@@ -1,19 +1,16 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-    kotlin("multiplatform") version "2.0.21"
+    kotlin("multiplatform") version "2.3.10"
     id("org.jetbrains.compose") version "1.7.0"
-    kotlin("plugin.compose") version "2.0.21"
+    kotlin("plugin.compose") version "2.3.10"
 }
 
 group = "com.example.kifumanager"
 version = "1.0.0"
 
 kotlin {
-    jvmToolchain(21)
-    jvm("desktop") {
-        withJava()
-    }
+    jvm("desktop")
     sourceSets {
         val desktopMain by getting {
             dependencies {
