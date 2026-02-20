@@ -11,7 +11,7 @@ import java.io.File
 fun OverwriteConfirmDialog(
     file: File,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
 ) {
     val targetFileName = file.nameWithoutExtension + ".kifu"
     AlertDialog(
@@ -24,6 +24,6 @@ fun OverwriteConfirmDialog(
                 Spacer(Modifier.width(8.dp))
                 Button(onClick = onConfirm) { Text("上書きする") }
             }
-        }
+        },
     )
 }

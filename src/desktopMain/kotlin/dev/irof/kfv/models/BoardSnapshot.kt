@@ -6,5 +6,5 @@ data class BoardSnapshot(
     val goteMochigoma: List<Piece> = emptyList(),
     val lastMoveText: String = "",
     val lastFrom: Square? = null,
-    val lastTo: Square? = null
+    val lastTo: Square? = null,
 )

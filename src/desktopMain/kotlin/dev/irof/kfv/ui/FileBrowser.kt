@@ -27,13 +27,15 @@ fun FileEntryItem(
     isSelected: Boolean = false,
     onNavigate: (Path) -> Unit,
     onSelect: (Path) -> Unit,
-    onShowText: (Path) -> Unit
+    onShowText: (Path) -> Unit,
 ) {
     val isDirectory = path.isDirectory() || isParentLink
     ContextMenuArea(items = {
         if (!isDirectory && !isParentLink) {
             listOf(ContextMenuItem("テキストを表示") { onShowText(path) })
-        } else emptyList()
+        } else {
+            emptyList()
+        }
     }) {
         Row(
             modifier = Modifier
@@ -41,14 +43,14 @@ fun FileEntryItem(
                 .padding(vertical = 1.dp)
                 .background(if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent)
                 .combinedClickable(onClick = { if (!isDirectory) onSelect(path) }, onDoubleClick = { onNavigate(path) })
-                .padding(6.dp)
+                .padding(6.dp),
         ) {
             Text(
                 text = if (isParentLink) ".." else path.name + if (path.isDirectory()) "/" else "",
                 fontSize = 13.sp,
                 color = if (isDirectory) Color.Blue else Color.Black,
                 lineHeight = 16.sp,
-                modifier = Modifier.padding(end = 4.dp)
+                modifier = Modifier.padding(end = 4.dp),
             )
         }
     }

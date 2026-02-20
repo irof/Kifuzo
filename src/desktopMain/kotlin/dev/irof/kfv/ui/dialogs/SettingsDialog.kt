@@ -22,7 +22,7 @@ import dev.irof.kfv.models.AppSettings
 fun SettingsDialog(
     initialRegex: String,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit
+    onSave: (String) -> Unit,
 ) {
     var tempRegex by remember { mutableStateOf(initialRegex) }
     var rawSettings by remember { mutableStateOf(AppSettings.getAllSettings()) }
@@ -36,36 +36,36 @@ fun SettingsDialog(
                 Text("自分の名前の判定用（正規表現）:", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
                 TextField(
-                    value = tempRegex, 
-                    onValueChange = { tempRegex = it }, 
-                    placeholder = { Text("例: (irof|名無し)") }, 
-                    modifier = Modifier.fillMaxWidth()
+                    value = tempRegex,
+                    onValueChange = { tempRegex = it },
+                    placeholder = { Text("例: (irof|名無し)") },
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Text("※自分が後手の場合、自動的に盤面を反転します。", fontSize = 10.sp, color = Color.Gray)
-                
+
                 Spacer(Modifier.height(24.dp))
                 Divider()
                 Spacer(Modifier.height(16.dp))
-                
+
                 Text("保存されている詳細データ (Preferences):", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
-                
+
                 rawSettings.forEach { (key, value) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(key, fontSize = 10.sp, color = Color.Gray)
                             var editingValue by remember(key) { mutableStateOf(value) }
                             BasicTextField(
                                 value = editingValue,
-                                onValueChange = { 
+                                onValueChange = {
                                     editingValue = it
                                     AppSettings.putSetting(key, it)
                                 },
                                 textStyle = TextStyle(fontSize = 12.sp),
-                                modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(4.dp)
+                                modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(4.dp),
                             )
                         }
                         IconButton(onClick = {
@@ -84,6 +84,6 @@ fun SettingsDialog(
                 Spacer(Modifier.width(8.dp))
                 Button(onClick = { onSave(tempRegex) }) { Text("名前設定を保存") }
             }
-        }
+        },
     )
 }

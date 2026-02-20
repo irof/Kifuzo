@@ -1,7 +1,7 @@
 package dev.irof.kfv.logic
 
-import java.nio.file.Path
 import java.nio.charset.Charset
+import java.nio.file.Path
 import kotlin.io.path.readBytes
 import kotlin.text.Charsets
 
@@ -23,6 +23,4 @@ fun readTextWithEncoding(path: Path): String {
 /**
  * 棋譜ファイルから各行を読み込みます。
  */
-fun readLinesWithEncoding(path: Path): List<String> {
-    return readTextWithEncoding(path).lines()
-}
+fun readLinesWithEncoding(path: Path): List<String> = readTextWithEncoding(path).lines()

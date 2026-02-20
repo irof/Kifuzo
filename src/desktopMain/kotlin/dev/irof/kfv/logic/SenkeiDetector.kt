@@ -14,7 +14,7 @@ fun detectSenkei(history: List<BoardSnapshot>): String {
     val cells = snapshot.cells
     var senteRookX = -1
     var goteRookX = -1
-    
+
     // x: 0-8 (9筋-1筋)
     for (y in 0..8) {
         for (x in 0..8) {
@@ -28,7 +28,7 @@ fun detectSenkei(history: List<BoardSnapshot>): String {
             }
         }
     }
-    
+
     fun getFuriType(rookX: Int): String? = when (rookX) {
         3 -> "袖飛車"
         4 -> "右四間飛車"
@@ -38,10 +38,10 @@ fun detectSenkei(history: List<BoardSnapshot>): String {
         8 -> "向かい飛車"
         else -> null
     }
-    
+
     val senteSenkei = getFuriType(senteRookX)
     val goteSenkei = getFuriType(goteRookX)
-    
+
     return when {
         senteSenkei != null && goteSenkei != null -> if (senteSenkei == goteSenkei) "相$senteSenkei" else "相振り飛車"
         senteSenkei != null -> senteSenkei

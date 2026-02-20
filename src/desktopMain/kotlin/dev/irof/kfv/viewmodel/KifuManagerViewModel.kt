@@ -13,7 +13,7 @@ import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
 class KifuManagerViewModel(
-    private val repository: KifuRepository = KifuRepository()
+    private val repository: KifuRepository = KifuRepository(),
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
@@ -22,29 +22,32 @@ class KifuManagerViewModel(
     var kifuInfos by mutableStateOf(mapOf<Path, KifuInfo>())
     var isScanning by mutableStateOf(false)
     var selectedSenkei by mutableStateOf<String?>(null)
-    
+
     var selectedFile by mutableStateOf<Path?>(null)
     var errorMessage by mutableStateOf<String?>(null)
     var infoMessage by mutableStateOf<String?>(null)
     var showOverwriteConfirm by mutableStateOf<Path?>(null)
     var viewingText by mutableStateOf<String?>(null)
     var isFlipped by mutableStateOf(false)
-    
+
     var showSettings by mutableStateOf(false)
     var myNameRegex by mutableStateOf(AppSettings.myNameRegex)
 
     val boardState = ShogiBoardState()
 
     val filteredContents: List<Path>
-        get() = if (selectedSenkei == null) directoryContents
-        else directoryContents.filter { path -> path.isDirectory() || kifuInfos[path]?.senkei == selectedSenkei }
+        get() = if (selectedSenkei == null) {
+            directoryContents
+        } else {
+            directoryContents.filter { path -> path.isDirectory() || kifuInfos[path]?.senkei == selectedSenkei }
+        }
 
     val availableSenkei: List<String>
         get() = kifuInfos.values.map { it.senkei }.filter { it.isNotEmpty() }.distinct().sorted()
 
     fun refreshFiles() {
         directoryContents = repository.scanDirectory(currentDirectory)
-        
+
         scope.launch {
             isScanning = true
             kifuInfos = withContext(Dispatchers.IO) {
@@ -72,7 +75,11 @@ class KifuManagerViewModel(
 
     fun updateAutoFlip() {
         if (myNameRegex.isEmpty()) return
-        val regex = try { Regex(myNameRegex) } catch (e: Exception) { null } ?: return
+        val regex = try {
+            Regex(myNameRegex)
+        } catch (e: Exception) {
+            null
+        } ?: return
         if (regex.containsMatchIn(boardState.goteName) && !regex.containsMatchIn(boardState.senteName)) {
             isFlipped = true
         } else if (regex.containsMatchIn(boardState.senteName)) {
@@ -105,7 +112,7 @@ class KifuManagerViewModel(
             performCsaConversion(path)
         }
     }
-    
+
     fun confirmOverwrite() {
         showOverwriteConfirm?.let {
             performCsaConversion(it)

@@ -5,19 +5,15 @@ import java.nio.file.Path
 import kotlin.io.path.*
 
 class KifuRepository {
-    
-    fun scanDirectory(directory: Path): List<Path> {
-        return try {
-            directory.listDirectoryEntries().sortedWith(compareBy({ !it.isDirectory() }, { it.name.lowercase() }))
-        } catch (e: Exception) {
-            emptyList()
-        }
+
+    fun scanDirectory(directory: Path): List<Path> = try {
+        directory.listDirectoryEntries().sortedWith(compareBy({ !it.isDirectory() }, { it.name.lowercase() }))
+    } catch (e: Exception) {
+        emptyList()
     }
 
-    fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> {
-        return files.filter { it.isRegularFile() && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
-            .associateWith { scanKifuInfo(it) }
-    }
+    fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = files.filter { it.isRegularFile() && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
+        .associateWith { scanKifuInfo(it) }
 
     fun parse(path: Path, state: ShogiBoardState) {
         parseKifu(path, state)
@@ -32,9 +28,7 @@ class KifuRepository {
         updateKifuSenkei(path, senkei)
     }
 
-    fun importQuestFiles(): Int {
-        return importShogiQuestFiles()
-    }
+    fun importQuestFiles(): Int = importShogiQuestFiles()
 }
 
 /**
@@ -44,5 +38,5 @@ data class KifuInfo(
     val path: Path,
     val senteName: String = "",
     val goteName: String = "",
-    val senkei: String = ""
+    val senkei: String = "",
 )

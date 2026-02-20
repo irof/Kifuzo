@@ -33,6 +33,10 @@ object AppSettings {
         prefs.keys().forEach { key -> map[key] = prefs.get(key, "") }
         return map
     }
-    fun removeSetting(key: String) { prefs.remove(key) }
-    fun putSetting(key: String, value: String) { prefs.put(key, value) }
+    fun removeSetting(key: String) {
+        prefs.remove(key)
+    }
+    fun putSetting(key: String, value: String) {
+        prefs.put(key, value)
+    }
 }

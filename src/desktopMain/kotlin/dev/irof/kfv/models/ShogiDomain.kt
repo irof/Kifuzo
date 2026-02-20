@@ -2,7 +2,8 @@ package dev.irof.kfv.models
 
 enum class PieceColor {
     Black, // 先手 (▲)
-    White; // 後手 (△)
+    White, // 後手 (△)
+    ;
 
     fun flip(): PieceColor = if (this == Black) White else Black
     fun toSymbol(): String = if (this == Black) "▲" else "△"
@@ -10,7 +11,7 @@ enum class PieceColor {
 
 data class Square(val file: Int, val rank: Int) {
     // file: 1-9 (筋), rank: 1-9 (段)
-    
+
     init {
         require(file in 1..9 && rank in 1..9) { "Invalid square: $file$rank" }
     }
@@ -22,8 +23,6 @@ data class Square(val file: Int, val rank: Int) {
     val yIndex: Int get() = rank - 1
 
     companion object {
-        fun fromIndex(x: Int, y: Int): Square {
-            return Square(9 - x, y + 1)
-        }
+        fun fromIndex(x: Int, y: Int): Square = Square(9 - x, y + 1)
     }
 }
