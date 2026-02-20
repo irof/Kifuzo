@@ -120,11 +120,11 @@ fun KifuManagerApp() {
                                 viewModel.currentRootDirectory = chooser.selectedFile.toPath()
                             }
                         }) {
-                            Icon(Icons.Default.List, contentDescription = "フォルダ選択", tint = ShogiColors.Primary)
+                            Icon(Icons.Default.Home, contentDescription = "フォルダ選択", tint = ShogiColors.Primary)
                         }
                         
                         IconButton(onClick = { viewModel.importFiles() }) {
-                            Icon(Icons.Default.AddCircle, contentDescription = "インポート", tint = ShogiColors.Primary)
+                            Icon(Icons.Default.Add, contentDescription = "インポート", tint = ShogiColors.Primary)
                         }
                     }
                     
