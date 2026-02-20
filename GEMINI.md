@@ -75,7 +75,7 @@ The project uses **Gradle** as the build tool.
 ## Development Conventions
 
 - **Language:** Comments and documentation in the code must be written in **Japanese**.
-- **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation. **Before committing, you MUST run `./gradlew verify` and ensure it passes.**
+- **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation. **Before committing, you MUST run `./gradlew verify` and ensure it passes. Additionally, if a change affects the content of `GEMINI.md` (e.g., new features, structural changes, or updated conventions), you MUST update `GEMINI.md` accordingly in the same task.**
 - **UI Framework:** Jetpack Compose (Desktop).
 - **State Management:** Uses a **ViewModel** pattern with `UiState` and `Action` objects for predictable state transitions.
 - **Parsing:** Primarily uses Regex and line-by-line processing for game records.
