@@ -151,8 +151,13 @@ fun KifuManagerApp() {
 
                 // ファイルツリーのスクロール領域（横スクロール対応）
                 val treeHorizontalScroll = rememberScrollState()
-                Box(modifier = Modifier.weight(1f).fillMaxWidth().horizontalScroll(treeHorizontalScroll)) {
-                    LazyColumn(modifier = Modifier.fillMaxHeight().width(IntrinsicSize.Max)) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .horizontalScroll(treeHorizontalScroll)
+                ) {
+                    LazyColumn(modifier = Modifier.fillMaxHeight()) {
                         items(viewModel.filteredNodes) { node ->
                             FileTreeItem(
                                 node = node, 
