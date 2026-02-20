@@ -1,6 +1,7 @@
 package dev.irof.kfv.logic
 
 import java.nio.file.Path
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.io.path.*
@@ -15,38 +16,11 @@ fun importShogiQuestFiles(sourceDir: Path, targetDir: Path): Int {
     val txtFiles = sourceDir.listDirectoryEntries("*.txt").filter { it.isRegularFile() }
 
     var count = 0
-    val dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-        .withZone(ZoneId.systemDefault())
-
-    val nameCleanupRegex = Regex("""\(.*?\)""")
-
     txtFiles.forEach { file ->
         try {
             val lines = readLinesWithEncoding(file)
-            if (lines.isEmpty()) return@forEach
+            val newFileName = calculateImportTarget(lines, file.getLastModifiedTime().toMillis()) ?: return@forEach
 
-            // CSA判定: 先頭10行以内に N+ または N- があるか
-            val headerLines = lines.take(10)
-            val hasCsaMarker = headerLines.any { it.startsWith("N+") || it.startsWith("N-") }
-            if (!hasCsaMarker) return@forEach
-
-            var sente = "unknown"
-            var gote = "unknown"
-
-            // 名前抽出
-            lines.forEach { line ->
-                if (line.startsWith("N+")) {
-                    sente = line.substring(2).replace(nameCleanupRegex, "").trim()
-                } else if (line.startsWith("N-")) {
-                    gote = line.substring(2).replace(nameCleanupRegex, "").trim()
-                }
-            }
-
-            // タイムスタンプから日付取得
-            val dateStr = dateFormatter.format(file.getLastModifiedTime().toInstant())
-
-            // 新しいファイル名: {YYYYMMDD}-{先手}-{後手}.csa
-            val newFileName = "$dateStr-$sente-$gote.csa"
             val targetFile = targetDir / newFileName
 
             // 移動（コピーして削除）
@@ -58,4 +32,40 @@ fun importShogiQuestFiles(sourceDir: Path, targetDir: Path): Int {
         }
     }
     return count
+}
+
+private val importDateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+    .withZone(ZoneId.systemDefault())
+
+private val nameCleanupRegex = Regex("""\(.*?\)""")
+
+/**
+ * 棋譜の内容と更新日時から、インポート後のファイル名を算出します。
+ * インポート対象でない場合は null を返します。
+ */
+fun calculateImportTarget(lines: List<String>, lastModifiedMillis: Long): String? {
+    if (lines.isEmpty()) return null
+
+    // CSA判定: 先頭10行以内に N+ または N- があるか
+    val headerLines = lines.take(10)
+    val hasCsaMarker = headerLines.any { it.startsWith("N+") || it.startsWith("N-") }
+    if (!hasCsaMarker) return null
+
+    var sente = "unknown"
+    var gote = "unknown"
+
+    // 名前抽出
+    lines.forEach { line ->
+        if (line.startsWith("N+")) {
+            sente = line.substring(2).replace(nameCleanupRegex, "").trim()
+        } else if (line.startsWith("N-")) {
+            gote = line.substring(2).replace(nameCleanupRegex, "").trim()
+        }
+    }
+
+    // タイムスタンプから日付取得
+    val dateStr = importDateFormatter.format(Instant.ofEpochMilli(lastModifiedMillis))
+
+    // 新しいファイル名: {YYYYMMDD}-{先手}-{後手}.csa
+    return "$dateStr-$sente-$gote.csa"
 }
