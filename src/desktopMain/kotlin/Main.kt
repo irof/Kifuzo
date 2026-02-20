@@ -63,14 +63,16 @@ fun KifuManagerApp() {
     
     // ファイル選択時の解析
     LaunchedEffect(selectedFile) {
-        if (selectedFile?.extension?.lowercase() == "kifu") {
+        val ext = selectedFile?.extension?.lowercase()
+        if (ext == "kifu" || ext == "kif") {
             try {
                 parseKifu(selectedFile!!, boardState)
             } catch (e: Exception) {
                 errorMessage = "解析中断: ${selectedFile?.name}\n\n${e.message}"
+                boardState.history = emptyList()
             }
         } else {
-            boardState.reset(getInitialCells())
+            boardState.history = emptyList()
         }
     }
 
@@ -207,14 +209,12 @@ fun KifuManagerApp() {
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
-            
-            ShogiBoardView(boardState)
-            
-            Spacer(Modifier.height(16.dp))
-            
-            // 棋譜操作コントロール
             if (boardState.history.isNotEmpty()) {
+                Spacer(Modifier.height(16.dp))
+                ShogiBoardView(boardState)
+                Spacer(Modifier.height(16.dp))
+                
+                // 棋譜操作コントロール
                 Text(
                     text = "手数: ${boardState.currentStep} / ${boardState.history.size - 1}",
                     style = MaterialTheme.typography.caption
