@@ -143,16 +143,16 @@ fun KifuManagerApp() {
                 onClick = {
                     val count = importShogiQuestFiles()
                     if (count > 0) {
-                        infoMessage = "${count}件のクエスト棋譜をインポートしました。"
+                        infoMessage = "${count}件の棋譜をインポートしました。"
                         refreshFiles()
                     } else {
-                        infoMessage = "Downloadsフォルダにクエスト棋譜が見つかりませんでした。"
+                        infoMessage = "Downloadsフォルダに該当する棋譜が見つかりませんでした。"
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF6200EE), contentColor = Color.White)
             ) {
-                Text("クエスト棋譜をインポート", fontSize = 11.sp)
+                Text("Downloadsから棋譜をインポート", fontSize = 11.sp)
             }
             
             Spacer(Modifier.height(8.dp))

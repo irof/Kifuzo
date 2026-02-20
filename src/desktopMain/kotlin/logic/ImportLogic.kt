@@ -1,35 +1,64 @@
 package logic
 
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
- * Downloadsフォルダから将棋クエストの棋譜（.txt）を検出し、
- * ~/Kifu/quest/csa フォルダへコピー・整理します。
+ * Downloadsフォルダから特定のテキストファイルを検出し、
+ * 棋譜の内容に基づいて適切なフォルダへリネームして移動します。
  */
 fun importShogiQuestFiles(): Int {
     val userHome = System.getProperty("user.home")
     val downloadsDir = File(userHome, "Downloads")
-    val targetDir = File(userHome, "Kifu/quest/csa")
+    val kifuRoot = File(userHome, "Kifu")
+    val questDir = File(kifuRoot, "quest/csa")
     
-    if (!targetDir.exists()) {
-        targetDir.mkdirs()
-    }
-    
-    // 将棋クエストの棋譜ファイル（通常は .txt で CSA形式の内容を持つもの）を検索
-    // ここではファイル名に "sq" が含まれるか、内容が V2.2 で始まるものを対象とします
-    val files = downloadsDir.listFiles { file ->
-        file.isFile && file.extension.lowercase() == "txt" && 
-        (file.name.contains("sq", ignoreCase = true) || file.readText().trim().startsWith("V2.2"))
+    val txtFiles = downloadsDir.listFiles { file ->
+        file.isFile && file.extension.lowercase() == "txt"
     } ?: return 0
     
     var count = 0
-    files.forEach { file ->
+    val dateFormat = SimpleDateFormat("yyyyMMdd")
+    // 名前から丸括弧とその中身を削除するための正規表現
+    val nameCleanupRegex = Regex("""\(.*?\)""")
+
+    txtFiles.forEach { file ->
         try {
-            // CSAとして保存するため拡張子を変更
-            val newName = file.nameWithoutExtension + ".csa"
-            val targetFile = File(targetDir, newName)
+            val lines = file.useLines { it.take(10).toList() }
+            if (lines.isEmpty()) return@forEach
+            
+            // CSA判定: 先頭10行以内に N+ または N- があるか
+            val hasCsaMarker = lines.any { it.startsWith("N+") || it.startsWith("N-") }
+            if (!hasCsaMarker) return@forEach
+            
+            // 情報抽出
+            val isQuest = lines.firstOrNull()?.trim() == "'Shogi Quest"
+            var sente = "unknown"
+            var gote = "unknown"
+            
+            // ファイル全体から名前を探す（念のため）
+            file.forEachLine { line ->
+                if (line.startsWith("N+")) {
+                    sente = line.substring(2).replace(nameCleanupRegex, "").trim()
+                } else if (line.startsWith("N-")) {
+                    gote = line.substring(2).replace(nameCleanupRegex, "").trim()
+                }
+            }
+            
+            // タイムスタンプから日付取得
+            val dateStr = dateFormat.format(Date(file.lastModified()))
+            
+            // 保存先決定
+            val targetDir = if (isQuest) questDir else kifuRoot
+            if (!targetDir.exists()) targetDir.mkdirs()
+            
+            // 新しいファイル名: csa-{YYYYMMDD}-{先手}-{後手}.csa
+            val newFileName = "csa-$dateStr-$sente-$gote.csa"
+            val targetFile = File(targetDir, newFileName)
+            
+            // 移動（コピーして削除）
             file.copyTo(targetFile, overwrite = true)
-            // 元ファイルを削除（インポート完了）
             file.delete()
             count++
         } catch (e: Exception) {
