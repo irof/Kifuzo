@@ -1,4 +1,4 @@
-package models
+package dev.irof.kfv.models
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,7 +13,6 @@ object AppConfig {
 
 object AppSettings {
     private val prefs = java.util.prefs.Preferences.userNodeForPackage(AppSettings::class.java)
-    
     private const val KEY_MY_NAME_REGEX = "my_name_regex"
     private const val KEY_WINDOW_X = "window_x"
     private const val KEY_WINDOW_Y = "window_y"
@@ -40,39 +39,19 @@ object AppSettings {
         get() = prefs.getFloat(KEY_WINDOW_HEIGHT, 750f)
         set(value) = prefs.putFloat(KEY_WINDOW_HEIGHT, value)
 
-    /**
-     * 現在保存されているすべての設定を取得します。
-     */
     fun getAllSettings(): Map<String, String> {
         val map = mutableMapOf<String, String>()
-        prefs.keys().forEach { key ->
-            map[key] = prefs.get(key, "")
-        }
+        prefs.keys().forEach { key -> map[key] = prefs.get(key, "") }
         return map
     }
-
-    /**
-     * 特定のキーの設定を削除します。
-     */
-    fun removeSetting(key: String) {
-        prefs.remove(key)
-    }
-
-    /**
-     * 直接値を設定します。
-     */
-    fun putSetting(key: String, value: String) {
-        prefs.put(key, value)
-    }
+    fun removeSetting(key: String) { prefs.remove(key) }
+    fun putSetting(key: String, value: String) { prefs.put(key, value) }
 }
 
 enum class Piece(val symbol: String) {
     FU("歩"), KY("香"), KE("桂"), GI("銀"), KI("金"), KA("角"), HI("飛"), OU("玉"),
     TO("と"), NY("杏"), NK("圭"), NG("全"), UM("馬"), RY("龍");
-
-    fun toBase(): Piece = when(this) {
-        TO -> FU; NY -> KY; NK -> KE; NG -> GI; UM -> KA; RY -> HI; else -> this
-    }
+    fun toBase(): Piece = when(this) { TO -> FU; NY -> KY; NK -> KE; NG -> GI; UM -> KA; RY -> HI; else -> this }
     fun isPromoted(): Boolean = this in listOf(TO, NY, NK, NG, UM, RY)
 }
 
@@ -81,8 +60,8 @@ data class BoardSnapshot(
     val senteMochigoma: List<Piece> = emptyList(),
     val goteMochigoma: List<Piece> = emptyList(),
     val lastMoveText: String = "",
-    val lastFrom: Pair<Int, Int>? = null, // (x, y) 0-8
-    val lastTo: Pair<Int, Int>? = null    // (x, y) 0-8
+    val lastFrom: Pair<Int, Int>? = null,
+    val lastTo: Pair<Int, Int>? = null
 )
 
 class ShogiBoardState {
@@ -91,22 +70,13 @@ class ShogiBoardState {
     var firstContactStep by mutableStateOf(-1)
     var senteName by mutableStateOf("先手")
     var goteName by mutableStateOf("後手")
-
-    val currentBoard: BoardSnapshot?
-        get() = if (history.isNotEmpty()) history[currentStep] else null
-
+    val currentBoard: BoardSnapshot? get() = if (history.isNotEmpty()) history[currentStep] else null
     fun reset(initialCells: Array<Array<Pair<Piece, Boolean>?>>) {
         history = listOf(BoardSnapshot(initialCells, lastMoveText = "開始局面"))
-        currentStep = 0
-        firstContactStep = -1
-        senteName = "先手"
-        goteName = "後手"
+        currentStep = 0; firstContactStep = -1; senteName = "先手"; goteName = "後手"
     }
-
     fun addStep(snapshot: BoardSnapshot, isContact: Boolean) {
         history = history + snapshot
-        if (isContact && firstContactStep == -1) {
-            firstContactStep = history.size - 1
-        }
+        if (isContact && firstContactStep == -1) firstContactStep = history.size - 1
     }
 }

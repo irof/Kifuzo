@@ -1,4 +1,4 @@
-package ui
+package dev.irof.kfv.ui
 
 import androidx.compose.foundation.ContextMenuArea
 import androidx.compose.foundation.ContextMenuItem
@@ -28,24 +28,17 @@ fun FileEntryItem(
     onShowText: (File) -> Unit
 ) {
     val isDirectory = file.isDirectory || isParentLink
-    
-    // コンテキストメニュー（右クリックメニュー）の設定
     ContextMenuArea(items = {
         if (!isDirectory && file.isFile) {
             listOf(ContextMenuItem("テキストを表示") { onShowText(file) })
-        } else {
-            emptyList()
-        }
+        } else emptyList()
     }) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 1.dp)
                 .background(if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent)
-                .combinedClickable(
-                    onClick = { if (!isDirectory) onSelect(file) },
-                    onDoubleClick = { onNavigate(file) }
-                )
+                .combinedClickable(onClick = { if (!isDirectory) onSelect(file) }, onDoubleClick = { onNavigate(file) })
                 .padding(6.dp)
         ) {
             Text(

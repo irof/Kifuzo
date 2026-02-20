@@ -1,3 +1,5 @@
+package dev.irof.kfv
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,20 +29,19 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
-import logic.*
-import models.AppConfig
-import models.AppSettings
-import models.ShogiBoardState
-import ui.FileEntryItem
-import ui.ShogiBoardView
-import utils.copyToClipboard
+import androidx.compose.ui.window.rememberWindowState
+import dev.irof.kfv.logic.*
+import dev.irof.kfv.models.AppConfig
+import dev.irof.kfv.models.AppSettings
+import dev.irof.kfv.models.ShogiBoardState
+import dev.irof.kfv.ui.FileEntryItem
+import dev.irof.kfv.ui.ShogiBoardView
+import dev.irof.kfv.utils.copyToClipboard
 import java.io.File
 import javax.swing.JFileChooser
-
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.rememberWindowState
 
 fun main() = application {
     val windowState = rememberWindowState(
@@ -212,86 +213,75 @@ fun KifuManagerApp() {
                 Spacer(Modifier.height(8.dp))
                 Text(text = selectedFile?.name ?: "kifuファイルを選択してください", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
                 
-                            if (selectedFile?.isFile == true) {
-                                val ext = selectedFile!!.extension.lowercase()
-                                val isKifuFile = ext == "kifu" || ext == "kif"
-                                val hasHistory = boardState.history.isNotEmpty()
-                
-                                if (hasHistory || ext == "csa") {
-                                    Spacer(Modifier.height(8.dp))
-                                    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                                                                if (hasHistory) {
-                                                                    OutlinedButton(onClick = { isFlipped = !isFlipped }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
-                                                                    
-                                                                    if (isKifuFile) {
-                                                                        val existingSenkei = kifuInfos[selectedFile]?.senkei
-                                                                        Spacer(Modifier.width(8.dp))
-                                                                        
-                                                                        if (!existingSenkei.isNullOrEmpty()) {
-                                                                            // 戦型が表示されている場合
-                                                                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
-                                                                                Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                                                                Spacer(Modifier.width(4.dp))
-                                                                                IconButton(
-                                                                                    onClick = { 
-                                                                                        val senkei = detectSenkei(boardState.history)
-                                                                                        if (senkei.isNotEmpty()) { updateKifuSenkei(selectedFile!!, senkei); refreshFiles(); infoMessage = "戦型を「$senkei」として更新しました。" }
-                                                                                    },
-                                                                                    modifier = Modifier.size(18.dp)
-                                                                                ) {
-                                                                                    Icon(Icons.Default.Refresh, contentDescription = "再判定", tint = Color(0xFF2196F3))
-                                                                                }
-                                                                            }
-                                                                        } else {
-                                                                            // 戦型が未設定の場合
-                                                                            Button(
-                                                                                onClick = { 
-                                                                                    val senkei = detectSenkei(boardState.history)
-                                                                                    if (senkei.isNotEmpty()) { updateKifuSenkei(selectedFile!!, senkei); refreshFiles(); infoMessage = "戦型を「$senkei」として追記しました。" }
-                                                                                },
-                                                                                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2196F3), contentColor = Color.White),
-                                                                                modifier = Modifier.height(32.dp)
-                                                                            ) {
-                                                                                Text("戦型判定", fontSize = 10.sp)
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }                
-                                                                if (ext == "csa") {
-                                                                    if (hasHistory) Spacer(Modifier.width(8.dp))
-                                                                    Button(
-                                                                        onClick = { 
-                                                                            val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
-                                                                            val performConversion = {
-                                                                                convertCsaToKifu(selectedFile!!)
-                                                                                // 変換後に戦型を自動判定して追記
-                                                                                try {
-                                                                                    val tempState = ShogiBoardState()
-                                                                                    parseKifu(targetFile, tempState)
-                                                                                    val senkei = detectSenkei(tempState.history)
-                                                                                    if (senkei.isNotEmpty()) {
-                                                                                        updateKifuSenkei(targetFile, senkei)
-                                                                                    }
-                                                                                } catch (e: Exception) {
-                                                                                    println("Auto-senkei detection failed: ${e.message}")
-                                                                                }
-                                                                                refreshFiles()
-                                                                            }
-                                        
-                                                                            if (targetFile.exists()) {
-                                                                                showOverwriteConfirm = selectedFile
-                                                                            } else {
-                                                                                performConversion()
-                                                                            }
-                                                                        }, 
-                                                                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White), 
-                                                                        modifier = Modifier.height(32.dp)
-                                                                    ) { 
-                                                                        Text("KIFUに変換", fontSize = 10.sp) 
-                                                                    }
-                                                                }                                    }
+                if (selectedFile?.isFile == true) {
+                    val ext = selectedFile!!.extension.lowercase()
+                    val isKifuFile = ext == "kifu" || ext == "kif"
+                    val hasHistory = boardState.history.isNotEmpty()
+
+                    if (hasHistory || ext == "csa") {
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                            if (hasHistory) {
+                                OutlinedButton(onClick = { isFlipped = !isFlipped }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
+                                
+                                if (isKifuFile) {
+                                    val existingSenkei = kifuInfos[selectedFile]?.senkei
+                                    Spacer(Modifier.width(8.dp))
+                                    
+                                    if (!existingSenkei.isNullOrEmpty()) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
+                                            Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                            Spacer(Modifier.width(4.dp))
+                                            IconButton(
+                                                onClick = { 
+                                                    val senkei = detectSenkei(boardState.history)
+                                                    if (senkei.isNotEmpty()) { updateKifuSenkei(selectedFile!!, senkei); refreshFiles(); infoMessage = "戦型を「$senkei」として更新しました。" }
+                                                },
+                                                modifier = Modifier.size(18.dp)
+                                            ) {
+                                                Icon(Icons.Default.Refresh, contentDescription = "再判定", tint = Color(0xFF2196F3))
+                                            }
+                                        }
+                                    } else {
+                                        Button(
+                                            onClick = { 
+                                                val senkei = detectSenkei(boardState.history)
+                                                if (senkei.isNotEmpty()) { updateKifuSenkei(selectedFile!!, senkei); refreshFiles(); infoMessage = "戦型を「$senkei」として追記しました。" }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2196F3), contentColor = Color.White),
+                                            modifier = Modifier.height(32.dp)
+                                        ) {
+                                            Text("戦型判定", fontSize = 10.sp)
+                                        }
+                                    }
                                 }
                             }
+
+                            if (ext == "csa") {
+                                if (hasHistory) Spacer(Modifier.width(8.dp))
+                                Button(
+                                    onClick = { 
+                                        val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
+                                        val performConversion = {
+                                            convertCsaToKifu(selectedFile!!)
+                                            try {
+                                                val tempState = ShogiBoardState()
+                                                parseKifu(targetFile, tempState)
+                                                val senkei = detectSenkei(tempState.history)
+                                                if (senkei.isNotEmpty()) updateKifuSenkei(targetFile, senkei)
+                                            } catch (e: Exception) { println("Auto-senkei detection failed: ${e.message}") }
+                                            refreshFiles()
+                                        }
+                                        if (targetFile.exists()) { showOverwriteConfirm = selectedFile } else { performConversion() }
+                                    }, 
+                                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White), 
+                                    modifier = Modifier.height(32.dp)
+                                ) { Text("KIFUに変換", fontSize = 10.sp) }
+                            }
+                        }
+                    }
+                }
+
                 if (boardState.history.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     ShogiBoardView(boardState, isFlipped = isFlipped)
@@ -318,7 +308,6 @@ fun KifuManagerApp() {
 
         // --- オーバーレイ・ダイアログ類 ---
 
-        // 共通エラー・通知
         if (errorMessage != null || infoMessage != null) {
             val title = if (errorMessage != null) "エラー" else "通知"
             val msg = errorMessage ?: infoMessage!!
@@ -334,43 +323,35 @@ fun KifuManagerApp() {
             )
         }
 
-            if (showOverwriteConfirm != null) {
-                val targetFile = File(showOverwriteConfirm!!.parent, showOverwriteConfirm!!.nameWithoutExtension + ".kifu")
-                AlertDialog(
-                    onDismissRequest = { showOverwriteConfirm = null },
-                    title = { Text("上書き確認") },
-                    text = { Text("${targetFile.name} は既に存在します。上書きしますか？") },
-                    buttons = {
-                        Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
-                            TextButton(onClick = { showOverwriteConfirm = null }) { Text("キャンセル") }
-                            Spacer(Modifier.width(8.dp))
-                            Button(onClick = {
-                                val fileToConvert = showOverwriteConfirm!!
-                                convertCsaToKifu(fileToConvert)
-                                
-                                // 変換後に戦型を自動判定して追記
-                                try {
-                                    val tempState = ShogiBoardState()
-                                    parseKifu(targetFile, tempState)
-                                    val senkei = detectSenkei(tempState.history)
-                                    if (senkei.isNotEmpty()) {
-                                        updateKifuSenkei(targetFile, senkei)
-                                    }
-                                } catch (e: Exception) {
-                                    println("Auto-senkei detection failed: ${e.message}")
-                                }
-        
-                                refreshFiles()
-                                showOverwriteConfirm = null
-                            }) { Text("上書きする") }
-                        }
+        if (showOverwriteConfirm != null) {
+            val targetFile = File(showOverwriteConfirm!!.parent, showOverwriteConfirm!!.nameWithoutExtension + ".kifu")
+            AlertDialog(
+                onDismissRequest = { showOverwriteConfirm = null },
+                title = { Text("上書き確認") },
+                text = { Text("${targetFile.name} は既に存在します。上書きしますか？") },
+                buttons = {
+                    Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { showOverwriteConfirm = null }) { Text("キャンセル") }
+                        Spacer(Modifier.width(8.dp))
+                        Button(onClick = {
+                            val fileToConvert = showOverwriteConfirm!!
+                            convertCsaToKifu(fileToConvert)
+                            try {
+                                val tempState = ShogiBoardState()
+                                parseKifu(targetFile, tempState)
+                                val senkei = detectSenkei(tempState.history)
+                                if (senkei.isNotEmpty()) updateKifuSenkei(targetFile, senkei)
+                            } catch (e: Exception) { println("Auto-senkei detection failed: ${e.message}") }
+                            refreshFiles(); showOverwriteConfirm = null
+                        }) { Text("上書きする") }
                     }
-                )
-            }
+                }
+            )
+        }
+
         if (showSettings) {
             var tempRegex by remember { mutableStateOf(myNameRegex) }
             var rawSettings by remember { mutableStateOf(AppSettings.getAllSettings()) }
-
             AlertDialog(
                 onDismissRequest = { showSettings = false },
                 title = { Text("設定") },
@@ -379,45 +360,21 @@ fun KifuManagerApp() {
                     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                         Text("自分の名前の判定用（正規表現）:", fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
-                        TextField(
-                            value = tempRegex, 
-                            onValueChange = { tempRegex = it }, 
-                            placeholder = { Text("例: (irof|名無し)") }, 
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        TextField(value = tempRegex, onValueChange = { tempRegex = it }, placeholder = { Text("例: (irof|名無し)") }, modifier = Modifier.fillMaxWidth())
                         Text("※自分が後手の場合、自動的に盤面を反転します。", fontSize = 10.sp, color = Color.Gray)
-                        
                         Spacer(Modifier.height(24.dp))
                         Divider()
                         Spacer(Modifier.height(16.dp))
-                        
                         Text("保存されている詳細データ (Preferences):", fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
-                        
                         rawSettings.forEach { (key, value) ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                            ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(key, fontSize = 10.sp, color = Color.Gray)
                                     var editingValue by remember(key) { mutableStateOf(value) }
-                                    BasicTextField(
-                                        value = editingValue,
-                                        onValueChange = { 
-                                            editingValue = it
-                                            AppSettings.putSetting(key, it)
-                                        },
-                                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.sp),
-                                        modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(4.dp)
-                                    )
+                                    BasicTextField(value = editingValue, onValueChange = { editingValue = it; AppSettings.putSetting(key, it) }, textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.sp), modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(4.dp))
                                 }
-                                IconButton(onClick = {
-                                    AppSettings.removeSetting(key)
-                                    rawSettings = AppSettings.getAllSettings()
-                                }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "削除", tint = Color.Red, modifier = Modifier.size(18.dp))
-                                }
+                                IconButton(onClick = { AppSettings.removeSetting(key); rawSettings = AppSettings.getAllSettings() }) { Icon(Icons.Default.Delete, contentDescription = "削除", tint = Color.Red, modifier = Modifier.size(18.dp)) }
                             }
                         }
                     }
@@ -426,59 +383,23 @@ fun KifuManagerApp() {
                     Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = { showSettings = false }) { Text("閉じる") }
                         Spacer(Modifier.width(8.dp))
-                        Button(onClick = {
-                            myNameRegex = tempRegex
-                            AppSettings.myNameRegex = tempRegex
-                            showSettings = false
-                        }) { Text("名前設定を保存") }
+                        Button(onClick = { myNameRegex = tempRegex; AppSettings.myNameRegex = tempRegex; showSettings = false }) { Text("名前設定を保存") }
                     }
                 }
             )
         }
 
-        // 棋譜テキスト表示（カスタムオーバーレイ）
         if (viewingText != null) {
-            // 背景（シールド）
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .clickable { viewingText = null }, // 背景クリックで閉じる
-                contentAlignment = Alignment.Center
-            ) {
-                // ダイアログ本体
-                Card(
-                    modifier = Modifier
-                        .size(600.dp, 550.dp)
-                        .clickable(enabled = false) { }, // 中身のクリックを背景に逃がさない
-                    elevation = 8.dp
-                ) {
+            Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)).clickable { viewingText = null }, contentAlignment = Alignment.Center) {
+                Card(modifier = Modifier.size(600.dp, 550.dp).clickable(enabled = false) { }, elevation = 8.dp) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("棋譜テキスト", style = MaterialTheme.typography.h6)
                         Spacer(Modifier.height(16.dp))
-                        
                         val scrollSVer = rememberScrollState()
                         val scrollSHor = rememberScrollState()
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .background(Color.White)
-                                .border(1.dp, Color.LightGray)
-                        ) {
-                            Text(
-                                text = viewingText!!,
-                                fontSize = 12.sp,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                softWrap = false,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(8.dp)
-                                    .verticalScroll(scrollSVer)
-                                    .horizontalScroll(scrollSHor)
-                            )
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth().background(Color.White).border(1.dp, Color.LightGray)) {
+                            Text(text = viewingText!!, fontSize = 12.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, softWrap = false, modifier = Modifier.fillMaxSize().padding(8.dp).verticalScroll(scrollSVer).horizontalScroll(scrollSHor))
                         }
-                        
                         Spacer(Modifier.height(16.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             Button(onClick = { copyToClipboard(viewingText!!); viewingText = null }) { Text("コピーして閉じる") }

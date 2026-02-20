@@ -1,8 +1,8 @@
-package logic
+package dev.irof.kfv.logic
 
-import models.BoardSnapshot
-import models.Piece
-import models.ShogiBoardState
+import dev.irof.kfv.models.BoardSnapshot
+import dev.irof.kfv.models.Piece
+import dev.irof.kfv.models.ShogiBoardState
 import java.io.File
 import java.nio.charset.Charset
 import kotlin.Exception
@@ -59,7 +59,6 @@ fun scanKifuInfo(file: File): KifuInfo {
             if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) sente = trimmed.substringAfter("：").trim()
             if (trimmed.startsWith("後手：")) gote = trimmed.substringAfter("：").trim()
             if (trimmed.startsWith("戦型：")) senkei = trimmed.substringAfter("：").trim()
-            // 指し手が始まったらヘッダー終了とみなす
             if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) break
         }
     } catch (e: Exception) {}
@@ -150,31 +149,15 @@ fun parseKifu(file: File, state: ShogiBoardState) {
  */
 fun updateKifuSenkei(file: File, senkei: String) {
     if (senkei.isEmpty()) return
-    
     val lines = readLinesWithEncoding(file).toMutableList()
     var senkeiLineIndex = -1
     var headerEndIndex = 0
-    
     for (i in lines.indices) {
         val line = lines[i].trim()
-        if (line.startsWith("戦型：")) {
-            senkeiLineIndex = i
-            break
-        }
-        // 指し手が始まったらそこがヘッダーの終わり
-        if (Regex("""^\s*\d+\s+.*""").matches(line)) {
-            headerEndIndex = i
-            break
-        }
+        if (line.startsWith("戦型：")) { senkeiLineIndex = i; break }
+        if (Regex("""^\s*\d+\s+.*""").matches(line)) { headerEndIndex = i; break }
     }
-    
-    if (senkeiLineIndex != -1) {
-        lines[senkeiLineIndex] = "戦型：$senkei"
-    } else {
-        // ヘッダーの終わりの直前に挿入
-        lines.add(headerEndIndex, "戦型：$senkei")
-    }
-    
-    // 保存（元のエンコーディングを尊重したいが、基本UTF-8で保存）
+    if (senkeiLineIndex != -1) lines[senkeiLineIndex] = "戦型：$senkei"
+    else lines.add(headerEndIndex, "戦型：$senkei")
     file.writeText(lines.joinToString("\n"), Charsets.UTF_8)
 }
