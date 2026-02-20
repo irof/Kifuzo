@@ -39,7 +39,9 @@ fun FileEntryItem(
         Text(
             text = if (isParentLink) ".." else file.name + if (file.isDirectory) "/" else "",
             fontSize = 13.sp,
-            color = if (isDirectory) Color.Blue else Color.Black
+            color = if (isDirectory) Color.Blue else Color.Black,
+            lineHeight = 16.sp,
+            modifier = Modifier.padding(end = 4.dp)
         )
     }
 }

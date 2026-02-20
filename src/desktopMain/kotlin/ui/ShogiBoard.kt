@@ -17,19 +17,19 @@ import models.ShogiBoardState
 
 @Composable
 fun ShogiBoardView(state: ShogiBoardState) {
-    val boardColor = Color(0xFFF3C077); val cellSize = 40.dp
+    val boardColor = Color(0xFFF3C077); val cellSize = 42.dp
     val board = state.currentBoard ?: return
     
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         MochigomaView(state.goteName, board.goteMochigoma, isSente = false)
         Spacer(Modifier.height(8.dp))
         Column(modifier = Modifier.background(boardColor).border(1.5.dp, Color.Black).padding(2.dp)) {
             for (y in 0..8) { Row { for (x in 0..8) {
-                Box(modifier = Modifier.size(cellSize).border(0.5.dp, Color.Gray), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.size(cellSize).border(0.5.dp, Color.Gray.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
                     board.cells[y][x]?.let { (piece, isSente) ->
                         Text(
                             text = piece.symbol, 
-                            fontSize = 22.sp, 
+                            fontSize = 24.sp, 
                             color = if (piece.isPromoted()) Color.Red else Color.Black,
                             modifier = if (!isSente) Modifier.rotate(180f) else Modifier
                         )
@@ -46,17 +46,17 @@ fun ShogiBoardView(state: ShogiBoardState) {
 fun MochigomaView(name: String, pieces: List<Piece>, isSente: Boolean) {
     val grouped = pieces.groupBy { it }.mapValues { it.value.size }
     Row(
-        modifier = Modifier.width(380.dp).padding(horizontal = 4.dp),
+        modifier = Modifier.padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = if (isSente) Arrangement.Start else Arrangement.End
     ) {
         if (!isSente) {
             MochigomaList(grouped, isSente)
-            Spacer(Modifier.width(8.dp))
-            Text(name, style = MaterialTheme.typography.subtitle2)
+            Spacer(Modifier.width(12.dp))
+            Text(name, style = MaterialTheme.typography.subtitle2, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         } else {
-            Text(name, style = MaterialTheme.typography.subtitle2)
-            Spacer(Modifier.width(8.dp))
+            Text(name, style = MaterialTheme.typography.subtitle2, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Spacer(Modifier.width(12.dp))
             MochigomaList(grouped, isSente)
         }
     }

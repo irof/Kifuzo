@@ -260,10 +260,16 @@ fun KifuManagerApp() {
             
             // ファイル操作ボタン（コピーのみ下部に残す）
             if (selectedFile?.isFile == true) {
-                Button(onClick = { copyToClipboard(selectedFile!!.readText()) }) {
+                Button(
+                    onClick = { copyToClipboard(selectedFile!!.readText()) },
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
                     Text("棋譜テキストをコピー", fontSize = 11.sp)
                 }
             }
+            
+            // スクロール可能な領域の末尾に十分な余白を確保
+            Spacer(Modifier.height(64.dp))
         }
     }
 }
