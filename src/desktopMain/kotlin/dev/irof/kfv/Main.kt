@@ -8,12 +8,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
@@ -43,8 +43,9 @@ import dev.irof.kfv.ui.dialogs.KifuTextViewer
 import dev.irof.kfv.ui.dialogs.OverwriteConfirmDialog
 import dev.irof.kfv.ui.dialogs.SettingsDialog
 import dev.irof.kfv.ui.theme.ShogiColors
-import dev.irof.kfv.viewmodel.KifuManagerViewModel
+import dev.irof.kfv.utils.AppStrings
 import dev.irof.kfv.utils.copyToClipboard
+import dev.irof.kfv.viewmodel.KifuManagerViewModel
 import javax.swing.JFileChooser
 import kotlin.io.path.extension
 import kotlin.io.path.name
@@ -68,7 +69,7 @@ fun main() = application {
             AppSettings.windowHeight = windowState.size.height.value
             exitApplication()
         },
-        title = "棋譜管理アプリ",
+        title = AppStrings.APP_TITLE,
         state = windowState
     ) {
         MaterialTheme {
@@ -116,7 +117,7 @@ fun KifuManagerApp() {
                         TooltipArea(
                             tooltip = {
                                 Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                                    Text("棋譜をインポート", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
+                                    Text(AppStrings.IMPORT_KIFU, modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
                                 }
                             }
                         ) {
@@ -133,7 +134,7 @@ fun KifuManagerApp() {
                                     viewModel.importFiles(chooser.selectedFile.toPath())
                                 }
                             }) {
-                                Icon(Icons.Default.Add, contentDescription = "インポート", tint = ShogiColors.Primary)
+                                Icon(Icons.Default.Add, contentDescription = AppStrings.IMPORT_KIFU, tint = ShogiColors.Primary)
                             }
                         }
                     }
@@ -141,12 +142,12 @@ fun KifuManagerApp() {
                     TooltipArea(
                         tooltip = {
                             Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                                Text("設定", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
+                                Text(AppStrings.SETTINGS, modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
                             }
                         }
                     ) {
                         IconButton(onClick = { viewModel.showSettings(true) }) {
-                            Icon(Icons.Default.Settings, contentDescription = "設定", tint = Color.Gray)
+                            Icon(Icons.Default.Settings, contentDescription = AppStrings.SETTINGS, tint = Color.Gray)
                         }
                     }
                 }
@@ -192,7 +193,7 @@ fun KifuManagerApp() {
                         LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
                     }
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).horizontalScroll(rememberScrollState())) {
-                        TextButton(onClick = { viewModel.setSelectedSenkei(null) }, colors = ButtonDefaults.textButtonColors(contentColor = if (state.selectedSenkei == null) Color.Blue else Color.Gray)) { Text("すべて", fontSize = 10.sp) }
+                        TextButton(onClick = { viewModel.setSelectedSenkei(null) }, colors = ButtonDefaults.textButtonColors(contentColor = if (state.selectedSenkei == null) Color.Blue else Color.Gray)) { Text(AppStrings.ALL_SENKEI, fontSize = 10.sp) }
                         state.availableSenkei.forEach { senkei ->
                             TextButton(onClick = { viewModel.setSelectedSenkei(senkei) }, colors = ButtonDefaults.textButtonColors(contentColor = if (state.selectedSenkei == senkei) Color.Blue else Color.Gray)) { Text(senkei, fontSize = 10.sp) }
                         }
@@ -222,7 +223,7 @@ fun KifuManagerApp() {
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top
             ) {
                 Spacer(Modifier.height(8.dp))
-                Text(text = state.selectedFile?.name ?: "kifuファイルを選択してください", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
+                Text(text = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT, style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
                 
                 state.selectedFile?.let { selected ->
                     val ext = selected.extension.lowercase()
@@ -233,21 +234,22 @@ fun KifuManagerApp() {
                         Spacer(Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                             if (hasHistory) {
-                                OutlinedButton(onClick = { viewModel.toggleFlipped() }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (state.isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
+                                OutlinedButton(onClick = { viewModel.toggleFlipped() }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (state.isFlipped) Color.LightGray else Color.White)) { Text(AppStrings.FLIP_BOARD, fontSize = 10.sp) }
                                 
                                 if (isKifuFile) {
-                                                                    val kifuInfo = state.kifuInfos[selected]
-                                                                    val existingSenkei = kifuInfo?.senkei
-                                                                    Spacer(Modifier.width(8.dp))
-                                                                    
-                                                                    if (!existingSenkei.isNullOrEmpty()) {                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
+                                    val kifuInfo = state.kifuInfos[selected]
+                                    val existingSenkei = kifuInfo?.senkei
+                                    Spacer(Modifier.width(8.dp))
+                                    
+                                    if (!existingSenkei.isNullOrEmpty()) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
                                             Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                             Spacer(Modifier.width(4.dp))
                                             IconButton(
                                                 onClick = { viewModel.detectAndWriteSenkei(selected) },
                                                 modifier = Modifier.size(18.dp)
                                             ) {
-                                                Icon(Icons.Default.Refresh, contentDescription = "再判定", tint = ShogiColors.Info)
+                                                Icon(Icons.Default.Refresh, contentDescription = AppStrings.DETECT_SENKEI, tint = ShogiColors.Info)
                                             }
                                         }
                                     } else {
@@ -255,7 +257,7 @@ fun KifuManagerApp() {
                                             onClick = { viewModel.detectAndWriteSenkei(selected) },
                                             colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Info, contentColor = Color.White),
                                             modifier = Modifier.height(32.dp)
-                                        ) { Text("戦型判定", fontSize = 10.sp) }
+                                        ) { Text(AppStrings.DETECT_SENKEI, fontSize = 10.sp) }
                                     }
                                 }
                             }
@@ -266,7 +268,7 @@ fun KifuManagerApp() {
                                     onClick = { viewModel.convertCsa(selected) }, 
                                     colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Success, contentColor = Color.White), 
                                     modifier = Modifier.height(32.dp)
-                                ) { Text("KIFUに変換", fontSize = 10.sp) }
+                                ) { Text(AppStrings.CONVERT_TO_KIFU, fontSize = 10.sp) }
                             }
                         }
                     }
@@ -276,20 +278,20 @@ fun KifuManagerApp() {
                     Spacer(Modifier.height(8.dp))
                     ShogiBoardView(viewModel.boardState, isFlipped = state.isFlipped)
                     Spacer(Modifier.height(8.dp))
-                    Text(text = "手数: ${viewModel.boardState.currentStep} / ${viewModel.boardState.session.maxStep}", style = MaterialTheme.typography.caption)
+                    Text(text = "${AppStrings.MOVE_COUNT}: ${viewModel.boardState.currentStep} / ${viewModel.boardState.session.maxStep}", style = MaterialTheme.typography.caption)
                     Text(text = viewModel.boardState.currentBoard?.lastMoveText ?: "", style = MaterialTheme.typography.body2, modifier = Modifier.height(24.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Button(onClick = { viewModel.boardState.currentStep = 0 }, modifier = Modifier.height(32.dp)) { Text("開始", fontSize = 10.sp) }
+                        Button(onClick = { viewModel.boardState.currentStep = 0 }, modifier = Modifier.height(32.dp)) { Text(AppStrings.START, fontSize = 10.sp) }
                         Spacer(Modifier.width(4.dp))
                         OutlinedButton(onClick = { viewModel.boardState.currentStep-- }, modifier = Modifier.height(32.dp)) { Text("◀", fontSize = 10.sp) }
                         Spacer(Modifier.width(4.dp))
                         if (viewModel.boardState.session.isStandardStart && viewModel.boardState.session.firstContactStep != -1) {
-                            Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.session.firstContactStep }, modifier = Modifier.height(32.dp)) { Text("衝突", fontSize = 10.sp) }
+                            Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.session.firstContactStep }, modifier = Modifier.height(32.dp)) { Text(AppStrings.CONTACT, fontSize = 10.sp) }
                             Spacer(Modifier.width(4.dp))
                         }
                         OutlinedButton(onClick = { viewModel.boardState.currentStep++ }, modifier = Modifier.height(32.dp)) { Text("▶", fontSize = 10.sp) }
                         Spacer(Modifier.width(4.dp))
-                        Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.session.maxStep }, modifier = Modifier.height(32.dp)) { Text("終局", fontSize = 10.sp) }
+                        Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.session.maxStep }, modifier = Modifier.height(32.dp)) { Text(AppStrings.END, fontSize = 10.sp) }
                     }
                     Slider(value = viewModel.boardState.currentStep.toFloat(), onValueChange = { viewModel.boardState.currentStep = it.toInt() }, valueRange = 0f..viewModel.boardState.session.maxStep.toFloat(), steps = if (viewModel.boardState.session.maxStep > 1) viewModel.boardState.session.maxStep - 1 else 0, modifier = Modifier.width(280.dp))
                 }
@@ -299,7 +301,7 @@ fun KifuManagerApp() {
         // --- オーバーレイ・ダイアログ類 ---
 
         if (state.errorMessage != null || state.infoMessage != null) {
-            val title = if (state.errorMessage != null) "エラー" else "通知"
+            val title = if (state.errorMessage != null) AppStrings.ERROR else AppStrings.NOTIFICATION
             val msg = state.errorMessage ?: state.infoMessage!!
             AlertDialog(
                 onDismissRequest = { viewModel.clearErrorAndInfo() },
@@ -307,7 +309,7 @@ fun KifuManagerApp() {
                 text = { Text(msg, fontSize = 12.sp) },
                 buttons = {
                     Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.CenterEnd) {
-                        Button(onClick = { viewModel.clearErrorAndInfo() }) { Text("OK") }
+                        Button(onClick = { viewModel.clearErrorAndInfo() }) { Text(AppStrings.OK) }
                     }
                 }
             )

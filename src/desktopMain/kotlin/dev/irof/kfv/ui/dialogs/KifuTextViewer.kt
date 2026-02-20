@@ -10,32 +10,31 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.irof.kfv.utils.AppStrings
 
 @Composable
 fun KifuTextViewer(
     text: String,
     onDismiss: () -> Unit,
-    onCopy: () -> Unit,
+    onCopy: () -> Unit
 ) {
-    // 背景（シールド）
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.4f))
             .clickable { onDismiss() },
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.Center
     ) {
-        // ダイアログ本体
         Card(
             modifier = Modifier
                 .size(600.dp, 550.dp)
                 .clickable(enabled = false) { },
-            elevation = 8.dp,
+            elevation = 8.dp
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("棋譜テキスト", style = MaterialTheme.typography.h6)
+                Text(AppStrings.KIFU_TEXT, style = MaterialTheme.typography.h6)
                 Spacer(Modifier.height(16.dp))
-
+                
                 val scrollSVer = rememberScrollState()
                 val scrollSHor = rememberScrollState()
                 Box(
@@ -43,7 +42,7 @@ fun KifuTextViewer(
                         .weight(1f)
                         .fillMaxWidth()
                         .background(Color.White)
-                        .border(1.dp, Color.LightGray),
+                        .border(1.dp, Color.LightGray)
                 ) {
                     Text(
                         text = text,
@@ -54,15 +53,15 @@ fun KifuTextViewer(
                             .fillMaxSize()
                             .padding(8.dp)
                             .verticalScroll(scrollSVer)
-                            .horizontalScroll(scrollSHor),
+                            .horizontalScroll(scrollSHor)
                     )
                 }
-
+                
                 Spacer(Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Button(onClick = onCopy) { Text("コピーして閉じる") }
+                    Button(onClick = onCopy) { Text(AppStrings.COPY_AND_CLOSE) }
                     Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = onDismiss) { Text("閉じる") }
+                    TextButton(onClick = onDismiss) { Text(AppStrings.CLOSE) }
                 }
             }
         }
