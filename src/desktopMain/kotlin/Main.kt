@@ -57,6 +57,7 @@ fun KifuManagerApp() {
     var selectedFile by remember { mutableStateOf<File?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var infoMessage by remember { mutableStateOf<String?>(null) }
+    var showOverwriteConfirm by remember { mutableStateOf<File?>(null) }
     val boardState = remember { ShogiBoardState() }
     val scrollState = rememberScrollState()
     val focusRequester = remember { FocusRequester() }
@@ -141,6 +142,27 @@ fun KifuManagerApp() {
             buttons = {
                 Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.CenterEnd) {
                     Button(onClick = { infoMessage = null }) { Text("OK") }
+                }
+            }
+        )
+    }
+
+    // 上書き確認ダイアログ
+    if (showOverwriteConfirm != null) {
+        val targetFile = File(showOverwriteConfirm!!.parent, showOverwriteConfirm!!.nameWithoutExtension + ".kifu")
+        AlertDialog(
+            onDismissRequest = { showOverwriteConfirm = null },
+            title = { Text("上書き確認") },
+            text = { Text("${targetFile.name} は既に存在します。上書きしますか？") },
+            buttons = {
+                Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { showOverwriteConfirm = null }) { Text("キャンセル") }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = {
+                        convertCsaToKifu(showOverwriteConfirm!!)
+                        refreshFiles()
+                        showOverwriteConfirm = null
+                    }) { Text("上書きする") }
                 }
             }
         )
@@ -248,8 +270,13 @@ fun KifuManagerApp() {
                 Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = { 
-                        convertCsaToKifu(selectedFile!!)
-                        refreshFiles()
+                        val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
+                        if (targetFile.exists()) {
+                            showOverwriteConfirm = selectedFile
+                        } else {
+                            convertCsaToKifu(selectedFile!!)
+                            refreshFiles()
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White)
                 ) {
