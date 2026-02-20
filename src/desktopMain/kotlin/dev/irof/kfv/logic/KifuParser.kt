@@ -5,28 +5,34 @@ import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.text.Charsets
 
-fun scanKifuInfo(path: Path): KifuInfo {
+fun scanKifuInfo(path: Path): KifuInfo = try {
+    val lines = readLinesWithEncoding(path)
+    scanKifuInfo(lines).copy(path = path)
+} catch (e: Exception) {
+    System.err.println("Failed to scan header for ${path.name}: ${e.message}")
+    KifuInfo(path, "", "", "")
+}
+
+fun scanKifuInfo(lines: List<String>): KifuInfo {
     var sente = ""
     var gote = ""
     var senkei = ""
-    try {
-        val lines = readLinesWithEncoding(path)
-        for (line in lines) {
-            val trimmed = line.trim()
-            if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) sente = trimmed.substringAfter("：").trim()
-            if (trimmed.startsWith("後手：")) gote = trimmed.substringAfter("：").trim()
-            if (trimmed.startsWith("戦型：")) senkei = trimmed.substringAfter("：").trim()
-            if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) break
-        }
-    } catch (e: Exception) {
-        System.err.println("Failed to scan header for ${path.name}: ${e.message}")
+    for (line in lines) {
+        val trimmed = line.trim()
+        if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) sente = trimmed.substringAfter("：").trim()
+        if (trimmed.startsWith("後手：")) gote = trimmed.substringAfter("：").trim()
+        if (trimmed.startsWith("戦型：")) senkei = trimmed.substringAfter("：").trim()
+        if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) break
     }
-    return KifuInfo(path, sente, gote, senkei)
+    return KifuInfo(java.nio.file.Paths.get(""), sente, gote, senkei)
 }
 
 fun parseKifu(path: Path, state: ShogiBoardState) {
     val lines = readLinesWithEncoding(path)
+    parseKifu(lines, state)
+}
 
+fun parseKifu(lines: List<String>, state: ShogiBoardState) {
     var currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
     var senteMochi = mutableListOf<Piece>()
     var goteMochi = mutableListOf<Piece>()
@@ -47,11 +53,16 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
         if (trimmed.startsWith("|") && trimmed.count { it == '|' } >= 2) {
             isStandardStart = false
             val content = trimmed.substringAfter("|").substringBeforeLast("|")
+            // |・|・| または | 歩|v桂| のような形式に対応するため、| で分割する
+            val cells = content.split("|")
             for (x in 0..8) {
-                if (x * 2 + 1 >= content.length) break
-                val pStr = content.substring(x * 2, x * 2 + 2)
+                if (x >= cells.size) break
+                val pStr = cells[x].trim()
+                if (pStr.isEmpty()) continue
+
                 val color = if (pStr.startsWith('v')) PieceColor.White else PieceColor.Black
-                val pieceName = pStr.substring(1).trim()
+                val pieceName = (if (pStr.startsWith('v')) pStr.substring(1) else pStr).trim()
+
                 if (pieceName.isNotEmpty() && pieceName != "・" && pieceName != "　") {
                     val piece = pieceSymbolMap[pieceName] ?: if (pieceName == "王") {
                         Piece.OU
