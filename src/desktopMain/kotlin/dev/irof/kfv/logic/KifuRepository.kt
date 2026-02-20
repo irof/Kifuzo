@@ -4,29 +4,38 @@ import dev.irof.kfv.models.*
 import java.nio.file.Path
 import kotlin.io.path.*
 
-class KifuRepository {
+interface KifuRepository {
+    fun scanDirectory(directory: Path): List<Path>
+    fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo>
+    fun parse(path: Path, state: ShogiBoardState)
+    fun convertCsa(path: Path): Path
+    fun updateSenkei(path: Path, senkei: String)
+    fun importQuestFiles(sourceDir: Path, targetDir: Path): Int
+}
 
-    fun scanDirectory(directory: Path): List<Path> = try {
+class KifuRepositoryImpl : KifuRepository {
+
+    override fun scanDirectory(directory: Path): List<Path> = try {
         directory.listDirectoryEntries().sortedWith(compareBy({ !it.isDirectory() }, { it.name.lowercase() }))
     } catch (e: Exception) {
         emptyList()
     }
 
-    fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = files.filter { it.isRegularFile() && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
+    override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = files.filter { it.isRegularFile() && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
         .associateWith { scanKifuInfo(it) }
 
-    fun parse(path: Path, state: ShogiBoardState) {
+    override fun parse(path: Path, state: ShogiBoardState) {
         parseKifu(path, state)
     }
 
-    fun convertCsa(path: Path): Path {
+    override fun convertCsa(path: Path): Path {
         convertCsaToKifu(path)
         return (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
     }
 
-    fun updateSenkei(path: Path, senkei: String) {
+    override fun updateSenkei(path: Path, senkei: String) {
         updateKifuSenkei(path, senkei)
     }
 
-    fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = importShogiQuestFiles(sourceDir, targetDir)
+    override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = importShogiQuestFiles(sourceDir, targetDir)
 }

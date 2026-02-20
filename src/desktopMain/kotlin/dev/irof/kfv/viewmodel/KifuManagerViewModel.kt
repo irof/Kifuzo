@@ -14,7 +14,7 @@ import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
 class KifuManagerViewModel(
-    private val repository: KifuRepository = KifuRepository(),
+    private val repository: KifuRepository = KifuRepositoryImpl(),
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
