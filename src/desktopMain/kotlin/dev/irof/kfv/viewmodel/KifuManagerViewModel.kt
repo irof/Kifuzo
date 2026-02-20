@@ -36,6 +36,7 @@ class KifuManagerViewModel(
             is KifuManagerAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
             is KifuManagerAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
             is KifuManagerAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
+            is KifuManagerAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
             is KifuManagerAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, infoMessage = null) }
             is KifuManagerAction.ImportFiles -> importFiles(action.sourceDir)
             is KifuManagerAction.ConvertCsa -> convertCsa(action.path)
@@ -133,6 +134,7 @@ class KifuManagerViewModel(
     private fun importFiles(sourceDir: Path) {
         val count = repository.importQuestFiles(sourceDir, currentRootDirectory)
         AppSettings.importSourceDir = sourceDir.toString()
+        updateState { it.copy(showImportDialog = false) }
         if (count > 0) {
             updateState { it.copy(infoMessage = "${count}件の棋譜をインポートしました。") }
             refreshFiles()
@@ -150,7 +152,11 @@ class KifuManagerViewModel(
         }
     }
     
-    private fun confirmOverwrite() {
+    fun hideOverwriteConfirm() {
+        updateState { it.copy(showOverwriteConfirm = null) }
+    }
+
+    fun confirmOverwrite() {
         uiState.showOverwriteConfirm?.let {
             performCsaConversion(it)
             updateState { it.copy(showOverwriteConfirm = null) }
@@ -168,7 +174,7 @@ class KifuManagerViewModel(
         refreshFiles()
     }
 
-    private fun detectAndWriteSenkei(path: Path) {
+    fun detectAndWriteSenkei(path: Path) {
         val senkei = detectSenkei(boardState.session.history)
         if (senkei.isNotEmpty()) {
             repository.updateSenkei(path, senkei)

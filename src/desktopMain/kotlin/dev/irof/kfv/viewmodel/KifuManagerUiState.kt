@@ -16,6 +16,7 @@ data class KifuManagerUiState(
     val viewingText: String? = null,
     val isFlipped: Boolean = false,
     val showSettings: Boolean = false,
+    val showImportDialog: Boolean = false,
     val myNameRegex: String = ""
 ) {
     val filteredNodes: List<FileTreeNode>

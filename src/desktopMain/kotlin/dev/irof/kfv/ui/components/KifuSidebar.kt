@@ -20,9 +20,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.irof.kfv.logic.readTextWithEncoding
-import dev.irof.kfv.models.AppSettings
 import dev.irof.kfv.ui.FileTreeItem
 import dev.irof.kfv.ui.theme.ShogiColors
 import dev.irof.kfv.ui.theme.ShogiDimensions
@@ -39,7 +37,7 @@ fun KifuSidebar(
     state: KifuManagerUiState,
     currentRoot: Path,
     onSetRoot: (Path) -> Unit,
-    onImport: (Path) -> Unit,
+    onImport: () -> Unit,
     onShowSettings: () -> Unit,
     onSelectSenkei: (String?) -> Unit,
     onToggleDir: (dev.irof.kfv.models.FileTreeNode) -> Unit,
@@ -50,30 +48,14 @@ fun KifuSidebar(
     Column(modifier = modifier.fillMaxHeight().padding(ShogiDimensions.PaddingLarge)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // インポートボタン
                 TooltipArea(
                     tooltip = {
                         Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                            Text(AppStrings.IMPORT_KIFU, modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
+                            Text(AppStrings.IMPORT_KIFU, modifier = Modifier.padding(8.dp), color = Color.White, fontSize = ShogiDimensions.FontSizeCaption)
                         }
                     }
                 ) {
-                    IconButton(onClick = {
-                        val savedDir = AppSettings.importSourceDir
-                        val chooser = JFileChooser().apply { 
-                            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                            if (savedDir.isNotEmpty()) {
-                                val f = java.io.File(savedDir)
-                                if (f.exists()) {
-                                    currentDirectory = f.parentFile ?: f
-                                    selectedFile = f
-                                }
-                            }
-                        }
-                        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                            onImport(chooser.selectedFile.toPath())
-                        }
-                    }) {
+                    IconButton(onClick = onImport) {
                         Icon(ShogiIcons.Import, contentDescription = AppStrings.IMPORT_KIFU, tint = ShogiColors.Primary)
                     }
                 }
@@ -145,7 +127,7 @@ private fun SidebarIconButton(
     TooltipArea(
         tooltip = {
             Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                Text(label, modifier = Modifier.padding(ShogiDimensions.PaddingMedium), color = Color.White, fontSize = ShogiDimensions.FontSizeBody)
+                Text(label, modifier = Modifier.padding(ShogiDimensions.PaddingMedium), color = Color.White, fontSize = ShogiDimensions.FontSizeCaption)
             }
         }
     ) {

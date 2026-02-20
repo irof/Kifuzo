@@ -12,6 +12,7 @@ sealed class KifuManagerAction {
     data class SetViewingText(val text: String?) : KifuManagerAction()
     data object ToggleFlipped : KifuManagerAction()
     data class ShowSettings(val show: Boolean) : KifuManagerAction()
+    data class ShowImportDialog(val show: Boolean) : KifuManagerAction()
     data object ClearErrorAndInfo : KifuManagerAction()
     data class ImportFiles(val sourceDir: Path) : KifuManagerAction()
     data class ConvertCsa(val path: Path) : KifuManagerAction()

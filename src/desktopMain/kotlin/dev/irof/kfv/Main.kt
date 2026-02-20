@@ -1,33 +1,59 @@
 package dev.irof.kfv
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import dev.irof.kfv.logic.readTextWithEncoding
 import dev.irof.kfv.models.AppSettings
+import dev.irof.kfv.ui.FileTreeItem
+import dev.irof.kfv.ui.ShogiBoardView
 import dev.irof.kfv.ui.components.KifuPreviewPanel
 import dev.irof.kfv.ui.components.KifuSidebar
+import dev.irof.kfv.ui.dialogs.ImportDialog
 import dev.irof.kfv.ui.dialogs.KifuTextViewer
 import dev.irof.kfv.ui.dialogs.OverwriteConfirmDialog
 import dev.irof.kfv.ui.dialogs.SettingsDialog
+import dev.irof.kfv.ui.theme.ShogiColors
 import dev.irof.kfv.ui.theme.ShogiDimensions
 import dev.irof.kfv.utils.AppStrings
 import dev.irof.kfv.utils.copyToClipboard
 import dev.irof.kfv.viewmodel.KifuManagerAction
 import dev.irof.kfv.viewmodel.KifuManagerViewModel
 import javax.swing.JFileChooser
+import kotlin.io.path.extension
+import kotlin.io.path.name
 import kotlin.io.path.toPath
 
 fun main() = application {
@@ -89,7 +115,7 @@ fun KifuManagerApp() {
                 state = state,
                 currentRoot = viewModel.currentRootDirectory,
                 onSetRoot = { viewModel.dispatch(KifuManagerAction.SetRootDirectory(it)) },
-                onImport = { viewModel.dispatch(KifuManagerAction.ImportFiles(it)) },
+                onImport = { viewModel.dispatch(KifuManagerAction.ShowImportDialog(true)) },
                 onShowSettings = { viewModel.dispatch(KifuManagerAction.ShowSettings(true)) },
                 onSelectSenkei = { viewModel.dispatch(KifuManagerAction.SetSelectedSenkei(it)) },
                 onToggleDir = { viewModel.dispatch(KifuManagerAction.ToggleDirectory(it)) },
@@ -108,6 +134,8 @@ fun KifuManagerApp() {
                 modifier = Modifier.weight(ShogiDimensions.PreviewWidthRatio)
             )
         }
+
+        // --- オーバーレイ・ダイアログ類 ---
 
         if (state.errorMessage != null || state.infoMessage != null) {
             val title = if (state.errorMessage != null) AppStrings.ERROR else AppStrings.NOTIFICATION
@@ -137,6 +165,14 @@ fun KifuManagerApp() {
                 initialRegex = state.myNameRegex,
                 onDismiss = { viewModel.dispatch(KifuManagerAction.ShowSettings(false)) },
                 onSave = { viewModel.dispatch(KifuManagerAction.SaveSettings(it)) }
+            )
+        }
+
+        if (state.showImportDialog) {
+            ImportDialog(
+                initialSourceDir = AppSettings.importSourceDir,
+                onDismiss = { viewModel.dispatch(KifuManagerAction.ShowImportDialog(false)) },
+                onImport = { viewModel.dispatch(KifuManagerAction.ImportFiles(it)) }
             )
         }
 
