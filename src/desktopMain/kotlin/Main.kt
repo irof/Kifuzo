@@ -193,22 +193,24 @@ fun KifuManagerApp() {
                 val scrollStateHorizontal = rememberScrollState()
                 Box(
                     modifier = Modifier
-                        .height(450.dp) // 高さを固定してガタツキを完全に抑える
+                        .height(450.dp)
                         .fillMaxWidth()
                         .background(Color.White)
                         .border(1.dp, Color.LightGray)
                 ) {
-                    Text(
-                        text = viewingText!!,
-                        fontSize = 12.sp,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        softWrap = false,
+                    Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
                             .verticalScroll(scrollStateVertical)
                             .horizontalScroll(scrollStateHorizontal)
-                    )
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = viewingText!!,
+                            fontSize = 12.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            softWrap = false
+                        )
+                    }
                 }
             },
             buttons = {
