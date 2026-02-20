@@ -190,31 +190,37 @@ fun KifuManagerApp() {
                 Spacer(Modifier.height(8.dp))
                 Text(text = selectedFile?.name ?: "kifuファイルを選択してください", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
                 
-                if (selectedFile?.isFile == true) {
-                    Spacer(Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedButton(onClick = { isFlipped = !isFlipped }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
-                        
-                        val ext = selectedFile!!.extension.lowercase()
-                        if (ext == "kifu" || ext == "kif") {
-                            Spacer(Modifier.width(8.dp))
-                            Button(onClick = { 
-                                val senkei = detectSenkei(boardState.history)
-                                if (senkei.isNotEmpty()) { updateKifuSenkei(selectedFile!!, senkei); refreshFiles(); infoMessage = "戦型を「$senkei」として追記しました。" }
-                            }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2196F3), contentColor = Color.White), modifier = Modifier.height(32.dp)) { Text("戦型判定", fontSize = 10.sp) }
-                        }
-
-                        if (ext == "csa") {
-                            Spacer(Modifier.width(8.dp))
-                            Button(onClick = { 
-                                val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
-                                if (targetFile.exists()) { showOverwriteConfirm = selectedFile } 
-                                else { convertCsaToKifu(selectedFile!!); refreshFiles() }
-                            }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White), modifier = Modifier.height(32.dp)) { Text("KIFUに変換", fontSize = 10.sp) }
-                        }
-                    }
-                }
-
+                            if (selectedFile?.isFile == true) {
+                                val ext = selectedFile!!.extension.lowercase()
+                                val isKifuFile = ext == "kifu" || ext == "kif"
+                                val hasHistory = boardState.history.isNotEmpty()
+                
+                                if (hasHistory || ext == "csa") {
+                                    Spacer(Modifier.height(8.dp))
+                                    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                                        if (hasHistory) {
+                                            OutlinedButton(onClick = { isFlipped = !isFlipped }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
+                                            
+                                            if (isKifuFile) {
+                                                Spacer(Modifier.width(8.dp))
+                                                Button(onClick = { 
+                                                    val senkei = detectSenkei(boardState.history)
+                                                    if (senkei.isNotEmpty()) { updateKifuSenkei(selectedFile!!, senkei); refreshFiles(); infoMessage = "戦型を「$senkei」として追記しました。" }
+                                                }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2196F3), contentColor = Color.White), modifier = Modifier.height(32.dp)) { Text("戦型判定", fontSize = 10.sp) }
+                                            }
+                                        }
+                
+                                        if (ext == "csa") {
+                                            if (hasHistory) Spacer(Modifier.width(8.dp))
+                                            Button(onClick = { 
+                                                val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
+                                                if (targetFile.exists()) { showOverwriteConfirm = selectedFile } 
+                                                else { convertCsaToKifu(selectedFile!!); refreshFiles() }
+                                            }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White), modifier = Modifier.height(32.dp)) { Text("KIFUに変換", fontSize = 10.sp) }
+                                        }
+                                    }
+                                }
+                            }
                 if (boardState.history.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     ShogiBoardView(boardState, isFlipped = isFlipped)
