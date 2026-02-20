@@ -2,6 +2,7 @@ package dev.irof.kfv.ui.theme
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 
 object ShogiIcons {
@@ -13,5 +14,5 @@ object ShogiIcons {
     val Refresh = Icons.Default.Refresh
 
     val ExpandMore = Icons.Default.ArrowDropDown
-    val ExpandLess = Icons.Default.ArrowForward
+    val ExpandLess = Icons.AutoMirrored.Filled.ArrowForward
 }
