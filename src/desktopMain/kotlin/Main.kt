@@ -37,11 +37,30 @@ import utils.copyToClipboard
 import java.io.File
 import javax.swing.JFileChooser
 
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.rememberWindowState
+
 fun main() = application {
+    val windowState = rememberWindowState(
+        position = if (AppSettings.windowX != null && AppSettings.windowY != null) {
+            WindowPosition(AppSettings.windowX!!.dp, AppSettings.windowY!!.dp)
+        } else {
+            WindowPosition.Aligned(Alignment.Center)
+        },
+        size = DpSize(AppSettings.windowWidth.dp, AppSettings.windowHeight.dp)
+    )
+
     Window(
-        onCloseRequest = ::exitApplication,
+        onCloseRequest = {
+            // ウィンドウの状態を保存
+            AppSettings.windowX = windowState.position.let { if (it is WindowPosition.Absolute) it.x.value else null }
+            AppSettings.windowY = windowState.position.let { if (it is WindowPosition.Absolute) it.y.value else null }
+            AppSettings.windowWidth = windowState.size.width.value
+            AppSettings.windowHeight = windowState.size.height.value
+            exitApplication()
+        },
         title = "棋譜管理アプリ",
-        state = WindowState(size = DpSize(800.dp, 750.dp))
+        state = windowState
     ) {
         MaterialTheme {
             KifuManagerApp()
