@@ -122,8 +122,11 @@ fun KifuManagerApp() {
                 
                 Spacer(Modifier.height(8.dp))
                 
-                if (viewModel.availableSenkei.isNotEmpty()) {
+                if (viewModel.availableSenkei.isNotEmpty() || viewModel.isScanning) {
                     Text("戦型フィルタ:", style = MaterialTheme.typography.caption)
+                    if (viewModel.isScanning) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
+                    }
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).horizontalScroll(rememberScrollState())) {
                         TextButton(onClick = { viewModel.selectedSenkei = null }, colors = ButtonDefaults.textButtonColors(contentColor = if (viewModel.selectedSenkei == null) Color.Blue else Color.Gray)) { Text("すべて", fontSize = 10.sp) }
                         viewModel.availableSenkei.forEach { senkei ->

@@ -7,12 +7,16 @@ import dev.irof.kfv.logic.*
 import dev.irof.kfv.models.AppConfig
 import dev.irof.kfv.models.AppSettings
 import dev.irof.kfv.models.ShogiBoardState
+import kotlinx.coroutines.*
 import java.io.File
 
 class KifuManagerViewModel {
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
     var currentDirectory by mutableStateOf(if (AppConfig.KIFU_ROOT.exists() && AppConfig.KIFU_ROOT.isDirectory) AppConfig.KIFU_ROOT else File(AppConfig.USER_HOME))
     var directoryContents by mutableStateOf(listOf<File>())
     var kifuInfos by mutableStateOf(mapOf<File, KifuInfo>())
+    var isScanning by mutableStateOf(false)
     var selectedSenkei by mutableStateOf<String?>(null)
     
     var selectedFile by mutableStateOf<File?>(null)
@@ -41,11 +45,16 @@ class KifuManagerViewModel {
         }?.toList() ?: emptyList()
         directoryContents = contents.sortedWith(compareBy({ !it.isDirectory }, { it.name.lowercase() }))
         
-        val newInfos = mutableMapOf<File, KifuInfo>()
-        contents.filter { it.isFile && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }.forEach { file ->
-            newInfos[file] = scanKifuInfo(file)
+        // 非同期でスキャンを実行
+        scope.launch {
+            isScanning = true
+            val newInfos = withContext(Dispatchers.IO) {
+                contents.filter { it.isFile && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
+                    .associateWith { scanKifuInfo(it) }
+            }
+            kifuInfos = newInfos
+            isScanning = false
         }
-        kifuInfos = newInfos
     }
 
     fun selectFile(file: File) {
