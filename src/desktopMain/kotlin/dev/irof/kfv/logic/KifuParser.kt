@@ -45,56 +45,60 @@ fun scanKifuInfo(path: Path): KifuInfo {
 fun parseKifu(path: Path, state: ShogiBoardState) {
     val lines = readLinesWithEncoding(path)
     
-    // 初期状態の解析
     var currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
     var senteMochi = mutableListOf<Piece>()
     var goteMochi = mutableListOf<Piece>()
     var isStandardStart = true
     
-    // 盤面図の解析用
-    val boardLineRegex = Regex("""^\|(.*)\|\w段$""")
     val pieceSymbolMap = Piece.entries.associateBy { it.symbol }
     var boardY = 0
 
-    // ヘッダースキャン
     var moveStartIndex = -1
     for (i in lines.indices) {
-        val line = lines[i].trim()
+        val line = lines[i] // 解析用に trim() しない状態も考慮
+        val trimmed = line.trim()
         
-        // 名前
-        if (line.startsWith("先手：") || line.startsWith("対局者：")) state.senteName = line.substringAfter("：").trim()
-        if (line.startsWith("後手：")) state.goteName = line.substringAfter("：").trim()
+        if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) state.senteName = trimmed.substringAfter("：").trim()
+        if (trimmed.startsWith("後手：")) state.goteName = trimmed.substringAfter("：").trim()
         
-        // 盤面図の開始検出
-        val boardMatch = boardLineRegex.find(line)
-        if (boardMatch != null) {
+        // 局面図行の判定: | で始まり、18文字以上のデータがあり、その後に | がある
+        if (trimmed.startsWith("|") && trimmed.count { it == '|' } >= 2) {
             isStandardStart = false
-            val rowText = boardMatch.groupValues[1]
-            // " v歩" や " 歩 " のような形式を2文字ずつ解析
+            val content = trimmed.substringAfter("|").substringBeforeLast("|")
+            // content は " ・ ・ ・" や "v歩 ・" など 18文字以上あるはず
             for (x in 0..8) {
-                val pStr = rowText.substring(x * 2, x * 2 + 2)
+                if (x * 2 + 1 >= content.length) break
+                val pStr = content.substring(x * 2, x * 2 + 2)
+                
                 val color = if (pStr.startsWith('v')) PieceColor.White else PieceColor.Black
                 val pieceName = pStr.substring(1).trim()
-                if (pieceName.isNotEmpty()) {
-                    val piece = pieceSymbolMap[pieceName] ?: if (pieceName == "王") Piece.OU else if (pieceName == "竜") Piece.RY else null
-                    if (piece != null) currentCells[boardY][x] = piece to color
+                
+                if (pieceName.isNotEmpty() && pieceName != "・" && pieceName != "　") {
+                    val piece = pieceSymbolMap[pieceName] 
+                        ?: if (pieceName == "王") Piece.OU 
+                        else if (pieceName == "玉") Piece.OU 
+                        else if (pieceName == "竜") Piece.RY 
+                        else if (pieceName == "馬") Piece.UM
+                        else null
+                    
+                    if (piece != null) {
+                        currentCells[boardY][x] = piece to color
+                    }
                 }
             }
             boardY++
         }
         
-        // 持ち駒の解析
-        if (line.startsWith("先手持駒：") || line.startsWith("下手持駒：")) {
+        if (trimmed.startsWith("先手持駒：") || trimmed.startsWith("下手持駒：")) {
             isStandardStart = false
-            senteMochi.addAll(parseMochigoma(line.substringAfter("：")))
+            senteMochi.addAll(parseMochigoma(trimmed.substringAfter("：")))
         }
-        if (line.startsWith("後手持駒：") || line.startsWith("上手持駒：")) {
+        if (trimmed.startsWith("後手持駒：") || trimmed.startsWith("上手持駒：")) {
             isStandardStart = false
-            goteMochi.addAll(parseMochigoma(line.substringAfter("：")))
+            goteMochi.addAll(parseMochigoma(trimmed.substringAfter("：")))
         }
 
-        // 指し手の開始
-        if (Regex("""^\s*\d+\s+.*""").matches(line)) {
+        if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) {
             moveStartIndex = i
             break
         }
@@ -103,24 +107,31 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
     if (isStandardStart) {
         currentCells = getInitialCells()
     }
-    state.reset(currentCells)
-    // 持ち駒を反映
-    state.history = listOf(BoardSnapshot(currentCells, senteMochi.toList(), goteMochi.toList(), "開始局面"))
+    
+    // 初期状態を history にセット
+    val initialSnapshot = BoardSnapshot(
+        Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, 
+        senteMochi.toList(), 
+        goteMochi.toList(), 
+        "開始局面"
+    )
+    state.history = listOf(initialSnapshot)
+    state.currentStep = 0
 
     if (moveStartIndex == -1) return
 
+    // 指し手の解析（既存ロジックを微調整して継続）
     val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*""")
     val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*""")
     var lastTo: Square? = null
     var isVariationSection = false
     
     fun decodeX(c: Char): Int { val idx = "１２３４５６７８９123456789".indexOf(c); return if (idx == -1) -1 else (idx % 9) + 1 }
-    fun decodeY(c: Char): Int { val idx = "一二三四五六七八九１２３４５６７８９123456789".indexOf(c); return if (idx == -1) -1 else (idx % 9) + 1 }
+    fun decodeY(c: Char): Int { val idx = "一二三四五六七八九１２３４５６７８９1234567８９".indexOf(c); return if (idx == -1) -1 else (idx % 9) + 1 }
     
     for (i in moveStartIndex until lines.size) {
         val line = lines[i].trim()
-        if (line.isEmpty()) continue
-        if (line.startsWith("*") || line.startsWith("#") || line.startsWith("&")) continue
+        if (line.isEmpty() || line.startsWith("*") || line.startsWith("#") || line.startsWith("&")) continue
         if (line.startsWith("変化：") || line.startsWith("変化:")) { isVariationSection = true }
         if (isVariationSection) continue
         if (!Regex("""^\s*\d+\s+.*""").matches(line)) continue
@@ -129,7 +140,6 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
             val moveMatch = moveRegex.find(line)
             if (moveMatch != null) {
                 val moveNum = moveMatch.groupValues[1].toInt()
-                // 手番は「開始局面の次」から決まる。駒落ち等の場合を考慮し、通常は moveNum % 2 で決める
                 val turnColor = if (moveNum % 2 != 0) PieceColor.Black else PieceColor.White
                 
                 val toPosStr = moveMatch.groupValues[2].trim()
@@ -182,12 +192,13 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
  * 持ち駒文字列（例: "飛二 角 銀三"）を解析して Piece のリストを返します。
  */
 private fun parseMochigoma(text: String): List<Piece> {
-    if (text.trim() == "なし") return emptyList()
+    val t = text.trim()
+    if (t == "なし" || t.isEmpty()) return emptyList()
     val list = mutableListOf<Piece>()
     val kanjiDigits = "一二三四五六七八九"
     
-    // スペース区切りで分割
-    text.trim().split(Regex("""\s+""")).forEach { part ->
+    // 全角・半角スペース両方に対応
+    t.split(Regex("""[\s　]+""")).forEach { part ->
         if (part.isEmpty()) return@forEach
         val pieceName = part.substring(0, 1)
         val countStr = part.substring(1)
@@ -195,7 +206,7 @@ private fun parseMochigoma(text: String): List<Piece> {
             val idx = kanjiDigits.indexOf(countStr)
             if (idx != -1) idx + 1 else countStr.toIntOrNull() ?: 1
         }
-        val piece = Piece.entries.find { it.symbol == pieceName || (pieceName == "王" && it == Piece.OU) || (pieceName == "玉" && it == Piece.OU) || (pieceName == "竜" && it == Piece.RY) || (pieceName == "竜" && it == Piece.RY) }
+        val piece = Piece.entries.find { it.symbol == pieceName || (pieceName == "王" && it == Piece.OU) || (pieceName == "玉" && it == Piece.OU) || (pieceName == "竜" && it == Piece.RY) || (pieceName == "龍" && it == Piece.RY) || (pieceName == "馬" && it == Piece.UM) }
         if (piece != null) repeat(count) { list.add(piece) }
     }
     return list
