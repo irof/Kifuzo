@@ -12,10 +12,9 @@ fun readTextWithEncoding(file: File): String {
     val bytes = file.readBytes()
     try {
         val text = bytes.toString(Charsets.UTF_8)
-        // 不正な文字（）が含まれていないかチェック
         if (!text.contains("\uFFFD")) return text
     } catch (e: Exception) {
-        // デコード失敗時は次のエンコーディングへ
+        System.err.println("UTF-8 decoding failed for ${file.name}, trying Shift_JIS...")
     }
     // デフォルトで Shift_JIS (Windows-31J) を試す
     return bytes.toString(Charset.forName("Shift_JIS"))

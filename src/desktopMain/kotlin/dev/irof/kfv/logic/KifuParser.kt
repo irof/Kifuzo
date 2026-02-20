@@ -45,7 +45,9 @@ fun scanKifuInfo(file: File): KifuInfo {
             if (trimmed.startsWith("戦型：")) senkei = trimmed.substringAfter("：").trim()
             if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) break
         }
-    } catch (e: Exception) {}
+    } catch (e: Exception) {
+        System.err.println("Failed to scan header for ${file.name}: ${e.message}")
+    }
     return KifuInfo(file, sente, gote, senkei)
 }
 
