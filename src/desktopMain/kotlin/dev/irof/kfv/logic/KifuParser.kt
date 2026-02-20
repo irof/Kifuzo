@@ -48,47 +48,35 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
     var currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
     var senteMochi = mutableListOf<Piece>()
     var goteMochi = mutableListOf<Piece>()
+    var senteName = "先手"
+    var goteName = "後手"
+    var firstContactStep = -1
     var isStandardStart = true
     
     val pieceSymbolMap = Piece.entries.associateBy { it.symbol }
     var boardY = 0
-
     var moveStartIndex = -1
+
     for (i in lines.indices) {
-        val line = lines[i] // 解析用に trim() しない状態も考慮
+        val line = lines[i]
         val trimmed = line.trim()
-        
-        if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) state.senteName = trimmed.substringAfter("：").trim()
-        if (trimmed.startsWith("後手：")) state.goteName = trimmed.substringAfter("：").trim()
-        
-        // 局面図行の判定: | で始まり、18文字以上のデータがあり、その後に | がある
+        if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) senteName = trimmed.substringAfter("：").trim()
+        if (trimmed.startsWith("後手：")) goteName = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("|") && trimmed.count { it == '|' } >= 2) {
             isStandardStart = false
             val content = trimmed.substringAfter("|").substringBeforeLast("|")
-            // content は " ・ ・ ・" や "v歩 ・" など 18文字以上あるはず
             for (x in 0..8) {
                 if (x * 2 + 1 >= content.length) break
                 val pStr = content.substring(x * 2, x * 2 + 2)
-                
                 val color = if (pStr.startsWith('v')) PieceColor.White else PieceColor.Black
                 val pieceName = pStr.substring(1).trim()
-                
                 if (pieceName.isNotEmpty() && pieceName != "・" && pieceName != "　") {
-                    val piece = pieceSymbolMap[pieceName] 
-                        ?: if (pieceName == "王") Piece.OU 
-                        else if (pieceName == "玉") Piece.OU 
-                        else if (pieceName == "竜") Piece.RY 
-                        else if (pieceName == "馬") Piece.UM
-                        else null
-                    
-                    if (piece != null) {
-                        currentCells[boardY][x] = piece to color
-                    }
+                    val piece = pieceSymbolMap[pieceName] ?: if (pieceName == "王") Piece.OU else if (pieceName == "玉") Piece.OU else if (pieceName == "竜") Piece.RY else if (pieceName == "馬") Piece.UM else null
+                    if (piece != null) currentCells[boardY][x] = piece to color
                 }
             }
             boardY++
         }
-        
         if (trimmed.startsWith("先手持駒：") || trimmed.startsWith("下手持駒：")) {
             isStandardStart = false
             senteMochi.addAll(parseMochigoma(trimmed.substringAfter("：")))
@@ -97,118 +85,90 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
             isStandardStart = false
             goteMochi.addAll(parseMochigoma(trimmed.substringAfter("：")))
         }
-
         if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) {
             moveStartIndex = i
             break
         }
     }
 
-    if (isStandardStart) {
-        currentCells = getInitialCells()
-    }
-    state.isStandardStart = isStandardStart
+    if (isStandardStart) currentCells = getInitialCells()
     
-    // 初期状態を history にセット
-    val initialSnapshot = BoardSnapshot(
-        Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, 
-        senteMochi.toList(), 
-        goteMochi.toList(), 
-        "開始局面"
-    )
-    state.history = listOf(initialSnapshot)
-    state.currentStep = 0
+    val history = mutableListOf<BoardSnapshot>()
+    history.add(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), "開始局面"))
 
-    if (moveStartIndex == -1) return
-
-    // 指し手の解析（既存ロジックを微調整して継続）
-    val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*""")
-    val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*""")
-    var lastTo: Square? = null
-    var isVariationSection = false
-    
-    fun decodeX(c: Char): Int { val idx = "１２３４５６７８９123456789".indexOf(c); return if (idx == -1) -1 else (idx % 9) + 1 }
-    fun decodeY(c: Char): Int { val idx = "一二三四五六七八九１２３４５６７８９1234567８９".indexOf(c); return if (idx == -1) -1 else (idx % 9) + 1 }
-    
-    for (i in moveStartIndex until lines.size) {
-        val line = lines[i].trim()
-        if (line.isEmpty() || line.startsWith("*") || line.startsWith("#") || line.startsWith("&")) continue
-        if (line.startsWith("変化：") || line.startsWith("変化:")) { isVariationSection = true }
-        if (isVariationSection) continue
-        if (!Regex("""^\s*\d+\s+.*""").matches(line)) continue
+    if (moveStartIndex != -1) {
+        val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*""")
+        val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*""")
+        var lastTo: Square? = null
+        var isVariationSection = false
         
-        try {
-            val moveMatch = moveRegex.find(line)
-            if (moveMatch != null) {
-                val moveNum = moveMatch.groupValues[1].toInt()
-                val turnColor = if (moveNum % 2 != 0) PieceColor.Black else PieceColor.White
-                
-                val toPosStr = moveMatch.groupValues[2].trim()
-                val pieceName = moveMatch.groupValues[3].trim()
-                val fromPosStr = moveMatch.groupValues[4]
-                val isPromote = pieceName.contains("成") || pieceName == "竜" || pieceName == "馬" || pieceName == "龍" || pieceName == "圭" || pieceName == "杏" || pieceName == "全"
-                
-                val toSquare = if (toPosStr.startsWith("同")) lastTo ?: throw Exception("同の移動先が不明です") else Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
-                val fromSquare = Square(fromPosStr[0] - '0', fromPosStr[1] - '0')
-                
-                val captured = currentCells[toSquare.yIndex][toSquare.xIndex]
-                if (captured != null) { 
-                    if (turnColor == PieceColor.Black) senteMochi.add(captured.first.toBase()) else goteMochi.add(captured.first.toBase()) 
-                }
-                
-                val current = currentCells[fromSquare.yIndex][fromSquare.xIndex] ?: throw Exception("移動元($fromSquare)に駒がありません。")
-                val piece = if (isPromote) when(current.first) { Piece.FU -> Piece.TO; Piece.KY -> Piece.NY; Piece.KE -> Piece.NK; Piece.GI -> Piece.NG; Piece.KA -> Piece.UM; Piece.HI -> Piece.RY; else -> current.first } else current.first
-                
-                currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
-                currentCells[fromSquare.yIndex][fromSquare.xIndex] = null
-                
-                state.addStep(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare), captured != null)
-                lastTo = toSquare
-                continue
-            }
+        fun decodeX(c: Char): Int { val idx = "１２３４５６７８９123456789".indexOf(c); return if (idx == -1) -1 else (idx % 9) + 1 }
+        fun decodeY(c: Char): Int { val idx = "一二三四五六七八九１２３４５６７８９1234567８９".indexOf(c); return if (idx == -1) -1 else (idx % 9) + 1 }
+        
+        for (i in moveStartIndex until lines.size) {
+            val line = lines[i].trim()
+            if (line.isEmpty() || line.startsWith("*") || line.startsWith("#") || line.startsWith("&")) continue
+            if (line.startsWith("変化：") || line.startsWith("変化:")) { isVariationSection = true }
+            if (isVariationSection) continue
+            if (!Regex("""^\s*\d+\s+.*""").matches(line)) continue
             
-            val dropMatch = dropRegex.find(line)
-            if (dropMatch != null) {
-                val moveNum = dropMatch.groupValues[1].toInt()
-                val turnColor = if (moveNum % 2 != 0) PieceColor.Black else PieceColor.White
-                val toPosStr = dropMatch.groupValues[2]; val pieceSym = dropMatch.groupValues[3].substring(0, 1)
-                val toSquare = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
-                val piece = Piece.entries.find { it.symbol == pieceSym || (pieceSym == "王" && it == Piece.OU) || (pieceSym == "玉" && it == Piece.OU) || (pieceSym == "竜" && it == Piece.RY) || (pieceSym == "龍" && it == Piece.RY) || (pieceSym == "馬" && it == Piece.UM) } ?: throw Exception("不明な駒種: $pieceSym")
-                
-                if (turnColor == PieceColor.Black) senteMochi.remove(piece) else goteMochi.remove(piece)
-                currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
-                
-                state.addStep(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare), false)
-                lastTo = toSquare
-                continue
-            }
-        } catch (e: Exception) {
-            throw Exception("${i + 1}行目: ${e.message}\n(内容: $line)")
+            try {
+                val moveMatch = moveRegex.find(line)
+                if (moveMatch != null) {
+                    val moveNum = moveMatch.groupValues[1].toInt()
+                    val turnColor = if (moveNum % 2 != 0) PieceColor.Black else PieceColor.White
+                    val toPosStr = moveMatch.groupValues[2].trim()
+                    val pieceName = moveMatch.groupValues[3].trim()
+                    val fromPosStr = moveMatch.groupValues[4]
+                    val isPromote = pieceName.contains("成") || pieceName == "竜" || pieceName == "馬" || pieceName == "龍" || pieceName == "圭" || pieceName == "杏" || pieceName == "全"
+                    val toSquare = if (toPosStr.startsWith("同")) lastTo ?: throw Exception("同の移動先が不明です") else Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
+                    val fromSquare = Square(fromPosStr[0] - '0', fromPosStr[1] - '0')
+                    val captured = currentCells[toSquare.yIndex][toSquare.xIndex]
+                    if (captured != null) {
+                        if (turnColor == PieceColor.Black) senteMochi.add(captured.first.toBase()) else goteMochi.add(captured.first.toBase())
+                        if (firstContactStep == -1) firstContactStep = history.size
+                    }
+                    val current = currentCells[fromSquare.yIndex][fromSquare.xIndex] ?: throw Exception("移動元($fromSquare)に駒がありません。")
+                    val piece = if (isPromote) when(current.first) { Piece.FU -> Piece.TO; Piece.KY -> Piece.NY; Piece.KE -> Piece.NK; Piece.GI -> Piece.NG; Piece.KA -> Piece.UM; Piece.HI -> Piece.RY; else -> current.first } else current.first
+                    currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
+                    currentCells[fromSquare.yIndex][fromSquare.xIndex] = null
+                    history.add(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare))
+                    lastTo = toSquare
+                    continue
+                }
+                val dropMatch = dropRegex.find(line)
+                if (dropMatch != null) {
+                    val moveNum = dropMatch.groupValues[1].toInt()
+                    val turnColor = if (moveNum % 2 != 0) PieceColor.Black else PieceColor.White
+                    val toPosStr = dropMatch.groupValues[2]; val pieceSym = dropMatch.groupValues[3].substring(0, 1)
+                    val toSquare = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
+                    val piece = Piece.entries.find { it.symbol == pieceSym || (pieceSym == "王" && it == Piece.OU) || (pieceSym == "玉" && it == Piece.OU) || (pieceSym == "竜" && it == Piece.RY) || (pieceSym == "龍" && it == Piece.RY) || (pieceSym == "馬" && it == Piece.UM) } ?: throw Exception("不明な駒種: $pieceSym")
+                    if (turnColor == PieceColor.Black) senteMochi.remove(piece) else goteMochi.remove(piece)
+                    currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
+                    history.add(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare))
+                    lastTo = toSquare
+                    continue
+                }
+            } catch (e: Exception) { throw Exception("${i + 1}行目: ${e.message}\n(内容: $line)") }
         }
     }
-    // 初期表示の決定
-    state.currentStep = if (!isStandardStart) {
-        // 指定局面の場合は開始を表示
-        0
-    } else if (state.firstContactStep != -1) {
-        // 平手開始の場合は衝突を表示
-        state.firstContactStep
-    } else {
-        // それ以外は終局を表示
-        state.history.size - 1
-    }
+
+    val initialStep = if (!isStandardStart) 0 else if (firstContactStep != -1) firstContactStep else if (history.isNotEmpty()) history.size - 1 else 0
+    state.updateSession(KifuSession(
+        history = history,
+        initialStep = initialStep,
+        senteName = senteName,
+        goteName = goteName,
+        firstContactStep = firstContactStep,
+        isStandardStart = isStandardStart
+    ))
 }
 
-/**
- * 持ち駒文字列（例: "飛二 角 銀三"）を解析して Piece のリストを返します。
- */
 private fun parseMochigoma(text: String): List<Piece> {
     val t = text.trim()
     if (t == "なし" || t.isEmpty()) return emptyList()
     val list = mutableListOf<Piece>()
     val kanjiDigits = "一二三四五六七八九"
-    
-    // 全角・半角スペース両方に対応
     t.split(Regex("""[\s　]+""")).forEach { part ->
         if (part.isEmpty()) return@forEach
         val pieceName = part.substring(0, 1)

@@ -8,12 +8,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
@@ -84,8 +84,8 @@ fun KifuManagerApp() {
     val focusRequester = remember { FocusRequester() }
     val scrollState = rememberScrollState()
 
-    fun nextStep() { if (viewModel.boardState.currentStep < viewModel.boardState.history.size - 1) viewModel.boardState.currentStep++ }
-    fun prevStep() { if (viewModel.boardState.currentStep > 0) viewModel.boardState.currentStep-- }
+    fun nextStep() { viewModel.boardState.currentStep++ }
+    fun prevStep() { viewModel.boardState.currentStep-- }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -113,91 +113,89 @@ fun KifuManagerApp() {
                     } else false
                 }
         ) {
-                        // 左側：ファイルブラウザ
-                        Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    TooltipArea(
-                                        tooltip = {
-                                            Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                                                Text("棋譜をインポート", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
-                                            }
-                                        }
-                                    ) {
-                                        IconButton(onClick = {
-                                            val savedDir = AppSettings.importSourceDir
-                                            val chooser = JFileChooser().apply { 
-                                                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                                                if (savedDir.isNotEmpty()) {
-                                                    val f = java.io.File(savedDir)
-                                                    if (f.exists()) currentDirectory = f
-                                                }
-                                            }
-                                            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                                                viewModel.importFiles(chooser.selectedFile.toPath())
-                                            }
-                                        }) {
-                                            Icon(Icons.Default.Add, contentDescription = "インポート", tint = ShogiColors.Primary)
-                                        }
-                                    }
-                                }
-                                
-                                TooltipArea(
-                                    tooltip = {
-                                        Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                                            Text("設定", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
-                                        }
-                                    }
-                                ) {
-                                    IconButton(onClick = { viewModel.showSettings = true }) {
-                                        Icon(Icons.Default.Settings, contentDescription = "設定", tint = Color.Gray)
-                                    }
+            // 左側：ファイルブラウザ
+            Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TooltipArea(
+                            tooltip = {
+                                Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
+                                    Text("棋譜をインポート", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
                                 }
                             }
-                            
-                            Spacer(Modifier.height(8.dp))
-            
-                            // ルートフォルダ表示と変更（ツリーの直上に移動）
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        val chooser = JFileChooser().apply { 
-                                            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                                            currentDirectory = viewModel.currentRootDirectory.toFile()
-                                        }
-                                        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                                            viewModel.currentRootDirectory = chooser.selectedFile.toPath()
-                                        }
-                                    },
-                                elevation = 0.dp,
-                                backgroundColor = Color.White,
-                                border = BorderStroke(1.dp, Color.LightGray)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(Icons.Default.Menu, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(16.dp))
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(
-                                        text = viewModel.currentRootDirectory.toString(),
-                                        fontSize = 11.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f)
-                                    )
+                        ) {
+                            IconButton(onClick = {
+                                val savedDir = AppSettings.importSourceDir
+                                val chooser = JFileChooser().apply { 
+                                    fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                                    if (savedDir.isNotEmpty()) {
+                                        val f = java.io.File(savedDir)
+                                        if (f.exists()) currentDirectory = f
+                                    }
                                 }
+                                if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                                    viewModel.importFiles(chooser.selectedFile.toPath())
+                                }
+                            }) {
+                                Icon(Icons.Default.Add, contentDescription = "インポート", tint = ShogiColors.Primary)
                             }
-            
-                                            Spacer(Modifier.height(8.dp))
-                                            
-                                            if (viewModel.availableSenkei.isNotEmpty() || viewModel.isScanning) {
-                                                if (viewModel.isScanning) {
-                                                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
-                                                }
-                                                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).horizontalScroll(rememberScrollState())) {
-                            
+                        }
+                    }
+                    
+                    TooltipArea(
+                        tooltip = {
+                            Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
+                                Text("設定", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
+                            }
+                        }
+                    ) {
+                        IconButton(onClick = { viewModel.showSettings = true }) {
+                            Icon(Icons.Default.Settings, contentDescription = "設定", tint = Color.Gray)
+                        }
+                    }
+                }
+                
+                Spacer(Modifier.height(8.dp))
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            val chooser = JFileChooser().apply { 
+                                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                                currentDirectory = viewModel.currentRootDirectory.toFile()
+                            }
+                            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                                viewModel.currentRootDirectory = chooser.selectedFile.toPath()
+                            }
+                        },
+                    elevation = 0.dp,
+                    backgroundColor = Color.White,
+                    border = BorderStroke(1.dp, Color.LightGray)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Menu, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = viewModel.currentRootDirectory.toString(),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+                
+                if (viewModel.availableSenkei.isNotEmpty() || viewModel.isScanning) {
+                    if (viewModel.isScanning) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
+                    }
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).horizontalScroll(rememberScrollState())) {
                         TextButton(onClick = { viewModel.selectedSenkei = null }, colors = ButtonDefaults.textButtonColors(contentColor = if (viewModel.selectedSenkei == null) Color.Blue else Color.Gray)) { Text("すべて", fontSize = 10.sp) }
                         viewModel.availableSenkei.forEach { senkei ->
                             TextButton(onClick = { viewModel.selectedSenkei = senkei }, colors = ButtonDefaults.textButtonColors(contentColor = if (viewModel.selectedSenkei == senkei) Color.Blue else Color.Gray)) { Text(senkei, fontSize = 10.sp) }
@@ -233,7 +231,7 @@ fun KifuManagerApp() {
                 viewModel.selectedFile?.let { selected ->
                     val ext = selected.extension.lowercase()
                     val isKifuFile = ext == "kifu" || ext == "kif"
-                    val hasHistory = viewModel.boardState.history.isNotEmpty()
+                    val hasHistory = viewModel.boardState.session.history.isNotEmpty()
 
                     if (hasHistory || ext == "csa") {
                         Spacer(Modifier.height(8.dp))
@@ -278,26 +276,26 @@ fun KifuManagerApp() {
                     }
                 }
 
-                if (viewModel.boardState.history.isNotEmpty()) {
+                if (viewModel.boardState.session.history.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     ShogiBoardView(viewModel.boardState, isFlipped = viewModel.isFlipped)
                     Spacer(Modifier.height(8.dp))
-                    Text(text = "手数: ${viewModel.boardState.currentStep} / ${viewModel.boardState.history.size - 1}", style = MaterialTheme.typography.caption)
+                    Text(text = "手数: ${viewModel.boardState.currentStep} / ${viewModel.boardState.session.maxStep}", style = MaterialTheme.typography.caption)
                     Text(text = viewModel.boardState.currentBoard?.lastMoveText ?: "", style = MaterialTheme.typography.body2, modifier = Modifier.height(24.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Button(onClick = { viewModel.boardState.currentStep = 0 }, modifier = Modifier.height(32.dp)) { Text("開始", fontSize = 10.sp) }
                         Spacer(Modifier.width(4.dp))
-                        OutlinedButton(onClick = { prevStep() }, modifier = Modifier.height(32.dp)) { Text("◀", fontSize = 10.sp) }
+                        OutlinedButton(onClick = { viewModel.boardState.currentStep-- }, modifier = Modifier.height(32.dp)) { Text("◀", fontSize = 10.sp) }
                         Spacer(Modifier.width(4.dp))
-                        if (viewModel.boardState.isStandardStart && viewModel.boardState.firstContactStep != -1) {
-                            Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.firstContactStep }, modifier = Modifier.height(32.dp)) { Text("衝突", fontSize = 10.sp) }
+                        if (viewModel.boardState.session.isStandardStart && viewModel.boardState.session.firstContactStep != -1) {
+                            Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.session.firstContactStep }, modifier = Modifier.height(32.dp)) { Text("衝突", fontSize = 10.sp) }
                             Spacer(Modifier.width(4.dp))
                         }
-                        OutlinedButton(onClick = { nextStep() }, modifier = Modifier.height(32.dp)) { Text("▶", fontSize = 10.sp) }
+                        OutlinedButton(onClick = { viewModel.boardState.currentStep++ }, modifier = Modifier.height(32.dp)) { Text("▶", fontSize = 10.sp) }
                         Spacer(Modifier.width(4.dp))
-                        Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.history.size - 1 }, modifier = Modifier.height(32.dp)) { Text("終局", fontSize = 10.sp) }
+                        Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.session.maxStep }, modifier = Modifier.height(32.dp)) { Text("終局", fontSize = 10.sp) }
                     }
-                    Slider(value = viewModel.boardState.currentStep.toInt().toFloat(), onValueChange = { viewModel.boardState.currentStep = it.toInt() }, valueRange = 0f..(viewModel.boardState.history.size - 1).toFloat(), steps = if (viewModel.boardState.history.size > 2) viewModel.boardState.history.size - 2 else 0, modifier = Modifier.width(280.dp))
+                    Slider(value = viewModel.boardState.currentStep.toFloat(), onValueChange = { viewModel.boardState.currentStep = it.toInt() }, valueRange = 0f..viewModel.boardState.session.maxStep.toFloat(), steps = if (viewModel.boardState.session.maxStep > 1) viewModel.boardState.session.maxStep - 1 else 0, modifier = Modifier.width(280.dp))
                 }
             }
         }

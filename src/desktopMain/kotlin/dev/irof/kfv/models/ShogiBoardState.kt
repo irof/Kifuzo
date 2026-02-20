@@ -5,29 +5,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 class ShogiBoardState {
-    var history by mutableStateOf(listOf<BoardSnapshot>())
-    var currentStep by mutableStateOf(0)
-    var firstContactStep by mutableStateOf(-1)
-    var isStandardStart by mutableStateOf(true)
-    var senteName by mutableStateOf("先手")
-    var goteName by mutableStateOf("後手")
+    // 対局データ全体を一括管理
+    var session by mutableStateOf(KifuSession())
+        private set
+
+    // 現在の手数（常に session の範囲内に収まることを保証）
+    private var _currentStep by mutableStateOf(0)
+    var currentStep: Int
+        get() = _currentStep
+        set(value) {
+            _currentStep = session.coerceStep(value)
+        }
 
     val currentBoard: BoardSnapshot?
-        get() = if (history.isNotEmpty() && currentStep in history.indices) history[currentStep] 
-                else history.lastOrNull()
+        get() = session.history.getOrNull(currentStep)
 
-    fun reset(initialCells: Array<Array<Pair<Piece, PieceColor>?>>) {
-        history = listOf(BoardSnapshot(initialCells, lastMoveText = "開始局面"))
-        currentStep = 0
-        firstContactStep = -1
-        senteName = "先手"
-        goteName = "後手"
+    /**
+     * 新しい対局データをセットします。
+     * 手数やプレイヤー名なども含めてアトミックに更新されます。
+     */
+    fun updateSession(newSession: KifuSession) {
+        session = newSession
+        currentStep = newSession.initialStep
     }
 
-    fun addStep(snapshot: BoardSnapshot, isContact: Boolean) {
-        history = history + snapshot
-        if (isContact && firstContactStep == -1) {
-            firstContactStep = history.size - 1
-        }
+    /**
+     * すべての状態を初期化します。
+     */
+    fun clear() {
+        updateSession(KifuSession())
     }
 }
