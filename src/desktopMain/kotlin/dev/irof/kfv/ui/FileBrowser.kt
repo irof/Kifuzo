@@ -61,7 +61,9 @@ fun FileTreeItem(
                 text = node.name + if (node.isDirectory) "/" else "",
                 fontSize = 13.sp,
                 color = if (node.isDirectory) Color.Blue else Color.Black,
-                lineHeight = 16.sp
+                lineHeight = 16.sp,
+                softWrap = false,
+                maxLines = 1
             )
         }
     }

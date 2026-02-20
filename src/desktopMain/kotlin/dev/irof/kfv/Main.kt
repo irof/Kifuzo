@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -108,22 +109,29 @@ fun KifuManagerApp() {
         ) {
             // 左側：ファイルブラウザ
             Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Button(onClick = {
-                        val chooser = JFileChooser().apply { 
-                            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                            currentDirectory = viewModel.currentRootDirectory.toFile()
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = {
+                            val chooser = JFileChooser().apply { 
+                                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                                currentDirectory = viewModel.currentRootDirectory.toFile()
+                            }
+                            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                                viewModel.currentRootDirectory = chooser.selectedFile.toPath()
+                            }
+                        }) {
+                            Icon(Icons.Default.List, contentDescription = "フォルダ選択", tint = ShogiColors.Primary)
                         }
-                        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                            viewModel.currentRootDirectory = chooser.selectedFile.toPath()
+                        
+                        IconButton(onClick = { viewModel.importFiles() }) {
+                            Icon(Icons.Default.AddCircle, contentDescription = "インポート", tint = ShogiColors.Primary)
                         }
-                    }, modifier = Modifier.weight(1f)) { Text("フォルダ選択", fontSize = 11.sp) }
-                    Spacer(Modifier.width(4.dp))
-                    IconButton(onClick = { viewModel.showSettings = true }) { Icon(Icons.Default.Settings, contentDescription = "設定") }
+                    }
+                    
+                    IconButton(onClick = { viewModel.showSettings = true }) {
+                        Icon(Icons.Default.Settings, contentDescription = "設定", tint = Color.Gray)
+                    }
                 }
-                
-                Spacer(Modifier.height(8.dp))
-                Button(onClick = { viewModel.importFiles() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Primary, contentColor = Color.White)) { Text("Downloadsから棋譜をインポート", fontSize = 11.sp) }
                 
                 Spacer(Modifier.height(8.dp))
                 
@@ -141,15 +149,19 @@ fun KifuManagerApp() {
                     Divider()
                 }
 
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(viewModel.filteredNodes) { node ->
-                        FileTreeItem(
-                            node = node, 
-                            isSelected = (node.path == viewModel.selectedFile), 
-                            onToggle = { viewModel.toggleDirectory(it) },
-                            onSelect = { viewModel.selectFile(it) }, 
-                            onShowText = { viewModel.viewingText = readTextWithEncoding(it) }
-                        )
+                // ファイルツリーのスクロール領域（横スクロール対応）
+                val treeHorizontalScroll = rememberScrollState()
+                Box(modifier = Modifier.weight(1f).fillMaxWidth().horizontalScroll(treeHorizontalScroll)) {
+                    LazyColumn(modifier = Modifier.fillMaxHeight().width(IntrinsicSize.Max)) {
+                        items(viewModel.filteredNodes) { node ->
+                            FileTreeItem(
+                                node = node, 
+                                isSelected = (node.path == viewModel.selectedFile), 
+                                onToggle = { viewModel.toggleDirectory(it) },
+                                onSelect = { viewModel.selectFile(it) }, 
+                                onShowText = { viewModel.viewingText = readTextWithEncoding(it) }
+                            )
+                        }
                     }
                 }
             }
