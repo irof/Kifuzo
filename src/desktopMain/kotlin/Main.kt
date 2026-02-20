@@ -1,4 +1,5 @@
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
@@ -10,7 +11,10 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,6 +32,8 @@ import ui.ShogiBoardView
 import utils.copyToClipboard
 import java.io.File
 import javax.swing.JFileChooser
+import kotlin.math.max
+import kotlin.math.min
 
 fun main() = application {
     Window(
@@ -53,6 +59,24 @@ fun KifuManagerApp() {
     var infoMessage by remember { mutableStateOf<String?>(null) }
     val boardState = remember { ShogiBoardState() }
     val scrollState = rememberScrollState()
+    val focusRequester = remember { FocusRequester() }
+
+    // 手数を進める/戻す関数
+    fun nextStep() {
+        if (boardState.currentStep < boardState.history.size - 1) {
+            boardState.currentStep++
+        }
+    }
+    fun prevStep() {
+        if (boardState.currentStep > 0) {
+            boardState.currentStep--
+        }
+    }
+
+    // フォーカスの要求
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
 
     // ディレクトリ内容の更新
     fun refreshFiles() {
@@ -122,7 +146,21 @@ fun KifuManagerApp() {
         )
     }
 
-    Row(modifier = Modifier.fillMaxSize()) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .focusRequester(focusRequester)
+            .focusable()
+            .onPreviewKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown) {
+                    when (event.key) {
+                        Key.DirectionRight -> { nextStep(); true }
+                        Key.DirectionLeft -> { prevStep(); true }
+                        else -> false
+                    }
+                } else false
+            }
+    ) {
         // 左側：ファイルブラウザ
         Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -240,12 +278,26 @@ fun KifuManagerApp() {
                         Text("開始", fontSize = 10.sp)
                     }
                     Spacer(Modifier.width(4.dp))
+                    
+                    // 戻るボタン
+                    OutlinedButton(onClick = { prevStep() }, modifier = Modifier.height(32.dp)) {
+                        Text("◀", fontSize = 10.sp)
+                    }
+                    Spacer(Modifier.width(4.dp))
+
                     if (boardState.firstContactStep != -1) {
                         Button(onClick = { boardState.currentStep = boardState.firstContactStep }, modifier = Modifier.height(32.dp)) {
                             Text("衝突", fontSize = 10.sp)
                         }
                         Spacer(Modifier.width(4.dp))
                     }
+                    
+                    // 進むボタン
+                    OutlinedButton(onClick = { nextStep() }, modifier = Modifier.height(32.dp)) {
+                        Text("▶", fontSize = 10.sp)
+                    }
+                    Spacer(Modifier.width(4.dp))
+
                     Button(onClick = { boardState.currentStep = boardState.history.size - 1 }, modifier = Modifier.height(32.dp)) {
                         Text("終局", fontSize = 10.sp)
                     }
