@@ -34,7 +34,7 @@ import kotlin.io.path.toPath
 @Composable
 fun KifuSidebar(
     state: KifuManagerUiState,
-    currentRoot: Path,
+    currentRoot: Path?,
     onSetRoot: (Path) -> Unit,
     onImport: () -> Unit,
     onShowSettings: () -> Unit,
@@ -54,8 +54,8 @@ fun KifuSidebar(
                         }
                     },
                 ) {
-                    IconButton(onClick = onImport) {
-                        Icon(ShogiIcons.Import, contentDescription = AppStrings.IMPORT_KIFU, tint = ShogiColors.Primary)
+                    IconButton(onClick = onImport, enabled = currentRoot != null) {
+                        Icon(ShogiIcons.Import, contentDescription = AppStrings.IMPORT_KIFU, tint = if (currentRoot != null) ShogiColors.Primary else Color.Gray)
                     }
                 }
             }
@@ -68,7 +68,8 @@ fun KifuSidebar(
             modifier = Modifier.fillMaxWidth().clickable {
                 val chooser = JFileChooser().apply {
                     fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                    currentDirectory = currentRoot.toFile()
+                    val initialDir = currentRoot?.toFile() ?: dev.irof.kfv.models.AppConfig.USER_HOME_PATH.toFile()
+                    currentDirectory = initialDir
                 }
                 if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                     onSetRoot(chooser.selectedFile.toPath())
@@ -81,7 +82,7 @@ fun KifuSidebar(
             Row(modifier = Modifier.padding(ShogiDimensions.PaddingMedium), verticalAlignment = Alignment.CenterVertically) {
                 Icon(ShogiIcons.FolderSelect, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(ShogiDimensions.IconSizeSmall))
                 Spacer(Modifier.width(ShogiDimensions.PaddingMedium))
-                Text(text = currentRoot.toString(), fontSize = ShogiDimensions.FontSizeCaption, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Text(text = currentRoot?.toString() ?: AppStrings.SELECT_KIFU_ROOT, fontSize = ShogiDimensions.FontSizeCaption, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f), color = if (currentRoot == null) Color.Gray else Color.Black)
             }
         }
 

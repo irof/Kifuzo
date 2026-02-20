@@ -18,13 +18,13 @@ class KifuManagerViewModel(
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    var currentRootDirectory by mutableStateOf(
+    var currentRootDirectory by mutableStateOf<Path?>(
         AppSettings.lastRootDir.let {
             if (it.isNotEmpty()) {
                 val path = java.nio.file.Paths.get(it)
-                if (java.nio.file.Files.exists(path)) path else AppConfig.USER_HOME_PATH
+                if (java.nio.file.Files.exists(path)) path else null
             } else {
-                AppConfig.USER_HOME_PATH
+                null
             }
         },
     )
@@ -66,6 +66,7 @@ class KifuManagerViewModel(
      * 現在の展開状態を維持したまま、ファイル一覧を更新します。
      */
     fun refreshFiles() {
+        val root = currentRootDirectory ?: return
         val expandedPaths = uiState.treeNodes.filter { it.isExpanded }.map { it.path }.toSet()
         val newNodes = mutableListOf<FileTreeNode>()
 
@@ -83,7 +84,7 @@ class KifuManagerViewModel(
             }
         }
 
-        buildTree(currentRootDirectory, 0)
+        buildTree(root, 0)
         updateState { it.copy(treeNodes = newNodes) }
 
         // 戦型情報のスキャン（サブディレクトリも含めて最新にする）
@@ -91,7 +92,7 @@ class KifuManagerViewModel(
             updateState { it.copy(isScanning = true) }
             val allKifuFiles = mutableListOf<Path>()
             withContext(Dispatchers.IO) {
-                java.nio.file.Files.walk(currentRootDirectory, 3)
+                java.nio.file.Files.walk(root, 3)
                     .filter { it.isRegularFile() && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
                     .forEach { allKifuFiles.add(it) }
             }
@@ -169,7 +170,8 @@ class KifuManagerViewModel(
     }
 
     private fun importFiles(sourceDir: Path) {
-        val count = repository.importQuestFiles(sourceDir, currentRootDirectory)
+        val root = currentRootDirectory ?: return
+        val count = repository.importQuestFiles(sourceDir, root)
         AppSettings.importSourceDir = sourceDir.toString()
         updateState { it.copy(showImportDialog = false) }
         if (count > 0) {

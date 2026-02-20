@@ -28,5 +28,6 @@ object AppStrings {
     const val RAW_PREFS_LABEL = "保存されている詳細データ (Preferences):"
     const val SAVE_NAME_SETTING = "名前設定を保存"
     const val SELECT_KIFU_HINT = "kifuファイルを選択してください"
+    const val SELECT_KIFU_ROOT = "棋譜フォルダを選択してください"
     const val DELETE = "削除"
 }
