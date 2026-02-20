@@ -129,14 +129,24 @@ fun parseKifu(file: File, state: ShogiBoardState) {
                 currentCells[toY][toX] = piece to isSente
                 currentCells[fromY][fromX] = null
                 
-                state.addStep(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), line.trim()), captured != null)
+                state.addStep(
+                    BoardSnapshot(
+                        Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, 
+                        senteMochi.toList(), 
+                        goteMochi.toList(), 
+                        line.trim(),
+                        lastFrom = fromX to fromY,
+                        lastTo = toX to toY
+                    ), 
+                    captured != null
+                )
                 lastToX = toX; lastToY = toY; return@forEachIndexed
             }
             
             val dropMatch = dropRegex.find(line)
             if (dropMatch != null) {
                 val moveNum = dropMatch.groupValues[1].toInt(); val isSente = moveNum % 2 != 0
-                val toPosStr = dropMatch.groupValues[2]; val pieceSym = dropMatch.groupValues[3].substring(0, 1) // "金打" の "金" だけ取る
+                val toPosStr = dropMatch.groupValues[2]; val pieceSym = dropMatch.groupValues[3].substring(0, 1)
                 
                 val tx = decodeX(toPosStr[0]); val ty = decodeY(toPosStr[1])
                 val toX = 9 - tx; val toY = ty - 1
@@ -148,7 +158,17 @@ fun parseKifu(file: File, state: ShogiBoardState) {
                 
                 if (isSente) senteMochi.remove(piece) else goteMochi.remove(piece)
                 currentCells[toY][toX] = piece to isSente
-                state.addStep(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), line.trim()), false)
+                state.addStep(
+                    BoardSnapshot(
+                        Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, 
+                        senteMochi.toList(), 
+                        goteMochi.toList(), 
+                        line.trim(),
+                        lastFrom = null,
+                        lastTo = toX to toY
+                    ), 
+                    false
+                )
                 lastToX = toX; lastToY = toY; return@forEachIndexed
             }
             

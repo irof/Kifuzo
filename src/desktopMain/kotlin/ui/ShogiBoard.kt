@@ -36,9 +36,19 @@ fun ShogiBoardView(state: ShogiBoardState) {
                 for (y in 0..8) {
                     Row {
                         for (x in 0..8) {
+                            val isLastFrom = board.lastFrom?.let { it.first == x && it.second == y } ?: false
+                            val isLastTo = board.lastTo?.let { it.first == x && it.second == y } ?: false
+                            
                             Box(
                                 modifier = Modifier
                                     .size(cellSize)
+                                    .background(
+                                        when {
+                                            isLastTo -> Color(0xFFFFD54F).copy(alpha = 0.7f) // 移動先
+                                            isLastFrom -> Color(0xFFFFE082).copy(alpha = 0.5f) // 移動元
+                                            else -> Color.Transparent
+                                        }
+                                    )
                                     .border(0.5.dp, Color.Gray.copy(alpha = 0.5f)),
                                 contentAlignment = Alignment.Center
                             ) {

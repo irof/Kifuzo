@@ -25,7 +25,9 @@ data class BoardSnapshot(
     val cells: Array<Array<Pair<Piece, Boolean>?>>,
     val senteMochigoma: List<Piece> = emptyList(),
     val goteMochigoma: List<Piece> = emptyList(),
-    val lastMoveText: String = ""
+    val lastMoveText: String = "",
+    val lastFrom: Pair<Int, Int>? = null, // (x, y) 0-8
+    val lastTo: Pair<Int, Int>? = null    // (x, y) 0-8
 )
 
 class ShogiBoardState {
