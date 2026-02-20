@@ -236,15 +236,39 @@ fun KifuManagerApp() {
                                                                         }
                                                                     }
                                                                 }                
-                                        if (ext == "csa") {
-                                            if (hasHistory) Spacer(Modifier.width(8.dp))
-                                            Button(onClick = { 
-                                                val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
-                                                if (targetFile.exists()) { showOverwriteConfirm = selectedFile } 
-                                                else { convertCsaToKifu(selectedFile!!); refreshFiles() }
-                                            }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White), modifier = Modifier.height(32.dp)) { Text("KIFUに変換", fontSize = 10.sp) }
-                                        }
-                                    }
+                                                                if (ext == "csa") {
+                                                                    if (hasHistory) Spacer(Modifier.width(8.dp))
+                                                                    Button(
+                                                                        onClick = { 
+                                                                            val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
+                                                                            val performConversion = {
+                                                                                convertCsaToKifu(selectedFile!!)
+                                                                                // 変換後に戦型を自動判定して追記
+                                                                                try {
+                                                                                    val tempState = ShogiBoardState()
+                                                                                    parseKifu(targetFile, tempState)
+                                                                                    val senkei = detectSenkei(tempState.history)
+                                                                                    if (senkei.isNotEmpty()) {
+                                                                                        updateKifuSenkei(targetFile, senkei)
+                                                                                    }
+                                                                                } catch (e: Exception) {
+                                                                                    println("Auto-senkei detection failed: ${e.message}")
+                                                                                }
+                                                                                refreshFiles()
+                                                                            }
+                                        
+                                                                            if (targetFile.exists()) {
+                                                                                showOverwriteConfirm = selectedFile
+                                                                            } else {
+                                                                                performConversion()
+                                                                            }
+                                                                        }, 
+                                                                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White), 
+                                                                        modifier = Modifier.height(32.dp)
+                                                                    ) { 
+                                                                        Text("KIFUに変換", fontSize = 10.sp) 
+                                                                    }
+                                                                }                                    }
                                 }
                             }
                 if (boardState.history.isNotEmpty()) {
@@ -289,23 +313,40 @@ fun KifuManagerApp() {
             )
         }
 
-        if (showOverwriteConfirm != null) {
-            val targetFile = File(showOverwriteConfirm!!.parent, showOverwriteConfirm!!.nameWithoutExtension + ".kifu")
-            AlertDialog(
-                onDismissRequest = { showOverwriteConfirm = null },
-                title = { Text("上書き確認") },
-                text = { Text("${targetFile.name} は既に存在します。上書きしますか？") },
-                buttons = {
-                    Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { showOverwriteConfirm = null }) { Text("キャンセル") }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { convertCsaToKifu(showOverwriteConfirm!!); refreshFiles(); showOverwriteConfirm = null }) { Text("上書きする") }
+            if (showOverwriteConfirm != null) {
+                val targetFile = File(showOverwriteConfirm!!.parent, showOverwriteConfirm!!.nameWithoutExtension + ".kifu")
+                AlertDialog(
+                    onDismissRequest = { showOverwriteConfirm = null },
+                    title = { Text("上書き確認") },
+                    text = { Text("${targetFile.name} は既に存在します。上書きしますか？") },
+                    buttons = {
+                        Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = { showOverwriteConfirm = null }) { Text("キャンセル") }
+                            Spacer(Modifier.width(8.dp))
+                            Button(onClick = {
+                                val fileToConvert = showOverwriteConfirm!!
+                                convertCsaToKifu(fileToConvert)
+                                
+                                // 変換後に戦型を自動判定して追記
+                                try {
+                                    val tempState = ShogiBoardState()
+                                    parseKifu(targetFile, tempState)
+                                    val senkei = detectSenkei(tempState.history)
+                                    if (senkei.isNotEmpty()) {
+                                        updateKifuSenkei(targetFile, senkei)
+                                    }
+                                } catch (e: Exception) {
+                                    println("Auto-senkei detection failed: ${e.message}")
+                                }
+        
+                                refreshFiles()
+                                showOverwriteConfirm = null
+                            }) { Text("上書きする") }
+                        }
                     }
-                }
-            )
-        }
-
-        if (showSettings) {
+                )
+            }
+                if (showSettings) {
             var tempRegex by remember { mutableStateOf(myNameRegex) }
             AlertDialog(
                 onDismissRequest = { showSettings = false },
