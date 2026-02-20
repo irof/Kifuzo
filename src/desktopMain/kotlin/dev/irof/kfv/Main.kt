@@ -89,19 +89,7 @@ fun KifuManagerApp() {
                 state = state,
                 currentRoot = viewModel.currentRootDirectory,
                 onSetRoot = { viewModel.dispatch(KifuManagerAction.SetRootDirectory(it)) },
-                onImport = {
-                    val savedDir = AppSettings.importSourceDir
-                    val chooser = JFileChooser().apply { 
-                        fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                        if (savedDir.isNotEmpty()) {
-                            val f = java.io.File(savedDir)
-                            if (f.exists()) currentDirectory = f
-                        }
-                    }
-                    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                        viewModel.dispatch(KifuManagerAction.ImportFiles(chooser.selectedFile.toPath()))
-                    }
-                },
+                onImport = { viewModel.dispatch(KifuManagerAction.ImportFiles(it)) },
                 onShowSettings = { viewModel.dispatch(KifuManagerAction.ShowSettings(true)) },
                 onSelectSenkei = { viewModel.dispatch(KifuManagerAction.SetSelectedSenkei(it)) },
                 onToggleDir = { viewModel.dispatch(KifuManagerAction.ToggleDirectory(it)) },
