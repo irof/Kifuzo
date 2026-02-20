@@ -170,7 +170,8 @@ fun KifuManagerApp() {
                             file = parent,
                             isParentLink = true,
                             onNavigate = { currentDirectory = it },
-                            onSelect = { selectedFile = it }
+                            onSelect = { selectedFile = it },
+                            onCopy = { copyToClipboard(it.readText()) }
                         )
                     }
                 }
@@ -179,7 +180,8 @@ fun KifuManagerApp() {
                         file = file,
                         isSelected = (file == selectedFile),
                         onNavigate = { currentDirectory = it },
-                        onSelect = { selectedFile = it }
+                        onSelect = { selectedFile = it },
+                        onCopy = { copyToClipboard(it.readText()) }
                     )
                 }
             }
@@ -204,28 +206,16 @@ fun KifuManagerApp() {
             )
             
             // ファイル操作ボタン（上部に集約）
-            if (selectedFile?.isFile == true) {
+            if (selectedFile?.isFile == true && selectedFile!!.extension.lowercase() == "csa") {
                 Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.Center) {
-                    Button(
-                        onClick = { copyToClipboard(selectedFile!!.readText()) },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
-                    ) {
-                        Text("テキストコピー", fontSize = 10.sp)
-                    }
-                    
-                    if (selectedFile!!.extension.lowercase() == "csa") {
-                        Spacer(Modifier.width(8.dp))
-                        Button(
-                            onClick = { 
-                                convertCsaToKifu(selectedFile!!)
-                                refreshFiles()
-                            },
-                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White)
-                        ) {
-                            Text("KIFUに変換", fontSize = 10.sp)
-                        }
-                    }
+                Button(
+                    onClick = { 
+                        convertCsaToKifu(selectedFile!!)
+                        refreshFiles()
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White)
+                ) {
+                    Text("KIFUに変換", fontSize = 10.sp)
                 }
             }
 

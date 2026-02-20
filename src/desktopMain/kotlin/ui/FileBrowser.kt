@@ -1,5 +1,7 @@
 package ui
 
+import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -22,26 +24,37 @@ fun FileEntryItem(
     isParentLink: Boolean = false,
     isSelected: Boolean = false,
     onNavigate: (File) -> Unit,
-    onSelect: (File) -> Unit
+    onSelect: (File) -> Unit,
+    onCopy: (File) -> Unit
 ) {
     val isDirectory = file.isDirectory || isParentLink
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 1.dp)
-            .background(if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent)
-            .combinedClickable(
-                onClick = { if (!isDirectory) onSelect(file) },
-                onDoubleClick = { onNavigate(file) }
+    
+    // コンテキストメニュー（右クリックメニュー）の設定
+    ContextMenuArea(items = {
+        if (!isDirectory && file.isFile) {
+            listOf(ContextMenuItem("テキストをコピー") { onCopy(file) })
+        } else {
+            emptyList()
+        }
+    }) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 1.dp)
+                .background(if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent)
+                .combinedClickable(
+                    onClick = { if (!isDirectory) onSelect(file) },
+                    onDoubleClick = { onNavigate(file) }
+                )
+                .padding(6.dp)
+        ) {
+            Text(
+                text = if (isParentLink) ".." else file.name + if (file.isDirectory) "/" else "",
+                fontSize = 13.sp,
+                color = if (isDirectory) Color.Blue else Color.Black,
+                lineHeight = 16.sp,
+                modifier = Modifier.padding(end = 4.dp)
             )
-            .padding(6.dp)
-    ) {
-        Text(
-            text = if (isParentLink) ".." else file.name + if (file.isDirectory) "/" else "",
-            fontSize = 13.sp,
-            color = if (isDirectory) Color.Blue else Color.Black,
-            lineHeight = 16.sp,
-            modifier = Modifier.padding(end = 4.dp)
-        )
+        }
     }
 }
