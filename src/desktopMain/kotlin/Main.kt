@@ -8,9 +8,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
@@ -365,24 +367,70 @@ fun KifuManagerApp() {
                     }
                 )
             }
-                if (showSettings) {
+        if (showSettings) {
             var tempRegex by remember { mutableStateOf(myNameRegex) }
+            var rawSettings by remember { mutableStateOf(AppSettings.getAllSettings()) }
+
             AlertDialog(
                 onDismissRequest = { showSettings = false },
                 title = { Text("設定") },
+                modifier = Modifier.width(500.dp),
                 text = {
-                    Column {
-                        Text("自分の名前の判定用（正規表現）:")
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        Text("自分の名前の判定用（正規表現）:", fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
-                        TextField(value = tempRegex, onValueChange = { tempRegex = it }, placeholder = { Text("例: (irof|名無し)") }, modifier = Modifier.fillMaxWidth())
+                        TextField(
+                            value = tempRegex, 
+                            onValueChange = { tempRegex = it }, 
+                            placeholder = { Text("例: (irof|名無し)") }, 
+                            modifier = Modifier.fillMaxWidth()
+                        )
                         Text("※自分が後手の場合、自動的に盤面を反転します。", fontSize = 10.sp, color = Color.Gray)
+                        
+                        Spacer(Modifier.height(24.dp))
+                        Divider()
+                        Spacer(Modifier.height(16.dp))
+                        
+                        Text("保存されている詳細データ (Preferences):", fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(8.dp))
+                        
+                        rawSettings.forEach { (key, value) ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(key, fontSize = 10.sp, color = Color.Gray)
+                                    var editingValue by remember(key) { mutableStateOf(value) }
+                                    BasicTextField(
+                                        value = editingValue,
+                                        onValueChange = { 
+                                            editingValue = it
+                                            AppSettings.putSetting(key, it)
+                                        },
+                                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 12.sp),
+                                        modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(4.dp)
+                                    )
+                                }
+                                IconButton(onClick = {
+                                    AppSettings.removeSetting(key)
+                                    rawSettings = AppSettings.getAllSettings()
+                                }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "削除", tint = Color.Red, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
                     }
                 },
                 buttons = {
                     Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { showSettings = false }) { Text("キャンセル") }
+                        TextButton(onClick = { showSettings = false }) { Text("閉じる") }
                         Spacer(Modifier.width(8.dp))
-                        Button(onClick = { myNameRegex = tempRegex; AppSettings.myNameRegex = tempRegex; showSettings = false }) { Text("保存") }
+                        Button(onClick = {
+                            myNameRegex = tempRegex
+                            AppSettings.myNameRegex = tempRegex
+                            showSettings = false
+                        }) { Text("名前設定を保存") }
                     }
                 }
             )

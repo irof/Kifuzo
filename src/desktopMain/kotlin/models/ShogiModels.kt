@@ -13,6 +13,7 @@ object AppConfig {
 
 object AppSettings {
     private val prefs = java.util.prefs.Preferences.userNodeForPackage(AppSettings::class.java)
+    
     private const val KEY_MY_NAME_REGEX = "my_name_regex"
     private const val KEY_WINDOW_X = "window_x"
     private const val KEY_WINDOW_Y = "window_y"
@@ -38,6 +39,31 @@ object AppSettings {
     var windowHeight: Float
         get() = prefs.getFloat(KEY_WINDOW_HEIGHT, 750f)
         set(value) = prefs.putFloat(KEY_WINDOW_HEIGHT, value)
+
+    /**
+     * 現在保存されているすべての設定を取得します。
+     */
+    fun getAllSettings(): Map<String, String> {
+        val map = mutableMapOf<String, String>()
+        prefs.keys().forEach { key ->
+            map[key] = prefs.get(key, "")
+        }
+        return map
+    }
+
+    /**
+     * 特定のキーの設定を削除します。
+     */
+    fun removeSetting(key: String) {
+        prefs.remove(key)
+    }
+
+    /**
+     * 直接値を設定します。
+     */
+    fun putSetting(key: String, value: String) {
+        prefs.put(key, value)
+    }
 }
 
 enum class Piece(val symbol: String) {
