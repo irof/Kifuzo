@@ -19,7 +19,10 @@ KifuManager is a macOS GUI application built with **Compose Multiplatform** and 
     - Skips comments, branch/variation sections (`変化`), and game results (e.g., `投了`, `切れ負け`).
 - **Senkei Detection:** Automatically detects opening patterns (Senkei) like "Yagura", "Gokigen Nakabisha", etc.
 - **Format Conversion:** Converts `.csa` files to standard `.kifu` (UTF-8) format with proper notation.
-- **Import Utility:** Automatically detects and imports "Shogi Quest" text files from the `~/Downloads` folder into a structured `~/Kifu/quest/csa` directory.
+- **Import Utility:** Imports Shogi Quest game records from a user-specified directory to the **current root directory**.
+    - Detects `.txt` files containing CSA formatted records.
+    - Automatically renames files to `{YYYYMMDD}-{Sente}-{Gote}.csa` based on game metadata and file timestamps.
+    - Remembers the last used import source directory in application settings.
 - **Clipboard Integration:** Buttons to copy kifu text or error logs for easy sharing.
 
 ## Building and Running
