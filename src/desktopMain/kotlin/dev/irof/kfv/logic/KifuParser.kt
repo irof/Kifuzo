@@ -5,24 +5,6 @@ import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.text.Charsets
 
-/**
- * 標準の平手初期配置を取得します。
- */
-fun getInitialCells(): Array<Array<Pair<Piece, PieceColor>?>> {
-    val cells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
-    cells[0][0] = Piece.KY to PieceColor.White; cells[0][1] = Piece.KE to PieceColor.White; cells[0][2] = Piece.GI to PieceColor.White
-    cells[0][3] = Piece.KI to PieceColor.White; cells[0][4] = Piece.OU to PieceColor.White; cells[0][5] = Piece.KI to PieceColor.White
-    cells[0][6] = Piece.GI to PieceColor.White; cells[0][7] = Piece.KE to PieceColor.White; cells[0][8] = Piece.KY to PieceColor.White
-    cells[1][1] = Piece.HI to PieceColor.White; cells[1][7] = Piece.KA to PieceColor.White
-    for (i in 0..8) cells[2][i] = Piece.FU to PieceColor.White
-    cells[8][0] = Piece.KY to PieceColor.Black; cells[8][1] = Piece.KE to PieceColor.Black; cells[8][2] = Piece.GI to PieceColor.Black
-    cells[8][3] = Piece.KI to PieceColor.Black; cells[8][4] = Piece.OU to PieceColor.Black; cells[8][5] = Piece.KI to PieceColor.Black
-    cells[8][6] = Piece.GI to PieceColor.Black; cells[8][7] = Piece.KE to PieceColor.Black; cells[8][8] = Piece.KY to PieceColor.Black
-    cells[7][1] = Piece.KA to PieceColor.Black; cells[7][7] = Piece.HI to PieceColor.Black
-    for (i in 0..8) cells[6][i] = Piece.FU to PieceColor.Black
-    return cells
-}
-
 fun scanKifuInfo(path: Path): KifuInfo {
     var sente = ""
     var gote = ""
@@ -79,11 +61,11 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
         }
         if (trimmed.startsWith("先手持駒：") || trimmed.startsWith("下手持駒：")) {
             isStandardStart = false
-            senteMochi.addAll(parseMochigoma(trimmed.substringAfter("：")))
+            senteMochi.addAll(Piece.parseMochigoma(trimmed.substringAfter("：")))
         }
         if (trimmed.startsWith("後手持駒：") || trimmed.startsWith("上手持駒：")) {
             isStandardStart = false
-            goteMochi.addAll(parseMochigoma(trimmed.substringAfter("：")))
+            goteMochi.addAll(Piece.parseMochigoma(trimmed.substringAfter("：")))
         }
         if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) {
             moveStartIndex = i
@@ -91,7 +73,7 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
         }
     }
 
-    if (isStandardStart) currentCells = getInitialCells()
+    if (isStandardStart) currentCells = BoardSnapshot.getInitialCells()
     
     val history = mutableListOf<BoardSnapshot>()
     history.add(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), "開始局面"))
@@ -162,25 +144,6 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
         firstContactStep = firstContactStep,
         isStandardStart = isStandardStart
     ))
-}
-
-private fun parseMochigoma(text: String): List<Piece> {
-    val t = text.trim()
-    if (t == "なし" || t.isEmpty()) return emptyList()
-    val list = mutableListOf<Piece>()
-    val kanjiDigits = "一二三四五六七八九"
-    t.split(Regex("""[\s　]+""")).forEach { part ->
-        if (part.isEmpty()) return@forEach
-        val pieceName = part.substring(0, 1)
-        val countStr = part.substring(1)
-        val count = if (countStr.isEmpty()) 1 else {
-            val idx = kanjiDigits.indexOf(countStr)
-            if (idx != -1) idx + 1 else countStr.toIntOrNull() ?: 1
-        }
-        val piece = Piece.entries.find { it.symbol == pieceName || (pieceName == "王" && it == Piece.OU) || (pieceName == "玉" && it == Piece.OU) || (pieceName == "竜" && it == Piece.RY) || (pieceName == "龍" && it == Piece.RY) || (pieceName == "馬" && it == Piece.UM) }
-        if (piece != null) repeat(count) { list.add(piece) }
-    }
-    return list
 }
 
 fun updateKifuSenkei(path: Path, senkei: String) {

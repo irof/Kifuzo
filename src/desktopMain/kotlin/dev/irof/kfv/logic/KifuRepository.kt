@@ -21,7 +21,7 @@ class KifuRepository {
 
     fun convertCsa(path: Path): Path {
         convertCsaToKifu(path)
-        return path.parent / (path.nameWithoutExtension + ".kifu")
+        return (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
     }
 
     fun updateSenkei(path: Path, senkei: String) {
@@ -30,13 +30,3 @@ class KifuRepository {
 
     fun importQuestFiles(sourceDir: Path): Int = importShogiQuestFiles(sourceDir)
 }
-
-/**
- * 棋譜の要約情報
- */
-data class KifuInfo(
-    val path: Path,
-    val senteName: String = "",
-    val goteName: String = "",
-    val senkei: String = "",
-)
