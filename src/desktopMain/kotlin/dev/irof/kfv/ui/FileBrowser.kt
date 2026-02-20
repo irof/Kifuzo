@@ -3,9 +3,6 @@ package dev.irof.kfv.ui
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -13,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.irof.kfv.models.FileTreeNode
+import dev.irof.kfv.ui.theme.ShogiIcons
 import java.nio.file.Path
 import kotlin.io.path.name
 
@@ -46,7 +44,7 @@ fun FileTreeItem(
         ) {
             if (node.isDirectory) {
                 Icon(
-                    imageVector = if (node.isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                    imageVector = if (node.isExpanded) ShogiIcons.ExpandMore else ShogiIcons.ExpandLess,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
                     tint = Color.Gray

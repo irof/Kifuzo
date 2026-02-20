@@ -12,6 +12,6 @@ object ShogiIcons {
     val Delete = Icons.Default.Delete
     val Refresh = Icons.Default.Refresh
     
-    val ExpandMore = Icons.Default.KeyboardArrowDown
-    val ExpandLess = Icons.Default.KeyboardArrowRight
+    val ExpandMore = Icons.Default.ArrowDropDown
+    val ExpandLess = Icons.Default.ArrowForward
 }
