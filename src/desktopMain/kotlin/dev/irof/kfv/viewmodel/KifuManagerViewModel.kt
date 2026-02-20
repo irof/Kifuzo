@@ -21,11 +21,32 @@ class KifuManagerViewModel(
     var currentRootDirectory by mutableStateOf(if (java.nio.file.Files.exists(AppConfig.KIFU_ROOT)) AppConfig.KIFU_ROOT else AppConfig.USER_HOME_PATH)
         private set
 
-    // UI状態の一括管理
     var uiState by mutableStateOf(KifuManagerUiState(myNameRegex = AppSettings.myNameRegex))
         private set
 
     val boardState = ShogiBoardState()
+
+    fun dispatch(action: KifuManagerAction) {
+        when (action) {
+            is KifuManagerAction.SetRootDirectory -> setRootDirectory(action.path)
+            is KifuManagerAction.ToggleDirectory -> toggleDirectory(action.node)
+            is KifuManagerAction.SelectFile -> selectFile(action.path)
+            is KifuManagerAction.SetSelectedSenkei -> updateState { it.copy(selectedSenkei = action.senkei) }
+            is KifuManagerAction.SaveSettings -> saveSettings(action.regex)
+            is KifuManagerAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
+            is KifuManagerAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
+            is KifuManagerAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
+            is KifuManagerAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, infoMessage = null) }
+            is KifuManagerAction.ImportFiles -> importFiles(action.sourceDir)
+            is KifuManagerAction.ConvertCsa -> convertCsa(action.path)
+            is KifuManagerAction.ConfirmOverwrite -> confirmOverwrite()
+            is KifuManagerAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
+            is KifuManagerAction.DetectAndWriteSenkei -> detectAndWriteSenkei(action.path)
+            is KifuManagerAction.ChangeStep -> boardState.currentStep = action.step
+            is KifuManagerAction.NextStep -> boardState.currentStep++
+            is KifuManagerAction.PrevStep -> boardState.currentStep--
+        }
+    }
 
     private fun updateState(update: (KifuManagerUiState) -> KifuManagerUiState) {
         uiState = update(uiState)
@@ -48,13 +69,13 @@ class KifuManagerViewModel(
         }
     }
 
-    fun setRootDirectory(path: Path) {
+    private fun setRootDirectory(path: Path) {
         currentRootDirectory = path
         updateState { it.copy(selectedSenkei = null) }
         refreshFiles()
     }
 
-    fun toggleDirectory(node: FileTreeNode) {
+    private fun toggleDirectory(node: FileTreeNode) {
         if (!node.isDirectory) return
         val nodes = uiState.treeNodes
         val index = nodes.indexOf(node)
@@ -76,7 +97,7 @@ class KifuManagerViewModel(
         }
     }
 
-    fun selectFile(path: Path) {
+    private fun selectFile(path: Path) {
         updateState { it.copy(selectedFile = path) }
         val ext = path.extension.lowercase()
         if (ext == "kifu" || ext == "kif") {
@@ -92,7 +113,7 @@ class KifuManagerViewModel(
         }
     }
 
-    fun updateAutoFlip() {
+    private fun updateAutoFlip() {
         val myRegexStr = uiState.myNameRegex
         if (myRegexStr.isEmpty()) return
         val regex = try { Regex(myRegexStr) } catch (e: Exception) { null } ?: return
@@ -103,33 +124,13 @@ class KifuManagerViewModel(
         }
     }
 
-    fun toggleFlipped() {
-        updateState { it.copy(isFlipped = !it.isFlipped) }
-    }
-
-    fun showSettings(show: Boolean) {
-        updateState { it.copy(showSettings = show) }
-    }
-
-    fun saveSettings(newRegex: String) {
+    private fun saveSettings(newRegex: String) {
         AppSettings.myNameRegex = newRegex
         updateState { it.copy(myNameRegex = newRegex, showSettings = false) }
         updateAutoFlip()
     }
 
-    fun setViewingText(text: String?) {
-        updateState { it.copy(viewingText = text) }
-    }
-
-    fun setSelectedSenkei(senkei: String?) {
-        updateState { it.copy(selectedSenkei = senkei) }
-    }
-
-    fun clearErrorAndInfo() {
-        updateState { it.copy(errorMessage = null, infoMessage = null) }
-    }
-
-    fun importFiles(sourceDir: Path) {
+    private fun importFiles(sourceDir: Path) {
         val count = repository.importQuestFiles(sourceDir)
         AppSettings.importSourceDir = sourceDir.toString()
         if (count > 0) {
@@ -140,7 +141,7 @@ class KifuManagerViewModel(
         }
     }
 
-    fun convertCsa(path: Path) {
+    private fun convertCsa(path: Path) {
         val targetFile = path.parent.resolve(path.nameWithoutExtension + ".kifu")
         if (java.nio.file.Files.exists(targetFile)) {
             updateState { it.copy(showOverwriteConfirm = path) }
@@ -149,11 +150,7 @@ class KifuManagerViewModel(
         }
     }
     
-    fun hideOverwriteConfirm() {
-        updateState { it.copy(showOverwriteConfirm = null) }
-    }
-
-    fun confirmOverwrite() {
+    private fun confirmOverwrite() {
         uiState.showOverwriteConfirm?.let {
             performCsaConversion(it)
             updateState { it.copy(showOverwriteConfirm = null) }
@@ -171,7 +168,7 @@ class KifuManagerViewModel(
         refreshFiles()
     }
 
-    fun detectAndWriteSenkei(path: Path) {
+    private fun detectAndWriteSenkei(path: Path) {
         val senkei = detectSenkei(boardState.session.history)
         if (senkei.isNotEmpty()) {
             repository.updateSenkei(path, senkei)

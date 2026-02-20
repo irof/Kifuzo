@@ -5,6 +5,7 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -24,6 +25,7 @@ import dev.irof.kfv.ui.dialogs.SettingsDialog
 import dev.irof.kfv.ui.theme.ShogiDimensions
 import dev.irof.kfv.utils.AppStrings
 import dev.irof.kfv.utils.copyToClipboard
+import dev.irof.kfv.viewmodel.KifuManagerAction
 import dev.irof.kfv.viewmodel.KifuManagerViewModel
 import javax.swing.JFileChooser
 import kotlin.io.path.toPath
@@ -33,7 +35,7 @@ fun main() = application {
         position = if (AppSettings.windowX != null && AppSettings.windowY != null) {
             WindowPosition(AppSettings.windowX!!.dp, AppSettings.windowY!!.dp)
         } else {
-            WindowPosition.Aligned(androidx.compose.ui.Alignment.Center)
+            WindowPosition.Aligned(Alignment.Center)
         },
         size = DpSize(AppSettings.windowWidth.dp, AppSettings.windowHeight.dp)
     )
@@ -76,8 +78,8 @@ fun KifuManagerApp() {
                 .onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown) {
                         when (event.key) {
-                            Key.DirectionRight -> { viewModel.boardState.currentStep++; true }
-                            Key.DirectionLeft -> { viewModel.boardState.currentStep--; true }
+                            Key.DirectionRight -> { viewModel.dispatch(KifuManagerAction.NextStep); true }
+                            Key.DirectionLeft -> { viewModel.dispatch(KifuManagerAction.PrevStep); true }
                             else -> false
                         }
                     } else false
@@ -86,7 +88,7 @@ fun KifuManagerApp() {
             KifuSidebar(
                 state = state,
                 currentRoot = viewModel.currentRootDirectory,
-                onSetRoot = { viewModel.setRootDirectory(it) },
+                onSetRoot = { viewModel.dispatch(KifuManagerAction.SetRootDirectory(it)) },
                 onImport = {
                     val savedDir = AppSettings.importSourceDir
                     val chooser = JFileChooser().apply { 
@@ -97,24 +99,24 @@ fun KifuManagerApp() {
                         }
                     }
                     if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                        viewModel.importFiles(chooser.selectedFile.toPath())
+                        viewModel.dispatch(KifuManagerAction.ImportFiles(chooser.selectedFile.toPath()))
                     }
                 },
-                onShowSettings = { viewModel.showSettings(true) },
-                onSelectSenkei = { viewModel.setSelectedSenkei(it) },
-                onToggleDir = { viewModel.toggleDirectory(it) },
-                onSelectFile = { viewModel.selectFile(it) },
-                onShowText = { viewModel.setViewingText(it) },
+                onShowSettings = { viewModel.dispatch(KifuManagerAction.ShowSettings(true)) },
+                onSelectSenkei = { viewModel.dispatch(KifuManagerAction.SetSelectedSenkei(it)) },
+                onToggleDir = { viewModel.dispatch(KifuManagerAction.ToggleDirectory(it)) },
+                onSelectFile = { viewModel.dispatch(KifuManagerAction.SelectFile(it)) },
+                onShowText = { viewModel.dispatch(KifuManagerAction.SetViewingText(it)) },
                 modifier = Modifier.weight(ShogiDimensions.SidebarWidthRatio)
             )
 
             KifuPreviewPanel(
                 state = state,
                 boardState = viewModel.boardState,
-                onToggleFlip = { viewModel.toggleFlipped() },
-                onDetectSenkei = { viewModel.detectAndWriteSenkei(it) },
-                onConvertCsa = { viewModel.convertCsa(it) },
-                onStepChange = { viewModel.boardState.currentStep = it },
+                onToggleFlip = { viewModel.dispatch(KifuManagerAction.ToggleFlipped) },
+                onDetectSenkei = { viewModel.dispatch(KifuManagerAction.DetectAndWriteSenkei(it)) },
+                onConvertCsa = { viewModel.dispatch(KifuManagerAction.ConvertCsa(it)) },
+                onStepChange = { viewModel.dispatch(KifuManagerAction.ChangeStep(it)) },
                 modifier = Modifier.weight(ShogiDimensions.PreviewWidthRatio)
             )
         }
@@ -123,12 +125,12 @@ fun KifuManagerApp() {
             val title = if (state.errorMessage != null) AppStrings.ERROR else AppStrings.NOTIFICATION
             val msg = state.errorMessage ?: state.infoMessage!!
             AlertDialog(
-                onDismissRequest = { viewModel.clearErrorAndInfo() },
+                onDismissRequest = { viewModel.dispatch(KifuManagerAction.ClearErrorAndInfo) },
                 title = { Text(title) },
                 text = { Text(msg) },
                 buttons = {
-                    Box(modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.PaddingMedium), contentAlignment = androidx.compose.ui.Alignment.CenterEnd) {
-                        Button(onClick = { viewModel.clearErrorAndInfo() }) { Text(AppStrings.OK) }
+                    Box(modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.PaddingMedium), contentAlignment = Alignment.CenterEnd) {
+                        Button(onClick = { viewModel.dispatch(KifuManagerAction.ClearErrorAndInfo) }) { Text(AppStrings.OK) }
                     }
                 }
             )
@@ -137,24 +139,24 @@ fun KifuManagerApp() {
         if (state.showOverwriteConfirm != null) {
             OverwriteConfirmDialog(
                 file = state.showOverwriteConfirm.toFile(),
-                onDismiss = { viewModel.hideOverwriteConfirm() },
-                onConfirm = { viewModel.confirmOverwrite() }
+                onDismiss = { viewModel.dispatch(KifuManagerAction.HideOverwriteConfirm) },
+                onConfirm = { viewModel.dispatch(KifuManagerAction.ConfirmOverwrite) }
             )
         }
 
         if (state.showSettings) {
             SettingsDialog(
                 initialRegex = state.myNameRegex,
-                onDismiss = { viewModel.showSettings(false) },
-                onSave = { viewModel.saveSettings(it) }
+                onDismiss = { viewModel.dispatch(KifuManagerAction.ShowSettings(false)) },
+                onSave = { viewModel.dispatch(KifuManagerAction.SaveSettings(it)) }
             )
         }
 
         if (state.viewingText != null) {
             KifuTextViewer(
                 text = state.viewingText,
-                onDismiss = { viewModel.setViewingText(null) },
-                onCopy = { copyToClipboard(state.viewingText); viewModel.setViewingText(null) }
+                onDismiss = { viewModel.dispatch(KifuManagerAction.SetViewingText(null)) },
+                onCopy = { copyToClipboard(state.viewingText); viewModel.dispatch(KifuManagerAction.SetViewingText(null)) }
             )
         }
     }
