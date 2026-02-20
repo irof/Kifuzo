@@ -1,4 +1,6 @@
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,9 +11,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import logic.convertCsaToKifu
 import logic.getInitialCells
@@ -28,7 +32,8 @@ import javax.swing.JFileChooser
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
-        title = "棋譜管理アプリ"
+        title = "棋譜管理アプリ",
+        state = WindowState(size = DpSize(800.dp, 750.dp))
     ) {
         MaterialTheme {
             KifuManagerApp()
@@ -47,6 +52,7 @@ fun KifuManagerApp() {
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var infoMessage by remember { mutableStateOf<String?>(null) }
     val boardState = remember { ShogiBoardState() }
+    val scrollState = rememberScrollState()
 
     // ディレクトリ内容の更新
     fun refreshFiles() {
@@ -185,6 +191,7 @@ fun KifuManagerApp() {
                 .fillMaxHeight()
                 .weight(0.6f)
                 .background(Color(0xFFEEEEEE))
+                .verticalScroll(scrollState)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
@@ -249,7 +256,7 @@ fun KifuManagerApp() {
                 )
             }
 
-            Spacer(Modifier.weight(1f)) // 下部の余白を埋める
+            Spacer(Modifier.height(32.dp))
             
             // ファイル操作ボタン（コピーのみ下部に残す）
             if (selectedFile?.isFile == true) {
