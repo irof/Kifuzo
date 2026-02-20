@@ -25,14 +25,14 @@ fun FileEntryItem(
     isSelected: Boolean = false,
     onNavigate: (File) -> Unit,
     onSelect: (File) -> Unit,
-    onCopy: (File) -> Unit
+    onShowText: (File) -> Unit
 ) {
     val isDirectory = file.isDirectory || isParentLink
     
     // コンテキストメニュー（右クリックメニュー）の設定
     ContextMenuArea(items = {
         if (!isDirectory && file.isFile) {
-            listOf(ContextMenuItem("テキストをコピー") { onCopy(file) })
+            listOf(ContextMenuItem("テキストを表示") { onShowText(file) })
         } else {
             emptyList()
         }

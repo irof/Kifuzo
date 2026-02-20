@@ -67,6 +67,7 @@ fun KifuManagerApp() {
     var infoMessage by remember { mutableStateOf<String?>(null) }
     var showOverwriteConfirm by remember { mutableStateOf<File?>(null) }
     var showSettings by remember { mutableStateOf(false) }
+    var viewingText by remember { mutableStateOf<String?>(null) }
     var myNameRegex by remember { mutableStateOf(AppSettings.myNameRegex) }
     var isFlipped by remember { mutableStateOf(false) }
     val boardState = remember { ShogiBoardState() }
@@ -180,6 +181,29 @@ fun KifuManagerApp() {
         )
     }
 
+    // テキスト表示ダイアログ
+    if (viewingText != null) {
+        AlertDialog(
+            onDismissRequest = { viewingText = null },
+            title = { Text("棋譜テキスト") },
+            text = {
+                Box(modifier = Modifier.sizeIn(maxHeight = 400.dp)) {
+                    val textScroll = rememberScrollState()
+                    Column(modifier = Modifier.verticalScroll(textScroll)) {
+                        Text(viewingText!!, fontSize = 12.sp, fontFamily = androidx.compose.ui.text.font.FontWeight.Normal.let { androidx.compose.ui.text.font.FontFamily.Monospace })
+                    }
+                }
+            },
+            buttons = {
+                Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
+                    Button(onClick = { copyToClipboard(viewingText!!); viewingText = null }) { Text("コピーして閉じる") }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = { viewingText = null }) { Text("閉じる") }
+                }
+            }
+        )
+    }
+
     if (showOverwriteConfirm != null) {
         val targetFile = File(showOverwriteConfirm!!.parent, showOverwriteConfirm!!.nameWithoutExtension + ".kifu")
         AlertDialog(
@@ -275,14 +299,28 @@ fun KifuManagerApp() {
                 Divider()
             }
 
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                currentDirectory.parentFile?.let { parent ->
-                    item { FileEntryItem(file = parent, isParentLink = true, onNavigate = { currentDirectory = it }, onSelect = { selectedFile = it }, onCopy = { copyToClipboard(it.readText()) }) }
-                }
-                items(filteredContents) { file ->
-                    FileEntryItem(file = file, isSelected = (file == selectedFile), onNavigate = { currentDirectory = it }, onSelect = { selectedFile = it }, onCopy = { copyToClipboard(it.readText()) })
-                }
-            }
+                        LazyColumn(modifier = Modifier.weight(1f)) {
+                            currentDirectory.parentFile?.let { parent ->
+                                item {
+                                    FileEntryItem(
+                                        file = parent,
+                                        isParentLink = true,
+                                        onNavigate = { currentDirectory = it },
+                                        onSelect = { selectedFile = it },
+                                        onShowText = { viewingText = it.readText() }
+                                    )
+                                }
+                            }
+                            items(filteredContents) { file ->
+                                FileEntryItem(
+                                    file = file,
+                                    isSelected = (file == selectedFile),
+                                    onNavigate = { currentDirectory = it },
+                                    onSelect = { selectedFile = it },
+                                    onShowText = { viewingText = it.readText() }
+                                )
+                            }
+                        }
         }
 
         // 右側：プレビュー・操作パネル
