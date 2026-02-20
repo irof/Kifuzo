@@ -8,6 +8,7 @@ class ShogiBoardState {
     var history by mutableStateOf(listOf<BoardSnapshot>())
     var currentStep by mutableStateOf(0)
     var firstContactStep by mutableStateOf(-1)
+    var isStandardStart by mutableStateOf(true)
     var senteName by mutableStateOf("先手")
     var goteName by mutableStateOf("後手")
 

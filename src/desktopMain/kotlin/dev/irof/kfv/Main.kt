@@ -289,7 +289,7 @@ fun KifuManagerApp() {
                         Spacer(Modifier.width(4.dp))
                         OutlinedButton(onClick = { prevStep() }, modifier = Modifier.height(32.dp)) { Text("◀", fontSize = 10.sp) }
                         Spacer(Modifier.width(4.dp))
-                        if (viewModel.boardState.firstContactStep != -1) {
+                        if (viewModel.boardState.isStandardStart && viewModel.boardState.firstContactStep != -1) {
                             Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.firstContactStep }, modifier = Modifier.height(32.dp)) { Text("衝突", fontSize = 10.sp) }
                             Spacer(Modifier.width(4.dp))
                         }

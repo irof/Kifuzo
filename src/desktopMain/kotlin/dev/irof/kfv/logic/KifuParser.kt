@@ -107,6 +107,7 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
     if (isStandardStart) {
         currentCells = getInitialCells()
     }
+    state.isStandardStart = isStandardStart
     
     // 初期状態を history にセット
     val initialSnapshot = BoardSnapshot(
