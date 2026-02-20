@@ -17,6 +17,7 @@ KifuManager is a macOS GUI application built with **Compose Multiplatform** and 
 - **Kifu Parser:** A robust parser for `.kifu` (UTF-8) files.
     - Handles full-width digits and Kanji notation (e.g., `７六歩`, `同　`).
     - Skips comments, branch/variation sections (`変化`), and game results (e.g., `投了`, `切れ負け`).
+- **Senkei Detection:** Automatically detects opening patterns (Senkei) like "Yagura", "Gokigen Nakabisha", etc.
 - **Format Conversion:** Converts `.csa` files to standard `.kifu` (UTF-8) format with proper notation.
 - **Import Utility:** Automatically detects and imports "Shogi Quest" text files from the `~/Downloads` folder into a structured `~/Kifu/quest/csa` directory.
 - **Clipboard Integration:** Buttons to copy kifu text or error logs for easy sharing.
@@ -42,6 +43,10 @@ The project uses **Gradle** as the build tool.
   ```bash
   ./gradlew createDistributable
   ```
+- **Run tests:**
+  ```bash
+  ./gradlew test
+  ```
 - **Clean build artifacts:**
   ```bash
   ./gradlew clean
@@ -49,16 +54,23 @@ The project uses **Gradle** as the build tool.
 
 ## Project Structure
 
-- `src/desktopMain/kotlin/Main.kt`: Contains the entire application logic, including the UI (Compose), State management, and Kifu/CSA parsing logic.
+- `src/desktopMain/kotlin/dev/irof/kfv/`: Root package.
+    - `Main.kt`: Application entry point.
+    - `logic/`: Business logic (parsers, converters, IO, repository, senkei detection).
+    - `models/`: Domain models (Piece, BoardState) and app configuration.
+    - `ui/`: Compose UI components, themes, and dialogs.
+    - `viewmodel/`: State management using the ViewModel pattern (UI State & Actions).
+    - `utils/`: Common utilities (Strings, Clipboard).
+- `src/desktopTest/kotlin/dev/irof/kfv/`: Unit tests for logic and models.
 - `build.gradle.kts`: Project dependencies and Compose Multiplatform configuration.
-- `gradle.properties`: Build environment settings (e.g., `org.gradle.java.home`).
+- `gradle.properties`: Build environment settings.
 
 ## Development Conventions
 
 - **Language:** Comments and documentation in the code must be written in **Japanese**.
 - **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation.
 - **UI Framework:** Jetpack Compose (Desktop).
-- **State Management:** Uses `remember` and `mutableStateOf` within Composable functions.
+- **State Management:** Uses a **ViewModel** pattern with `UiState` and `Action` objects for predictable state transitions.
 - **Parsing:** Primarily uses Regex and line-by-line processing for game records.
 - **Encoding:** Standardizes on **UTF-8** for all file operations.
 - **Naming:** Uses standard Kotlin/JVM naming conventions.
