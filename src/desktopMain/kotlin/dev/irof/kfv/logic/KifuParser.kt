@@ -35,13 +35,13 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
 fun parseKifu(lines: List<String>, state: ShogiBoardState) {
     val header = parseHeader(lines)
 
-    var currentCells = header.initialCells
+    val currentCells = Array(9) { y -> header.initialCells[y].toTypedArray() }
     val senteMochi = header.senteMochi.toMutableList()
     val goteMochi = header.goteMochi.toMutableList()
     var firstContactStep = -1
 
     val history = mutableListOf<BoardSnapshot>()
-    history.add(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), "開始局面"))
+    history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), "開始局面"))
 
     if (header.moveStartIndex != -1) {
         var lastTo: Square? = null
@@ -84,7 +84,7 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
                         }
                         currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
                         currentCells[fromSquare.yIndex][fromSquare.xIndex] = null
-                        history.add(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare))
+                        history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare))
                         lastTo = toSquare
                     }
                     is KifuParsedMove.Drop -> {
@@ -93,7 +93,7 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
                         val piece = parsedMove.piece
                         if (turnColor == PieceColor.Black) senteMochi.remove(piece) else goteMochi.remove(piece)
                         currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
-                        history.add(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare))
+                        history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare))
                         lastTo = toSquare
                     }
                 }
@@ -127,7 +127,7 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
 private data class KifuHeader(
     val senteName: String,
     val goteName: String,
-    val initialCells: Array<Array<Pair<Piece, PieceColor>?>>,
+    val initialCells: List<List<Pair<Piece, PieceColor>?>>,
     val senteMochi: List<Piece>,
     val goteMochi: List<Piece>,
     val isStandardStart: Boolean,
@@ -137,7 +137,7 @@ private data class KifuHeader(
 private fun parseHeader(lines: List<String>): KifuHeader {
     var senteName = "先手"
     var goteName = "後手"
-    var currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
+    val currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
     val senteMochi = mutableListOf<Piece>()
     val goteMochi = mutableListOf<Piece>()
     var isStandardStart = true
@@ -194,12 +194,12 @@ private fun parseHeader(lines: List<String>): KifuHeader {
         }
     }
 
-    if (isStandardStart) currentCells = BoardSnapshot.getInitialCells()
+    val finalCells = if (isStandardStart) BoardSnapshot.getInitialCells() else currentCells.map { it.toList() }
 
     return KifuHeader(
         senteName = senteName,
         goteName = goteName,
-        initialCells = currentCells,
+        initialCells = finalCells,
         senteMochi = senteMochi,
         goteMochi = goteMochi,
         isStandardStart = isStandardStart,

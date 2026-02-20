@@ -1,7 +1,7 @@
 package dev.irof.kfv.models
 
 data class BoardSnapshot(
-    val cells: Array<Array<Pair<Piece, PieceColor>?>>,
+    val cells: List<List<Pair<Piece, PieceColor>?>>,
     val senteMochigoma: List<Piece> = emptyList(),
     val goteMochigoma: List<Piece> = emptyList(),
     val lastMoveText: String = "",
@@ -12,7 +12,7 @@ data class BoardSnapshot(
         /**
          * 標準の平手初期配置を取得します。
          */
-        fun getInitialCells(): Array<Array<Pair<Piece, PieceColor>?>> {
+        fun getInitialCells(): List<List<Pair<Piece, PieceColor>?>> {
             val cells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
             cells[0][0] = Piece.KY to PieceColor.White
             cells[0][1] = Piece.KE to PieceColor.White
@@ -38,7 +38,7 @@ data class BoardSnapshot(
             cells[7][1] = Piece.KA to PieceColor.Black
             cells[7][7] = Piece.HI to PieceColor.Black
             for (i in 0..8) cells[6][i] = Piece.FU to PieceColor.Black
-            return cells
+            return cells.map { it.toList() }
         }
     }
 }

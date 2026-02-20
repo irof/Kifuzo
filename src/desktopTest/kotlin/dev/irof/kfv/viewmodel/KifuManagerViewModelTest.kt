@@ -32,7 +32,7 @@ class KifuManagerViewModelTest {
         parseResultAction = { state ->
             state.updateSession(
                 KifuSession(
-                    history = listOf(BoardSnapshot(Array(9) { arrayOfNulls(9) })),
+                    history = listOf(BoardSnapshot(List(9) { List(9) { null } })),
                     senteName = "先手",
                     goteName = "後手",
                 ),
@@ -50,7 +50,7 @@ class KifuManagerViewModelTest {
         // 3手ある棋譜をセット
         viewModel.boardState.updateSession(
             KifuSession(
-                history = List(4) { BoardSnapshot(Array(9) { arrayOfNulls(9) }) }, // 0, 1, 2, 3手
+                history = List(4) { BoardSnapshot(List(9) { List(9) { null } }) }, // 0, 1, 2, 3手
             ),
         )
         viewModel.boardState.currentStep = 0
