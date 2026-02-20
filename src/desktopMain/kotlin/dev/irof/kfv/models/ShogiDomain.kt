@@ -5,7 +5,6 @@ enum class PieceColor {
     White, // 後手 (△)
     ;
 
-    fun flip(): PieceColor = if (this == Black) White else Black
     fun toSymbol(): String = if (this == Black) "▲" else "△"
 }
 

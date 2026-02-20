@@ -179,10 +179,6 @@ class KifuManagerViewModel(
         }
     }
 
-    fun hideOverwriteConfirm() {
-        updateState { it.copy(showOverwriteConfirm = null) }
-    }
-
     fun confirmOverwrite() {
         uiState.showOverwriteConfirm?.let {
             performCsaConversion(it)
