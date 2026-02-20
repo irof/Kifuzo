@@ -32,19 +32,6 @@ fun getInitialCells(): Array<Array<Pair<Piece, PieceColor>?>> {
     return cells
 }
 
-fun readLinesWithEncoding(file: File): List<String> {
-    return readTextWithEncoding(file).lines()
-}
-
-fun readTextWithEncoding(file: File): String {
-    val bytes = file.readBytes()
-    try {
-        val text = bytes.toString(Charsets.UTF_8)
-        if (!text.contains("\uFFFD")) return text
-    } catch (e: Exception) {}
-    return bytes.toString(Charset.forName("Shift_JIS"))
-}
-
 fun scanKifuInfo(file: File): KifuInfo {
     var sente = ""
     var gote = ""
