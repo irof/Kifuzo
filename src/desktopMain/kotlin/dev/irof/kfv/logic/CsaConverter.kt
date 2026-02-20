@@ -8,6 +8,12 @@ import kotlin.text.Charsets
 
 fun convertCsaToKifu(path: Path) {
     val lines = readLinesWithEncoding(path)
+    val kifLines = convertCsaToKifuLines(lines)
+    val kifuFile = (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
+    java.nio.file.Files.write(kifuFile, kifLines.joinToString("\n", postfix = "\n").toByteArray(Charsets.UTF_8))
+}
+
+fun convertCsaToKifuLines(lines: List<String>): List<String> {
     val kifLines = mutableListOf<String>()
     kifLines.add("# KIF version=2.0 encoding=UTF-8")
 
@@ -83,6 +89,5 @@ fun convertCsaToKifu(path: Path) {
             lastToY = ty
         }
     }
-    val kifuFile = (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
-    java.nio.file.Files.write(kifuFile, kifLines.joinToString("\n", postfix = "\n").toByteArray(Charsets.UTF_8))
+    return kifLines
 }
