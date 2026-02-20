@@ -110,4 +110,90 @@ class KifuParserTest {
         assertEquals(Piece.OU, step0.cells[8][4]?.first, "5九(xIndex=4)の駒 (実際の内容: $row9)")
         assertEquals(PieceColor.Black, step0.cells[8][4]?.second)
     }
+
+    @Test
+    fun testParseKifuWithResultAndComments() {
+        val lines = listOf(
+            "1 ７六歩(77)",
+            "* この手は定跡です",
+            "2 ３四歩(33)",
+            "# ここから中盤です",
+            "3 投了",
+            "& その他付随情報",
+        )
+        val state = ShogiBoardState()
+        parseKifu(lines, state)
+
+        val session = state.session
+        assertEquals(2, session.maxStep, "投了などの特殊行は手数としてカウントされないこと")
+        assertEquals("1 ７六歩(77)", session.history[1].lastMoveText)
+        assertEquals("2 ３四歩(33)", session.history[2].lastMoveText)
+    }
+
+    @Test
+    fun testParseKifuWithVariations() {
+        val lines = listOf(
+            "1 ７六歩(77)",
+            "2 ３四歩(33)",
+            "変化：2手",
+            "2 ８四歩(83)",
+            "3 ２六歩(27)",
+        )
+        val state = ShogiBoardState()
+        parseKifu(lines, state)
+
+        val session = state.session
+        assertEquals(2, session.maxStep, "変化セクションの内容は本譜に含まれないこと")
+        assertEquals("2 ３四歩(33)", session.history[2].lastMoveText)
+    }
+
+    @Test
+    fun testParseKifuPromotionDetails() {
+        val lines = listOf(
+            "1 ７六歩(77)",
+            "2 ３四歩(33)",
+            "3 ２二角成(88)", // 通常の成り
+            "4 ４二銀(31)", // 3一の銀が4二へ
+            "5 ２一馬(22)", // 2二の馬が2一の桂馬を取る
+        )
+        val state = ShogiBoardState()
+        parseKifu(lines, state)
+
+        val session = state.session
+        assertEquals(Piece.UM, session.history[3].cells[1][7]?.first, "2二が馬になっていること")
+        assertEquals(Piece.GI, session.history[4].cells[1][5]?.first, "4二(xIndex=5, yIndex=1)が銀になっていること")
+        assertEquals(Piece.UM, session.history[5].cells[0][7]?.first, "2一が馬になっていること")
+        assertEquals(listOf(Piece.KA, Piece.KE), session.history[5].senteMochigoma, "2二の角と2一の桂馬を取っていること")
+    }
+
+    @Test
+    fun testParseKifuInitialMochigoma() {
+        val lines = listOf(
+            "先手持駒：飛二 角",
+            "後手持駒：金四 銀四",
+            "|・|・|・|・|・|・|・|・|・|一",
+            "|・|・|・|・|・|・|・|・|・|二",
+            "|・|・|・|・|・|・|・|・|・|三",
+            "|・|・|・|・|・|・|・|・|・|四",
+            "|・|・|・|・|・|・|・|・|・|五",
+            "|・|・|・|・|・|・|・|・|・|六",
+            "|・|・|・|・|・|・|・|・|・|七",
+            "|・|・|・|・|・|・|・|・|・|八",
+            "|・|・|・|・|王|・|・|・|・|九",
+            "1 ５八玉(59)",
+        )
+        val state = ShogiBoardState()
+        parseKifu(lines, state)
+
+        val step0 = state.session.history[0]
+        // 飛車2枚、角1枚
+        assertEquals(3, step0.senteMochigoma.size)
+        assertEquals(2, step0.senteMochigoma.count { it == Piece.HI })
+        assertEquals(1, step0.senteMochigoma.count { it == Piece.KA })
+
+        // 金4枚、銀4枚
+        assertEquals(8, step0.goteMochigoma.size)
+        assertEquals(4, step0.goteMochigoma.count { it == Piece.KI })
+        assertEquals(4, step0.goteMochigoma.count { it == Piece.GI })
+    }
 }
