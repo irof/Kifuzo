@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,14 +27,13 @@ import logic.getInitialCells
 import logic.importShogiQuestFiles
 import logic.parseKifu
 import models.AppConfig
+import models.AppSettings
 import models.ShogiBoardState
 import ui.FileEntryItem
 import ui.ShogiBoardView
 import utils.copyToClipboard
 import java.io.File
 import javax.swing.JFileChooser
-import kotlin.math.max
-import kotlin.math.min
 
 fun main() = application {
     Window(
@@ -58,10 +58,31 @@ fun KifuManagerApp() {
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var infoMessage by remember { mutableStateOf<String?>(null) }
     var showOverwriteConfirm by remember { mutableStateOf<File?>(null) }
+    var showSettings by remember { mutableStateOf(false) }
+    var myNameRegex by remember { mutableStateOf(AppSettings.myNameRegex) }
     var isFlipped by remember { mutableStateOf(false) }
     val boardState = remember { ShogiBoardState() }
     val scrollState = rememberScrollState()
     val focusRequester = remember { FocusRequester() }
+
+    // 自動反転ロジック
+    fun updateAutoFlip() {
+        if (myNameRegex.isEmpty()) return
+        val regex = try { Regex(myNameRegex) } catch (e: Exception) { null } ?: return
+        
+        // 後手が自分にマッチし、先手がマッチしない場合は反転
+        if (regex.containsMatchIn(boardState.goteName) && !regex.containsMatchIn(boardState.senteName)) {
+            isFlipped = true
+        } else if (regex.containsMatchIn(boardState.senteName)) {
+            // 先手が自分にマッチする場合は通常表示
+            isFlipped = false
+        }
+    }
+
+    // 名前が変わった時や設定が変わった時に自動反転をチェック
+    LaunchedEffect(boardState.senteName, boardState.goteName, myNameRegex) {
+        updateAutoFlip()
+    }
 
     // 手数を進める/戻す関数
     fun nextStep() {
@@ -169,6 +190,39 @@ fun KifuManagerApp() {
         )
     }
 
+    // 設定ダイアログ
+    if (showSettings) {
+        var tempRegex by remember { mutableStateOf(myNameRegex) }
+        AlertDialog(
+            onDismissRequest = { showSettings = false },
+            title = { Text("設定") },
+            text = {
+                Column {
+                    Text("自分の名前の判定用（正規表現）:")
+                    Spacer(Modifier.height(8.dp))
+                    TextField(
+                        value = tempRegex,
+                        onValueChange = { tempRegex = it },
+                        placeholder = { Text("例: (irof|名無し)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text("※自分が後手の場合、自動的に盤面を反転します。", fontSize = 10.sp, color = Color.Gray)
+                }
+            },
+            buttons = {
+                Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { showSettings = false }) { Text("キャンセル") }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = {
+                        myNameRegex = tempRegex
+                        AppSettings.myNameRegex = tempRegex
+                        showSettings = false
+                    }) { Text("保存") }
+                }
+            }
+        )
+    }
+
     Row(
         modifier = Modifier
             .fillMaxSize()
@@ -190,16 +244,23 @@ fun KifuManagerApp() {
                 IconButton(onClick = { currentDirectory.parentFile?.let { currentDirectory = it } }) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "戻る")
                 }
-                Button(onClick = {
-                    val chooser = JFileChooser().apply {
-                        fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                        selectedFile = currentDirectory
-                    }
-                    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                        currentDirectory = chooser.selectedFile
-                    }
-                }) {
+                Button(
+                    onClick = {
+                        val chooser = JFileChooser().apply {
+                            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                            selectedFile = currentDirectory
+                        }
+                        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                            currentDirectory = chooser.selectedFile
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text("フォルダ選択", fontSize = 11.sp)
+                }
+                Spacer(Modifier.width(4.dp))
+                IconButton(onClick = { showSettings = true }) {
+                    Icon(Icons.Default.Settings, contentDescription = "設定")
                 }
             }
             

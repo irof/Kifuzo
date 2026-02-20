@@ -11,6 +11,15 @@ object AppConfig {
     val QUEST_CSA_DIR = File(KIFU_ROOT, "quest/csa")
 }
 
+object AppSettings {
+    private val prefs = java.util.prefs.Preferences.userNodeForPackage(AppSettings::class.java)
+    private const val KEY_MY_NAME_REGEX = "my_name_regex"
+
+    var myNameRegex: String
+        get() = prefs.get(KEY_MY_NAME_REGEX, "")
+        set(value) = prefs.put(KEY_MY_NAME_REGEX, value)
+}
+
 enum class Piece(val symbol: String) {
     FU("歩"), KY("香"), KE("桂"), GI("銀"), KI("金"), KA("角"), HI("飛"), OU("玉"),
     TO("と"), NY("杏"), NK("圭"), NG("全"), UM("馬"), RY("龍");
