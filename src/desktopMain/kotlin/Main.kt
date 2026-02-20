@@ -192,34 +192,47 @@ fun KifuManagerApp() {
                 .weight(0.6f)
                 .background(Color(0xFFEEEEEE))
                 .verticalScroll(scrollState)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = selectedFile?.name ?: "kifuファイルを選択してください",
-                style = MaterialTheme.typography.h6
+                style = MaterialTheme.typography.subtitle1,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
             
-            // 変換ボタンをファイル名のすぐ下に配置
-            if (selectedFile?.isFile == true && selectedFile!!.extension.lowercase() == "csa") {
+            // ファイル操作ボタン（上部に集約）
+            if (selectedFile?.isFile == true) {
                 Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = { 
-                        convertCsaToKifu(selectedFile!!)
-                        refreshFiles()
-                    },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White)
-                ) {
-                    Text("KIFUに変換して保存", fontSize = 12.sp)
+                Row(horizontalArrangement = Arrangement.Center) {
+                    Button(
+                        onClick = { copyToClipboard(selectedFile!!.readText()) },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
+                    ) {
+                        Text("テキストコピー", fontSize = 10.sp)
+                    }
+                    
+                    if (selectedFile!!.extension.lowercase() == "csa") {
+                        Spacer(Modifier.width(8.dp))
+                        Button(
+                            onClick = { 
+                                convertCsaToKifu(selectedFile!!)
+                                refreshFiles()
+                            },
+                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White)
+                        ) {
+                            Text("KIFUに変換", fontSize = 10.sp)
+                        }
+                    }
                 }
             }
 
             if (boardState.history.isNotEmpty()) {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(8.dp))
                 ShogiBoardView(boardState)
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(8.dp))
                 
                 // 棋譜操作コントロール
                 Text(
@@ -229,48 +242,32 @@ fun KifuManagerApp() {
                 Text(
                     text = boardState.currentBoard?.lastMoveText ?: "",
                     style = MaterialTheme.typography.body2,
-                    modifier = Modifier.height(40.dp) // 高さを固定してガタツキを抑える
+                    modifier = Modifier.height(24.dp) // 高さを抑える
                 )
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Button(onClick = { boardState.currentStep = 0 }) {
+                    Button(onClick = { boardState.currentStep = 0 }, modifier = Modifier.height(32.dp)) {
                         Text("開始", fontSize = 10.sp)
                     }
                     Spacer(Modifier.width(4.dp))
                     if (boardState.firstContactStep != -1) {
-                        Button(onClick = { boardState.currentStep = boardState.firstContactStep }) {
+                        Button(onClick = { boardState.currentStep = boardState.firstContactStep }, modifier = Modifier.height(32.dp)) {
                             Text("衝突", fontSize = 10.sp)
                         }
                         Spacer(Modifier.width(4.dp))
                     }
-                    Button(onClick = { boardState.currentStep = boardState.history.size - 1 }) {
+                    Button(onClick = { boardState.currentStep = boardState.history.size - 1 }, modifier = Modifier.height(32.dp)) {
                         Text("終局", fontSize = 10.sp)
                     }
                 }
                 Slider(
-                    value = boardState.currentStep.toFloat(),
+                    value = boardState.currentStep.toInt().toFloat(),
                     onValueChange = { boardState.currentStep = it.toInt() },
                     valueRange = 0f..(boardState.history.size - 1).toFloat(),
                     steps = if (boardState.history.size > 2) boardState.history.size - 2 else 0,
-                    modifier = Modifier.width(300.dp)
+                    modifier = Modifier.width(280.dp)
                 )
             }
-
-            Spacer(Modifier.height(32.dp))
-            
-            // ファイル操作ボタン（コピーのみ下部に残す）
-            if (selectedFile?.isFile == true) {
-                Button(
-                    onClick = { copyToClipboard(selectedFile!!.readText()) },
-                    modifier = Modifier.padding(bottom = 16.dp)
-                ) {
-                    Text("棋譜テキストをコピー", fontSize = 11.sp)
-                }
-            }
-            
-            // スクロール可能な領域の末尾に十分な余白を確保
-            Spacer(Modifier.height(64.dp))
         }
     }
 }
-
