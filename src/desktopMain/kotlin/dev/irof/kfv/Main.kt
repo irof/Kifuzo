@@ -38,6 +38,9 @@ import dev.irof.kfv.ui.theme.ShogiColors
 import dev.irof.kfv.viewmodel.KifuManagerViewModel
 import dev.irof.kfv.utils.copyToClipboard
 import javax.swing.JFileChooser
+import kotlin.io.path.extension
+import kotlin.io.path.name
+import kotlin.io.path.toPath
 
 fun main() = application {
     val windowState = rememberWindowState(
@@ -104,12 +107,17 @@ fun KifuManagerApp() {
             // 左側：ファイルブラウザ
             Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { viewModel.currentDirectory.parentFile?.let { viewModel.currentDirectory = it } }) {
+                    IconButton(onClick = { viewModel.currentDirectory.parent?.let { viewModel.currentDirectory = it } }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "戻る")
                     }
                     Button(onClick = {
-                        val chooser = JFileChooser().apply { fileSelectionMode = JFileChooser.DIRECTORIES_ONLY; selectedFile = viewModel.currentDirectory }
-                        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) viewModel.currentDirectory = chooser.selectedFile
+                        val chooser = JFileChooser().apply { 
+                            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                            currentDirectory = viewModel.currentDirectory.toFile()
+                        }
+                        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                            viewModel.currentDirectory = chooser.selectedFile.toPath()
+                        }
                     }, modifier = Modifier.weight(1f)) { Text("フォルダ選択", fontSize = 11.sp) }
                     Spacer(Modifier.width(4.dp))
                     IconButton(onClick = { viewModel.showSettings = true }) { Icon(Icons.Default.Settings, contentDescription = "設定") }
@@ -135,11 +143,11 @@ fun KifuManagerApp() {
                 }
 
                 LazyColumn(modifier = Modifier.weight(1f)) {
-                    viewModel.currentDirectory.parentFile?.let { parent ->
-                        item { FileEntryItem(file = parent, isParentLink = true, onNavigate = { viewModel.currentDirectory = it }, onSelect = { viewModel.selectFile(it) }, onShowText = { viewModel.viewingText = readTextWithEncoding(it) }) }
+                    viewModel.currentDirectory.parent?.let { parent ->
+                        item { FileEntryItem(path = parent, isParentLink = true, onNavigate = { viewModel.currentDirectory = it }, onSelect = { viewModel.selectFile(it) }, onShowText = { viewModel.viewingText = readTextWithEncoding(it) }) }
                     }
-                    items(viewModel.filteredContents) { file ->
-                        FileEntryItem(file = file, isSelected = (file == viewModel.selectedFile), onNavigate = { viewModel.currentDirectory = it }, onSelect = { viewModel.selectFile(it) }, onShowText = { viewModel.viewingText = readTextWithEncoding(it) })
+                    items(viewModel.filteredContents) { path ->
+                        FileEntryItem(path = path, isSelected = (path == viewModel.selectedFile), onNavigate = { viewModel.currentDirectory = it }, onSelect = { viewModel.selectFile(it) }, onShowText = { viewModel.viewingText = readTextWithEncoding(it) })
                     }
                 }
             }
@@ -152,8 +160,8 @@ fun KifuManagerApp() {
                 Spacer(Modifier.height(8.dp))
                 Text(text = viewModel.selectedFile?.name ?: "kifuファイルを選択してください", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
                 
-                if (viewModel.selectedFile?.isFile == true) {
-                    val ext = viewModel.selectedFile!!.extension.lowercase()
+                viewModel.selectedFile?.let { selected ->
+                    val ext = selected.extension.lowercase()
                     val isKifuFile = ext == "kifu" || ext == "kif"
                     val hasHistory = viewModel.boardState.history.isNotEmpty()
 
@@ -164,7 +172,7 @@ fun KifuManagerApp() {
                                 OutlinedButton(onClick = { viewModel.isFlipped = !viewModel.isFlipped }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (viewModel.isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
                                 
                                 if (isKifuFile) {
-                                    val existingSenkei = viewModel.kifuInfos[viewModel.selectedFile]?.senkei
+                                    val existingSenkei = viewModel.kifuInfos[selected]?.senkei
                                     Spacer(Modifier.width(8.dp))
                                     
                                     if (!existingSenkei.isNullOrEmpty()) {
@@ -172,7 +180,7 @@ fun KifuManagerApp() {
                                             Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                             Spacer(Modifier.width(4.dp))
                                             IconButton(
-                                                onClick = { viewModel.detectAndWriteSenkei(viewModel.selectedFile!!) },
+                                                onClick = { viewModel.detectAndWriteSenkei(selected) },
                                                 modifier = Modifier.size(18.dp)
                                             ) {
                                                 Icon(Icons.Default.Refresh, contentDescription = "再判定", tint = ShogiColors.Info)
@@ -180,7 +188,7 @@ fun KifuManagerApp() {
                                         }
                                     } else {
                                         Button(
-                                            onClick = { viewModel.detectAndWriteSenkei(viewModel.selectedFile!!) },
+                                            onClick = { viewModel.detectAndWriteSenkei(selected) },
                                             colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Info, contentColor = Color.White),
                                             modifier = Modifier.height(32.dp)
                                         ) { Text("戦型判定", fontSize = 10.sp) }
@@ -191,7 +199,7 @@ fun KifuManagerApp() {
                             if (ext == "csa") {
                                 if (hasHistory) Spacer(Modifier.width(8.dp))
                                 Button(
-                                    onClick = { viewModel.convertCsa(viewModel.selectedFile!!) }, 
+                                    onClick = { viewModel.convertCsa(selected) }, 
                                     colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Success, contentColor = Color.White), 
                                     modifier = Modifier.height(32.dp)
                                 ) { Text("KIFUに変換", fontSize = 10.sp) }
@@ -243,7 +251,7 @@ fun KifuManagerApp() {
 
         if (viewModel.showOverwriteConfirm != null) {
             OverwriteConfirmDialog(
-                file = viewModel.showOverwriteConfirm!!,
+                file = viewModel.showOverwriteConfirm!!.toFile(),
                 onDismiss = { viewModel.showOverwriteConfirm = null },
                 onConfirm = { viewModel.confirmOverwrite() }
             )

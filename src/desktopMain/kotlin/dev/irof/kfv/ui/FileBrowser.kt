@@ -15,22 +15,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FileEntryItem(
-    file: File,
+    path: Path,
     isParentLink: Boolean = false,
     isSelected: Boolean = false,
-    onNavigate: (File) -> Unit,
-    onSelect: (File) -> Unit,
-    onShowText: (File) -> Unit
+    onNavigate: (Path) -> Unit,
+    onSelect: (Path) -> Unit,
+    onShowText: (Path) -> Unit
 ) {
-    val isDirectory = file.isDirectory || isParentLink
+    val isDirectory = path.isDirectory() || isParentLink
     ContextMenuArea(items = {
-        if (!isDirectory && file.isFile) {
-            listOf(ContextMenuItem("テキストを表示") { onShowText(file) })
+        if (!isDirectory && !isParentLink) {
+            listOf(ContextMenuItem("テキストを表示") { onShowText(path) })
         } else emptyList()
     }) {
         Row(
@@ -38,11 +40,11 @@ fun FileEntryItem(
                 .fillMaxWidth()
                 .padding(vertical = 1.dp)
                 .background(if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent)
-                .combinedClickable(onClick = { if (!isDirectory) onSelect(file) }, onDoubleClick = { onNavigate(file) })
+                .combinedClickable(onClick = { if (!isDirectory) onSelect(path) }, onDoubleClick = { onNavigate(path) })
                 .padding(6.dp)
         ) {
             Text(
-                text = if (isParentLink) ".." else file.name + if (file.isDirectory) "/" else "",
+                text = if (isParentLink) ".." else path.name + if (path.isDirectory()) "/" else "",
                 fontSize = 13.sp,
                 color = if (isDirectory) Color.Blue else Color.Black,
                 lineHeight = 16.sp,

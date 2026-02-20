@@ -1,12 +1,13 @@
 package dev.irof.kfv.logic
 
 import dev.irof.kfv.logic.readLinesWithEncoding
-import java.io.File
-import kotlin.text.Charsets
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.nameWithoutExtension
+import kotlin.text.Charsets
 
-fun convertCsaToKifu(csaFile: File) {
-    val lines = readLinesWithEncoding(csaFile)
+fun convertCsaToKifu(path: Path) {
+    val lines = readLinesWithEncoding(path)
     val kifLines = mutableListOf<String>()
     kifLines.add("# KIF version=2.0 encoding=UTF-8")
     
@@ -50,14 +51,8 @@ fun convertCsaToKifu(csaFile: File) {
             val fx = line[1] - '0'; val fy = line[2] - '0'; val tx = line[3] - '0'; val ty = line[4] - '0'
             val pieceCsa = line.substring(5, 7)
             val isPromote = line.endsWith("+")
-            
             val basePieceName = pieceMap[pieceCsa] ?: pieceCsa
-            val pieceKif = if (isPromote && !listOf("TO", "NY", "NK", "NG", "UM", "RY").contains(pieceCsa)) {
-                "${basePieceName}成"
-            } else {
-                basePieceName
-            }
-            
+            val pieceKif = if (isPromote && !listOf("TO", "NY", "NK", "NG", "UM", "RY").contains(pieceCsa)) "${basePieceName}成" else basePieceName
             val toPosStr = if (tx == lastToX && ty == lastToY) "同　" else "${fullWidthDigits[tx-1]}${kanjiDigits[ty-1]}"
             val fromStr = if (fx == 0) "打" else "($fx$fy)"
             
@@ -75,6 +70,6 @@ fun convertCsaToKifu(csaFile: File) {
             lastToX = tx; lastToY = ty
         }
     }
-    val kifuFile = File(csaFile.parent, csaFile.nameWithoutExtension + ".kifu")
-    kifuFile.writeText(kifLines.joinToString("\n", postfix = "\n"), Charsets.UTF_8)
+    val kifuFile = (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
+    java.nio.file.Files.write(kifuFile, kifLines.joinToString("\n", postfix = "\n").toByteArray(Charsets.UTF_8))
 }

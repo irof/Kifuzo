@@ -1,21 +1,21 @@
 package dev.irof.kfv.logic
 
 import dev.irof.kfv.models.AppConfig
-import java.io.File
+import java.nio.file.Path
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.io.path.*
 
 /**
  * Downloadsフォルダから特定のテキストファイルを検出し、
  * 棋譜の内容に基づいて適切なフォルダへリネームして移動します。
  */
 fun importShogiQuestFiles(): Int {
-    val downloadsDir = File(AppConfig.USER_HOME, "Downloads")
+    val downloadsDir = AppConfig.USER_HOME_PATH / "Downloads"
+    if (!downloadsDir.exists()) return 0
     
-    val txtFiles = downloadsDir.listFiles { file ->
-        file.isFile && file.extension.lowercase() == "txt"
-    } ?: return 0
+    val txtFiles = downloadsDir.listDirectoryEntries("*.txt").filter { it.isRegularFile() }
     
     var count = 0
     val dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
@@ -44,15 +44,15 @@ fun importShogiQuestFiles(): Int {
                 }
             }
             
-            val dateStr = dateFormatter.format(Instant.ofEpochMilli(file.lastModified()))
+            val dateStr = dateFormatter.format(file.getLastModifiedTime().toInstant())
             val targetDir = if (isQuest) AppConfig.QUEST_CSA_DIR else AppConfig.KIFU_ROOT
-            if (!targetDir.exists()) targetDir.mkdirs()
+            if (!targetDir.exists()) targetDir.createDirectories()
             
             val newFileName = "csa-$dateStr-$sente-$gote.csa"
-            val targetFile = File(targetDir, newFileName)
+            val targetFile = targetDir / newFileName
             
             file.copyTo(targetFile, overwrite = true)
-            file.delete()
+            file.deleteExisting()
             count++
         } catch (e: Exception) {
             println("Failed to import ${file.name}: ${e.message}")
