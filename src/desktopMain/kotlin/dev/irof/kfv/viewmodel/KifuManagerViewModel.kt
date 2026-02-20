@@ -135,13 +135,14 @@ class KifuManagerViewModel(
         updateAutoFlip()
     }
 
-    fun importFiles() {
-        val count = repository.importQuestFiles()
+    fun importFiles(sourceDir: Path) {
+        val count = repository.importQuestFiles(sourceDir)
+        AppSettings.importSourceDir = sourceDir.toString()
         if (count > 0) {
             infoMessage = "${count}件の棋譜をインポートしました。"
             refreshFiles()
         } else {
-            infoMessage = "Downloadsフォルダに該当する棋譜が見つかりませんでした。"
+            infoMessage = "指定されたフォルダに該当する棋譜が見つかりませんでした。"
         }
     }
 

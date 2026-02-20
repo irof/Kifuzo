@@ -28,7 +28,7 @@ class KifuRepository {
         updateKifuSenkei(path, senkei)
     }
 
-    fun importQuestFiles(): Int = importShogiQuestFiles()
+    fun importQuestFiles(sourceDir: Path): Int = importShogiQuestFiles(sourceDir)
 }
 
 /**

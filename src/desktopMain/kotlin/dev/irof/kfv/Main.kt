@@ -1,5 +1,4 @@
-package dev.irof.kfv
-
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.background
@@ -7,12 +6,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
@@ -26,6 +25,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -113,44 +113,63 @@ fun KifuManagerApp() {
         ) {
             // 左側：ファイルブラウザ
             Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
+                // ルートフォルダ表示と変更
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            val chooser = JFileChooser().apply { 
+                                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                                currentDirectory = viewModel.currentRootDirectory.toFile()
+                            }
+                            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                                viewModel.currentRootDirectory = chooser.selectedFile.toPath()
+                            }
+                        },
+                    elevation = 0.dp,
+                    backgroundColor = Color.White,
+                    border = BorderStroke(1.dp, Color.LightGray)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Menu, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = viewModel.currentRootDirectory.toString(),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TooltipArea(
                             tooltip = {
-                                Surface(
-                                    modifier = Modifier.shadow(4.dp),
-                                    color = Color(0xFF333333),
-                                    shape = MaterialTheme.shapes.small
-                                ) {
-                                    Text("フォルダ選択", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
-                                }
-                            }
-                        ) {
-                            IconButton(onClick = {
-                                val chooser = JFileChooser().apply { 
-                                    fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                                    currentDirectory = viewModel.currentRootDirectory.toFile()
-                                }
-                                if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                                    viewModel.currentRootDirectory = chooser.selectedFile.toPath()
-                                }
-                            }) {
-                                Icon(Icons.Default.Home, contentDescription = "フォルダ選択", tint = ShogiColors.Primary)
-                            }
-                        }
-                        
-                        TooltipArea(
-                            tooltip = {
-                                Surface(
-                                    modifier = Modifier.shadow(4.dp),
-                                    color = Color(0xFF333333),
-                                    shape = MaterialTheme.shapes.small
-                                ) {
+                                Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
                                     Text("棋譜をインポート", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
                                 }
                             }
                         ) {
-                            IconButton(onClick = { viewModel.importFiles() }) {
+                            IconButton(onClick = {
+                                val savedDir = AppSettings.importSourceDir
+                                val chooser = JFileChooser().apply { 
+                                    fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                                    if (savedDir.isNotEmpty()) {
+                                        val f = java.io.File(savedDir)
+                                        if (f.exists()) currentDirectory = f
+                                    }
+                                }
+                                if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                                    viewModel.importFiles(chooser.selectedFile.toPath())
+                                }
+                            }) {
                                 Icon(Icons.Default.Add, contentDescription = "インポート", tint = ShogiColors.Primary)
                             }
                         }
@@ -158,11 +177,7 @@ fun KifuManagerApp() {
                     
                     TooltipArea(
                         tooltip = {
-                            Surface(
-                                modifier = Modifier.shadow(4.dp),
-                                color = Color(0xFF333333),
-                                shape = MaterialTheme.shapes.small
-                            ) {
+                            Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
                                 Text("設定", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
                             }
                         }
@@ -189,14 +204,8 @@ fun KifuManagerApp() {
                     Divider()
                 }
 
-                // ファイルツリーのスクロール領域（横スクロール対応）
                 val treeHorizontalScroll = rememberScrollState()
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .horizontalScroll(treeHorizontalScroll)
-                ) {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth().horizontalScroll(treeHorizontalScroll)) {
                     LazyColumn(modifier = Modifier.fillMaxHeight()) {
                         items(viewModel.filteredNodes) { node ->
                             FileTreeItem(

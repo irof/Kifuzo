@@ -28,6 +28,11 @@ object AppSettings {
         get() = prefs.getFloat(KEY_WINDOW_HEIGHT, 750f)
         set(value) = prefs.putFloat(KEY_WINDOW_HEIGHT, value)
 
+    private const val KEY_IMPORT_SOURCE_DIR = "import_source_dir"
+    var importSourceDir: String
+        get() = prefs.get(KEY_IMPORT_SOURCE_DIR, "")
+        set(value) = prefs.put(KEY_IMPORT_SOURCE_DIR, value)
+
     fun getAllSettings(): Map<String, String> {
         val map = mutableMapOf<String, String>()
         prefs.keys().forEach { key -> map[key] = prefs.get(key, "") }

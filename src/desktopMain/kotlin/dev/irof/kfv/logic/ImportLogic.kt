@@ -1,20 +1,19 @@
 package dev.irof.kfv.logic
 
 import dev.irof.kfv.models.AppConfig
+import java.nio.file.Path
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.io.path.*
 
 /**
- * Downloadsフォルダから特定のテキストファイルを検出し、
+ * 指定されたフォルダから特定のテキストファイルを検出し、
  * 棋譜の内容に基づいて適切なフォルダへリネームして移動します。
  */
-fun importShogiQuestFiles(): Int {
-    val downloadsDir = AppConfig.USER_HOME_PATH / "Downloads"
-    if (!downloadsDir.exists()) return 0
-
-    val txtFiles = downloadsDir.listDirectoryEntries("*.txt").filter { it.isRegularFile() }
-
+fun importShogiQuestFiles(sourceDir: Path): Int {
+    if (!sourceDir.exists()) return 0
+    
+    val txtFiles = sourceDir.listDirectoryEntries("*.txt").filter { it.isRegularFile() }
     var count = 0
     val dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
         .withZone(ZoneId.systemDefault())
