@@ -15,6 +15,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import logic.convertCsaToKifu
 import logic.getInitialCells
+import logic.importShogiQuestFiles
 import logic.parseKifu
 import models.ShogiBoardState
 import ui.FileEntryItem
@@ -46,12 +47,13 @@ fun KifuManagerApp() {
     var directoryContents by remember { mutableStateOf(listOf<File>()) }
     var selectedFile by remember { mutableStateOf<File?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var infoMessage by remember { mutableStateOf<String?>(null) }
     val boardState = remember { ShogiBoardState() }
 
     // ディレクトリ内容の更新
     fun refreshFiles() {
         val contents = currentDirectory.listFiles { file ->
-            file.isDirectory || (file.isFile && file.extension.lowercase() in listOf("kif", "kifu", "kifz", "csa", "jkf"))
+            file.isDirectory || (file.isFile && file.extension.lowercase() in listOf("kif", "kifu", "kifz", "csa", "jkf", "txt"))
         }?.toList() ?: emptyList()
         directoryContents = contents.sortedWith(compareBy({ !it.isDirectory }, { it.name.lowercase() }))
     }
@@ -100,6 +102,20 @@ fun KifuManagerApp() {
         )
     }
 
+    // 情報ダイアログ（インポート完了通知など）
+    if (infoMessage != null) {
+        AlertDialog(
+            onDismissRequest = { infoMessage = null },
+            title = { Text("通知") },
+            text = { Text(infoMessage!!) },
+            buttons = {
+                Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.CenterEnd) {
+                    Button(onClick = { infoMessage = null }) { Text("OK") }
+                }
+            }
+        )
+    }
+
     Row(modifier = Modifier.fillMaxSize()) {
         // 左側：ファイルブラウザ
         Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
@@ -119,7 +135,28 @@ fun KifuManagerApp() {
                     Text("フォルダ選択", fontSize = 11.sp)
                 }
             }
+            
             Spacer(Modifier.height(8.dp))
+            
+            // クエスト棋譜インポートボタン
+            Button(
+                onClick = {
+                    val count = importShogiQuestFiles()
+                    if (count > 0) {
+                        infoMessage = "${count}件のクエスト棋譜をインポートしました。"
+                        refreshFiles()
+                    } else {
+                        infoMessage = "Downloadsフォルダにクエスト棋譜が見つかりませんでした。"
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF6200EE), contentColor = Color.White)
+            ) {
+                Text("クエスト棋譜をインポート", fontSize = 11.sp)
+            }
+            
+            Spacer(Modifier.height(8.dp))
+            
             LazyColumn(modifier = Modifier.weight(1f)) {
                 currentDirectory.parentFile?.let { parent ->
                     item {
@@ -150,13 +187,29 @@ fun KifuManagerApp() {
                 .background(Color(0xFFEEEEEE))
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
+            Spacer(Modifier.height(16.dp))
             Text(
                 text = selectedFile?.name ?: "kifuファイルを選択してください",
                 style = MaterialTheme.typography.h6
             )
-            Spacer(Modifier.height(8.dp))
+            
+            // 変換ボタンをファイル名のすぐ下に配置
+            if (selectedFile?.isFile == true && selectedFile!!.extension.lowercase() == "csa") {
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = { 
+                        convertCsaToKifu(selectedFile!!)
+                        refreshFiles()
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White)
+                ) {
+                    Text("KIFUに変換して保存", fontSize = 12.sp)
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
             
             ShogiBoardView(boardState)
             
@@ -170,7 +223,8 @@ fun KifuManagerApp() {
                 )
                 Text(
                     text = boardState.currentBoard?.lastMoveText ?: "",
-                    style = MaterialTheme.typography.body2
+                    style = MaterialTheme.typography.body2,
+                    modifier = Modifier.height(40.dp) // 高さを固定してガタツキを抑える
                 )
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -197,25 +251,15 @@ fun KifuManagerApp() {
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.weight(1f)) // 下部の余白を埋める
             
-            // ファイル操作ボタン
+            // ファイル操作ボタン（コピーのみ下部に残す）
             if (selectedFile?.isFile == true) {
-                Row {
-                    Button(onClick = { copyToClipboard(selectedFile!!.readText()) }) {
-                        Text("内容をコピー", fontSize = 11.sp)
-                    }
-                    if (selectedFile!!.extension.lowercase() == "csa") {
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { 
-                            convertCsaToKifu(selectedFile!!)
-                            refreshFiles()
-                        }) {
-                            Text("KIFUに変換", fontSize = 11.sp)
-                        }
-                    }
+                Button(onClick = { copyToClipboard(selectedFile!!.readText()) }) {
+                    Text("棋譜テキストをコピー", fontSize = 11.sp)
                 }
             }
         }
     }
 }
+
