@@ -26,9 +26,11 @@ import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import logic.KifuInfo
 import logic.convertCsaToKifu
+import logic.detectSenkei
 import logic.importShogiQuestFiles
 import logic.parseKifu
 import logic.scanKifuInfo
+import logic.updateKifuSenkei
 import models.AppConfig
 import models.AppSettings
 import models.ShogiBoardState
@@ -295,7 +297,27 @@ fun KifuManagerApp() {
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                     OutlinedButton(onClick = { isFlipped = !isFlipped }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
-                    if (selectedFile!!.extension.lowercase() == "csa") {
+                    
+                    val ext = selectedFile!!.extension.lowercase()
+                    if (ext == "kifu" || ext == "kif") {
+                        Spacer(Modifier.width(8.dp))
+                        Button(
+                            onClick = { 
+                                val senkei = detectSenkei(boardState.history)
+                                if (senkei.isNotEmpty()) {
+                                    updateKifuSenkei(selectedFile!!, senkei)
+                                    refreshFiles()
+                                    infoMessage = "戦型を「$senkei」として追記しました。"
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2196F3), contentColor = Color.White),
+                            modifier = Modifier.height(32.dp)
+                        ) {
+                            Text("戦型判定", fontSize = 10.sp)
+                        }
+                    }
+
+                    if (ext == "csa") {
                         Spacer(Modifier.width(8.dp))
                         Button(onClick = { 
                             val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")

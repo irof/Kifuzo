@@ -140,3 +140,37 @@ fun parseKifu(file: File, state: ShogiBoardState) {
     }
     state.currentStep = if (state.firstContactStep != -1) state.firstContactStep else state.history.size - 1
 }
+
+/**
+ * 棋譜ファイルに戦型情報を追記・更新します。
+ */
+fun updateKifuSenkei(file: File, senkei: String) {
+    if (senkei.isEmpty()) return
+    
+    val lines = readLinesWithEncoding(file).toMutableList()
+    var senkeiLineIndex = -1
+    var headerEndIndex = 0
+    
+    for (i in lines.indices) {
+        val line = lines[i].trim()
+        if (line.startsWith("戦型：")) {
+            senkeiLineIndex = i
+            break
+        }
+        // 指し手が始まったらそこがヘッダーの終わり
+        if (Regex("""^\s*\d+\s+.*""").matches(line)) {
+            headerEndIndex = i
+            break
+        }
+    }
+    
+    if (senkeiLineIndex != -1) {
+        lines[senkeiLineIndex] = "戦型：$senkei"
+    } else {
+        // ヘッダーの終わりの直前に挿入
+        lines.add(headerEndIndex, "戦型：$senkei")
+    }
+    
+    // 保存（元のエンコーディングを尊重したいが、基本UTF-8で保存）
+    file.writeText(lines.joinToString("\n"), Charsets.UTF_8)
+}
