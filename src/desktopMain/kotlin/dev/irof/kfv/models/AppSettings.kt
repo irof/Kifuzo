@@ -33,6 +33,11 @@ object AppSettings {
         get() = prefs.get(KEY_IMPORT_SOURCE_DIR, "")
         set(value) = prefs.put(KEY_IMPORT_SOURCE_DIR, value)
 
+    private const val KEY_LAST_ROOT_DIR = "last_root_dir"
+    var lastRootDir: String
+        get() = prefs.get(KEY_LAST_ROOT_DIR, "")
+        set(value) = prefs.put(KEY_LAST_ROOT_DIR, value)
+
     fun getAllSettings(): Map<String, String> {
         val map = mutableMapOf<String, String>()
         prefs.keys().forEach { key -> map[key] = prefs.get(key, "") }

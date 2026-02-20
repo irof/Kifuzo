@@ -18,7 +18,16 @@ class KifuManagerViewModel(
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    var currentRootDirectory by mutableStateOf(if (java.nio.file.Files.exists(AppConfig.KIFU_ROOT)) AppConfig.KIFU_ROOT else AppConfig.USER_HOME_PATH)
+    var currentRootDirectory by mutableStateOf(
+        AppSettings.lastRootDir.let {
+            if (it.isNotEmpty()) {
+                val path = java.nio.file.Paths.get(it)
+                if (java.nio.file.Files.exists(path)) path else AppConfig.USER_HOME_PATH
+            } else {
+                AppConfig.USER_HOME_PATH
+            }
+        },
+    )
         private set
 
     var uiState by mutableStateOf(KifuManagerUiState(myNameRegex = AppSettings.myNameRegex))
@@ -93,6 +102,7 @@ class KifuManagerViewModel(
 
     fun setRootDirectory(path: Path) {
         currentRootDirectory = path
+        AppSettings.lastRootDir = path.toString()
         updateState { it.copy(selectedSenkei = null, treeNodes = emptyList()) } // ルート変更時は展開状態をクリア
         refreshFiles()
     }

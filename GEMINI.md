@@ -11,6 +11,7 @@ KifuManager is a macOS GUI application built with **Compose Multiplatform** and 
 ## Key Features
 
 - **File Browser:** A dual-pane interface with a file navigator on the left and a preview/board view on the right. Supports directory navigation (double-click to enter, `..` to go back).
+    - Remembers the last opened root directory across application restarts.
 - **Board Display:** Renders a 9x9 Shogi board showing the **final state** (endgame) of a `.kifu` record.
     - Supports piece rotation (opponent pieces face down).
     - Highlights sente (black) and gote (red) pieces.
