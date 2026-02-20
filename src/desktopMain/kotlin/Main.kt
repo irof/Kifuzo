@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -198,18 +199,43 @@ fun KifuManagerApp() {
                                 if (hasHistory || ext == "csa") {
                                     Spacer(Modifier.height(8.dp))
                                     Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                                        if (hasHistory) {
-                                            OutlinedButton(onClick = { isFlipped = !isFlipped }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
-                                            
-                                            if (isKifuFile) {
-                                                Spacer(Modifier.width(8.dp))
-                                                Button(onClick = { 
-                                                    val senkei = detectSenkei(boardState.history)
-                                                    if (senkei.isNotEmpty()) { updateKifuSenkei(selectedFile!!, senkei); refreshFiles(); infoMessage = "戦型を「$senkei」として追記しました。" }
-                                                }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2196F3), contentColor = Color.White), modifier = Modifier.height(32.dp)) { Text("戦型判定", fontSize = 10.sp) }
-                                            }
-                                        }
-                
+                                                                if (hasHistory) {
+                                                                    OutlinedButton(onClick = { isFlipped = !isFlipped }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
+                                                                    
+                                                                    if (isKifuFile) {
+                                                                        val existingSenkei = kifuInfos[selectedFile]?.senkei
+                                                                        Spacer(Modifier.width(8.dp))
+                                                                        
+                                                                        if (!existingSenkei.isNullOrEmpty()) {
+                                                                            // 戦型が表示されている場合
+                                                                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
+                                                                                Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                                                                Spacer(Modifier.width(4.dp))
+                                                                                IconButton(
+                                                                                    onClick = { 
+                                                                                        val senkei = detectSenkei(boardState.history)
+                                                                                        if (senkei.isNotEmpty()) { updateKifuSenkei(selectedFile!!, senkei); refreshFiles(); infoMessage = "戦型を「$senkei」として更新しました。" }
+                                                                                    },
+                                                                                    modifier = Modifier.size(18.dp)
+                                                                                ) {
+                                                                                    Icon(Icons.Default.Refresh, contentDescription = "再判定", tint = Color(0xFF2196F3))
+                                                                                }
+                                                                            }
+                                                                        } else {
+                                                                            // 戦型が未設定の場合
+                                                                            Button(
+                                                                                onClick = { 
+                                                                                    val senkei = detectSenkei(boardState.history)
+                                                                                    if (senkei.isNotEmpty()) { updateKifuSenkei(selectedFile!!, senkei); refreshFiles(); infoMessage = "戦型を「$senkei」として追記しました。" }
+                                                                                },
+                                                                                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2196F3), contentColor = Color.White),
+                                                                                modifier = Modifier.height(32.dp)
+                                                                            ) {
+                                                                                Text("戦型判定", fontSize = 10.sp)
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }                
                                         if (ext == "csa") {
                                             if (hasHistory) Spacer(Modifier.width(8.dp))
                                             Button(onClick = { 
