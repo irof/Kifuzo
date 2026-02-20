@@ -8,7 +8,6 @@ import dev.irof.kfv.models.*
 import kotlinx.coroutines.*
 import java.nio.file.Path
 import kotlin.io.path.extension
-import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
@@ -17,6 +16,7 @@ class KifuManagerViewModel(
     private val repository: KifuRepository = KifuRepositoryImpl(),
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val fileTreeManager = FileTreeManager(repository)
 
     var currentRootDirectory by mutableStateOf<Path?>(
         AppSettings.lastRootDir.let {
@@ -67,24 +67,7 @@ class KifuManagerViewModel(
      */
     fun refreshFiles() {
         val root = currentRootDirectory ?: return
-        val expandedPaths = uiState.treeNodes.filter { it.isExpanded }.map { it.path }.toSet()
-        val newNodes = mutableListOf<FileTreeNode>()
-
-        fun buildTree(dir: Path, level: Int) {
-            val contents = repository.scanDirectory(dir)
-            contents.forEach { path ->
-                val isDir = path.isDirectory()
-                val isExpanded = expandedPaths.contains(path)
-                val node = FileTreeNode(path, level, isDir, isExpanded)
-                newNodes.add(node)
-
-                if (isDir && isExpanded) {
-                    buildTree(path, level + 1)
-                }
-            }
-        }
-
-        buildTree(root, 0)
+        val newNodes = fileTreeManager.buildTree(root, uiState.treeNodes)
         updateState { it.copy(treeNodes = newNodes) }
 
         // 戦型情報のスキャン（サブディレクトリも含めて最新にする）
@@ -109,26 +92,7 @@ class KifuManagerViewModel(
     }
 
     private fun toggleDirectory(node: FileTreeNode) {
-        if (!node.isDirectory) return
-
-        val newNodes = uiState.treeNodes.toMutableList()
-        val index = newNodes.indexOfFirst { it.path == node.path }
-        if (index == -1) return
-
-        if (node.isExpanded) {
-            // 閉じる
-            newNodes[index] = node.copy(isExpanded = false)
-            var i = index + 1
-            while (i < newNodes.size && newNodes[i].level > node.level) {
-                newNodes.removeAt(i)
-            }
-        } else {
-            // 展開
-            newNodes[index] = node.copy(isExpanded = true)
-            val children = repository.scanDirectory(node.path)
-            val childNodes = children.map { FileTreeNode(it, node.level + 1, it.isDirectory()) }
-            newNodes.addAll(index + 1, childNodes)
-        }
+        val newNodes = fileTreeManager.toggleNode(node, uiState.treeNodes)
         updateState { it.copy(treeNodes = newNodes) }
     }
 
