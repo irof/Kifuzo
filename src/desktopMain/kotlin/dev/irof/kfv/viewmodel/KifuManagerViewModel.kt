@@ -69,7 +69,7 @@ class KifuManagerViewModel(
         }
     }
 
-    private fun setRootDirectory(path: Path) {
+    fun setRootDirectory(path: Path) {
         currentRootDirectory = path
         updateState { it.copy(selectedSenkei = null) }
         refreshFiles()
@@ -131,7 +131,7 @@ class KifuManagerViewModel(
     }
 
     private fun importFiles(sourceDir: Path) {
-        val count = repository.importQuestFiles(sourceDir)
+        val count = repository.importQuestFiles(sourceDir, currentRootDirectory)
         AppSettings.importSourceDir = sourceDir.toString()
         if (count > 0) {
             updateState { it.copy(infoMessage = "${count}件の棋譜をインポートしました。") }
