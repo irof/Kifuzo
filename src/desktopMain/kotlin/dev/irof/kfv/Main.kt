@@ -83,17 +83,13 @@ fun KifuManagerApp() {
     val viewModel = remember { KifuManagerViewModel() }
     val focusRequester = remember { FocusRequester() }
     val scrollState = rememberScrollState()
+    val state = viewModel.uiState
 
     fun nextStep() { viewModel.boardState.currentStep++ }
     fun prevStep() { viewModel.boardState.currentStep-- }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
-        viewModel.refreshFiles()
-    }
-    
-    LaunchedEffect(viewModel.currentRootDirectory) {
-        viewModel.selectedSenkei = null
         viewModel.refreshFiles()
     }
 
@@ -149,7 +145,7 @@ fun KifuManagerApp() {
                             }
                         }
                     ) {
-                        IconButton(onClick = { viewModel.showSettings = true }) {
+                        IconButton(onClick = { viewModel.showSettings(true) }) {
                             Icon(Icons.Default.Settings, contentDescription = "設定", tint = Color.Gray)
                         }
                     }
@@ -166,7 +162,7 @@ fun KifuManagerApp() {
                                 currentDirectory = viewModel.currentRootDirectory.toFile()
                             }
                             if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                                viewModel.currentRootDirectory = chooser.selectedFile.toPath()
+                                viewModel.setRootDirectory(chooser.selectedFile.toPath())
                             }
                         },
                     elevation = 0.dp,
@@ -191,14 +187,14 @@ fun KifuManagerApp() {
 
                 Spacer(Modifier.height(8.dp))
                 
-                if (viewModel.availableSenkei.isNotEmpty() || viewModel.isScanning) {
-                    if (viewModel.isScanning) {
+                if (state.availableSenkei.isNotEmpty() || state.isScanning) {
+                    if (state.isScanning) {
                         LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
                     }
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).horizontalScroll(rememberScrollState())) {
-                        TextButton(onClick = { viewModel.selectedSenkei = null }, colors = ButtonDefaults.textButtonColors(contentColor = if (viewModel.selectedSenkei == null) Color.Blue else Color.Gray)) { Text("すべて", fontSize = 10.sp) }
-                        viewModel.availableSenkei.forEach { senkei ->
-                            TextButton(onClick = { viewModel.selectedSenkei = senkei }, colors = ButtonDefaults.textButtonColors(contentColor = if (viewModel.selectedSenkei == senkei) Color.Blue else Color.Gray)) { Text(senkei, fontSize = 10.sp) }
+                        TextButton(onClick = { viewModel.setSelectedSenkei(null) }, colors = ButtonDefaults.textButtonColors(contentColor = if (state.selectedSenkei == null) Color.Blue else Color.Gray)) { Text("すべて", fontSize = 10.sp) }
+                        state.availableSenkei.forEach { senkei ->
+                            TextButton(onClick = { viewModel.setSelectedSenkei(senkei) }, colors = ButtonDefaults.textButtonColors(contentColor = if (state.selectedSenkei == senkei) Color.Blue else Color.Gray)) { Text(senkei, fontSize = 10.sp) }
                         }
                     }
                     Divider()
@@ -207,13 +203,13 @@ fun KifuManagerApp() {
                 val treeHorizontalScroll = rememberScrollState()
                 Box(modifier = Modifier.weight(1f).fillMaxWidth().horizontalScroll(treeHorizontalScroll)) {
                     LazyColumn(modifier = Modifier.fillMaxHeight()) {
-                        items(viewModel.filteredNodes) { node ->
+                        items(state.filteredNodes) { node ->
                             FileTreeItem(
                                 node = node, 
-                                isSelected = (node.path == viewModel.selectedFile), 
+                                isSelected = (node.path == state.selectedFile), 
                                 onToggle = { viewModel.toggleDirectory(it) },
                                 onSelect = { viewModel.selectFile(it) }, 
-                                onShowText = { viewModel.viewingText = readTextWithEncoding(it) }
+                                onShowText = { viewModel.setViewingText(readTextWithEncoding(it)) }
                             )
                         }
                     }
@@ -226,9 +222,9 @@ fun KifuManagerApp() {
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top
             ) {
                 Spacer(Modifier.height(8.dp))
-                Text(text = viewModel.selectedFile?.name ?: "kifuファイルを選択してください", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
+                Text(text = state.selectedFile?.name ?: "kifuファイルを選択してください", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
                 
-                viewModel.selectedFile?.let { selected ->
+                state.selectedFile?.let { selected ->
                     val ext = selected.extension.lowercase()
                     val isKifuFile = ext == "kifu" || ext == "kif"
                     val hasHistory = viewModel.boardState.session.history.isNotEmpty()
@@ -237,14 +233,14 @@ fun KifuManagerApp() {
                         Spacer(Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                             if (hasHistory) {
-                                OutlinedButton(onClick = { viewModel.isFlipped = !viewModel.isFlipped }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (viewModel.isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
+                                OutlinedButton(onClick = { viewModel.toggleFlipped() }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (state.isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
                                 
                                 if (isKifuFile) {
-                                    val existingSenkei = viewModel.kifuInfos[selected]?.senkei
-                                    Spacer(Modifier.width(8.dp))
-                                    
-                                    if (!existingSenkei.isNullOrEmpty()) {
-                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
+                                                                    val kifuInfo = state.kifuInfos[selected]
+                                                                    val existingSenkei = kifuInfo?.senkei
+                                                                    Spacer(Modifier.width(8.dp))
+                                                                    
+                                                                    if (!existingSenkei.isNullOrEmpty()) {                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
                                             Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                             Spacer(Modifier.width(4.dp))
                                             IconButton(
@@ -278,7 +274,7 @@ fun KifuManagerApp() {
 
                 if (viewModel.boardState.session.history.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
-                    ShogiBoardView(viewModel.boardState, isFlipped = viewModel.isFlipped)
+                    ShogiBoardView(viewModel.boardState, isFlipped = state.isFlipped)
                     Spacer(Modifier.height(8.dp))
                     Text(text = "手数: ${viewModel.boardState.currentStep} / ${viewModel.boardState.session.maxStep}", style = MaterialTheme.typography.caption)
                     Text(text = viewModel.boardState.currentBoard?.lastMoveText ?: "", style = MaterialTheme.typography.body2, modifier = Modifier.height(24.dp))
@@ -302,42 +298,42 @@ fun KifuManagerApp() {
 
         // --- オーバーレイ・ダイアログ類 ---
 
-        if (viewModel.errorMessage != null || viewModel.infoMessage != null) {
-            val title = if (viewModel.errorMessage != null) "エラー" else "通知"
-            val msg = viewModel.errorMessage ?: viewModel.infoMessage!!
+        if (state.errorMessage != null || state.infoMessage != null) {
+            val title = if (state.errorMessage != null) "エラー" else "通知"
+            val msg = state.errorMessage ?: state.infoMessage!!
             AlertDialog(
-                onDismissRequest = { viewModel.errorMessage = null; viewModel.infoMessage = null },
+                onDismissRequest = { viewModel.clearErrorAndInfo() },
                 title = { Text(title) },
                 text = { Text(msg, fontSize = 12.sp) },
                 buttons = {
                     Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.CenterEnd) {
-                        Button(onClick = { viewModel.errorMessage = null; viewModel.infoMessage = null }) { Text("OK") }
+                        Button(onClick = { viewModel.clearErrorAndInfo() }) { Text("OK") }
                     }
                 }
             )
         }
 
-        if (viewModel.showOverwriteConfirm != null) {
+        if (state.showOverwriteConfirm != null) {
             OverwriteConfirmDialog(
-                file = viewModel.showOverwriteConfirm!!.toFile(),
-                onDismiss = { viewModel.showOverwriteConfirm = null },
+                file = state.showOverwriteConfirm.toFile(),
+                onDismiss = { viewModel.hideOverwriteConfirm() },
                 onConfirm = { viewModel.confirmOverwrite() }
             )
         }
 
-        if (viewModel.showSettings) {
+        if (state.showSettings) {
             SettingsDialog(
-                initialRegex = viewModel.myNameRegex,
-                onDismiss = { viewModel.showSettings = false },
+                initialRegex = state.myNameRegex,
+                onDismiss = { viewModel.showSettings(false) },
                 onSave = { viewModel.saveSettings(it) }
             )
         }
 
-        if (viewModel.viewingText != null) {
+        if (state.viewingText != null) {
             KifuTextViewer(
-                text = viewModel.viewingText!!,
-                onDismiss = { viewModel.viewingText = null },
-                onCopy = { copyToClipboard(viewModel.viewingText!!); viewModel.viewingText = null }
+                text = state.viewingText,
+                onDismiss = { viewModel.setViewingText(null) },
+                onCopy = { copyToClipboard(state.viewingText); viewModel.setViewingText(null) }
             )
         }
     }

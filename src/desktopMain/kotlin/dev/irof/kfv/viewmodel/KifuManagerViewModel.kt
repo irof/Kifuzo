@@ -19,78 +19,72 @@ class KifuManagerViewModel(
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     var currentRootDirectory by mutableStateOf(if (java.nio.file.Files.exists(AppConfig.KIFU_ROOT)) AppConfig.KIFU_ROOT else AppConfig.USER_HOME_PATH)
-    var treeNodes by mutableStateOf(listOf<FileTreeNode>())
-    var kifuInfos by mutableStateOf(mapOf<Path, KifuInfo>())
-    var isScanning by mutableStateOf(false)
-    var selectedSenkei by mutableStateOf<String?>(null)
-    
-    var selectedFile by mutableStateOf<Path?>(null)
-    var errorMessage by mutableStateOf<String?>(null)
-    var infoMessage by mutableStateOf<String?>(null)
-    var showOverwriteConfirm by mutableStateOf<Path?>(null)
-    var viewingText by mutableStateOf<String?>(null)
-    var isFlipped by mutableStateOf(false)
-    
-    var showSettings by mutableStateOf(false)
-    var myNameRegex by mutableStateOf(AppSettings.myNameRegex)
+        private set
+
+    // UI状態の一括管理
+    var uiState by mutableStateOf(KifuManagerUiState(myNameRegex = AppSettings.myNameRegex))
+        private set
 
     val boardState = ShogiBoardState()
 
-    val filteredNodes: List<FileTreeNode>
-        get() = if (selectedSenkei == null) treeNodes
-        else treeNodes.filter { node -> node.isDirectory || kifuInfos[node.path]?.senkei == selectedSenkei }
-
-    val availableSenkei: List<String>
-        get() = kifuInfos.values.map { it.senkei }.filter { it.isNotEmpty() }.distinct().sorted()
+    private fun updateState(update: (KifuManagerUiState) -> KifuManagerUiState) {
+        uiState = update(uiState)
+    }
 
     fun refreshFiles() {
         val rootFiles = repository.scanDirectory(currentRootDirectory)
-        treeNodes = rootFiles.map { FileTreeNode(it, 0, it.isDirectory()) }
+        updateState { it.copy(treeNodes = rootFiles.map { f -> FileTreeNode(f, 0, f.isDirectory()) }) }
         
         scope.launch {
-            isScanning = true
+            updateState { it.copy(isScanning = true) }
             val allKifuFiles = mutableListOf<Path>()
             withContext(Dispatchers.IO) {
                 java.nio.file.Files.walk(currentRootDirectory, 3)
                     .filter { it.isRegularFile() && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
                     .forEach { allKifuFiles.add(it) }
             }
-            kifuInfos = withContext(Dispatchers.IO) {
-                repository.getKifuInfos(allKifuFiles)
-            }
-            isScanning = false
+            val infos = withContext(Dispatchers.IO) { repository.getKifuInfos(allKifuFiles) }
+            updateState { it.copy(kifuInfos = infos, isScanning = false) }
         }
+    }
+
+    fun setRootDirectory(path: Path) {
+        currentRootDirectory = path
+        updateState { it.copy(selectedSenkei = null) }
+        refreshFiles()
     }
 
     fun toggleDirectory(node: FileTreeNode) {
         if (!node.isDirectory) return
-        val index = treeNodes.indexOf(node)
+        val nodes = uiState.treeNodes
+        val index = nodes.indexOf(node)
         if (index == -1) return
+
         if (node.isExpanded) {
-            val newNodes = treeNodes.toMutableList()
+            val newNodes = nodes.toMutableList()
             newNodes[index] = node.copy(isExpanded = false)
             var i = index + 1
             while (i < newNodes.size && newNodes[i].level > node.level) { newNodes.removeAt(i) }
-            treeNodes = newNodes
+            updateState { it.copy(treeNodes = newNodes) }
         } else {
             val children = repository.scanDirectory(node.path)
             val childNodes = children.map { FileTreeNode(it, node.level + 1, it.isDirectory(), parent = node) }
-            val newNodes = treeNodes.toMutableList()
+            val newNodes = nodes.toMutableList()
             newNodes[index] = node.copy(isExpanded = true)
             newNodes.addAll(index + 1, childNodes)
-            treeNodes = newNodes
+            updateState { it.copy(treeNodes = newNodes) }
         }
     }
 
     fun selectFile(path: Path) {
-        selectedFile = path
+        updateState { it.copy(selectedFile = path) }
         val ext = path.extension.lowercase()
         if (ext == "kifu" || ext == "kif") {
             try {
                 repository.parse(path, boardState)
                 updateAutoFlip()
             } catch (e: Exception) {
-                errorMessage = "解析中断: ${path.name}\n\n${e.message}"
+                updateState { it.copy(errorMessage = "解析中断: ${path.name}\n\n${e.message}") }
                 boardState.clear()
             }
         } else {
@@ -99,37 +93,71 @@ class KifuManagerViewModel(
     }
 
     fun updateAutoFlip() {
-        if (myNameRegex.isEmpty()) return
-        val regex = try { Regex(myNameRegex) } catch (e: Exception) { null } ?: return
+        val myRegexStr = uiState.myNameRegex
+        if (myRegexStr.isEmpty()) return
+        val regex = try { Regex(myRegexStr) } catch (e: Exception) { null } ?: return
         if (regex.containsMatchIn(boardState.session.goteName) && !regex.containsMatchIn(boardState.session.senteName)) {
-            isFlipped = true
+            updateState { it.copy(isFlipped = true) }
         } else if (regex.containsMatchIn(boardState.session.senteName)) {
-            isFlipped = false
+            updateState { it.copy(isFlipped = false) }
         }
     }
 
+    fun toggleFlipped() {
+        updateState { it.copy(isFlipped = !it.isFlipped) }
+    }
+
+    fun showSettings(show: Boolean) {
+        updateState { it.copy(showSettings = show) }
+    }
+
     fun saveSettings(newRegex: String) {
-        myNameRegex = newRegex
         AppSettings.myNameRegex = newRegex
-        showSettings = false
+        updateState { it.copy(myNameRegex = newRegex, showSettings = false) }
         updateAutoFlip()
+    }
+
+    fun setViewingText(text: String?) {
+        updateState { it.copy(viewingText = text) }
+    }
+
+    fun setSelectedSenkei(senkei: String?) {
+        updateState { it.copy(selectedSenkei = senkei) }
+    }
+
+    fun clearErrorAndInfo() {
+        updateState { it.copy(errorMessage = null, infoMessage = null) }
     }
 
     fun importFiles(sourceDir: Path) {
         val count = repository.importQuestFiles(sourceDir)
         AppSettings.importSourceDir = sourceDir.toString()
-        if (count > 0) { infoMessage = "${count}件の棋譜をインポートしました。"; refreshFiles() }
-        else { infoMessage = "指定されたフォルダに該当する棋譜が見つかりませんでした。" }
+        if (count > 0) {
+            updateState { it.copy(infoMessage = "${count}件の棋譜をインポートしました。") }
+            refreshFiles()
+        } else {
+            updateState { it.copy(infoMessage = "指定されたフォルダに該当する棋譜が見つかりませんでした。") }
+        }
     }
 
     fun convertCsa(path: Path) {
         val targetFile = path.parent.resolve(path.nameWithoutExtension + ".kifu")
-        if (java.nio.file.Files.exists(targetFile)) { showOverwriteConfirm = path } 
-        else { performCsaConversion(path) }
+        if (java.nio.file.Files.exists(targetFile)) {
+            updateState { it.copy(showOverwriteConfirm = path) }
+        } else {
+            performCsaConversion(path)
+        }
     }
     
+    fun hideOverwriteConfirm() {
+        updateState { it.copy(showOverwriteConfirm = null) }
+    }
+
     fun confirmOverwrite() {
-        showOverwriteConfirm?.let { performCsaConversion(it); showOverwriteConfirm = null }
+        uiState.showOverwriteConfirm?.let {
+            performCsaConversion(it)
+            updateState { it.copy(showOverwriteConfirm = null) }
+        }
     }
 
     private fun performCsaConversion(path: Path) {
@@ -148,7 +176,7 @@ class KifuManagerViewModel(
         if (senkei.isNotEmpty()) {
             repository.updateSenkei(path, senkei)
             refreshFiles()
-            infoMessage = "戦型を「$senkei」として追記しました。"
+            updateState { it.copy(infoMessage = "戦型を「$senkei」として追記しました。") }
         }
     }
 }
