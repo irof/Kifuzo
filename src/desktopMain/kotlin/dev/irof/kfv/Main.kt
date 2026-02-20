@@ -5,7 +5,6 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -22,6 +21,7 @@ import dev.irof.kfv.ui.components.KifuSidebar
 import dev.irof.kfv.ui.dialogs.KifuTextViewer
 import dev.irof.kfv.ui.dialogs.OverwriteConfirmDialog
 import dev.irof.kfv.ui.dialogs.SettingsDialog
+import dev.irof.kfv.ui.theme.ShogiDimensions
 import dev.irof.kfv.utils.AppStrings
 import dev.irof.kfv.utils.copyToClipboard
 import dev.irof.kfv.viewmodel.KifuManagerViewModel
@@ -33,7 +33,7 @@ fun main() = application {
         position = if (AppSettings.windowX != null && AppSettings.windowY != null) {
             WindowPosition(AppSettings.windowX!!.dp, AppSettings.windowY!!.dp)
         } else {
-            WindowPosition.Aligned(Alignment.Center)
+            WindowPosition.Aligned(androidx.compose.ui.Alignment.Center)
         },
         size = DpSize(AppSettings.windowWidth.dp, AppSettings.windowHeight.dp)
     )
@@ -60,7 +60,7 @@ fun main() = application {
 fun KifuManagerApp() {
     val viewModel = remember { KifuManagerViewModel() }
     val state = viewModel.uiState
-    val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+    val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
         viewModel.refreshFiles()
@@ -105,7 +105,7 @@ fun KifuManagerApp() {
                 onToggleDir = { viewModel.toggleDirectory(it) },
                 onSelectFile = { viewModel.selectFile(it) },
                 onShowText = { viewModel.setViewingText(it) },
-                modifier = Modifier.weight(0.4f)
+                modifier = Modifier.weight(ShogiDimensions.SidebarWidthRatio)
             )
 
             KifuPreviewPanel(
@@ -115,11 +115,10 @@ fun KifuManagerApp() {
                 onDetectSenkei = { viewModel.detectAndWriteSenkei(it) },
                 onConvertCsa = { viewModel.convertCsa(it) },
                 onStepChange = { viewModel.boardState.currentStep = it },
-                modifier = Modifier.weight(0.6f)
+                modifier = Modifier.weight(ShogiDimensions.PreviewWidthRatio)
             )
         }
 
-        // ダイアログ類
         if (state.errorMessage != null || state.infoMessage != null) {
             val title = if (state.errorMessage != null) AppStrings.ERROR else AppStrings.NOTIFICATION
             val msg = state.errorMessage ?: state.infoMessage!!
@@ -128,7 +127,7 @@ fun KifuManagerApp() {
                 title = { Text(title) },
                 text = { Text(msg) },
                 buttons = {
-                    Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.CenterEnd) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.PaddingMedium), contentAlignment = androidx.compose.ui.Alignment.CenterEnd) {
                         Button(onClick = { viewModel.clearErrorAndInfo() }) { Text(AppStrings.OK) }
                     }
                 }
