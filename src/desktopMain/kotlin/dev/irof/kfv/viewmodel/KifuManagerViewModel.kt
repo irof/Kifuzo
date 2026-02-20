@@ -1,59 +1,104 @@
 package dev.irof.kfv.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import dev.irof.kfv.logic.*
 import dev.irof.kfv.models.*
 import kotlinx.coroutines.*
 import java.nio.file.Path
-import kotlin.io.path.extension
-import kotlin.io.path.isDirectory
-import kotlin.io.path.name
-import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.*
 
 class KifuManagerViewModel(
-    private val repository: KifuRepository = KifuRepository(),
+    private val repository: KifuRepository = KifuRepository()
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    var currentDirectory by mutableStateOf(if (java.nio.file.Files.exists(AppConfig.KIFU_ROOT)) AppConfig.KIFU_ROOT else AppConfig.USER_HOME_PATH)
-    var directoryContents by mutableStateOf(listOf<Path>())
+    var currentRootDirectory by mutableStateOf(if (java.nio.file.Files.exists(AppConfig.KIFU_ROOT)) AppConfig.KIFU_ROOT else AppConfig.USER_HOME_PATH)
+    
+    // 表示用のフラット化されたツリーノードリスト
+    var treeNodes by mutableStateOf(listOf<FileTreeNode>())
+    
     var kifuInfos by mutableStateOf(mapOf<Path, KifuInfo>())
     var isScanning by mutableStateOf(false)
     var selectedSenkei by mutableStateOf<String?>(null)
-
+    
     var selectedFile by mutableStateOf<Path?>(null)
     var errorMessage by mutableStateOf<String?>(null)
     var infoMessage by mutableStateOf<String?>(null)
     var showOverwriteConfirm by mutableStateOf<Path?>(null)
     var viewingText by mutableStateOf<String?>(null)
     var isFlipped by mutableStateOf(false)
-
+    
     var showSettings by mutableStateOf(false)
     var myNameRegex by mutableStateOf(AppSettings.myNameRegex)
 
     val boardState = ShogiBoardState()
 
-    val filteredContents: List<Path>
-        get() = if (selectedSenkei == null) {
-            directoryContents
-        } else {
-            directoryContents.filter { path -> path.isDirectory() || kifuInfos[path]?.senkei == selectedSenkei }
+    // フィルタリング後のノードリスト
+    val filteredNodes: List<FileTreeNode>
+        get() = if (selectedSenkei == null) treeNodes
+        else treeNodes.filter { node -> 
+            node.isDirectory || kifuInfos[node.path]?.senkei == selectedSenkei 
         }
 
     val availableSenkei: List<String>
         get() = kifuInfos.values.map { it.senkei }.filter { it.isNotEmpty() }.distinct().sorted()
 
+    /**
+     * ルートディレクトリからツリーを初期化します
+     */
     fun refreshFiles() {
-        directoryContents = repository.scanDirectory(currentDirectory)
-
+        // 初期状態はルート直下のファイルを表示
+        val rootFiles = repository.scanDirectory(currentRootDirectory)
+        treeNodes = rootFiles.map { FileTreeNode(it, 0, it.isDirectory()) }
+        
+        // 全棋譜のスキャン（戦型フィルタ用）
         scope.launch {
             isScanning = true
+            // サブディレクトリ内も含めて棋譜ファイルを探す
+            val allKifuFiles = mutableListOf<Path>()
+            withContext(Dispatchers.IO) {
+                java.nio.file.Files.walk(currentRootDirectory, 3) // 深さ3まで
+                    .filter { it.isRegularFile() && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
+                    .forEach { allKifuFiles.add(it) }
+            }
             kifuInfos = withContext(Dispatchers.IO) {
-                repository.getKifuInfos(directoryContents)
+                repository.getKifuInfos(allKifuFiles)
             }
             isScanning = false
+        }
+    }
+
+    /**
+     * フォルダの展開/折りたたみを切り替えます
+     */
+    fun toggleDirectory(node: FileTreeNode) {
+        if (!node.isDirectory) return
+
+        val index = treeNodes.indexOf(node)
+        if (index == -1) return
+
+        if (node.isExpanded) {
+            // 閉じる: そのノードより下のレベルの要素を削除
+            val newNodes = treeNodes.toMutableList()
+            node.isExpanded = false
+            newNodes[index] = node.copy(isExpanded = false)
+            
+            // 自分より深く、かつ連続している要素を削除
+            var i = index + 1
+            while (i < newNodes.size && newNodes[i].level > node.level) {
+                newNodes.removeAt(i)
+            }
+            treeNodes = newNodes
+        } else {
+            // 展開する: 子要素をスキャンして挿入
+            val children = repository.scanDirectory(node.path)
+            val childNodes = children.map { FileTreeNode(it, node.level + 1, it.isDirectory(), parent = node) }
+            
+            val newNodes = treeNodes.toMutableList()
+            node.isExpanded = true
+            newNodes[index] = node.copy(isExpanded = true)
+            newNodes.addAll(index + 1, childNodes)
+            treeNodes = newNodes
         }
     }
 
@@ -75,11 +120,7 @@ class KifuManagerViewModel(
 
     fun updateAutoFlip() {
         if (myNameRegex.isEmpty()) return
-        val regex = try {
-            Regex(myNameRegex)
-        } catch (e: Exception) {
-            null
-        } ?: return
+        val regex = try { Regex(myNameRegex) } catch (e: Exception) { null } ?: return
         if (regex.containsMatchIn(boardState.goteName) && !regex.containsMatchIn(boardState.senteName)) {
             isFlipped = true
         } else if (regex.containsMatchIn(boardState.senteName)) {
@@ -100,7 +141,7 @@ class KifuManagerViewModel(
             infoMessage = "${count}件の棋譜をインポートしました。"
             refreshFiles()
         } else {
-            infoMessage = "Downloadsフォルダに該当する棋譜が見わたらんでした。"
+            infoMessage = "Downloadsフォルダに該当する棋譜が見つかりませんでした。"
         }
     }
 
@@ -112,7 +153,7 @@ class KifuManagerViewModel(
             performCsaConversion(path)
         }
     }
-
+    
     fun confirmOverwrite() {
         showOverwriteConfirm?.let {
             performCsaConversion(it)
