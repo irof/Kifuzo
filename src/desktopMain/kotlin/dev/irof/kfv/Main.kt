@@ -1,5 +1,7 @@
 package dev.irof.kfv
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +20,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -72,6 +75,7 @@ fun main() = application {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun KifuManagerApp() {
     val viewModel = remember { KifuManagerViewModel() }
@@ -111,25 +115,61 @@ fun KifuManagerApp() {
             Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = {
-                            val chooser = JFileChooser().apply { 
-                                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                                currentDirectory = viewModel.currentRootDirectory.toFile()
+                        TooltipArea(
+                            tooltip = {
+                                Surface(
+                                    modifier = Modifier.shadow(4.dp),
+                                    color = Color(0xFF333333),
+                                    shape = MaterialTheme.shapes.small
+                                ) {
+                                    Text("フォルダ選択", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
+                                }
                             }
-                            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                                viewModel.currentRootDirectory = chooser.selectedFile.toPath()
+                        ) {
+                            IconButton(onClick = {
+                                val chooser = JFileChooser().apply { 
+                                    fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                                    currentDirectory = viewModel.currentRootDirectory.toFile()
+                                }
+                                if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                                    viewModel.currentRootDirectory = chooser.selectedFile.toPath()
+                                }
+                            }) {
+                                Icon(Icons.Default.Home, contentDescription = "フォルダ選択", tint = ShogiColors.Primary)
                             }
-                        }) {
-                            Icon(Icons.Default.Home, contentDescription = "フォルダ選択", tint = ShogiColors.Primary)
                         }
                         
-                        IconButton(onClick = { viewModel.importFiles() }) {
-                            Icon(Icons.Default.Add, contentDescription = "インポート", tint = ShogiColors.Primary)
+                        TooltipArea(
+                            tooltip = {
+                                Surface(
+                                    modifier = Modifier.shadow(4.dp),
+                                    color = Color(0xFF333333),
+                                    shape = MaterialTheme.shapes.small
+                                ) {
+                                    Text("棋譜をインポート", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
+                                }
+                            }
+                        ) {
+                            IconButton(onClick = { viewModel.importFiles() }) {
+                                Icon(Icons.Default.Add, contentDescription = "インポート", tint = ShogiColors.Primary)
+                            }
                         }
                     }
                     
-                    IconButton(onClick = { viewModel.showSettings = true }) {
-                        Icon(Icons.Default.Settings, contentDescription = "設定", tint = Color.Gray)
+                    TooltipArea(
+                        tooltip = {
+                            Surface(
+                                modifier = Modifier.shadow(4.dp),
+                                color = Color(0xFF333333),
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text("設定", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
+                            }
+                        }
+                    ) {
+                        IconButton(onClick = { viewModel.showSettings = true }) {
+                            Icon(Icons.Default.Settings, contentDescription = "設定", tint = Color.Gray)
+                        }
                     }
                 }
                 
