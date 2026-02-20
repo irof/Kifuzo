@@ -1,8 +1,9 @@
 package logic
 
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /**
  * Downloadsフォルダから特定のテキストファイルを検出し、
@@ -19,7 +20,10 @@ fun importShogiQuestFiles(): Int {
     } ?: return 0
     
     var count = 0
-    val dateFormat = SimpleDateFormat("yyyyMMdd")
+    // java.time.format.DateTimeFormatter を使用
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+        .withZone(ZoneId.systemDefault())
+    
     // 名前から丸括弧とその中身を削除するための正規表現
     val nameCleanupRegex = Regex("""\(.*?\)""")
 
@@ -37,7 +41,7 @@ fun importShogiQuestFiles(): Int {
             var sente = "unknown"
             var gote = "unknown"
             
-            // ファイル全体から名前を探す（念のため）
+            // ファイル全体から名前を探す
             file.forEachLine { line ->
                 if (line.startsWith("N+")) {
                     sente = line.substring(2).replace(nameCleanupRegex, "").trim()
@@ -46,8 +50,8 @@ fun importShogiQuestFiles(): Int {
                 }
             }
             
-            // タイムスタンプから日付取得
-            val dateStr = dateFormat.format(Date(file.lastModified()))
+            // java.time を使ってタイムスタンプから日付文字列を取得
+            val dateStr = dateFormatter.format(Instant.ofEpochMilli(file.lastModified()))
             
             // 保存先決定
             val targetDir = if (isQuest) questDir else kifuRoot
