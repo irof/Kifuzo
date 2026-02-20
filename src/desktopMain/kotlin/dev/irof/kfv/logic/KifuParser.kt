@@ -33,73 +33,17 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
 }
 
 fun parseKifu(lines: List<String>, state: ShogiBoardState) {
-    var currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
-    var senteMochi = mutableListOf<Piece>()
-    var goteMochi = mutableListOf<Piece>()
-    var senteName = "先手"
-    var goteName = "後手"
+    val header = parseHeader(lines)
+
+    var currentCells = header.initialCells
+    val senteMochi = header.senteMochi.toMutableList()
+    val goteMochi = header.goteMochi.toMutableList()
     var firstContactStep = -1
-    var isStandardStart = true
-
-    val pieceSymbolMap = Piece.entries.associateBy { it.symbol }
-    var boardY = 0
-    var moveStartIndex = -1
-
-    for (i in lines.indices) {
-        val line = lines[i]
-        val trimmed = line.trim()
-        if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) senteName = trimmed.substringAfter("：").trim()
-        if (trimmed.startsWith("後手：")) goteName = trimmed.substringAfter("：").trim()
-        if (trimmed.startsWith("|") && trimmed.count { it == '|' } >= 2) {
-            isStandardStart = false
-            val content = trimmed.substringAfter("|").substringBeforeLast("|")
-            // |・|・| または | 歩|v桂| のような形式に対応するため、| で分割する
-            val cells = content.split("|")
-            for (x in 0..8) {
-                if (x >= cells.size) break
-                val pStr = cells[x].trim()
-                if (pStr.isEmpty()) continue
-
-                val color = if (pStr.startsWith('v')) PieceColor.White else PieceColor.Black
-                val pieceName = (if (pStr.startsWith('v')) pStr.substring(1) else pStr).trim()
-
-                if (pieceName.isNotEmpty() && pieceName != "・" && pieceName != "　") {
-                    val piece = pieceSymbolMap[pieceName] ?: if (pieceName == "王") {
-                        Piece.OU
-                    } else if (pieceName == "玉") {
-                        Piece.OU
-                    } else if (pieceName == "竜") {
-                        Piece.RY
-                    } else if (pieceName == "馬") {
-                        Piece.UM
-                    } else {
-                        null
-                    }
-                    if (piece != null) currentCells[boardY][x] = piece to color
-                }
-            }
-            boardY++
-        }
-        if (trimmed.startsWith("先手持駒：") || trimmed.startsWith("下手持駒：")) {
-            isStandardStart = false
-            senteMochi.addAll(Piece.parseMochigoma(trimmed.substringAfter("：")))
-        }
-        if (trimmed.startsWith("後手持駒：") || trimmed.startsWith("上手持駒：")) {
-            isStandardStart = false
-            goteMochi.addAll(Piece.parseMochigoma(trimmed.substringAfter("：")))
-        }
-        if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) {
-            moveStartIndex = i
-            break
-        }
-    }
-
-    if (isStandardStart) currentCells = BoardSnapshot.getInitialCells()
 
     val history = mutableListOf<BoardSnapshot>()
     history.add(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), "開始局面"))
 
-    if (moveStartIndex != -1) {
+    if (header.moveStartIndex != -1) {
         val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*""")
         val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*""")
         var lastTo: Square? = null
@@ -114,7 +58,7 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
             return if (idx == -1) -1 else (idx % 9) + 1
         }
 
-        for (i in moveStartIndex until lines.size) {
+        for (i in header.moveStartIndex until lines.size) {
             val line = lines[i].trim()
             if (line.isEmpty() || line.startsWith("*") || line.startsWith("#") || line.startsWith("&")) continue
             if (line.startsWith("変化：") || line.startsWith("変化:")) {
@@ -179,7 +123,7 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
         }
     }
 
-    val initialStep = if (!isStandardStart) {
+    val initialStep = if (!header.isStandardStart) {
         0
     } else if (firstContactStep != -1) {
         firstContactStep
@@ -192,11 +136,94 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
         KifuSession(
             history = history,
             initialStep = initialStep,
-            senteName = senteName,
-            goteName = goteName,
+            senteName = header.senteName,
+            goteName = header.goteName,
             firstContactStep = firstContactStep,
-            isStandardStart = isStandardStart,
+            isStandardStart = header.isStandardStart,
         ),
+    )
+}
+
+private data class KifuHeader(
+    val senteName: String,
+    val goteName: String,
+    val initialCells: Array<Array<Pair<Piece, PieceColor>?>>,
+    val senteMochi: List<Piece>,
+    val goteMochi: List<Piece>,
+    val isStandardStart: Boolean,
+    val moveStartIndex: Int,
+)
+
+private fun parseHeader(lines: List<String>): KifuHeader {
+    var senteName = "先手"
+    var goteName = "後手"
+    var currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
+    val senteMochi = mutableListOf<Piece>()
+    val goteMochi = mutableListOf<Piece>()
+    var isStandardStart = true
+    var moveStartIndex = -1
+
+    val pieceSymbolMap = Piece.entries.associateBy { it.symbol }
+    var boardY = 0
+
+    for (i in lines.indices) {
+        val line = lines[i]
+        val trimmed = line.trim()
+        if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) senteName = trimmed.substringAfter("：").trim()
+        if (trimmed.startsWith("後手：")) goteName = trimmed.substringAfter("：").trim()
+        if (trimmed.startsWith("|") && trimmed.count { it == '|' } >= 2) {
+            isStandardStart = false
+            val content = trimmed.substringAfter("|").substringBeforeLast("|")
+            val cells = content.split("|")
+            for (x in 0..8) {
+                if (x >= cells.size) break
+                val pStr = cells[x].trim()
+                if (pStr.isEmpty()) continue
+
+                val color = if (pStr.startsWith('v')) PieceColor.White else PieceColor.Black
+                val pieceName = (if (pStr.startsWith('v')) pStr.substring(1) else pStr).trim()
+
+                if (pieceName.isNotEmpty() && pieceName != "・" && pieceName != "　") {
+                    val piece = pieceSymbolMap[pieceName] ?: if (pieceName == "王") {
+                        Piece.OU
+                    } else if (pieceName == "玉") {
+                        Piece.OU
+                    } else if (pieceName == "竜") {
+                        Piece.RY
+                    } else if (pieceName == "馬") {
+                        Piece.UM
+                    } else {
+                        null
+                    }
+                    if (piece != null) currentCells[boardY][x] = piece to color
+                }
+            }
+            boardY++
+        }
+        if (trimmed.startsWith("先手持駒：") || trimmed.startsWith("下手持駒：")) {
+            isStandardStart = false
+            senteMochi.addAll(Piece.parseMochigoma(trimmed.substringAfter("：")))
+        }
+        if (trimmed.startsWith("後手持駒：") || trimmed.startsWith("上手持駒：")) {
+            isStandardStart = false
+            goteMochi.addAll(Piece.parseMochigoma(trimmed.substringAfter("：")))
+        }
+        if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) {
+            moveStartIndex = i
+            break
+        }
+    }
+
+    if (isStandardStart) currentCells = BoardSnapshot.getInitialCells()
+
+    return KifuHeader(
+        senteName = senteName,
+        goteName = goteName,
+        initialCells = currentCells,
+        senteMochi = senteMochi,
+        goteMochi = goteMochi,
+        isStandardStart = isStandardStart,
+        moveStartIndex = moveStartIndex,
     )
 }
 
