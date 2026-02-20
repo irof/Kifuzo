@@ -174,10 +174,10 @@ fun KifuManagerApp() {
 
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     currentDirectory.parentFile?.let { parent ->
-                        item { FileEntryItem(file = parent, isParentLink = true, onNavigate = { currentDirectory = it }, onSelect = { selectedFile = it }, onShowText = { viewingText = it.readText() }) }
+                        item { FileEntryItem(file = parent, isParentLink = true, onNavigate = { currentDirectory = it }, onSelect = { selectedFile = it }, onShowText = { viewingText = readTextWithEncoding(it) }) }
                     }
                     items(filteredContents) { file ->
-                        FileEntryItem(file = file, isSelected = (file == selectedFile), onNavigate = { currentDirectory = it }, onSelect = { selectedFile = it }, onShowText = { viewingText = it.readText() })
+                        FileEntryItem(file = file, isSelected = (file == selectedFile), onNavigate = { currentDirectory = it }, onSelect = { selectedFile = it }, onShowText = { viewingText = readTextWithEncoding(it) })
                     }
                 }
             }

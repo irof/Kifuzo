@@ -5,7 +5,7 @@ import java.util.*
 import kotlin.text.Charsets
 
 fun convertCsaToKifu(csaFile: File) {
-    val lines = csaFile.readLines()
+    val lines = readLinesWithEncoding(csaFile)
     val kifLines = mutableListOf<String>()
     kifLines.add("# KIF version=2.0 encoding=UTF-8")
     

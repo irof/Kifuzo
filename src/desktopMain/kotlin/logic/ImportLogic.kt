@@ -27,20 +27,21 @@ fun importShogiQuestFiles(): Int {
 
     txtFiles.forEach { file ->
         try {
-            val lines = file.useLines { it.take(10).toList() }
+            val lines = readLinesWithEncoding(file)
             if (lines.isEmpty()) return@forEach
             
             // CSA判定: 先頭10行以内に N+ または N- があるか
-            val hasCsaMarker = lines.any { it.startsWith("N+") || it.startsWith("N-") }
+            val headerLines = lines.take(10)
+            val hasCsaMarker = headerLines.any { it.startsWith("N+") || it.startsWith("N-") }
             if (!hasCsaMarker) return@forEach
             
             // 情報抽出
-            val isQuest = lines.firstOrNull()?.trim() == "'Shogi Quest"
+            val isQuest = headerLines.firstOrNull()?.trim() == "'Shogi Quest"
             var sente = "unknown"
             var gote = "unknown"
             
             // ファイル全体から名前を探す
-            file.forEachLine { line ->
+            lines.forEach { line ->
                 if (line.startsWith("N+")) {
                     sente = line.substring(2).replace(nameCleanupRegex, "").trim()
                 } else if (line.startsWith("N-")) {
