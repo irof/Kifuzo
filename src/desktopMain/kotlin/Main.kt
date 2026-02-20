@@ -186,12 +186,26 @@ fun KifuManagerApp() {
         AlertDialog(
             onDismissRequest = { viewingText = null },
             title = { Text("棋譜テキスト") },
+            modifier = Modifier.width(600.dp),
             text = {
-                Box(modifier = Modifier.sizeIn(maxHeight = 400.dp)) {
-                    val textScroll = rememberScrollState()
-                    Column(modifier = Modifier.verticalScroll(textScroll)) {
-                        Text(viewingText!!, fontSize = 12.sp, fontFamily = androidx.compose.ui.text.font.FontWeight.Normal.let { androidx.compose.ui.text.font.FontFamily.Monospace })
-                    }
+                val scrollStateVertical = rememberScrollState()
+                val scrollStateHorizontal = rememberScrollState()
+                Box(
+                    modifier = Modifier
+                        .heightIn(min = 200.dp, max = 450.dp)
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = viewingText!!,
+                        fontSize = 12.sp,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        softWrap = false,
+                        modifier = Modifier
+                            .verticalScroll(scrollStateVertical)
+                            .horizontalScroll(scrollStateHorizontal)
+                    )
                 }
             },
             buttons = {
