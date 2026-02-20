@@ -21,12 +21,14 @@ fun FileTreeItem(
     isSelected: Boolean = false,
     onToggle: (FileTreeNode) -> Unit,
     onSelect: (Path) -> Unit,
-    onShowText: (Path) -> Unit
+    onShowText: (Path) -> Unit,
 ) {
     ContextMenuArea(items = {
         if (!node.isDirectory) {
             listOf(ContextMenuItem("テキストを表示") { onShowText(node.path) })
-        } else emptyList()
+        } else {
+            emptyList()
+        }
     }) {
         Row(
             modifier = Modifier
@@ -34,34 +36,37 @@ fun FileTreeItem(
                 .padding(vertical = 1.dp)
                 .background(if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent)
                 .combinedClickable(
-                    onClick = { 
-                        if (node.isDirectory) onToggle(node)
-                        else onSelect(node.path)
-                    }
+                    onClick = {
+                        if (node.isDirectory) {
+                            onToggle(node)
+                        } else {
+                            onSelect(node.path)
+                        }
+                    },
                 )
                 .padding(start = (node.level * 16).dp, top = 4.dp, bottom = 4.dp, end = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (node.isDirectory) {
                 Icon(
                     imageVector = if (node.isExpanded) ShogiIcons.ExpandMore else ShogiIcons.ExpandLess,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = Color.Gray
+                    tint = Color.Gray,
                 )
             } else {
                 Spacer(Modifier.width(16.dp))
             }
-            
+
             Spacer(Modifier.width(4.dp))
-            
+
             Text(
                 text = node.name + if (node.isDirectory) "/" else "",
                 fontSize = 13.sp,
                 color = if (node.isDirectory) Color.Blue else Color.Black,
                 lineHeight = 16.sp,
                 softWrap = false,
-                maxLines = 1
+                maxLines = 1,
             )
         }
     }

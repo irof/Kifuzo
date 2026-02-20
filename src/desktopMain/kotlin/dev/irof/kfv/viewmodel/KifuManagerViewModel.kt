@@ -14,7 +14,7 @@ import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
 class KifuManagerViewModel(
-    private val repository: KifuRepository = KifuRepository()
+    private val repository: KifuRepository = KifuRepository(),
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
@@ -59,7 +59,7 @@ class KifuManagerViewModel(
     fun refreshFiles() {
         val expandedPaths = uiState.treeNodes.filter { it.isExpanded }.map { it.path }.toSet()
         val newNodes = mutableListOf<FileTreeNode>()
-        
+
         fun buildTree(dir: Path, level: Int) {
             val contents = repository.scanDirectory(dir)
             contents.forEach { path ->
@@ -67,7 +67,7 @@ class KifuManagerViewModel(
                 val isExpanded = expandedPaths.contains(path)
                 val node = FileTreeNode(path, level, isDir, isExpanded)
                 newNodes.add(node)
-                
+
                 if (isDir && isExpanded) {
                     buildTree(path, level + 1)
                 }
@@ -76,7 +76,7 @@ class KifuManagerViewModel(
 
         buildTree(currentRootDirectory, 0)
         updateState { it.copy(treeNodes = newNodes) }
-        
+
         // 戦型情報のスキャン（サブディレクトリも含めて最新にする）
         scope.launch {
             updateState { it.copy(isScanning = true) }
@@ -99,7 +99,7 @@ class KifuManagerViewModel(
 
     private fun toggleDirectory(node: FileTreeNode) {
         if (!node.isDirectory) return
-        
+
         val newNodes = uiState.treeNodes.toMutableList()
         val index = newNodes.indexOfFirst { it.path == node.path }
         if (index == -1) return
@@ -140,7 +140,11 @@ class KifuManagerViewModel(
     private fun updateAutoFlip() {
         val myRegexStr = uiState.myNameRegex
         if (myRegexStr.isEmpty()) return
-        val regex = try { Regex(myRegexStr) } catch (e: Exception) { null } ?: return
+        val regex = try {
+            Regex(myRegexStr)
+        } catch (e: Exception) {
+            null
+        } ?: return
         if (regex.containsMatchIn(boardState.session.goteName) && !regex.containsMatchIn(boardState.session.senteName)) {
             updateState { it.copy(isFlipped = true) }
         } else if (regex.containsMatchIn(boardState.session.senteName)) {
@@ -174,7 +178,7 @@ class KifuManagerViewModel(
             performCsaConversion(path)
         }
     }
-    
+
     fun hideOverwriteConfirm() {
         updateState { it.copy(showOverwriteConfirm = null) }
     }

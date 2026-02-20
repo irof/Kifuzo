@@ -11,13 +11,12 @@ import androidx.compose.ui.unit.dp
 import dev.irof.kfv.utils.AppStrings
 import java.nio.file.Path
 import javax.swing.JFileChooser
-import kotlin.io.path.toPath
 
 @Composable
 fun ImportDialog(
     initialSourceDir: String,
     onDismiss: () -> Unit,
-    onImport: (Path) -> Unit
+    onImport: (Path) -> Unit,
 ) {
     var sourcePath by remember { mutableStateOf(initialSourceDir) }
 
@@ -33,7 +32,7 @@ fun ImportDialog(
                         value = sourcePath,
                         onValueChange = { sourcePath = it },
                         modifier = Modifier.weight(1f),
-                        singleLine = true
+                        singleLine = true,
                     )
                     Spacer(Modifier.width(8.dp))
                     IconButton(onClick = {
@@ -60,7 +59,7 @@ fun ImportDialog(
                 TextButton(onClick = onDismiss) { Text(AppStrings.CANCEL) }
                 Spacer(Modifier.width(8.dp))
                 Button(
-                    onClick = { 
+                    onClick = {
                         try {
                             val path = java.nio.file.Paths.get(sourcePath)
                             onImport(path)
@@ -68,11 +67,11 @@ fun ImportDialog(
                             // 不正なパス入力への簡易的な対応
                         }
                     },
-                    enabled = sourcePath.isNotEmpty()
+                    enabled = sourcePath.isNotEmpty(),
                 ) {
                     Text("インポート実行")
                 }
             }
-        }
+        },
     )
 }

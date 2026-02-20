@@ -12,11 +12,11 @@ class SenkeiDetectorTest {
         val rook = cells[7][7]!! // 飛車 (88)
         cells[7][7] = null
         cells[7][3] = rook // 68飛へ移動 (x=3は6筋)
-        
+
         val history = List(30) {
             BoardSnapshot(cells = cells)
         }
-        
+
         assertEquals("四間飛車", detectSenkei(history))
     }
 
@@ -27,11 +27,11 @@ class SenkeiDetectorTest {
         val rook = cells[1][1]!! // 後手飛車 (22)
         cells[1][1] = null
         cells[1][4] = rook // 52飛へ移動
-        
+
         val history = List(30) {
             BoardSnapshot(cells = cells)
         }
-        
+
         assertEquals("中飛車", detectSenkei(history))
     }
 }

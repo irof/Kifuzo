@@ -32,7 +32,7 @@ fun KifuPreviewPanel(
     onDetectSenkei: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
     onStepChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
 
@@ -43,11 +43,11 @@ fun KifuPreviewPanel(
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        verticalArrangement = Arrangement.Top,
     ) {
         Spacer(Modifier.height(8.dp))
         Text(text = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT, style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
-        
+
         state.selectedFile?.let { selected ->
             val ext = selected.extension.lowercase()
             val isKifuFile = ext == "kifu" || ext == "kif"
@@ -58,12 +58,12 @@ fun KifuPreviewPanel(
                 Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                     if (hasHistory) {
                         OutlinedButton(onClick = onToggleFlip, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (state.isFlipped) Color.LightGray else Color.White)) { Text(AppStrings.FLIP_BOARD, fontSize = 10.sp) }
-                        
+
                         if (isKifuFile) {
                             val kifuInfo = state.kifuInfos[selected]
                             val existingSenkei = kifuInfo?.senkei
                             Spacer(Modifier.width(8.dp))
-                            
+
                             if (!existingSenkei.isNullOrEmpty()) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
                                     Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -94,14 +94,14 @@ fun KifuPreviewPanel(
             Spacer(Modifier.height(8.dp))
             ShogiBoardView(boardState, isFlipped = state.isFlipped)
             Spacer(Modifier.height(8.dp))
-            
+
             KifuOperationBar(
                 currentStep = boardState.currentStep,
                 maxStep = boardState.session.maxStep,
                 lastMoveText = boardState.currentBoard?.lastMoveText ?: "",
                 isStandardStart = boardState.session.isStandardStart,
                 firstContactStep = boardState.session.firstContactStep,
-                onStepChange = onStepChange
+                onStepChange = onStepChange,
             )
         }
     }
@@ -114,7 +114,7 @@ private fun KifuOperationBar(
     lastMoveText: String,
     isStandardStart: Boolean,
     firstContactStep: Int,
-    onStepChange: (Int) -> Unit
+    onStepChange: (Int) -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = "${AppStrings.MOVE_COUNT}: $currentStep / $maxStep", style = MaterialTheme.typography.caption)
@@ -133,11 +133,11 @@ private fun KifuOperationBar(
             Button(onClick = { onStepChange(maxStep) }, modifier = Modifier.height(32.dp)) { Text(AppStrings.END, fontSize = 10.sp) }
         }
         Slider(
-            value = currentStep.toFloat(), 
-            onValueChange = { onStepChange(it.toInt()) }, 
-            valueRange = 0f..maxStep.toFloat(), 
-            steps = if (maxStep > 1) maxStep - 1 else 0, 
-            modifier = Modifier.width(280.dp)
+            value = currentStep.toFloat(),
+            onValueChange = { onStepChange(it.toInt()) },
+            valueRange = 0f..maxStep.toFloat(),
+            steps = if (maxStep > 1) maxStep - 1 else 0,
+            modifier = Modifier.width(280.dp),
         )
     }
 }

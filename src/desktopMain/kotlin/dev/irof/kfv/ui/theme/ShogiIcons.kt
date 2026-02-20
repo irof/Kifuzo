@@ -11,7 +11,7 @@ object ShogiIcons {
     val Back = Icons.AutoMirrored.Filled.ArrowBack
     val Delete = Icons.Default.Delete
     val Refresh = Icons.Default.Refresh
-    
+
     val ExpandMore = Icons.Default.ArrowDropDown
     val ExpandLess = Icons.Default.ArrowForward
 }

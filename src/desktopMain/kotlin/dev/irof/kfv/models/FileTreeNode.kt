@@ -10,7 +10,7 @@ data class FileTreeNode(
     val level: Int,
     val isDirectory: Boolean,
     var isExpanded: Boolean = false,
-    val parent: FileTreeNode? = null
+    val parent: FileTreeNode? = null,
 ) {
     val name: String get() = path.fileName?.toString() ?: "/"
 }

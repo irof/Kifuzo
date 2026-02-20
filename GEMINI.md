@@ -46,6 +46,10 @@ The project uses **Gradle** as the build tool.
   ```bash
   ./gradlew createDistributable
   ```
+- **Run verification (Spotless & Test):**
+  ```bash
+  ./gradlew verify
+  ```
 - **Run tests:**
   ```bash
   ./gradlew test
@@ -71,7 +75,7 @@ The project uses **Gradle** as the build tool.
 ## Development Conventions
 
 - **Language:** Comments and documentation in the code must be written in **Japanese**.
-- **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation.
+- **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation. **Before committing, you MUST run `./gradlew verify` and ensure it passes.**
 - **UI Framework:** Jetpack Compose (Desktop).
 - **State Management:** Uses a **ViewModel** pattern with `UiState` and `Action` objects for predictable state transitions.
 - **Parsing:** Primarily uses Regex and line-by-line processing for game records.

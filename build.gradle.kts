@@ -52,3 +52,9 @@ spotless {
         endWithNewline()
     }
 }
+
+tasks.register("verify") {
+    group = "verification"
+    description = "Runs Spotless check and all tests."
+    dependsOn("spotlessCheck", "desktopTest")
+}

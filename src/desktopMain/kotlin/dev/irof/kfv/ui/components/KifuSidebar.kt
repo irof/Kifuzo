@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,7 +42,7 @@ fun KifuSidebar(
     onToggleDir: (dev.irof.kfv.models.FileTreeNode) -> Unit,
     onSelectFile: (Path) -> Unit,
     onShowText: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxHeight().padding(ShogiDimensions.PaddingLarge)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -53,7 +52,7 @@ fun KifuSidebar(
                         Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
                             Text(AppStrings.IMPORT_KIFU, modifier = Modifier.padding(8.dp), color = Color.White, fontSize = ShogiDimensions.FontSizeCaption)
                         }
-                    }
+                    },
                 ) {
                     IconButton(onClick = onImport) {
                         Icon(ShogiIcons.Import, contentDescription = AppStrings.IMPORT_KIFU, tint = ShogiColors.Primary)
@@ -62,12 +61,12 @@ fun KifuSidebar(
             }
             SidebarIconButton(AppStrings.SETTINGS, ShogiIcons.Settings, Color.Gray, onShowSettings)
         }
-        
+
         Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
 
         Card(
             modifier = Modifier.fillMaxWidth().clickable {
-                val chooser = JFileChooser().apply { 
+                val chooser = JFileChooser().apply {
                     fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
                     currentDirectory = currentRoot.toFile()
                 }
@@ -77,7 +76,7 @@ fun KifuSidebar(
             },
             elevation = 0.dp,
             backgroundColor = Color.White,
-            border = BorderStroke(1.dp, Color.LightGray)
+            border = BorderStroke(1.dp, Color.LightGray),
         ) {
             Row(modifier = Modifier.padding(ShogiDimensions.PaddingMedium), verticalAlignment = Alignment.CenterVertically) {
                 Icon(ShogiIcons.FolderSelect, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(ShogiDimensions.IconSizeSmall))
@@ -87,7 +86,7 @@ fun KifuSidebar(
         }
 
         Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
-        
+
         if (state.availableSenkei.isNotEmpty() || state.isScanning) {
             if (state.isScanning) LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
             Row(modifier = Modifier.fillMaxWidth().padding(vertical = ShogiDimensions.PaddingSmall).horizontalScroll(rememberScrollState())) {
@@ -104,11 +103,11 @@ fun KifuSidebar(
             LazyColumn(modifier = Modifier.fillMaxHeight()) {
                 items(state.filteredNodes) { node ->
                     FileTreeItem(
-                        node = node, 
-                        isSelected = (node.path == state.selectedFile), 
+                        node = node,
+                        isSelected = (node.path == state.selectedFile),
                         onToggle = onToggleDir,
-                        onSelect = onSelectFile, 
-                        onShowText = { onShowText(readTextWithEncoding(it)) }
+                        onSelect = onSelectFile,
+                        onShowText = { onShowText(readTextWithEncoding(it)) },
                     )
                 }
             }
@@ -122,14 +121,14 @@ private fun SidebarIconButton(
     label: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     tint: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     TooltipArea(
         tooltip = {
             Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
                 Text(label, modifier = Modifier.padding(ShogiDimensions.PaddingMedium), color = Color.White, fontSize = ShogiDimensions.FontSizeCaption)
             }
-        }
+        },
     ) {
         IconButton(onClick = onClick) {
             Icon(icon, contentDescription = label, tint = tint)

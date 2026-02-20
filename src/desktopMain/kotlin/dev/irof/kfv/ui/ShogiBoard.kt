@@ -11,8 +11,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.min
+import androidx.compose.ui.unit.sp
 import dev.irof.kfv.models.*
 import dev.irof.kfv.ui.theme.ShogiColors
 
@@ -28,11 +28,14 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
         val fontSize = (cellSize.value * 0.6f).sp
 
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-            if (isFlipped) MochigomaView(PieceColor.Black.toSymbol() + session.senteName, board.senteMochigoma, isSente = true, isTurn = isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
-            else MochigomaView(PieceColor.White.toSymbol() + session.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
-            
+            if (isFlipped) {
+                MochigomaView(PieceColor.Black.toSymbol() + session.senteName, board.senteMochigoma, isSente = true, isTurn = isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            } else {
+                MochigomaView(PieceColor.White.toSymbol() + session.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            }
+
             Spacer(Modifier.height(4.dp))
-            
+
             Column(modifier = Modifier.background(ShogiColors.BoardBackground).border(1.5.dp, ShogiColors.BoardLine).padding(2.dp)) {
                 val range = if (isFlipped) (8 downTo 0) else (0..8)
                 for (y in range) {
@@ -41,10 +44,22 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
                             val currentSquare = Square.fromIndex(x, y)
                             val isLastFrom = board.lastFrom == currentSquare
                             val isLastTo = board.lastTo == currentSquare
-                            Box(modifier = Modifier.size(cellSize).background(when { isLastTo -> ShogiColors.HighlightLastTo; isLastFrom -> ShogiColors.HighlightLastFrom; else -> Color.Transparent }).border(0.5.dp, ShogiColors.CellBorder), contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier.size(cellSize).background(
+                                    when {
+                                        isLastTo -> ShogiColors.HighlightLastTo
+                                        isLastFrom -> ShogiColors.HighlightLastFrom
+                                        else -> Color.Transparent
+                                    },
+                                ).border(0.5.dp, ShogiColors.CellBorder),
+                                contentAlignment = Alignment.Center,
+                            ) {
                                 board.cells[y][x]?.let { (piece, color) ->
                                     val isSentePiece = color == PieceColor.Black
-                                    val rotation = when { isFlipped -> if (isSentePiece) 180f else 0f; else -> if (isSentePiece) 0f else 180f }
+                                    val rotation = when {
+                                        isFlipped -> if (isSentePiece) 180f else 0f
+                                        else -> if (isSentePiece) 0f else 180f
+                                    }
                                     Text(text = piece.symbol, fontSize = fontSize, color = if (piece.isPromoted()) ShogiColors.PiecePromoted else ShogiColors.PieceSente, modifier = Modifier.rotate(rotation))
                                 }
                             }
@@ -53,8 +68,11 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
                 }
             }
             Spacer(Modifier.height(4.dp))
-            if (isFlipped) MochigomaView(PieceColor.White.toSymbol() + session.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
-            else MochigomaView(PieceColor.Black.toSymbol() + session.senteName, board.senteMochigoma, isSente = true, isTurn = isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            if (isFlipped) {
+                MochigomaView(PieceColor.White.toSymbol() + session.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            } else {
+                MochigomaView(PieceColor.Black.toSymbol() + session.senteName, board.senteMochigoma, isSente = true, isTurn = isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            }
         }
     }
 }
@@ -84,7 +102,10 @@ fun MochigomaList(grouped: Map<Piece, Int>, isSente: Boolean, isFlipped: Boolean
     Row {
         grouped.forEach { (piece, count) ->
             Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(horizontal = 2.dp)) {
-                val rotation = when { isFlipped -> if (isSente) 180f else 0f; else -> if (isSente) 0f else 180f }
+                val rotation = when {
+                    isFlipped -> if (isSente) 180f else 0f
+                    else -> if (isSente) 0f else 180f
+                }
                 Text(text = piece.symbol, fontSize = pieceFontSize, modifier = Modifier.rotate(rotation))
                 if (count > 1) Text(text = count.toString(), fontSize = countFontSize, color = Color.Gray, fontWeight = FontWeight.Bold)
             }

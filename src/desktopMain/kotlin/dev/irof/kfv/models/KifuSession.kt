@@ -9,14 +9,14 @@ data class KifuSession(
     val senteName: String = "先手",
     val goteName: String = "後手",
     val firstContactStep: Int = -1,
-    val isStandardStart: Boolean = true
+    val isStandardStart: Boolean = true,
 ) {
     // 棋譜が空（初期状態）かどうか
     val isEmpty: Boolean get() = history.isEmpty()
-    
+
     // 最後に有効なインデックス
     val maxStep: Int get() = if (history.isEmpty()) 0 else history.size - 1
-    
+
     /**
      * 手数が範囲内にあることを保証します。
      */

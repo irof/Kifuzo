@@ -17,11 +17,14 @@ data class KifuManagerUiState(
     val isFlipped: Boolean = false,
     val showSettings: Boolean = false,
     val showImportDialog: Boolean = false,
-    val myNameRegex: String = ""
+    val myNameRegex: String = "",
 ) {
     val filteredNodes: List<FileTreeNode>
-        get() = if (selectedSenkei == null) treeNodes
-        else treeNodes.filter { node -> node.isDirectory || kifuInfos[node.path]?.senkei == selectedSenkei }
+        get() = if (selectedSenkei == null) {
+            treeNodes
+        } else {
+            treeNodes.filter { node -> node.isDirectory || kifuInfos[node.path]?.senkei == selectedSenkei }
+        }
 
     val availableSenkei: List<String>
         get() = kifuInfos.values.map { it.senkei }.filter { it.isNotEmpty() }.distinct().sorted()

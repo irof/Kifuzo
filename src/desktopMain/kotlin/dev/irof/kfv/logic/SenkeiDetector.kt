@@ -14,7 +14,7 @@ fun detectSenkei(history: List<BoardSnapshot>): String {
     // 10手目から35手目までの各局面をスキャンして、自陣に飛車がいる時の筋をカウントする
     val startStep = 5
     val endStep = minOf(35, history.size - 1)
-    
+
     val senteFiles = mutableMapOf<Int, Int>()
     val goteFiles = mutableMapOf<Int, Int>()
 

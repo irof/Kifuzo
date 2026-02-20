@@ -26,7 +26,7 @@ fun scanKifuInfo(path: Path): KifuInfo {
 
 fun parseKifu(path: Path, state: ShogiBoardState) {
     val lines = readLinesWithEncoding(path)
-    
+
     var currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
     var senteMochi = mutableListOf<Piece>()
     var goteMochi = mutableListOf<Piece>()
@@ -34,7 +34,7 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
     var goteName = "後手"
     var firstContactStep = -1
     var isStandardStart = true
-    
+
     val pieceSymbolMap = Piece.entries.associateBy { it.symbol }
     var boardY = 0
     var moveStartIndex = -1
@@ -53,7 +53,17 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
                 val color = if (pStr.startsWith('v')) PieceColor.White else PieceColor.Black
                 val pieceName = pStr.substring(1).trim()
                 if (pieceName.isNotEmpty() && pieceName != "・" && pieceName != "　") {
-                    val piece = pieceSymbolMap[pieceName] ?: if (pieceName == "王") Piece.OU else if (pieceName == "玉") Piece.OU else if (pieceName == "竜") Piece.RY else if (pieceName == "馬") Piece.UM else null
+                    val piece = pieceSymbolMap[pieceName] ?: if (pieceName == "王") {
+                        Piece.OU
+                    } else if (pieceName == "玉") {
+                        Piece.OU
+                    } else if (pieceName == "竜") {
+                        Piece.RY
+                    } else if (pieceName == "馬") {
+                        Piece.UM
+                    } else {
+                        null
+                    }
                     if (piece != null) currentCells[boardY][x] = piece to color
                 }
             }
@@ -74,7 +84,7 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
     }
 
     if (isStandardStart) currentCells = BoardSnapshot.getInitialCells()
-    
+
     val history = mutableListOf<BoardSnapshot>()
     history.add(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), "開始局面"))
 
@@ -83,17 +93,25 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
         val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*""")
         var lastTo: Square? = null
         var isVariationSection = false
-        
-        fun decodeX(c: Char): Int { val idx = "１２３４５６７８９123456789".indexOf(c); return if (idx == -1) -1 else (idx % 9) + 1 }
-        fun decodeY(c: Char): Int { val idx = "一二三四五六七八九１２３４５６７８９1234567８９".indexOf(c); return if (idx == -1) -1 else (idx % 9) + 1 }
-        
+
+        fun decodeX(c: Char): Int {
+            val idx = "１２３４５６７８９123456789".indexOf(c)
+            return if (idx == -1) -1 else (idx % 9) + 1
+        }
+        fun decodeY(c: Char): Int {
+            val idx = "一二三四五六七八九１２３４５６７８９1234567８９".indexOf(c)
+            return if (idx == -1) -1 else (idx % 9) + 1
+        }
+
         for (i in moveStartIndex until lines.size) {
             val line = lines[i].trim()
             if (line.isEmpty() || line.startsWith("*") || line.startsWith("#") || line.startsWith("&")) continue
-            if (line.startsWith("変化：") || line.startsWith("変化:")) { isVariationSection = true }
+            if (line.startsWith("変化：") || line.startsWith("変化:")) {
+                isVariationSection = true
+            }
             if (isVariationSection) continue
             if (!Regex("""^\s*\d+\s+.*""").matches(line)) continue
-            
+
             try {
                 val moveMatch = moveRegex.find(line)
                 if (moveMatch != null) {
@@ -111,7 +129,19 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
                         if (firstContactStep == -1) firstContactStep = history.size
                     }
                     val current = currentCells[fromSquare.yIndex][fromSquare.xIndex] ?: throw Exception("移動元($fromSquare)に駒がありません。")
-                    val piece = if (isPromote) when(current.first) { Piece.FU -> Piece.TO; Piece.KY -> Piece.NY; Piece.KE -> Piece.NK; Piece.GI -> Piece.NG; Piece.KA -> Piece.UM; Piece.HI -> Piece.RY; else -> current.first } else current.first
+                    val piece = if (isPromote) {
+                        when (current.first) {
+                            Piece.FU -> Piece.TO
+                            Piece.KY -> Piece.NY
+                            Piece.KE -> Piece.NK
+                            Piece.GI -> Piece.NG
+                            Piece.KA -> Piece.UM
+                            Piece.HI -> Piece.RY
+                            else -> current.first
+                        }
+                    } else {
+                        current.first
+                    }
                     currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
                     currentCells[fromSquare.yIndex][fromSquare.xIndex] = null
                     history.add(BoardSnapshot(Array(9) { y -> Array(9) { x -> currentCells[y][x] } }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare))
@@ -122,7 +152,8 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
                 if (dropMatch != null) {
                     val moveNum = dropMatch.groupValues[1].toInt()
                     val turnColor = if (moveNum % 2 != 0) PieceColor.Black else PieceColor.White
-                    val toPosStr = dropMatch.groupValues[2]; val pieceSym = dropMatch.groupValues[3].substring(0, 1)
+                    val toPosStr = dropMatch.groupValues[2]
+                    val pieceSym = dropMatch.groupValues[3].substring(0, 1)
                     val toSquare = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
                     val piece = Piece.entries.find { it.symbol == pieceSym || (pieceSym == "王" && it == Piece.OU) || (pieceSym == "玉" && it == Piece.OU) || (pieceSym == "竜" && it == Piece.RY) || (pieceSym == "龍" && it == Piece.RY) || (pieceSym == "馬" && it == Piece.UM) } ?: throw Exception("不明な駒種: $pieceSym")
                     if (turnColor == PieceColor.Black) senteMochi.remove(piece) else goteMochi.remove(piece)
@@ -131,19 +162,31 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
                     lastTo = toSquare
                     continue
                 }
-            } catch (e: Exception) { throw Exception("${i + 1}行目: ${e.message}\n(内容: $line)") }
+            } catch (e: Exception) {
+                throw Exception("${i + 1}行目: ${e.message}\n(内容: $line)")
+            }
         }
     }
 
-    val initialStep = if (!isStandardStart) 0 else if (firstContactStep != -1) firstContactStep else if (history.isNotEmpty()) history.size - 1 else 0
-    state.updateSession(KifuSession(
-        history = history,
-        initialStep = initialStep,
-        senteName = senteName,
-        goteName = goteName,
-        firstContactStep = firstContactStep,
-        isStandardStart = isStandardStart
-    ))
+    val initialStep = if (!isStandardStart) {
+        0
+    } else if (firstContactStep != -1) {
+        firstContactStep
+    } else if (history.isNotEmpty()) {
+        history.size - 1
+    } else {
+        0
+    }
+    state.updateSession(
+        KifuSession(
+            history = history,
+            initialStep = initialStep,
+            senteName = senteName,
+            goteName = goteName,
+            firstContactStep = firstContactStep,
+            isStandardStart = isStandardStart,
+        ),
+    )
 }
 
 fun updateKifuSenkei(path: Path, senkei: String) {
@@ -153,10 +196,19 @@ fun updateKifuSenkei(path: Path, senkei: String) {
     var headerEndIndex = 0
     for (i in lines.indices) {
         val line = lines[i].trim()
-        if (line.startsWith("戦型：")) { senkeiLineIndex = i; break }
-        if (Regex("""^\s*\d+\s+.*""").matches(line)) { headerEndIndex = i; break }
+        if (line.startsWith("戦型：")) {
+            senkeiLineIndex = i
+            break
+        }
+        if (Regex("""^\s*\d+\s+.*""").matches(line)) {
+            headerEndIndex = i
+            break
+        }
     }
-    if (senkeiLineIndex != -1) lines[senkeiLineIndex] = "戦型：$senkei"
-    else lines.add(headerEndIndex, "戦型：$senkei")
+    if (senkeiLineIndex != -1) {
+        lines[senkeiLineIndex] = "戦型：$senkei"
+    } else {
+        lines.add(headerEndIndex, "戦型：$senkei")
+    }
     java.nio.file.Files.write(path, lines.joinToString("\n").toByteArray(Charsets.UTF_8))
 }
