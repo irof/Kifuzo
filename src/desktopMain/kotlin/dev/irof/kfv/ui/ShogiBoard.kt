@@ -14,10 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.min
 import dev.irof.kfv.models.*
+import dev.irof.kfv.ui.theme.ShogiColors
 
 @Composable
 fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
-    val boardColor = Color(0xFFF3C077)
     val board = state.currentBoard ?: return
     val isSenteTurn = state.currentStep % 2 == 0
 
@@ -27,21 +27,17 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
         val fontSize = (cellSize.value * 0.6f).sp
 
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-            if (isFlipped) MochigomaView("▲" + state.senteName, board.senteMochigoma, isSente = true, isTurn = isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
-            else MochigomaView("△" + state.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            if (isFlipped) MochigomaView(PieceColor.Black.toSymbol() + state.senteName, board.senteMochigoma, isSente = true, isTurn = isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            else MochigomaView(PieceColor.White.toSymbol() + state.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
             
             Spacer(Modifier.height(4.dp))
             
-            Column(modifier = Modifier.background(boardColor).border(1.5.dp, Color.Black).padding(2.dp)) {
-                // 配列のyインデックス: 通常(0..8), 反転(8..0)
-                val yRange = if (isFlipped) (8 downTo 0) else (0..8)
-                // 配列のxインデックス: 通常(0..8), 反転(8..0)
-                val xRange = if (isFlipped) (8 downTo 0) else (0..8)
+            Column(modifier = Modifier.background(ShogiColors.BoardBackground).border(1.5.dp, ShogiColors.BoardLine).padding(2.dp)) {
+                val range = if (isFlipped) (8 downTo 0) else (0..8)
 
-                for (y in yRange) {
+                for (y in range) {
                     Row {
-                        for (x in xRange) {
-                            // Squareに変換して比較（x, yは配列インデックス）
+                        for (x in range) {
                             val currentSquare = Square.fromIndex(x, y)
                             val isLastFrom = board.lastFrom == currentSquare
                             val isLastTo = board.lastTo == currentSquare
@@ -51,12 +47,12 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
                                     .size(cellSize)
                                     .background(
                                         when {
-                                            isLastTo -> Color(0xFFFFD54F).copy(alpha = 0.7f)
-                                            isLastFrom -> Color(0xFFFFE082).copy(alpha = 0.5f)
+                                            isLastTo -> ShogiColors.HighlightLastTo
+                                            isLastFrom -> ShogiColors.HighlightLastFrom
                                             else -> Color.Transparent
                                         }
                                     )
-                                    .border(0.5.dp, Color.Gray.copy(alpha = 0.5f)),
+                                    .border(0.5.dp, ShogiColors.CellBorder),
                                 contentAlignment = Alignment.Center
                             ) {
                                 board.cells[y][x]?.let { (piece, color) ->
@@ -68,7 +64,7 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
                                     Text(
                                         text = piece.symbol, 
                                         fontSize = fontSize, 
-                                        color = if (piece.isPromoted()) Color.Red else Color.Black,
+                                        color = if (piece.isPromoted()) ShogiColors.PiecePromoted else ShogiColors.PieceSente,
                                         modifier = Modifier.rotate(rotation)
                                     )
                                 }
@@ -80,8 +76,8 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
             
             Spacer(Modifier.height(4.dp))
             
-            if (isFlipped) MochigomaView("△" + state.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
-            else MochigomaView("▲" + state.senteName, board.senteMochigoma, isSente = true, isTurn = isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            if (isFlipped) MochigomaView(PieceColor.White.toSymbol() + state.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            else MochigomaView(PieceColor.Black.toSymbol() + state.senteName, board.senteMochigoma, isSente = true, isTurn = isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
         }
     }
 }
@@ -95,7 +91,7 @@ fun MochigomaView(name: String, pieces: List<Piece>, isSente: Boolean, isTurn: B
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (isTurn) Color.Yellow.copy(alpha = 0.3f) else Color.Transparent)
+            .background(if (isTurn) ShogiColors.TurnHighlight else Color.Transparent)
             .padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = if (isSente) Arrangement.Start else Arrangement.End

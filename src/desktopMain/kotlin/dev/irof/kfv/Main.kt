@@ -34,6 +34,7 @@ import dev.irof.kfv.logic.readTextWithEncoding
 import dev.irof.kfv.models.AppSettings
 import dev.irof.kfv.ui.FileEntryItem
 import dev.irof.kfv.ui.ShogiBoardView
+import dev.irof.kfv.ui.theme.ShogiColors
 import dev.irof.kfv.viewmodel.KifuManagerViewModel
 import dev.irof.kfv.utils.copyToClipboard
 import java.io.File
@@ -118,7 +119,7 @@ fun KifuManagerApp() {
                 }
                 
                 Spacer(Modifier.height(8.dp))
-                Button(onClick = { viewModel.importFiles() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF6200EE), contentColor = Color.White)) { Text("Downloadsから棋譜をインポート", fontSize = 11.sp) }
+                Button(onClick = { viewModel.importFiles() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Primary, contentColor = Color.White)) { Text("Downloadsから棋譜をインポート", fontSize = 11.sp) }
                 
                 Spacer(Modifier.height(8.dp))
                 
@@ -146,9 +147,8 @@ fun KifuManagerApp() {
                 }
             }
 
-            // 右側：プレビュー・操作パネル
             Column(
-                modifier = Modifier.fillMaxHeight().weight(0.6f).background(Color(0xFFEEEEEE)).verticalScroll(scrollState).padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.fillMaxHeight().weight(0.6f).background(ShogiColors.PanelBackground).verticalScroll(scrollState).padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top
             ) {
                 Spacer(Modifier.height(8.dp))
@@ -177,28 +177,27 @@ fun KifuManagerApp() {
                                                 onClick = { viewModel.detectAndWriteSenkei(viewModel.selectedFile!!) },
                                                 modifier = Modifier.size(18.dp)
                                             ) {
-                                                Icon(Icons.Default.Refresh, contentDescription = "再判定", tint = Color(0xFF2196F3))
-                                            }
-                                        }
-                                    } else {
-                                        Button(
-                                            onClick = { viewModel.detectAndWriteSenkei(viewModel.selectedFile!!) },
-                                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2196F3), contentColor = Color.White),
-                                            modifier = Modifier.height(32.dp)
-                                        ) { Text("戦型判定", fontSize = 10.sp) }
-                                    }
-                                }
-                            }
-
-                            if (ext == "csa") {
-                                if (hasHistory) Spacer(Modifier.width(8.dp))
-                                Button(
-                                    onClick = { viewModel.convertCsa(viewModel.selectedFile!!) }, 
-                                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White), 
-                                    modifier = Modifier.height(32.dp)
-                                ) { Text("KIFUに変換", fontSize = 10.sp) }
-                            }
-                        }
+                                                                                            Icon(Icons.Default.Refresh, contentDescription = "再判定", tint = ShogiColors.Info)
+                                                                                        }
+                                                                                    }
+                                                                                } else {
+                                                                                    Button(
+                                                                                        onClick = { viewModel.detectAndWriteSenkei(viewModel.selectedFile!!) },
+                                                                                        colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Info, contentColor = Color.White),
+                                                                                        modifier = Modifier.height(32.dp)
+                                                                                    ) { Text("戦型判定", fontSize = 10.sp) }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                
+                                                                        if (ext == "csa") {
+                                                                            if (hasHistory) Spacer(Modifier.width(8.dp))
+                                                                            Button(
+                                                                                onClick = { viewModel.convertCsa(viewModel.selectedFile!!) }, 
+                                                                                colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Success, contentColor = Color.White), 
+                                                                                modifier = Modifier.height(32.dp)
+                                                                            ) { Text("KIFUに変換", fontSize = 10.sp) }
+                                                                        }                        }
                     }
                 }
 
