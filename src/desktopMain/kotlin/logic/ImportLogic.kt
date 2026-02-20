@@ -1,5 +1,6 @@
 package logic
 
+import models.AppConfig
 import java.io.File
 import java.time.Instant
 import java.time.ZoneId
@@ -10,10 +11,7 @@ import java.time.format.DateTimeFormatter
  * 棋譜の内容に基づいて適切なフォルダへリネームして移動します。
  */
 fun importShogiQuestFiles(): Int {
-    val userHome = System.getProperty("user.home")
-    val downloadsDir = File(userHome, "Downloads")
-    val kifuRoot = File(userHome, "Kifu")
-    val questDir = File(kifuRoot, "quest/csa")
+    val downloadsDir = File(AppConfig.USER_HOME, "Downloads")
     
     val txtFiles = downloadsDir.listFiles { file ->
         file.isFile && file.extension.lowercase() == "txt"
@@ -54,7 +52,7 @@ fun importShogiQuestFiles(): Int {
             val dateStr = dateFormatter.format(Instant.ofEpochMilli(file.lastModified()))
             
             // 保存先決定
-            val targetDir = if (isQuest) questDir else kifuRoot
+            val targetDir = if (isQuest) AppConfig.QUEST_CSA_DIR else AppConfig.KIFU_ROOT
             if (!targetDir.exists()) targetDir.mkdirs()
             
             // 新しいファイル名: csa-{YYYYMMDD}-{先手}-{後手}.csa

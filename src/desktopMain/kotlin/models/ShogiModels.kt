@@ -3,6 +3,13 @@ package models
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import java.io.File
+
+object AppConfig {
+    val USER_HOME: String = System.getProperty("user.home")
+    val KIFU_ROOT = File(USER_HOME, "Kifu")
+    val QUEST_CSA_DIR = File(KIFU_ROOT, "quest/csa")
+}
 
 enum class Piece(val symbol: String) {
     FU("歩"), KY("香"), KE("桂"), GI("銀"), KI("金"), KA("角"), HI("飛"), OU("玉"),

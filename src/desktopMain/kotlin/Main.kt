@@ -17,6 +17,7 @@ import logic.convertCsaToKifu
 import logic.getInitialCells
 import logic.importShogiQuestFiles
 import logic.parseKifu
+import models.AppConfig
 import models.ShogiBoardState
 import ui.FileEntryItem
 import ui.ShogiBoardView
@@ -37,12 +38,9 @@ fun main() = application {
 
 @Composable
 fun KifuManagerApp() {
-    val userHome = System.getProperty("user.home")
-    val defaultDir = File(userHome, "Kifu")
-    
     // 状態管理
     var currentDirectory by remember { 
-        mutableStateOf(if (defaultDir.exists() && defaultDir.isDirectory) defaultDir else File(userHome)) 
+        mutableStateOf(if (AppConfig.KIFU_ROOT.exists() && AppConfig.KIFU_ROOT.isDirectory) AppConfig.KIFU_ROOT else File(AppConfig.USER_HOME)) 
     }
     var directoryContents by remember { mutableStateOf(listOf<File>()) }
     var selectedFile by remember { mutableStateOf<File?>(null) }
