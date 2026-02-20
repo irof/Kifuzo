@@ -53,10 +53,31 @@ class KifuManagerViewModel(
         uiState = update(uiState)
     }
 
+    /**
+     * 現在の展開状態を維持したまま、ファイル一覧を更新します。
+     */
     fun refreshFiles() {
-        val rootFiles = repository.scanDirectory(currentRootDirectory)
-        updateState { it.copy(treeNodes = rootFiles.map { f -> FileTreeNode(f, 0, f.isDirectory()) }) }
+        val expandedPaths = uiState.treeNodes.filter { it.isExpanded }.map { it.path }.toSet()
+        val newNodes = mutableListOf<FileTreeNode>()
         
+        fun buildTree(dir: Path, level: Int) {
+            val contents = repository.scanDirectory(dir)
+            contents.forEach { path ->
+                val isDir = path.isDirectory()
+                val isExpanded = expandedPaths.contains(path)
+                val node = FileTreeNode(path, level, isDir, isExpanded)
+                newNodes.add(node)
+                
+                if (isDir && isExpanded) {
+                    buildTree(path, level + 1)
+                }
+            }
+        }
+
+        buildTree(currentRootDirectory, 0)
+        updateState { it.copy(treeNodes = newNodes) }
+        
+        // 戦型情報のスキャン（サブディレクトリも含めて最新にする）
         scope.launch {
             updateState { it.copy(isScanning = true) }
             val allKifuFiles = mutableListOf<Path>()
@@ -72,30 +93,32 @@ class KifuManagerViewModel(
 
     fun setRootDirectory(path: Path) {
         currentRootDirectory = path
-        updateState { it.copy(selectedSenkei = null) }
+        updateState { it.copy(selectedSenkei = null, treeNodes = emptyList()) } // ルート変更時は展開状態をクリア
         refreshFiles()
     }
 
     private fun toggleDirectory(node: FileTreeNode) {
         if (!node.isDirectory) return
-        val nodes = uiState.treeNodes
-        val index = nodes.indexOf(node)
+        
+        val newNodes = uiState.treeNodes.toMutableList()
+        val index = newNodes.indexOfFirst { it.path == node.path }
         if (index == -1) return
 
         if (node.isExpanded) {
-            val newNodes = nodes.toMutableList()
+            // 閉じる
             newNodes[index] = node.copy(isExpanded = false)
             var i = index + 1
-            while (i < newNodes.size && newNodes[i].level > node.level) { newNodes.removeAt(i) }
-            updateState { it.copy(treeNodes = newNodes) }
+            while (i < newNodes.size && newNodes[i].level > node.level) {
+                newNodes.removeAt(i)
+            }
         } else {
-            val children = repository.scanDirectory(node.path)
-            val childNodes = children.map { FileTreeNode(it, node.level + 1, it.isDirectory(), parent = node) }
-            val newNodes = nodes.toMutableList()
+            // 展開
             newNodes[index] = node.copy(isExpanded = true)
+            val children = repository.scanDirectory(node.path)
+            val childNodes = children.map { FileTreeNode(it, node.level + 1, it.isDirectory()) }
             newNodes.addAll(index + 1, childNodes)
-            updateState { it.copy(treeNodes = newNodes) }
         }
+        updateState { it.copy(treeNodes = newNodes) }
     }
 
     private fun selectFile(path: Path) {
@@ -125,7 +148,7 @@ class KifuManagerViewModel(
         }
     }
 
-    private fun saveSettings(newRegex: String) {
+    fun saveSettings(newRegex: String) {
         AppSettings.myNameRegex = newRegex
         updateState { it.copy(myNameRegex = newRegex, showSettings = false) }
         updateAutoFlip()
