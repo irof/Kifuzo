@@ -1,4 +1,5 @@
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -192,10 +193,10 @@ fun KifuManagerApp() {
                 val scrollStateHorizontal = rememberScrollState()
                 Box(
                     modifier = Modifier
-                        .heightIn(min = 200.dp, max = 450.dp)
+                        .height(450.dp) // 高さを固定してガタツキを完全に抑える
                         .fillMaxWidth()
                         .background(Color.White)
-                        .padding(8.dp)
+                        .border(1.dp, Color.LightGray)
                 ) {
                     Text(
                         text = viewingText!!,
@@ -203,6 +204,8 @@ fun KifuManagerApp() {
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                         softWrap = false,
                         modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp)
                             .verticalScroll(scrollStateVertical)
                             .horizontalScroll(scrollStateHorizontal)
                     )
