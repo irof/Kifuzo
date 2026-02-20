@@ -4,13 +4,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import dev.irof.kfv.logic.*
-import dev.irof.kfv.models.AppConfig
-import dev.irof.kfv.models.AppSettings
-import dev.irof.kfv.models.ShogiBoardState
+import dev.irof.kfv.models.*
 import kotlinx.coroutines.*
 import java.io.File
 
-class KifuManagerViewModel {
+class KifuManagerViewModel(
+    private val repository: KifuRepository = KifuRepository()
+) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     var currentDirectory by mutableStateOf(if (AppConfig.KIFU_ROOT.exists() && AppConfig.KIFU_ROOT.isDirectory) AppConfig.KIFU_ROOT else File(AppConfig.USER_HOME))
@@ -26,7 +26,6 @@ class KifuManagerViewModel {
     var viewingText by mutableStateOf<String?>(null)
     var isFlipped by mutableStateOf(false)
     
-    // 設定関連
     var showSettings by mutableStateOf(false)
     var myNameRegex by mutableStateOf(AppSettings.myNameRegex)
 
@@ -40,19 +39,13 @@ class KifuManagerViewModel {
         get() = kifuInfos.values.map { it.senkei }.filter { it.isNotEmpty() }.distinct().sorted()
 
     fun refreshFiles() {
-        val contents = currentDirectory.listFiles { file ->
-            file.isDirectory || (file.isFile && file.extension.lowercase() in listOf("kif", "kifu", "kifz", "csa", "jkf", "txt"))
-        }?.toList() ?: emptyList()
-        directoryContents = contents.sortedWith(compareBy({ !it.isDirectory }, { it.name.lowercase() }))
+        directoryContents = repository.scanDirectory(currentDirectory)
         
-        // 非同期でスキャンを実行
         scope.launch {
             isScanning = true
-            val newInfos = withContext(Dispatchers.IO) {
-                contents.filter { it.isFile && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
-                    .associateWith { scanKifuInfo(it) }
+            kifuInfos = withContext(Dispatchers.IO) {
+                repository.getKifuInfos(directoryContents)
             }
-            kifuInfos = newInfos
             isScanning = false
         }
     }
@@ -62,7 +55,7 @@ class KifuManagerViewModel {
         val ext = file.extension.lowercase()
         if (ext == "kifu" || ext == "kif") {
             try {
-                parseKifu(file, boardState)
+                repository.parse(file, boardState)
                 updateAutoFlip()
             } catch (e: Exception) {
                 errorMessage = "解析中断: ${file.name}\n\n${e.message}"
@@ -91,7 +84,7 @@ class KifuManagerViewModel {
     }
 
     fun importFiles() {
-        val count = importShogiQuestFiles()
+        val count = repository.importQuestFiles()
         if (count > 0) {
             infoMessage = "${count}件の棋譜をインポートしました。"
             refreshFiles()
@@ -102,43 +95,35 @@ class KifuManagerViewModel {
 
     fun convertCsa(file: File) {
         val targetFile = File(file.parent, file.nameWithoutExtension + ".kifu")
-        val performConversion = {
-            convertCsaToKifu(file)
-            try {
-                val tempState = ShogiBoardState()
-                parseKifu(targetFile, tempState)
-                val senkei = detectSenkei(tempState.history)
-                if (senkei.isNotEmpty()) updateKifuSenkei(targetFile, senkei)
-            } catch (e: Exception) { println("Auto-senkei detection failed: ${e.message}") }
-            refreshFiles()
-        }
         if (targetFile.exists()) {
             showOverwriteConfirm = file
         } else {
-            performConversion()
+            performCsaConversion(file)
         }
     }
     
     fun confirmOverwrite() {
         showOverwriteConfirm?.let {
-            convertCsaToKifu(it)
-            val targetFile = File(it.parent, it.nameWithoutExtension + ".kifu")
-            try {
-                val tempState = ShogiBoardState()
-                parseKifu(targetFile, tempState)
-                val senkei = detectSenkei(tempState.history)
-                if (senkei.isNotEmpty()) updateKifuSenkei(targetFile, senkei)
-            } catch (e: Exception) {}
-            
-            refreshFiles()
+            performCsaConversion(it)
             showOverwriteConfirm = null
         }
+    }
+
+    private fun performCsaConversion(file: File) {
+        val targetFile = repository.convertCsa(file)
+        try {
+            val tempState = ShogiBoardState()
+            repository.parse(targetFile, tempState)
+            val senkei = detectSenkei(tempState.history)
+            if (senkei.isNotEmpty()) repository.updateSenkei(targetFile, senkei)
+        } catch (e: Exception) {}
+        refreshFiles()
     }
 
     fun detectAndWriteSenkei(file: File) {
         val senkei = detectSenkei(boardState.history)
         if (senkei.isNotEmpty()) {
-            updateKifuSenkei(file, senkei)
+            repository.updateSenkei(file, senkei)
             refreshFiles()
             infoMessage = "戦型を「$senkei」として追記しました。"
         }
