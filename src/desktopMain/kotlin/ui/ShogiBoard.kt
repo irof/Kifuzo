@@ -42,10 +42,10 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
             
             // 盤面
             Column(modifier = Modifier.background(boardColor).border(1.5.dp, Color.Black).padding(2.dp)) {
-                // 通常: y=0が奥(後手陣)、x=8が右(1筋)
-                // 反転: y=8が奥(先手陣)、x=0が右(9筋)
+                // 通常: y=0が奥(後手陣)、x=0が左(9筋)
+                // 反転: y=8が奥(先手陣)、x=8が左(1筋)
                 val yRange = if (isFlipped) (8 downTo 0) else (0..8)
-                val xRange = if (isFlipped) (0..8) else (8 downTo 0)
+                val xRange = if (isFlipped) (8 downTo 0) else (0..8)
 
                 for (y in yRange) {
                     Row {
