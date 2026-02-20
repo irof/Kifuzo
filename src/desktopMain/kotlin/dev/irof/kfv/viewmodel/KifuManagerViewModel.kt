@@ -103,8 +103,11 @@ class KifuManagerViewModel(
             try {
                 repository.parse(path, boardState)
                 updateAutoFlip()
+            } catch (e: KifuParseException) {
+                updateState { it.copy(errorMessage = "棋譜パースエラー: ${path.name}\n\n${e.message}") }
+                boardState.clear()
             } catch (e: Exception) {
-                updateState { it.copy(errorMessage = "解析中断: ${path.name}\n\n${e.message}") }
+                updateState { it.copy(errorMessage = "予期せぬエラー: ${path.name}\n\n${e.message}") }
                 boardState.clear()
             }
         } else {

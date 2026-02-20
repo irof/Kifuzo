@@ -68,7 +68,7 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
                             if (turnColor == PieceColor.Black) senteMochi.add(captured.first.toBase()) else goteMochi.add(captured.first.toBase())
                             if (firstContactStep == -1) firstContactStep = history.size
                         }
-                        val current = currentCells[fromSquare.yIndex][fromSquare.xIndex] ?: throw Exception("移動元($fromSquare)に駒がありません。")
+                        val current = currentCells[fromSquare.yIndex][fromSquare.xIndex] ?: throw KifuParseException("移動元($fromSquare)に駒がありません。")
                         val piece = if (parsedMove.isPromote) {
                             when (current.first) {
                                 Piece.FU -> Piece.TO
@@ -98,7 +98,7 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
                     }
                 }
             } catch (e: Exception) {
-                throw Exception("${i + 1}行目: ${e.message}\n(内容: $line)")
+                throw KifuParseException("${i + 1}行目: ${e.message}\n(内容: $line)", e)
             }
         }
     }
@@ -247,7 +247,7 @@ private fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
         val pieceName = moveMatch.groupValues[3].trim()
         val fromPosStr = moveMatch.groupValues[4]
         val isPromote = pieceName.contains("成") || pieceName == "竜" || pieceName == "馬" || pieceName == "龍" || pieceName == "圭" || pieceName == "杏" || pieceName == "全"
-        val toSquare = if (toPosStr.startsWith("同")) lastTo ?: throw Exception("同の移動先が不明です") else Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
+        val toSquare = if (toPosStr.startsWith("同")) lastTo ?: throw KifuParseException("同の移動先が不明です") else Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
         val fromSquare = Square(fromPosStr[0] - '0', fromPosStr[1] - '0')
         return KifuParsedMove.Move(moveNum, toSquare, fromSquare, isPromote)
     }
@@ -258,7 +258,7 @@ private fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
         val toPosStr = dropMatch.groupValues[2]
         val pieceSym = dropMatch.groupValues[3].substring(0, 1)
         val toSquare = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
-        val piece = Piece.entries.find { it.symbol == pieceSym || (pieceSym == "王" && it == Piece.OU) || (pieceSym == "玉" && it == Piece.OU) || (pieceSym == "竜" && it == Piece.RY) || (pieceSym == "龍" && it == Piece.RY) || (pieceSym == "馬" && it == Piece.UM) } ?: throw Exception("不明な駒種: $pieceSym")
+        val piece = Piece.entries.find { it.symbol == pieceSym || (pieceSym == "王" && it == Piece.OU) || (pieceSym == "玉" && it == Piece.OU) || (pieceSym == "竜" && it == Piece.RY) || (pieceSym == "龍" && it == Piece.RY) || (pieceSym == "馬" && it == Piece.UM) } ?: throw KifuParseException("不明な駒種: $pieceSym")
         return KifuParsedMove.Drop(moveNum, toSquare, piece)
     }
 
@@ -288,3 +288,5 @@ fun updateKifuSenkei(path: Path, senkei: String) {
     }
     java.nio.file.Files.write(path, lines.joinToString("\n").toByteArray(Charsets.UTF_8))
 }
+
+class KifuParseException(message: String, cause: Throwable? = null) : Exception(message, cause)
