@@ -13,7 +13,8 @@ class ShogiBoardState {
     var goteName by mutableStateOf("後手")
 
     val currentBoard: BoardSnapshot?
-        get() = if (history.isNotEmpty()) history[currentStep] else null
+        get() = if (history.isNotEmpty() && currentStep in history.indices) history[currentStep] 
+                else history.lastOrNull()
 
     fun reset(initialCells: Array<Array<Pair<Piece, PieceColor>?>>) {
         history = listOf(BoardSnapshot(initialCells, lastMoveText = "開始局面"))

@@ -105,6 +105,7 @@ class KifuManagerViewModel(
     fun selectFile(path: Path) {
         selectedFile = path
         val ext = path.extension.lowercase()
+        boardState.currentStep = 0 // 解析前に手数をリセット
         if (ext == "kifu" || ext == "kif") {
             try {
                 repository.parse(path, boardState)
