@@ -12,63 +12,94 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.min
 import models.Piece
 import models.ShogiBoardState
 
 @Composable
 fun ShogiBoardView(state: ShogiBoardState) {
-    val boardColor = Color(0xFFF3C077); val cellSize = 38.dp
+    val boardColor = Color(0xFFF3C077)
     val board = state.currentBoard ?: return
     
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-        MochigomaView(state.goteName, board.goteMochigoma, isSente = false)
-        Spacer(Modifier.height(4.dp))
-        Column(modifier = Modifier.background(boardColor).border(1.5.dp, Color.Black).padding(2.dp)) {
-            for (y in 0..8) { Row { for (x in 0..8) {
-                Box(modifier = Modifier.size(cellSize).border(0.5.dp, Color.Gray.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
-                    board.cells[y][x]?.let { (piece, isSente) ->
-                        Text(
-                            text = piece.symbol, 
-                            fontSize = 22.sp, 
-                            color = if (piece.isPromoted()) Color.Red else Color.Black,
-                            modifier = if (!isSente) Modifier.rotate(180f) else Modifier
-                        )
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        // 利用可能な幅に基づいてマスのサイズを計算（最大60dp）
+        val calculatedCellSize = (maxWidth * 0.9f) / 9
+        val cellSize = min(calculatedCellSize, 60.dp)
+        val fontSize = (cellSize.value * 0.6f).sp
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+            MochigomaView(state.goteName, board.goteMochigoma, isSente = false, cellSize = cellSize)
+            Spacer(Modifier.height(4.dp))
+            
+            // 盤面
+            Column(modifier = Modifier.background(boardColor).border(1.5.dp, Color.Black).padding(2.dp)) {
+                for (y in 0..8) {
+                    Row {
+                        for (x in 0..8) {
+                            Box(
+                                modifier = Modifier
+                                    .size(cellSize)
+                                    .border(0.5.dp, Color.Gray.copy(alpha = 0.5f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                board.cells[y][x]?.let { (piece, isSente) ->
+                                    Text(
+                                        text = piece.symbol, 
+                                        fontSize = fontSize, 
+                                        color = if (piece.isPromoted()) Color.Red else Color.Black,
+                                        modifier = if (!isSente) Modifier.rotate(180f) else Modifier
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
-            } } }
+            }
+            
+            Spacer(Modifier.height(4.dp))
+            MochigomaView(state.senteName, board.senteMochigoma, isSente = true, cellSize = cellSize)
         }
-        Spacer(Modifier.height(4.dp))
-        MochigomaView(state.senteName, board.senteMochigoma, isSente = true)
     }
 }
 
 @Composable
-fun MochigomaView(name: String, pieces: List<Piece>, isSente: Boolean) {
+fun MochigomaView(name: String, pieces: List<Piece>, isSente: Boolean, cellSize: androidx.compose.ui.unit.Dp) {
     val grouped = pieces.groupBy { it }.mapValues { it.value.size }
+    val fontSize = (cellSize.value * 0.4f).sp
+    
     Row(
-        modifier = Modifier.padding(horizontal = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = if (isSente) Arrangement.Start else Arrangement.End
     ) {
         if (!isSente) {
-            MochigomaList(grouped, isSente)
+            MochigomaList(grouped, isSente, cellSize)
             Spacer(Modifier.width(12.dp))
-            Text(name, style = MaterialTheme.typography.subtitle2, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text(name, fontSize = fontSize, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         } else {
-            Text(name, style = MaterialTheme.typography.subtitle2, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text(name, fontSize = fontSize, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
             Spacer(Modifier.width(12.dp))
-            MochigomaList(grouped, isSente)
+            MochigomaList(grouped, isSente, cellSize)
         }
     }
 }
 
 @Composable
-fun MochigomaList(grouped: Map<Piece, Int>, isSente: Boolean) {
+fun MochigomaList(grouped: Map<Piece, Int>, isSente: Boolean, cellSize: androidx.compose.ui.unit.Dp) {
+    val pieceFontSize = (cellSize.value * 0.5f).sp
+    val countFontSize = (cellSize.value * 0.3f).sp
+    
     Row {
         grouped.forEach { (piece, count) ->
             Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(horizontal = 2.dp)) {
-                Text(text = piece.symbol, fontSize = 18.sp, modifier = if (!isSente) Modifier.rotate(180f) else Modifier)
-                if (count > 1) { Text(text = count.toString(), fontSize = 12.sp, color = Color.Gray) }
+                Text(
+                    text = piece.symbol, 
+                    fontSize = pieceFontSize, 
+                    modifier = if (!isSente) Modifier.rotate(180f) else Modifier
+                )
+                if (count > 1) {
+                    Text(text = count.toString(), fontSize = countFontSize, color = Color.Gray)
+                }
             }
         }
     }
