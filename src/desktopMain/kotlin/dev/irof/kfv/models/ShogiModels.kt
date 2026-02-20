@@ -33,9 +33,10 @@ object AppSettings {
                         prefs.put(key, value)
                     }
                 }
-                // コピー後に古いデータを消すことも可能ですが、安全のため残すか、
-                // またはここで oldPrefs.removeNode() を呼び出します。
-                println("Preferences migrated from old package 'models'.")
+                // 移行が完了したので、古いノードを完全に削除する
+                oldPrefs.removeNode()
+                prefs.flush() // 即座に反映
+                println("Preferences migrated from old package 'models' and old node removed.")
             }
         } catch (e: Exception) {
             // マイグレーション失敗時はログ出力のみ
