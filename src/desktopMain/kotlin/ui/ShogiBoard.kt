@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.min
@@ -17,25 +18,38 @@ import models.Piece
 import models.ShogiBoardState
 
 @Composable
-fun ShogiBoardView(state: ShogiBoardState) {
+fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
     val boardColor = Color(0xFFF3C077)
     val board = state.currentBoard ?: return
     
+    // 手番の判定: 手数(currentStep) % 2 が 0なら先手番、1なら後手番
+    val isSenteTurn = state.currentStep % 2 == 0
+
     BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-        // 利用可能な幅に基づいてマスのサイズを計算（最大60dp）
         val calculatedCellSize = (maxWidth * 0.9f) / 9
         val cellSize = min(calculatedCellSize, 60.dp)
         val fontSize = (cellSize.value * 0.6f).sp
 
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-            MochigomaView(state.goteName, board.goteMochigoma, isSente = false, cellSize = cellSize)
+            // 上側の持ち駒と名前
+            if (isFlipped) {
+                MochigomaView("▲" + state.senteName, board.senteMochigoma, isSente = true, isTurn = isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            } else {
+                MochigomaView("△" + state.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            }
+            
             Spacer(Modifier.height(4.dp))
             
             // 盤面
             Column(modifier = Modifier.background(boardColor).border(1.5.dp, Color.Black).padding(2.dp)) {
-                for (y in 0..8) {
+                // 通常: y=0が奥(後手陣)、x=8が右(1筋)
+                // 反転: y=8が奥(先手陣)、x=0が右(9筋)
+                val yRange = if (isFlipped) (8 downTo 0) else (0..8)
+                val xRange = if (isFlipped) (0..8) else (8 downTo 0)
+
+                for (y in yRange) {
                     Row {
-                        for (x in 0..8) {
+                        for (x in xRange) {
                             val isLastFrom = board.lastFrom?.let { it.first == x && it.second == y } ?: false
                             val isLastTo = board.lastTo?.let { it.first == x && it.second == y } ?: false
                             
@@ -44,8 +58,8 @@ fun ShogiBoardView(state: ShogiBoardState) {
                                     .size(cellSize)
                                     .background(
                                         when {
-                                            isLastTo -> Color(0xFFFFD54F).copy(alpha = 0.7f) // 移動先
-                                            isLastFrom -> Color(0xFFFFE082).copy(alpha = 0.5f) // 移動元
+                                            isLastTo -> Color(0xFFFFD54F).copy(alpha = 0.7f)
+                                            isLastFrom -> Color(0xFFFFE082).copy(alpha = 0.5f)
                                             else -> Color.Transparent
                                         }
                                     )
@@ -53,11 +67,15 @@ fun ShogiBoardView(state: ShogiBoardState) {
                                 contentAlignment = Alignment.Center
                             ) {
                                 board.cells[y][x]?.let { (piece, isSente) ->
+                                    val rotation = when {
+                                        isFlipped -> if (isSente) 180f else 0f
+                                        else -> if (isSente) 0f else 180f
+                                    }
                                     Text(
                                         text = piece.symbol, 
                                         fontSize = fontSize, 
                                         color = if (piece.isPromoted()) Color.Red else Color.Black,
-                                        modifier = if (!isSente) Modifier.rotate(180f) else Modifier
+                                        modifier = Modifier.rotate(rotation)
                                     )
                                 }
                             }
@@ -67,48 +85,76 @@ fun ShogiBoardView(state: ShogiBoardState) {
             }
             
             Spacer(Modifier.height(4.dp))
-            MochigomaView(state.senteName, board.senteMochigoma, isSente = true, cellSize = cellSize)
+
+            // 下側の持ち駒と名前
+            if (isFlipped) {
+                MochigomaView("△" + state.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            } else {
+                MochigomaView("▲" + state.senteName, board.senteMochigoma, isSente = true, isTurn = isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
+            }
         }
     }
 }
 
 @Composable
-fun MochigomaView(name: String, pieces: List<Piece>, isSente: Boolean, cellSize: androidx.compose.ui.unit.Dp) {
+fun MochigomaView(name: String, pieces: List<Piece>, isSente: Boolean, isTurn: Boolean, isFlipped: Boolean, cellSize: androidx.compose.ui.unit.Dp) {
     val grouped = pieces.groupBy { it }.mapValues { it.value.size }
-    val fontSize = (cellSize.value * 0.4f).sp
+    val fontSize = (cellSize.value * 0.45f).sp
     
+    // 手番の場合は名前の背景を強調
+    val nameColor = if (isTurn) Color.Black else Color.Gray
+
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = if (isSente) Arrangement.Start else Arrangement.End
     ) {
         if (!isSente) {
-            MochigomaList(grouped, isSente, cellSize)
+            MochigomaList(grouped, isSente = false, isFlipped = isFlipped, cellSize = cellSize)
             Spacer(Modifier.width(12.dp))
-            Text(name, fontSize = fontSize, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text(
+                text = name, 
+                fontSize = fontSize, 
+                fontWeight = if (isTurn) FontWeight.Bold else FontWeight.Normal,
+                color = nameColor,
+                modifier = if (isTurn) Modifier.background(Color.Yellow.copy(alpha = 0.3f)) else Modifier
+            )
         } else {
-            Text(name, fontSize = fontSize, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text(
+                text = name, 
+                fontSize = fontSize, 
+                fontWeight = if (isTurn) FontWeight.Bold else FontWeight.Normal,
+                color = nameColor,
+                modifier = if (isTurn) Modifier.background(Color.Yellow.copy(alpha = 0.3f)) else Modifier
+            )
             Spacer(Modifier.width(12.dp))
-            MochigomaList(grouped, isSente, cellSize)
+            MochigomaList(grouped, isSente = true, isFlipped = isFlipped, cellSize = cellSize)
         }
     }
 }
 
 @Composable
-fun MochigomaList(grouped: Map<Piece, Int>, isSente: Boolean, cellSize: androidx.compose.ui.unit.Dp) {
+fun MochigomaList(grouped: Map<Piece, Int>, isSente: Boolean, isFlipped: Boolean, cellSize: androidx.compose.ui.unit.Dp) {
     val pieceFontSize = (cellSize.value * 0.5f).sp
-    val countFontSize = (cellSize.value * 0.3f).sp
+    val countFontSize = (cellSize.value * 0.35f).sp
     
     Row {
         grouped.forEach { (piece, count) ->
             Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(horizontal = 2.dp)) {
+                // 持ち駒の向きも、盤面の反転と陣営に合わせて回転
+                val rotation = when {
+                    isFlipped -> if (isSente) 180f else 0f
+                    else -> if (isSente) 0f else 180f
+                }
                 Text(
                     text = piece.symbol, 
                     fontSize = pieceFontSize, 
-                    modifier = if (!isSente) Modifier.rotate(180f) else Modifier
+                    modifier = Modifier.rotate(rotation)
                 )
                 if (count > 1) {
-                    Text(text = count.toString(), fontSize = countFontSize, color = Color.Gray)
+                    Text(text = count.toString(), fontSize = countFontSize, color = Color.Gray, fontWeight = FontWeight.Bold)
                 }
             }
         }

@@ -58,6 +58,7 @@ fun KifuManagerApp() {
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var infoMessage by remember { mutableStateOf<String?>(null) }
     var showOverwriteConfirm by remember { mutableStateOf<File?>(null) }
+    var isFlipped by remember { mutableStateOf(false) }
     val boardState = remember { ShogiBoardState() }
     val scrollState = rememberScrollState()
     val focusRequester = remember { FocusRequester() }
@@ -266,27 +267,41 @@ fun KifuManagerApp() {
             )
             
             // ファイル操作ボタン（上部に集約）
-            if (selectedFile?.isFile == true && selectedFile!!.extension.lowercase() == "csa") {
+            if (selectedFile?.isFile == true) {
                 Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = { 
-                        val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
-                        if (targetFile.exists()) {
-                            showOverwriteConfirm = selectedFile
-                        } else {
-                            convertCsaToKifu(selectedFile!!)
-                            refreshFiles()
+                Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(
+                        onClick = { isFlipped = !isFlipped },
+                        modifier = Modifier.height(32.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (isFlipped) Color.LightGray else Color.White)
+                    ) {
+                        Text("盤面反転", fontSize = 10.sp)
+                    }
+
+                    if (selectedFile!!.extension.lowercase() == "csa") {
+                        Spacer(Modifier.width(8.dp))
+                        Button(
+                            onClick = { 
+                                val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
+                                if (targetFile.exists()) {
+                                    showOverwriteConfirm = selectedFile
+                                } else {
+                                    convertCsaToKifu(selectedFile!!)
+                                    refreshFiles()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White),
+                            modifier = Modifier.height(32.dp)
+                        ) {
+                            Text("KIFUに変換", fontSize = 10.sp)
                         }
-                    },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White)
-                ) {
-                    Text("KIFUに変換", fontSize = 10.sp)
+                    }
                 }
             }
 
             if (boardState.history.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
-                ShogiBoardView(boardState)
+                ShogiBoardView(boardState, isFlipped = isFlipped)
                 Spacer(Modifier.height(8.dp))
                 
                 // 棋譜操作コントロール
