@@ -187,26 +187,28 @@ fun KifuManagerApp() {
         AlertDialog(
             onDismissRequest = { viewingText = null },
             title = { Text("棋譜テキスト") },
-            modifier = Modifier.width(600.dp).height(550.dp),
+            modifier = Modifier.width(600.dp), // 幅だけ固定
             text = {
                 val scrollStateVertical = rememberScrollState()
                 val scrollStateHorizontal = rememberScrollState()
-                Box(
-                    modifier = Modifier
-                        .height(400.dp)
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .border(1.dp, Color.LightGray)
-                        .verticalScroll(scrollStateVertical)
-                        .horizontalScroll(scrollStateHorizontal)
-                ) {
-                    Text(
-                        text = viewingText!!,
-                        fontSize = 12.sp,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        softWrap = false,
-                        modifier = Modifier.padding(8.dp)
-                    )
+                // 内部のサイズを厳密に固定
+                Column(modifier = Modifier.width(560.dp).height(400.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White)
+                            .border(1.dp, Color.LightGray)
+                            .verticalScroll(scrollStateVertical)
+                            .horizontalScroll(scrollStateHorizontal)
+                    ) {
+                        Text(
+                            text = viewingText!!,
+                            fontSize = 12.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            softWrap = false,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
                 }
             },
             buttons = {
