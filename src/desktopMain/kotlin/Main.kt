@@ -1,5 +1,6 @@
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
@@ -16,16 +17,18 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import logic.KifuInfo
 import logic.convertCsaToKifu
-import logic.getInitialCells
 import logic.importShogiQuestFiles
 import logic.parseKifu
+import logic.scanKifuInfo
 import models.AppConfig
 import models.AppSettings
 import models.ShogiBoardState
@@ -54,6 +57,9 @@ fun KifuManagerApp() {
         mutableStateOf(if (AppConfig.KIFU_ROOT.exists() && AppConfig.KIFU_ROOT.isDirectory) AppConfig.KIFU_ROOT else File(AppConfig.USER_HOME)) 
     }
     var directoryContents by remember { mutableStateOf(listOf<File>()) }
+    var kifuInfos by remember { mutableStateOf(mapOf<File, KifuInfo>()) }
+    var selectedSenkei by remember { mutableStateOf<String?>(null) }
+    
     var selectedFile by remember { mutableStateOf<File?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var infoMessage by remember { mutableStateOf<String?>(null) }
@@ -70,21 +76,17 @@ fun KifuManagerApp() {
         if (myNameRegex.isEmpty()) return
         val regex = try { Regex(myNameRegex) } catch (e: Exception) { null } ?: return
         
-        // 後手が自分にマッチし、先手がマッチしない場合は反転
         if (regex.containsMatchIn(boardState.goteName) && !regex.containsMatchIn(boardState.senteName)) {
             isFlipped = true
         } else if (regex.containsMatchIn(boardState.senteName)) {
-            // 先手が自分にマッチする場合は通常表示
             isFlipped = false
         }
     }
 
-    // 名前が変わった時や設定が変わった時に自動反転をチェック
     LaunchedEffect(boardState.senteName, boardState.goteName, myNameRegex) {
         updateAutoFlip()
     }
 
-    // 手数を進める/戻す関数
     fun nextStep() {
         if (boardState.currentStep < boardState.history.size - 1) {
             boardState.currentStep++
@@ -96,25 +98,43 @@ fun KifuManagerApp() {
         }
     }
 
-    // フォーカスの要求
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
 
-    // ディレクトリ内容の更新
+    // ディレクトリ内容の更新とスキャン
     fun refreshFiles() {
         val contents = currentDirectory.listFiles { file ->
             file.isDirectory || (file.isFile && file.extension.lowercase() in listOf("kif", "kifu", "kifz", "csa", "jkf", "txt"))
         }?.toList() ?: emptyList()
         directoryContents = contents.sortedWith(compareBy({ !it.isDirectory }, { it.name.lowercase() }))
+        
+        // 棋譜情報のスキャン（戦型抽出）
+        val newInfos = mutableMapOf<File, KifuInfo>()
+        contents.filter { it.isFile && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }.forEach { file ->
+            newInfos[file] = scanKifuInfo(file)
+        }
+        kifuInfos = newInfos
     }
 
-    // ディレクトリ変更時のリフレッシュ
     LaunchedEffect(currentDirectory) {
+        selectedSenkei = null
         refreshFiles()
     }
     
-    // ファイル選択時の解析
+    // フィルタリングされたリスト
+    val filteredContents = remember(directoryContents, selectedSenkei, kifuInfos) {
+        if (selectedSenkei == null) directoryContents
+        else directoryContents.filter { file ->
+            file.isDirectory || kifuInfos[file]?.senkei == selectedSenkei
+        }
+    }
+
+    // 利用可能な戦型リスト
+    val availableSenkei = remember(kifuInfos) {
+        kifuInfos.values.map { it.senkei }.filter { it.isNotEmpty() }.distinct().sorted()
+    }
+
     LaunchedEffect(selectedFile) {
         val ext = selectedFile?.extension?.lowercase()
         if (ext == "kifu" || ext == "kif") {
@@ -129,33 +149,22 @@ fun KifuManagerApp() {
         }
     }
 
-    // エラーダイアログ
+    // ダイアログ類
     if (errorMessage != null) {
         AlertDialog(
             onDismissRequest = { errorMessage = null },
             title = { Text("解析エラー") },
             text = { Text(errorMessage!!, fontSize = 12.sp) },
             buttons = {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(8.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Button(onClick = { 
-                        copyToClipboard(errorMessage!!)
-                        errorMessage = null 
-                    }) {
-                        Text("コピーして閉じる")
-                    }
+                Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
+                    Button(onClick = { copyToClipboard(errorMessage!!); errorMessage = null }) { Text("コピーして閉じる") }
                     Spacer(Modifier.width(8.dp))
-                    Button(onClick = { errorMessage = null }) {
-                        Text("閉じる")
-                    }
+                    Button(onClick = { errorMessage = null }) { Text("閉じる") }
                 }
             }
         )
     }
 
-    // 情報ダイアログ（インポート完了通知など）
     if (infoMessage != null) {
         AlertDialog(
             onDismissRequest = { infoMessage = null },
@@ -169,7 +178,6 @@ fun KifuManagerApp() {
         )
     }
 
-    // 上書き確認ダイアログ
     if (showOverwriteConfirm != null) {
         val targetFile = File(showOverwriteConfirm!!.parent, showOverwriteConfirm!!.nameWithoutExtension + ".kifu")
         AlertDialog(
@@ -180,17 +188,12 @@ fun KifuManagerApp() {
                 Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = { showOverwriteConfirm = null }) { Text("キャンセル") }
                     Spacer(Modifier.width(8.dp))
-                    Button(onClick = {
-                        convertCsaToKifu(showOverwriteConfirm!!)
-                        refreshFiles()
-                        showOverwriteConfirm = null
-                    }) { Text("上書きする") }
+                    Button(onClick = { convertCsaToKifu(showOverwriteConfirm!!); refreshFiles(); showOverwriteConfirm = null }) { Text("上書きする") }
                 }
             }
         )
     }
 
-    // 設定ダイアログ
     if (showSettings) {
         var tempRegex by remember { mutableStateOf(myNameRegex) }
         AlertDialog(
@@ -200,12 +203,7 @@ fun KifuManagerApp() {
                 Column {
                     Text("自分の名前の判定用（正規表現）:")
                     Spacer(Modifier.height(8.dp))
-                    TextField(
-                        value = tempRegex,
-                        onValueChange = { tempRegex = it },
-                        placeholder = { Text("例: (irof|名無し)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    TextField(value = tempRegex, onValueChange = { tempRegex = it }, placeholder = { Text("例: (irof|名無し)") }, modifier = Modifier.fillMaxWidth())
                     Text("※自分が後手の場合、自動的に盤面を反転します。", fontSize = 10.sp, color = Color.Gray)
                 }
             },
@@ -213,11 +211,7 @@ fun KifuManagerApp() {
                 Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = { showSettings = false }) { Text("キャンセル") }
                     Spacer(Modifier.width(8.dp))
-                    Button(onClick = {
-                        myNameRegex = tempRegex
-                        AppSettings.myNameRegex = tempRegex
-                        showSettings = false
-                    }) { Text("保存") }
+                    Button(onClick = { myNameRegex = tempRegex; AppSettings.myNameRegex = tempRegex; showSettings = false }) { Text("保存") }
                 }
             }
         )
@@ -244,118 +238,70 @@ fun KifuManagerApp() {
                 IconButton(onClick = { currentDirectory.parentFile?.let { currentDirectory = it } }) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "戻る")
                 }
-                Button(
-                    onClick = {
-                        val chooser = JFileChooser().apply {
-                            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                            selectedFile = currentDirectory
-                        }
-                        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                            currentDirectory = chooser.selectedFile
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("フォルダ選択", fontSize = 11.sp)
-                }
+                Button(onClick = {
+                    val chooser = JFileChooser().apply { fileSelectionMode = JFileChooser.DIRECTORIES_ONLY; selectedFile = currentDirectory }
+                    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) currentDirectory = chooser.selectedFile
+                }, modifier = Modifier.weight(1f)) { Text("フォルダ選択", fontSize = 11.sp) }
                 Spacer(Modifier.width(4.dp))
-                IconButton(onClick = { showSettings = true }) {
-                    Icon(Icons.Default.Settings, contentDescription = "設定")
-                }
+                IconButton(onClick = { showSettings = true }) { Icon(Icons.Default.Settings, contentDescription = "設定") }
             }
             
             Spacer(Modifier.height(8.dp))
+            Button(onClick = {
+                val count = importShogiQuestFiles()
+                if (count > 0) { infoMessage = "${count}件の棋譜をインポートしました。"; refreshFiles() }
+                else { infoMessage = "Downloadsフォルダに該当する棋譜が見つかりませんでした。" }
+            }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF6200EE), contentColor = Color.White)) { Text("Downloadsから棋譜をインポート", fontSize = 11.sp) }
             
-            // クエスト棋譜インポートボタン
-            Button(
-                onClick = {
-                    val count = importShogiQuestFiles()
-                    if (count > 0) {
-                        infoMessage = "${count}件の棋譜をインポートしました。"
-                        refreshFiles()
-                    } else {
-                        infoMessage = "Downloadsフォルダに該当する棋譜が見つかりませんでした。"
+            Spacer(Modifier.height(8.dp))
+            
+            // 戦型フィルタエリア
+            if (availableSenkei.isNotEmpty()) {
+                Text("戦型フィルタ:", style = MaterialTheme.typography.caption)
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).horizontalScroll(rememberScrollState())) {
+                    TextButton(
+                        onClick = { selectedSenkei = null },
+                        colors = ButtonDefaults.textButtonColors(contentColor = if (selectedSenkei == null) Color.Blue else Color.Gray)
+                    ) { Text("すべて", fontSize = 10.sp) }
+                    availableSenkei.forEach { senkei ->
+                        TextButton(
+                            onClick = { selectedSenkei = senkei },
+                            colors = ButtonDefaults.textButtonColors(contentColor = if (selectedSenkei == senkei) Color.Blue else Color.Gray)
+                        ) { Text(senkei, fontSize = 10.sp) }
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF6200EE), contentColor = Color.White)
-            ) {
-                Text("Downloadsから棋譜をインポート", fontSize = 11.sp)
+                }
+                Divider()
             }
-            
-            Spacer(Modifier.height(8.dp))
-            
+
             LazyColumn(modifier = Modifier.weight(1f)) {
                 currentDirectory.parentFile?.let { parent ->
-                    item {
-                        FileEntryItem(
-                            file = parent,
-                            isParentLink = true,
-                            onNavigate = { currentDirectory = it },
-                            onSelect = { selectedFile = it },
-                            onCopy = { copyToClipboard(it.readText()) }
-                        )
-                    }
+                    item { FileEntryItem(file = parent, isParentLink = true, onNavigate = { currentDirectory = it }, onSelect = { selectedFile = it }, onCopy = { copyToClipboard(it.readText()) }) }
                 }
-                items(directoryContents) { file ->
-                    FileEntryItem(
-                        file = file,
-                        isSelected = (file == selectedFile),
-                        onNavigate = { currentDirectory = it },
-                        onSelect = { selectedFile = it },
-                        onCopy = { copyToClipboard(it.readText()) }
-                    )
+                items(filteredContents) { file ->
+                    FileEntryItem(file = file, isSelected = (file == selectedFile), onNavigate = { currentDirectory = it }, onSelect = { selectedFile = it }, onCopy = { copyToClipboard(it.readText()) })
                 }
             }
         }
 
         // 右側：プレビュー・操作パネル
         Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(0.6f)
-                .background(Color(0xFFEEEEEE))
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            modifier = Modifier.fillMaxHeight().weight(0.6f).background(Color(0xFFEEEEEE)).verticalScroll(scrollState).padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top
         ) {
             Spacer(Modifier.height(8.dp))
-            Text(
-                text = selectedFile?.name ?: "kifuファイルを選択してください",
-                style = MaterialTheme.typography.subtitle1,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-            )
+            Text(text = selectedFile?.name ?: "kifuファイルを選択してください", style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
             
-            // ファイル操作ボタン（上部に集約）
             if (selectedFile?.isFile == true) {
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedButton(
-                        onClick = { isFlipped = !isFlipped },
-                        modifier = Modifier.height(32.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (isFlipped) Color.LightGray else Color.White)
-                    ) {
-                        Text("盤面反転", fontSize = 10.sp)
-                    }
-
+                    OutlinedButton(onClick = { isFlipped = !isFlipped }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (isFlipped) Color.LightGray else Color.White)) { Text("盤面反転", fontSize = 10.sp) }
                     if (selectedFile!!.extension.lowercase() == "csa") {
                         Spacer(Modifier.width(8.dp))
-                        Button(
-                            onClick = { 
-                                val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
-                                if (targetFile.exists()) {
-                                    showOverwriteConfirm = selectedFile
-                                } else {
-                                    convertCsaToKifu(selectedFile!!)
-                                    refreshFiles()
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White),
-                            modifier = Modifier.height(32.dp)
-                        ) {
-                            Text("KIFUに変換", fontSize = 10.sp)
-                        }
+                        Button(onClick = { 
+                            val targetFile = File(selectedFile!!.parent, selectedFile!!.nameWithoutExtension + ".kifu")
+                            if (targetFile.exists()) { showOverwriteConfirm = selectedFile } 
+                            else { convertCsaToKifu(selectedFile!!); refreshFiles() }
+                        }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50), contentColor = Color.White), modifier = Modifier.height(32.dp)) { Text("KIFUに変換", fontSize = 10.sp) }
                     }
                 }
             }
@@ -364,54 +310,22 @@ fun KifuManagerApp() {
                 Spacer(Modifier.height(8.dp))
                 ShogiBoardView(boardState, isFlipped = isFlipped)
                 Spacer(Modifier.height(8.dp))
-                
-                // 棋譜操作コントロール
-                Text(
-                    text = "手数: ${boardState.currentStep} / ${boardState.history.size - 1}",
-                    style = MaterialTheme.typography.caption
-                )
-                Text(
-                    text = boardState.currentBoard?.lastMoveText ?: "",
-                    style = MaterialTheme.typography.body2,
-                    modifier = Modifier.height(24.dp) // 高さを抑える
-                )
-                
+                Text(text = "手数: ${boardState.currentStep} / ${boardState.history.size - 1}", style = MaterialTheme.typography.caption)
+                Text(text = boardState.currentBoard?.lastMoveText ?: "", style = MaterialTheme.typography.body2, modifier = Modifier.height(24.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Button(onClick = { boardState.currentStep = 0 }, modifier = Modifier.height(32.dp)) {
-                        Text("開始", fontSize = 10.sp)
-                    }
+                    Button(onClick = { boardState.currentStep = 0 }, modifier = Modifier.height(32.dp)) { Text("開始", fontSize = 10.sp) }
                     Spacer(Modifier.width(4.dp))
-                    
-                    // 戻るボタン
-                    OutlinedButton(onClick = { prevStep() }, modifier = Modifier.height(32.dp)) {
-                        Text("◀", fontSize = 10.sp)
-                    }
+                    OutlinedButton(onClick = { prevStep() }, modifier = Modifier.height(32.dp)) { Text("◀", fontSize = 10.sp) }
                     Spacer(Modifier.width(4.dp))
-
                     if (boardState.firstContactStep != -1) {
-                        Button(onClick = { boardState.currentStep = boardState.firstContactStep }, modifier = Modifier.height(32.dp)) {
-                            Text("衝突", fontSize = 10.sp)
-                        }
+                        Button(onClick = { boardState.currentStep = boardState.firstContactStep }, modifier = Modifier.height(32.dp)) { Text("衝突", fontSize = 10.sp) }
                         Spacer(Modifier.width(4.dp))
                     }
-                    
-                    // 進むボタン
-                    OutlinedButton(onClick = { nextStep() }, modifier = Modifier.height(32.dp)) {
-                        Text("▶", fontSize = 10.sp)
-                    }
+                    OutlinedButton(onClick = { nextStep() }, modifier = Modifier.height(32.dp)) { Text("▶", fontSize = 10.sp) }
                     Spacer(Modifier.width(4.dp))
-
-                    Button(onClick = { boardState.currentStep = boardState.history.size - 1 }, modifier = Modifier.height(32.dp)) {
-                        Text("終局", fontSize = 10.sp)
-                    }
+                    Button(onClick = { boardState.currentStep = boardState.history.size - 1 }, modifier = Modifier.height(32.dp)) { Text("終局", fontSize = 10.sp) }
                 }
-                Slider(
-                    value = boardState.currentStep.toInt().toFloat(),
-                    onValueChange = { boardState.currentStep = it.toInt() },
-                    valueRange = 0f..(boardState.history.size - 1).toFloat(),
-                    steps = if (boardState.history.size > 2) boardState.history.size - 2 else 0,
-                    modifier = Modifier.width(280.dp)
-                )
+                Slider(value = boardState.currentStep.toInt().toFloat(), onValueChange = { boardState.currentStep = it.toInt() }, valueRange = 0f..(boardState.history.size - 1).toFloat(), steps = if (boardState.history.size > 2) boardState.history.size - 2 else 0, modifier = Modifier.width(280.dp))
             }
         }
     }
