@@ -111,86 +111,85 @@ fun KifuManagerApp() {
                     } else false
                 }
         ) {
-            // 左側：ファイルブラウザ
-            Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
-                // ルートフォルダ表示と変更
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            val chooser = JFileChooser().apply { 
-                                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                                currentDirectory = viewModel.currentRootDirectory.toFile()
-                            }
-                            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                                viewModel.currentRootDirectory = chooser.selectedFile.toPath()
-                            }
-                        },
-                    elevation = 0.dp,
-                    backgroundColor = Color.White,
-                    border = BorderStroke(1.dp, Color.LightGray)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Menu, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = viewModel.currentRootDirectory.toString(),
-                            fontSize = 11.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(8.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        TooltipArea(
-                            tooltip = {
-                                Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                                    Text("棋譜をインポート", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
-                                }
-                            }
-                        ) {
-                            IconButton(onClick = {
-                                val savedDir = AppSettings.importSourceDir
-                                val chooser = JFileChooser().apply { 
-                                    fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                                    if (savedDir.isNotEmpty()) {
-                                        val f = java.io.File(savedDir)
-                                        if (f.exists()) currentDirectory = f
+                        // 左側：ファイルブラウザ
+                        Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    TooltipArea(
+                                        tooltip = {
+                                            Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
+                                                Text("棋譜をインポート", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
+                                            }
+                                        }
+                                    ) {
+                                        IconButton(onClick = {
+                                            val savedDir = AppSettings.importSourceDir
+                                            val chooser = JFileChooser().apply { 
+                                                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                                                if (savedDir.isNotEmpty()) {
+                                                    val f = java.io.File(savedDir)
+                                                    if (f.exists()) currentDirectory = f
+                                                }
+                                            }
+                                            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                                                viewModel.importFiles(chooser.selectedFile.toPath())
+                                            }
+                                        }) {
+                                            Icon(Icons.Default.Add, contentDescription = "インポート", tint = ShogiColors.Primary)
+                                        }
                                     }
                                 }
-                                if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                                    viewModel.importFiles(chooser.selectedFile.toPath())
+                                
+                                TooltipArea(
+                                    tooltip = {
+                                        Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
+                                            Text("設定", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
+                                        }
+                                    }
+                                ) {
+                                    IconButton(onClick = { viewModel.showSettings = true }) {
+                                        Icon(Icons.Default.Settings, contentDescription = "設定", tint = Color.Gray)
+                                    }
                                 }
-                            }) {
-                                Icon(Icons.Default.Add, contentDescription = "インポート", tint = ShogiColors.Primary)
                             }
-                        }
-                    }
-                    
-                    TooltipArea(
-                        tooltip = {
-                            Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                                Text("設定", modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
+                            
+                            Spacer(Modifier.height(8.dp))
+            
+                            // ルートフォルダ表示と変更（ツリーの直上に移動）
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val chooser = JFileChooser().apply { 
+                                            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                                            currentDirectory = viewModel.currentRootDirectory.toFile()
+                                        }
+                                        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                                            viewModel.currentRootDirectory = chooser.selectedFile.toPath()
+                                        }
+                                    },
+                                elevation = 0.dp,
+                                backgroundColor = Color.White,
+                                border = BorderStroke(1.dp, Color.LightGray)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Menu, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = viewModel.currentRootDirectory.toString(),
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
-                        }
-                    ) {
-                        IconButton(onClick = { viewModel.showSettings = true }) {
-                            Icon(Icons.Default.Settings, contentDescription = "設定", tint = Color.Gray)
-                        }
-                    }
-                }
-                
-                Spacer(Modifier.height(8.dp))
-                
-                if (viewModel.availableSenkei.isNotEmpty() || viewModel.isScanning) {
+            
+                            Spacer(Modifier.height(8.dp))
+                            if (viewModel.availableSenkei.isNotEmpty() || viewModel.isScanning) {
                     Text("戦型フィルタ:", style = MaterialTheme.typography.caption)
                     if (viewModel.isScanning) {
                         LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
