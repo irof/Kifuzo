@@ -181,5 +181,6 @@ fun parseKifu(file: File, state: ShogiBoardState) {
             throw Exception("${lineNum}行目: ${e.message}\n(内容: $line)") 
         }
     }
-    state.currentStep = state.history.size - 1
+    // 初期表示を手がぶつかった局面（衝突）にする。衝突がなければ終局。
+    state.currentStep = if (state.firstContactStep != -1) state.firstContactStep else state.history.size - 1
 }
