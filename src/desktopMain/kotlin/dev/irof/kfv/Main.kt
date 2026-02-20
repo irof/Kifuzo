@@ -1,54 +1,31 @@
 package dev.irof.kfv
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.TooltipArea
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import dev.irof.kfv.logic.readTextWithEncoding
 import dev.irof.kfv.models.AppSettings
-import dev.irof.kfv.ui.FileTreeItem
-import dev.irof.kfv.ui.ShogiBoardView
+import dev.irof.kfv.ui.components.KifuPreviewPanel
+import dev.irof.kfv.ui.components.KifuSidebar
 import dev.irof.kfv.ui.dialogs.KifuTextViewer
 import dev.irof.kfv.ui.dialogs.OverwriteConfirmDialog
 import dev.irof.kfv.ui.dialogs.SettingsDialog
-import dev.irof.kfv.ui.theme.ShogiColors
 import dev.irof.kfv.utils.AppStrings
 import dev.irof.kfv.utils.copyToClipboard
 import dev.irof.kfv.viewmodel.KifuManagerViewModel
 import javax.swing.JFileChooser
-import kotlin.io.path.extension
-import kotlin.io.path.name
 import kotlin.io.path.toPath
 
 fun main() = application {
@@ -82,16 +59,12 @@ fun main() = application {
 @Composable
 fun KifuManagerApp() {
     val viewModel = remember { KifuManagerViewModel() }
-    val focusRequester = remember { FocusRequester() }
-    val scrollState = rememberScrollState()
     val state = viewModel.uiState
-
-    fun nextStep() { viewModel.boardState.currentStep++ }
-    fun prevStep() { viewModel.boardState.currentStep-- }
+    val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
 
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
         viewModel.refreshFiles()
+        focusRequester.requestFocus()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -103,210 +76,57 @@ fun KifuManagerApp() {
                 .onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown) {
                         when (event.key) {
-                            Key.DirectionRight -> { nextStep(); true }
-                            Key.DirectionLeft -> { prevStep(); true }
+                            Key.DirectionRight -> { viewModel.boardState.currentStep++; true }
+                            Key.DirectionLeft -> { viewModel.boardState.currentStep--; true }
                             else -> false
                         }
                     } else false
                 }
         ) {
-            // 左側：ファイルブラウザ
-            Column(modifier = Modifier.fillMaxHeight().weight(0.4f).padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        TooltipArea(
-                            tooltip = {
-                                Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                                    Text(AppStrings.IMPORT_KIFU, modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
-                                }
-                            }
-                        ) {
-                            IconButton(onClick = {
-                                val savedDir = AppSettings.importSourceDir
-                                val chooser = JFileChooser().apply { 
-                                    fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                                    if (savedDir.isNotEmpty()) {
-                                        val f = java.io.File(savedDir)
-                                        if (f.exists()) currentDirectory = f
-                                    }
-                                }
-                                if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                                    viewModel.importFiles(chooser.selectedFile.toPath())
-                                }
-                            }) {
-                                Icon(Icons.Default.Add, contentDescription = AppStrings.IMPORT_KIFU, tint = ShogiColors.Primary)
-                            }
+            KifuSidebar(
+                state = state,
+                currentRoot = viewModel.currentRootDirectory,
+                onSetRoot = { viewModel.setRootDirectory(it) },
+                onImport = {
+                    val savedDir = AppSettings.importSourceDir
+                    val chooser = JFileChooser().apply { 
+                        fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                        if (savedDir.isNotEmpty()) {
+                            val f = java.io.File(savedDir)
+                            if (f.exists()) currentDirectory = f
                         }
                     }
-                    
-                    TooltipArea(
-                        tooltip = {
-                            Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                                Text(AppStrings.SETTINGS, modifier = Modifier.padding(8.dp), color = Color.White, fontSize = 12.sp)
-                            }
-                        }
-                    ) {
-                        IconButton(onClick = { viewModel.showSettings(true) }) {
-                            Icon(Icons.Default.Settings, contentDescription = AppStrings.SETTINGS, tint = Color.Gray)
-                        }
+                    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                        viewModel.importFiles(chooser.selectedFile.toPath())
                     }
-                }
-                
-                Spacer(Modifier.height(8.dp))
+                },
+                onShowSettings = { viewModel.showSettings(true) },
+                onSelectSenkei = { viewModel.setSelectedSenkei(it) },
+                onToggleDir = { viewModel.toggleDirectory(it) },
+                onSelectFile = { viewModel.selectFile(it) },
+                onShowText = { viewModel.setViewingText(it) },
+                modifier = Modifier.weight(0.4f)
+            )
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            val chooser = JFileChooser().apply { 
-                                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                                currentDirectory = viewModel.currentRootDirectory.toFile()
-                            }
-                            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                                viewModel.setRootDirectory(chooser.selectedFile.toPath())
-                            }
-                        },
-                    elevation = 0.dp,
-                    backgroundColor = Color.White,
-                    border = BorderStroke(1.dp, Color.LightGray)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Menu, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = viewModel.currentRootDirectory.toString(),
-                            fontSize = 11.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(8.dp))
-                
-                if (state.availableSenkei.isNotEmpty() || state.isScanning) {
-                    if (state.isScanning) {
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
-                    }
-                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).horizontalScroll(rememberScrollState())) {
-                        TextButton(onClick = { viewModel.setSelectedSenkei(null) }, colors = ButtonDefaults.textButtonColors(contentColor = if (state.selectedSenkei == null) Color.Blue else Color.Gray)) { Text(AppStrings.ALL_SENKEI, fontSize = 10.sp) }
-                        state.availableSenkei.forEach { senkei ->
-                            TextButton(onClick = { viewModel.setSelectedSenkei(senkei) }, colors = ButtonDefaults.textButtonColors(contentColor = if (state.selectedSenkei == senkei) Color.Blue else Color.Gray)) { Text(senkei, fontSize = 10.sp) }
-                        }
-                    }
-                    Divider()
-                }
-
-                val treeHorizontalScroll = rememberScrollState()
-                Box(modifier = Modifier.weight(1f).fillMaxWidth().horizontalScroll(treeHorizontalScroll)) {
-                    LazyColumn(modifier = Modifier.fillMaxHeight()) {
-                        items(state.filteredNodes) { node ->
-                            FileTreeItem(
-                                node = node, 
-                                isSelected = (node.path == state.selectedFile), 
-                                onToggle = { viewModel.toggleDirectory(it) },
-                                onSelect = { viewModel.selectFile(it) }, 
-                                onShowText = { viewModel.setViewingText(readTextWithEncoding(it)) }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 右側：プレビュー・操作パネル
-            Column(
-                modifier = Modifier.fillMaxHeight().weight(0.6f).background(ShogiColors.PanelBackground).verticalScroll(scrollState).padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top
-            ) {
-                Spacer(Modifier.height(8.dp))
-                Text(text = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT, style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
-                
-                state.selectedFile?.let { selected ->
-                    val ext = selected.extension.lowercase()
-                    val isKifuFile = ext == "kifu" || ext == "kif"
-                    val hasHistory = viewModel.boardState.session.history.isNotEmpty()
-
-                    if (hasHistory || ext == "csa") {
-                        Spacer(Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                            if (hasHistory) {
-                                OutlinedButton(onClick = { viewModel.toggleFlipped() }, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (state.isFlipped) Color.LightGray else Color.White)) { Text(AppStrings.FLIP_BOARD, fontSize = 10.sp) }
-                                
-                                if (isKifuFile) {
-                                    val kifuInfo = state.kifuInfos[selected]
-                                    val existingSenkei = kifuInfo?.senkei
-                                    Spacer(Modifier.width(8.dp))
-                                    
-                                    if (!existingSenkei.isNullOrEmpty()) {
-                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
-                                            Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                            Spacer(Modifier.width(4.dp))
-                                            IconButton(
-                                                onClick = { viewModel.detectAndWriteSenkei(selected) },
-                                                modifier = Modifier.size(18.dp)
-                                            ) {
-                                                Icon(Icons.Default.Refresh, contentDescription = AppStrings.DETECT_SENKEI, tint = ShogiColors.Info)
-                                            }
-                                        }
-                                    } else {
-                                        Button(
-                                            onClick = { viewModel.detectAndWriteSenkei(selected) },
-                                            colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Info, contentColor = Color.White),
-                                            modifier = Modifier.height(32.dp)
-                                        ) { Text(AppStrings.DETECT_SENKEI, fontSize = 10.sp) }
-                                    }
-                                }
-                            }
-
-                            if (ext == "csa") {
-                                if (hasHistory) Spacer(Modifier.width(8.dp))
-                                Button(
-                                    onClick = { viewModel.convertCsa(selected) }, 
-                                    colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Success, contentColor = Color.White), 
-                                    modifier = Modifier.height(32.dp)
-                                ) { Text(AppStrings.CONVERT_TO_KIFU, fontSize = 10.sp) }
-                            }
-                        }
-                    }
-                }
-
-                if (viewModel.boardState.session.history.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
-                    ShogiBoardView(viewModel.boardState, isFlipped = state.isFlipped)
-                    Spacer(Modifier.height(8.dp))
-                    Text(text = "${AppStrings.MOVE_COUNT}: ${viewModel.boardState.currentStep} / ${viewModel.boardState.session.maxStep}", style = MaterialTheme.typography.caption)
-                    Text(text = viewModel.boardState.currentBoard?.lastMoveText ?: "", style = MaterialTheme.typography.body2, modifier = Modifier.height(24.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Button(onClick = { viewModel.boardState.currentStep = 0 }, modifier = Modifier.height(32.dp)) { Text(AppStrings.START, fontSize = 10.sp) }
-                        Spacer(Modifier.width(4.dp))
-                        OutlinedButton(onClick = { viewModel.boardState.currentStep-- }, modifier = Modifier.height(32.dp)) { Text("◀", fontSize = 10.sp) }
-                        Spacer(Modifier.width(4.dp))
-                        if (viewModel.boardState.session.isStandardStart && viewModel.boardState.session.firstContactStep != -1) {
-                            Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.session.firstContactStep }, modifier = Modifier.height(32.dp)) { Text(AppStrings.CONTACT, fontSize = 10.sp) }
-                            Spacer(Modifier.width(4.dp))
-                        }
-                        OutlinedButton(onClick = { viewModel.boardState.currentStep++ }, modifier = Modifier.height(32.dp)) { Text("▶", fontSize = 10.sp) }
-                        Spacer(Modifier.width(4.dp))
-                        Button(onClick = { viewModel.boardState.currentStep = viewModel.boardState.session.maxStep }, modifier = Modifier.height(32.dp)) { Text(AppStrings.END, fontSize = 10.sp) }
-                    }
-                    Slider(value = viewModel.boardState.currentStep.toFloat(), onValueChange = { viewModel.boardState.currentStep = it.toInt() }, valueRange = 0f..viewModel.boardState.session.maxStep.toFloat(), steps = if (viewModel.boardState.session.maxStep > 1) viewModel.boardState.session.maxStep - 1 else 0, modifier = Modifier.width(280.dp))
-                }
-            }
+            KifuPreviewPanel(
+                state = state,
+                boardState = viewModel.boardState,
+                onToggleFlip = { viewModel.toggleFlipped() },
+                onDetectSenkei = { viewModel.detectAndWriteSenkei(it) },
+                onConvertCsa = { viewModel.convertCsa(it) },
+                onStepChange = { viewModel.boardState.currentStep = it },
+                modifier = Modifier.weight(0.6f)
+            )
         }
 
-        // --- オーバーレイ・ダイアログ類 ---
-
+        // ダイアログ類
         if (state.errorMessage != null || state.infoMessage != null) {
             val title = if (state.errorMessage != null) AppStrings.ERROR else AppStrings.NOTIFICATION
             val msg = state.errorMessage ?: state.infoMessage!!
             AlertDialog(
                 onDismissRequest = { viewModel.clearErrorAndInfo() },
                 title = { Text(title) },
-                text = { Text(msg, fontSize = 12.sp) },
+                text = { Text(msg) },
                 buttons = {
                     Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.CenterEnd) {
                         Button(onClick = { viewModel.clearErrorAndInfo() }) { Text(AppStrings.OK) }
