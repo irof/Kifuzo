@@ -185,7 +185,17 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
             throw Exception("${i + 1}行目: ${e.message}\n(内容: $line)")
         }
     }
-    state.currentStep = if (state.firstContactStep != -1) state.firstContactStep else state.history.size - 1
+    // 初期表示の決定
+    state.currentStep = if (!isStandardStart) {
+        // 指定局面の場合は開始を表示
+        0
+    } else if (state.firstContactStep != -1) {
+        // 平手開始の場合は衝突を表示
+        state.firstContactStep
+    } else {
+        // それ以外は終局を表示
+        state.history.size - 1
+    }
 }
 
 /**
