@@ -13,7 +13,38 @@ object AppConfig {
 
 object AppSettings {
     private val prefs = java.util.prefs.Preferences.userNodeForPackage(AppSettings::class.java)
+    
+    init {
+        // 旧パッケージからのマイグレーション
+        migrateFromOldPackage()
+    }
+
+    private fun migrateFromOldPackage() {
+        try {
+            // 古いノード（"models"）を直接取得
+            val oldPrefs = java.util.prefs.Preferences.userRoot().node("models")
+            val oldKeys = oldPrefs.keys()
+            
+            if (oldKeys.isNotEmpty() && prefs.keys().isEmpty()) {
+                // 古いデータがあり、新しいデータがまだない場合のみコピー
+                oldKeys.forEach { key ->
+                    val value = oldPrefs.get(key, null)
+                    if (value != null) {
+                        prefs.put(key, value)
+                    }
+                }
+                // コピー後に古いデータを消すことも可能ですが、安全のため残すか、
+                // またはここで oldPrefs.removeNode() を呼び出します。
+                println("Preferences migrated from old package 'models'.")
+            }
+        } catch (e: Exception) {
+            // マイグレーション失敗時はログ出力のみ
+            println("Migration failed: ${e.message}")
+        }
+    }
+
     private const val KEY_MY_NAME_REGEX = "my_name_regex"
+
     private const val KEY_WINDOW_X = "window_x"
     private const val KEY_WINDOW_Y = "window_y"
     private const val KEY_WINDOW_WIDTH = "window_width"
