@@ -57,12 +57,12 @@ enum class Piece(val symbol: String) {
 }
 
 data class BoardSnapshot(
-    val cells: Array<Array<Pair<Piece, Boolean>?>>,
+    val cells: Array<Array<Pair<Piece, PieceColor>?>>,
     val senteMochigoma: List<Piece> = emptyList(),
     val goteMochigoma: List<Piece> = emptyList(),
     val lastMoveText: String = "",
-    val lastFrom: Pair<Int, Int>? = null,
-    val lastTo: Pair<Int, Int>? = null
+    val lastFrom: Square? = null,
+    val lastTo: Square? = null
 )
 
 class ShogiBoardState {
@@ -72,7 +72,7 @@ class ShogiBoardState {
     var senteName by mutableStateOf("先手")
     var goteName by mutableStateOf("後手")
     val currentBoard: BoardSnapshot? get() = if (history.isNotEmpty()) history[currentStep] else null
-    fun reset(initialCells: Array<Array<Pair<Piece, Boolean>?>>) {
+    fun reset(initialCells: Array<Array<Pair<Piece, PieceColor>?>>) {
         history = listOf(BoardSnapshot(initialCells, lastMoveText = "開始局面"))
         currentStep = 0; firstContactStep = -1; senteName = "先手"; goteName = "後手"
     }
