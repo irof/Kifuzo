@@ -168,24 +168,43 @@ private fun parseHeader(lines: List<String>): KifuHeader {
         val trimmed = line.trim()
         if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) senteName = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("後手：")) goteName = trimmed.substringAfter("：").trim()
+
+        // 盤面行の解析
         if (trimmed.startsWith("|") && trimmed.count { it == '|' } >= 2) {
             isStandardStart = false
             val content = trimmed.substringAfter("|").substringBeforeLast("|")
-            val cells = content.split("|")
+
+            // セパレータ '|' がある場合は分割、ない場合は2文字ずつの固定幅として扱う
+            val cells = if (content.contains("|")) {
+                content.split("|")
+            } else {
+                (0 until 9).map { idx ->
+                    val start = idx * 2
+                    if (start + 2 <= content.length) {
+                        content.substring(start, start + 2)
+                    } else if (start < content.length) {
+                        content.substring(start)
+                    } else {
+                        ""
+                    }
+                }
+            }
+
             for (x in 0..8) {
                 if (x >= cells.size || boardY >= 9) break
-                val pStr = cells[x] // trim はあえてせず、中身を見る
-                if (pStr.trim().isEmpty() || pStr.contains('・')) continue
-
+                val pStr = cells[x]
                 val isGote = pStr.contains('v')
-                val color = if (isGote) PieceColor.White else PieceColor.Black
-                val pieceName = pStr.replace("v", "").trim()
+                val pieceName = pStr.replace("v", "").replace("・", "").trim()
 
                 val piece = Piece.findPieceBySymbol(pieceName)
-                if (piece != null) currentCells[boardY][x] = piece to color
+                if (piece != null) {
+                    val color = if (isGote) PieceColor.White else PieceColor.Black
+                    currentCells[boardY][x] = piece to color
+                }
             }
             boardY++
         }
+
         if (trimmed.startsWith("先手持駒：") || trimmed.startsWith("下手持駒：")) {
             isStandardStart = false
             senteMochi.addAll(Piece.parseMochigoma(trimmed.substringAfter("：")))
@@ -194,9 +213,14 @@ private fun parseHeader(lines: List<String>): KifuHeader {
             isStandardStart = false
             goteMochi.addAll(Piece.parseMochigoma(trimmed.substringAfter("：")))
         }
+
+        // 指し手開始行の判定
         if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) {
-            moveStartIndex = i
-            break
+            // 盤面ヘッダの「 ９ ８ ７...」などを誤検知しないよう、実際に指し手としてパースできるか確認する
+            if (parseMove(trimmed, null) != null) {
+                moveStartIndex = i
+                break
+            }
         }
     }
 

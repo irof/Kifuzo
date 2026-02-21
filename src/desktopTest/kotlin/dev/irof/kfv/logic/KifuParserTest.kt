@@ -6,6 +6,36 @@ import kotlin.test.*
 class KifuParserTest {
 
     @Test
+    fun testParseKifuWithBoxBoard() {
+        val lines = listOf(
+            "| ・v桂 ・v金 ・v玉 ・v桂v香|一",
+            "| ・ ・ ・ ・ ・ ・ ・ 馬 ・|二",
+            "| ・ ・ ・v飛 ・v金 ・v歩 ・|三",
+            "| ・ ・v歩v銀 ・ ・v歩 ・v歩|四",
+            "| ・ 歩 ・ ・ ・ ・ ・ ・ ・|五",
+            "| ・ 馬 歩 ・ 歩 ・ ・ ・ 歩|六",
+            "| 歩 ・ ・ ・ ・ 歩 歩 ・v龍|七",
+            "| ・ ・ 玉 ・ ・ ・ ・ ・ ・|八",
+            "| ・ ・ ・ ・ ・ ・ ・ ・ ・|九",
+            "1 ３二銀打",
+            "2 ５二玉(41)",
+        )
+        val state = ShogiBoardState()
+        parseKifu(lines, state)
+
+        val history = state.session.history
+        // 0手目: 4一に玉(White)がいるか
+        val step0 = history[0]
+        assertEquals(Piece.OU, step0.cells[0][5]?.first, "4一(xIndex=5, yIndex=0)に玉がいること")
+        assertEquals(PieceColor.White, step0.cells[0][5]?.second)
+
+        // 2手目: 4一の玉が5二へ移動できているか
+        val step2 = history[2]
+        assertNull(step2.cells[0][5], "4一から玉が消えていること")
+        assertEquals(Piece.OU, step2.cells[1][4]?.first, "5二(xIndex=4, yIndex=1)に玉が移動していること")
+    }
+
+    @Test
     fun testParseKifuWithEvaluations() {
         val lines = listOf(
             "1 ７六歩(77)",
