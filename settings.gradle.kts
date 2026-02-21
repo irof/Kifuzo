@@ -1,4 +1,4 @@
-rootProject.name = "KifuManager"
+rootProject.name = "Kifuzo"
 
 pluginManagement {
     repositories {

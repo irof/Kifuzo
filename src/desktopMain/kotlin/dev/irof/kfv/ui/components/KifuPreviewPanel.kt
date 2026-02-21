@@ -39,14 +39,14 @@ import dev.irof.kfv.models.ShogiBoardState
 import dev.irof.kfv.ui.ShogiBoardView
 import dev.irof.kfv.ui.theme.ShogiColors
 import dev.irof.kfv.utils.AppStrings
-import dev.irof.kfv.viewmodel.KifuManagerUiState
+import dev.irof.kfv.viewmodel.KifuzoUiState
 import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.name
 
 @Composable
 fun KifuPreviewPanel(
-    state: KifuManagerUiState,
+    state: KifuzoUiState,
     boardState: ShogiBoardState,
     onToggleFlip: () -> Unit,
     onDetectSenkei: (Path) -> Unit,

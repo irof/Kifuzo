@@ -40,7 +40,7 @@ import dev.irof.kfv.ui.theme.ShogiColors
 import dev.irof.kfv.ui.theme.ShogiDimensions
 import dev.irof.kfv.ui.theme.ShogiIcons
 import dev.irof.kfv.utils.AppStrings
-import dev.irof.kfv.viewmodel.KifuManagerUiState
+import dev.irof.kfv.viewmodel.KifuzoUiState
 import java.nio.file.Path
 import javax.swing.JFileChooser
 import kotlin.io.path.toPath
@@ -48,7 +48,7 @@ import kotlin.io.path.toPath
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun KifuSidebar(
-    state: KifuManagerUiState,
+    state: KifuzoUiState,
     currentRoot: Path?,
     onSetRoot: (Path) -> Unit,
     onToggleDir: (dev.irof.kfv.models.FileTreeNode) -> Unit,

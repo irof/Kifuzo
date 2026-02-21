@@ -1,7 +1,7 @@
 package dev.irof.kfv.utils
 
 object AppStrings {
-    const val APP_TITLE = "棋譜管理アプリ"
+    const val APP_TITLE = "Kifuzo（棋譜蔵）"
     const val SELECT_FOLDER = "フォルダ選択"
     const val IMPORT_KIFU = "棋譜をインポート"
     const val SETTINGS = "設定"

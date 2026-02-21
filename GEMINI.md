@@ -1,6 +1,6 @@
-# KifuManager - Shogi Game Record Manager
+# Kifuzo - Shogi Game Record Librarian
 
-KifuManager is a macOS GUI application built with **Compose Multiplatform** and **Kotlin**. It is designed to manage, view, and convert Shogi game records (Kifu) from local files.
+Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kotlin**. It is designed to manage, view, and convert Shogi game records (Kifu) from local files.
 
 ## Project Overview
 
@@ -12,10 +12,14 @@ KifuManager is a macOS GUI application built with **Compose Multiplatform** and 
 
 - **File Browser:** A dual-pane interface with a file navigator on the left and a preview/board view on the right. Supports directory navigation (double-click to enter, `..` to go back).
     - Remembers the last opened root directory across application restarts. Defaults to "no directory selected" on first run.
-    - **Collapsible Sidebar:** The file browser sidebar can be toggled (opened/closed) from the preview panel to maximize board viewing area.
-- **Board Display:** Renders a 9x9 Shogi board showing the **final state** (endgame) of a `.kifu` record.
+    - **Vertical Menu Bar:** A dedicated sidebar on the far left for quick access to "Sidebar Toggle", "Import", and "Settings".
+- **Board Display:** Renders a 9x9 Shogi board showing the board state of a match.
     - Supports piece rotation (opponent pieces face down).
     - Highlights sente (black) and gote (red) pieces.
+    - Displays captured pieces (Mochigoma) in a standardized order (Rook, Bishop, Gold, Silver, Knight, Lance, Pawn).
+- **Analysis Tools:** 
+    - **Evaluation Graph:** Visualizes the game's evaluation values. Features non-linear scaling (compressing values > 2000) for better readability and automatic inversion when the board is flipped.
+    - **Significant Moves:** Automatically detects and displays shortcut buttons for moves with large evaluation changes (500+ points).
 - **Kifu Parser:** A robust parser for `.kifu` (UTF-8) files.
     - Handles full-width digits and Kanji notation (e.g., `７六歩`, `同　`).
     - Skips comments, branch/variation sections (`変化`), and game results (e.g., `投了`, `切れ負け`).

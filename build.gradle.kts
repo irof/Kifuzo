@@ -34,7 +34,7 @@ compose.desktop {
         mainClass = "dev.irof.kfv.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg)
-            packageName = "KifuManager"
+            packageName = "Kifuzo"
             packageVersion = "1.0.0"
         }
     }

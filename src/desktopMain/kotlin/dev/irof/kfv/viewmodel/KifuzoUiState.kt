@@ -14,7 +14,7 @@ enum class FileFilter {
     RECENT,
 }
 
-data class KifuManagerUiState(
+data class KifuzoUiState(
     val treeNodes: List<FileTreeNode> = emptyList(),
     val kifuInfos: Map<Path, KifuInfo> = emptyMap(),
     val isScanning: Boolean = false,

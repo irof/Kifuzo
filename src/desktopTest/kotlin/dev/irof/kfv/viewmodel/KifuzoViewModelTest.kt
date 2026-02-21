@@ -12,9 +12,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class KifuManagerViewModelTest {
+class KifuzoViewModelTest {
 
-    private lateinit var viewModel: KifuManagerViewModel
+    private lateinit var viewModel: KifuzoViewModel
     private var parseResultAction: (ShogiBoardState) -> Unit = {}
 
     @BeforeTest
@@ -30,7 +30,7 @@ class KifuManagerViewModelTest {
             override fun updateSenkei(path: Path, senkei: String) {}
             override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = 0
         }
-        viewModel = KifuManagerViewModel(stubRepository)
+        viewModel = KifuzoViewModel(stubRepository)
     }
 
     @Test
@@ -46,7 +46,7 @@ class KifuManagerViewModelTest {
             )
         }
 
-        viewModel.dispatch(KifuManagerAction.SelectFile(path))
+        viewModel.dispatch(KifuzoAction.SelectFile(path))
 
         assertEquals(path, viewModel.uiState.selectedFile)
         assertEquals("先手", viewModel.boardState.session.senteName)
@@ -62,16 +62,16 @@ class KifuManagerViewModelTest {
         )
         viewModel.boardState.currentStep = 0
 
-        viewModel.dispatch(KifuManagerAction.NextStep)
+        viewModel.dispatch(KifuzoAction.NextStep)
         assertEquals(1, viewModel.boardState.currentStep)
 
-        viewModel.dispatch(KifuManagerAction.NextStep)
+        viewModel.dispatch(KifuzoAction.NextStep)
         assertEquals(2, viewModel.boardState.currentStep)
 
-        viewModel.dispatch(KifuManagerAction.PrevStep)
+        viewModel.dispatch(KifuzoAction.PrevStep)
         assertEquals(1, viewModel.boardState.currentStep)
 
-        viewModel.dispatch(KifuManagerAction.ChangeStep(3))
+        viewModel.dispatch(KifuzoAction.ChangeStep(3))
         assertEquals(3, viewModel.boardState.currentStep)
     }
 
@@ -79,16 +79,16 @@ class KifuManagerViewModelTest {
     fun testToggleSettings() {
         assertFalse(viewModel.uiState.showSettings)
 
-        viewModel.dispatch(KifuManagerAction.ShowSettings(true))
+        viewModel.dispatch(KifuzoAction.ShowSettings(true))
         assertTrue(viewModel.uiState.showSettings)
 
-        viewModel.dispatch(KifuManagerAction.ShowSettings(false))
+        viewModel.dispatch(KifuzoAction.ShowSettings(false))
         assertFalse(viewModel.uiState.showSettings)
     }
 
     @Test
     fun testSaveSettings() {
-        viewModel.dispatch(KifuManagerAction.SaveSettings("MyName"))
+        viewModel.dispatch(KifuzoAction.SaveSettings("MyName"))
         assertEquals("MyName", viewModel.uiState.myNameRegex)
         assertFalse(viewModel.uiState.showSettings)
     }

@@ -22,7 +22,7 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
-class KifuManagerViewModel(
+class KifuzoViewModel(
     private val repository: KifuRepository = KifuRepositoryImpl(),
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -40,33 +40,33 @@ class KifuManagerViewModel(
     )
         private set
 
-    var uiState by mutableStateOf(KifuManagerUiState(myNameRegex = AppSettings.myNameRegex))
+    var uiState by mutableStateOf(KifuzoUiState(myNameRegex = AppSettings.myNameRegex))
         private set
 
     val boardState = ShogiBoardState()
 
-    fun dispatch(action: KifuManagerAction) {
+    fun dispatch(action: KifuzoAction) {
         when (action) {
-            is KifuManagerAction.SetRootDirectory -> setRootDirectory(action.path)
-            is KifuManagerAction.ToggleDirectory -> toggleDirectory(action.node)
-            is KifuManagerAction.SelectFile -> selectFile(action.path)
-            is KifuManagerAction.SaveSettings -> saveSettings(action.regex)
-            is KifuManagerAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
-            is KifuManagerAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
-            is KifuManagerAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
-            is KifuManagerAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
-            is KifuManagerAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, infoMessage = null) }
-            is KifuManagerAction.ImportFiles -> importFiles(action.sourceDir)
-            is KifuManagerAction.ConvertCsa -> convertCsa(action.path)
-            is KifuManagerAction.ConfirmOverwrite -> confirmOverwrite()
-            is KifuManagerAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
-            is KifuManagerAction.DetectAndWriteSenkei -> detectAndWriteSenkei(action.path)
-            is KifuManagerAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
-            is KifuManagerAction.SetViewMode -> {
+            is KifuzoAction.SetRootDirectory -> setRootDirectory(action.path)
+            is KifuzoAction.ToggleDirectory -> toggleDirectory(action.node)
+            is KifuzoAction.SelectFile -> selectFile(action.path)
+            is KifuzoAction.SaveSettings -> saveSettings(action.regex)
+            is KifuzoAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
+            is KifuzoAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
+            is KifuzoAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
+            is KifuzoAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
+            is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, infoMessage = null) }
+            is KifuzoAction.ImportFiles -> importFiles(action.sourceDir)
+            is KifuzoAction.ConvertCsa -> convertCsa(action.path)
+            is KifuzoAction.ConfirmOverwrite -> confirmOverwrite()
+            is KifuzoAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
+            is KifuzoAction.DetectAndWriteSenkei -> detectAndWriteSenkei(action.path)
+            is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
+            is KifuzoAction.SetViewMode -> {
                 updateState { it.copy(viewMode = action.mode) }
                 refreshFiles()
             }
-            is KifuManagerAction.ToggleFileFilter -> {
+            is KifuzoAction.ToggleFileFilter -> {
                 updateState {
                     val newFilters = if (it.fileFilters.contains(action.filter)) {
                         it.fileFilters - action.filter
@@ -77,11 +77,11 @@ class KifuManagerViewModel(
                 }
                 refreshFiles()
             }
-            is KifuManagerAction.SelectNextFile -> selectAdjacentFile(forward = true)
-            is KifuManagerAction.SelectPrevFile -> selectAdjacentFile(forward = false)
-            is KifuManagerAction.ChangeStep -> boardState.currentStep = action.step
-            is KifuManagerAction.NextStep -> boardState.currentStep++
-            is KifuManagerAction.PrevStep -> boardState.currentStep--
+            is KifuzoAction.SelectNextFile -> selectAdjacentFile(forward = true)
+            is KifuzoAction.SelectPrevFile -> selectAdjacentFile(forward = false)
+            is KifuzoAction.ChangeStep -> boardState.currentStep = action.step
+            is KifuzoAction.NextStep -> boardState.currentStep++
+            is KifuzoAction.PrevStep -> boardState.currentStep--
         }
     }
 
@@ -103,7 +103,7 @@ class KifuManagerViewModel(
         }
     }
 
-    private fun updateState(update: (KifuManagerUiState) -> KifuManagerUiState) {
+    private fun updateState(update: (KifuzoUiState) -> KifuzoUiState) {
         uiState = update(uiState)
     }
 
