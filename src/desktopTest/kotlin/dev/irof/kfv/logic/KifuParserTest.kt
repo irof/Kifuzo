@@ -6,6 +6,25 @@ import kotlin.test.*
 class KifuParserTest {
 
     @Test
+    fun testParseKifuWithEvaluations() {
+        val lines = listOf(
+            "1 ７六歩(77)",
+            "* 123",
+            "2 ３四歩(33)",
+            "* -456",
+            "3 ２二角成(88)",
+            "* +2000",
+        )
+        val state = ShogiBoardState()
+        parseKifu(lines, state)
+
+        val session = state.session
+        assertEquals(123, session.history[1].evaluation)
+        assertEquals(-456, session.history[2].evaluation)
+        assertEquals(2000, session.history[3].evaluation)
+    }
+
+    @Test
     fun testScanKifuInfo() {
         val lines = listOf(
             "先手：先手太郎",

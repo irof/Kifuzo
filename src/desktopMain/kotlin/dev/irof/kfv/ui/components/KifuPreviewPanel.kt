@@ -101,6 +101,7 @@ fun KifuPreviewPanel(
                 lastMoveText = boardState.currentBoard?.lastMoveText ?: "",
                 isStandardStart = boardState.session.isStandardStart,
                 firstContactStep = boardState.session.firstContactStep,
+                evaluations = boardState.session.history.map { it.evaluation },
                 onStepChange = onStepChange,
             )
         }
@@ -114,11 +115,26 @@ private fun KifuOperationBar(
     lastMoveText: String,
     isStandardStart: Boolean,
     firstContactStep: Int,
+    evaluations: List<Int?>,
     onStepChange: (Int) -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = "${AppStrings.MOVE_COUNT}: $currentStep / $maxStep", style = MaterialTheme.typography.caption)
+        val currentEval = evaluations.getOrNull(currentStep)
+        val evalText = if (currentEval != null) {
+            val sign = if (currentEval > 0) "+" else ""
+            " (評価値: $sign$currentEval)"
+        } else {
+            ""
+        }
+
+        Text(text = "${AppStrings.MOVE_COUNT}: $currentStep / $maxStep$evalText", style = MaterialTheme.typography.caption)
         Text(text = lastMoveText, style = MaterialTheme.typography.body2, modifier = Modifier.height(24.dp))
+
+        if (evaluations.any { it != null }) {
+            EvaluationGraph(evaluations = evaluations, currentStep = currentStep)
+            Spacer(Modifier.height(4.dp))
+        }
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = { onStepChange(0) }, modifier = Modifier.height(32.dp)) { Text(AppStrings.START, fontSize = 10.sp) }
             Spacer(Modifier.width(4.dp))

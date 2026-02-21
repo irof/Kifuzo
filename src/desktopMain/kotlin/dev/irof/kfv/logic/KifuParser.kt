@@ -49,11 +49,24 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
 
         for (i in header.moveStartIndex until lines.size) {
             val line = lines[i].trim()
-            if (line.isEmpty() || line.startsWith("*") || line.startsWith("#") || line.startsWith("&")) continue
+            if (line.isEmpty() || line.startsWith("#") || line.startsWith("&")) continue
             if (line.startsWith("変化：") || line.startsWith("変化:")) {
                 isVariationSection = true
             }
             if (isVariationSection) continue
+
+            // コメント行の処理（評価値抽出）
+            if (line.startsWith("*")) {
+                val evalMatch = Regex("""\* ([+-]?\d+)""").find(line)
+                if (evalMatch != null && history.isNotEmpty()) {
+                    val eval = evalMatch.groupValues[1].toIntOrNull()
+                    if (eval != null) {
+                        val last = history.last()
+                        history[history.size - 1] = last.copy(evaluation = eval)
+                    }
+                }
+                continue
+            }
 
             val parsedMove = parseMove(line, lastTo) ?: continue
 

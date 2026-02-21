@@ -7,6 +7,7 @@ data class BoardSnapshot(
     val lastMoveText: String = "",
     val lastFrom: Square? = null,
     val lastTo: Square? = null,
+    val evaluation: Int? = null,
 ) {
     companion object {
         /**
