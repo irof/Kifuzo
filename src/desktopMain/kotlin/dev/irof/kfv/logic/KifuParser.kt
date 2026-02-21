@@ -173,27 +173,16 @@ private fun parseHeader(lines: List<String>): KifuHeader {
             val content = trimmed.substringAfter("|").substringBeforeLast("|")
             val cells = content.split("|")
             for (x in 0..8) {
-                if (x >= cells.size) break
-                val pStr = cells[x].trim()
-                if (pStr.isEmpty()) continue
+                if (x >= cells.size || boardY >= 9) break
+                val pStr = cells[x] // trim はあえてせず、中身を見る
+                if (pStr.trim().isEmpty() || pStr.contains('・')) continue
 
-                val color = if (pStr.startsWith('v')) PieceColor.White else PieceColor.Black
-                val pieceName = (if (pStr.startsWith('v')) pStr.substring(1) else pStr).trim()
+                val isGote = pStr.contains('v')
+                val color = if (isGote) PieceColor.White else PieceColor.Black
+                val pieceName = pStr.replace("v", "").trim()
 
-                if (pieceName.isNotEmpty() && pieceName != "・" && pieceName != "　") {
-                    val piece = pieceSymbolMap[pieceName] ?: if (pieceName == "王") {
-                        Piece.OU
-                    } else if (pieceName == "玉") {
-                        Piece.OU
-                    } else if (pieceName == "竜") {
-                        Piece.RY
-                    } else if (pieceName == "馬") {
-                        Piece.UM
-                    } else {
-                        null
-                    }
-                    if (piece != null) currentCells[boardY][x] = piece to color
-                }
+                val piece = Piece.findPieceBySymbol(pieceName)
+                if (piece != null) currentCells[boardY][x] = piece to color
             }
             boardY++
         }
