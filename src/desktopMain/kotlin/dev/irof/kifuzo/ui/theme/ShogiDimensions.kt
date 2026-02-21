@@ -13,8 +13,9 @@ object ShogiDimensions {
 
     val ButtonHeight = 32.dp
     val MenuBarWidth = 48.dp
-    val SidebarWidthRatio = 0.4f
-    val PreviewWidthRatio = 0.6f
+    val DefaultSidebarWidth = 250.dp
+    val MinSidebarWidth = 150.dp
+    val MaxSidebarWidth = 600.dp
 
     val FontSizeCaption = 10.sp
     val FontSizeBody = 12.sp

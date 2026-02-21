@@ -28,6 +28,7 @@ data class KifuzoUiState(
     val showImportDialog: Boolean = false,
     val myNameRegex: String = "",
     val isSidebarVisible: Boolean = true,
+    val sidebarWidth: Float = 250f,
     val viewMode: FileViewMode = FileViewMode.HIERARCHY,
     val fileFilters: Set<FileFilter> = emptySet(),
 )

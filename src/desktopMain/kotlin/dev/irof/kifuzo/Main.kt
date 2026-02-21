@@ -1,12 +1,16 @@
 package dev.irof.kifuzo
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
@@ -18,11 +22,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -42,6 +50,7 @@ import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.utils.copyToClipboard
 import dev.irof.kifuzo.viewmodel.KifuzoAction
 import dev.irof.kifuzo.viewmodel.KifuzoViewModel
+import java.awt.Cursor
 
 fun main() = application {
     val windowState = rememberWindowState(
@@ -131,7 +140,22 @@ fun KifuzoApp() {
                     onShowText = { viewModel.dispatch(KifuzoAction.SetViewingText(it)) },
                     onSetViewMode = { viewModel.dispatch(KifuzoAction.SetViewMode(it)) },
                     onToggleFileFilter = { viewModel.dispatch(KifuzoAction.ToggleFileFilter(it)) },
-                    modifier = Modifier.weight(ShogiDimensions.SidebarWidthRatio),
+                    modifier = Modifier.width(state.sidebarWidth.dp),
+                )
+
+                // ドラッグ可能な境界線
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(4.dp)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                viewModel.dispatch(KifuzoAction.UpdateSidebarWidth(dragAmount.x))
+                            }
+                        }
+                        .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
+                        .background(Color.LightGray.copy(alpha = 0.5f)),
                 )
             }
 
@@ -142,7 +166,7 @@ fun KifuzoApp() {
                 onDetectSenkei = { viewModel.dispatch(KifuzoAction.DetectAndWriteSenkei(it)) },
                 onConvertCsa = { viewModel.dispatch(KifuzoAction.ConvertCsa(it)) },
                 onStepChange = { viewModel.dispatch(KifuzoAction.ChangeStep(it)) },
-                modifier = Modifier.weight(if (state.isSidebarVisible) ShogiDimensions.PreviewWidthRatio else 1.0f),
+                modifier = Modifier.weight(1.0f),
             )
         }
 

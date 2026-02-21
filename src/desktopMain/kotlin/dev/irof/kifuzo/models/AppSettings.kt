@@ -28,6 +28,11 @@ object AppSettings {
         get() = prefs.getFloat(KEY_WINDOW_HEIGHT, 750f)
         set(value) = prefs.putFloat(KEY_WINDOW_HEIGHT, value)
 
+    private const val KEY_SIDEBAR_WIDTH = "sidebar_width"
+    var sidebarWidth: Float
+        get() = prefs.getFloat(KEY_SIDEBAR_WIDTH, 250f)
+        set(value) = prefs.putFloat(KEY_SIDEBAR_WIDTH, value)
+
     private const val KEY_IMPORT_SOURCE_DIR = "import_source_dir"
     var importSourceDir: String
         get() = prefs.get(KEY_IMPORT_SOURCE_DIR, "")

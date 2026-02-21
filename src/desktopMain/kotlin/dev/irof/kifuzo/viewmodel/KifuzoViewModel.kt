@@ -11,6 +11,7 @@ import dev.irof.kifuzo.logic.detectSenkei
 import dev.irof.kifuzo.models.AppSettings
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.ShogiBoardState
+import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,7 +41,12 @@ class KifuzoViewModel(
     )
         private set
 
-    var uiState by mutableStateOf(KifuzoUiState(myNameRegex = AppSettings.myNameRegex))
+    var uiState by mutableStateOf(
+        KifuzoUiState(
+            myNameRegex = AppSettings.myNameRegex,
+            sidebarWidth = AppSettings.sidebarWidth,
+        ),
+    )
         private set
 
     val boardState = ShogiBoardState()
@@ -76,6 +82,16 @@ class KifuzoViewModel(
                     it.copy(fileFilters = newFilters)
                 }
                 refreshFiles()
+            }
+            is KifuzoAction.UpdateSidebarWidth -> {
+                updateState {
+                    val newWidth = (it.sidebarWidth + action.delta).coerceIn(
+                        ShogiDimensions.MinSidebarWidth.value,
+                        ShogiDimensions.MaxSidebarWidth.value,
+                    )
+                    AppSettings.sidebarWidth = newWidth
+                    it.copy(sidebarWidth = newWidth)
+                }
             }
             is KifuzoAction.SelectNextFile -> selectAdjacentFile(forward = true)
             is KifuzoAction.SelectPrevFile -> selectAdjacentFile(forward = false)
