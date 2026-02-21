@@ -32,7 +32,6 @@ object AppStrings {
     const val DELETE = "削除"
     const val HIERARCHY = "階層"
     const val FLAT = "フラット"
-    const val FILTER_ALL = "すべて"
-    const val FILTER_KIFU = "棋譜のみ"
+    const val FILTER_KIFU = ".kifu"
     const val FILTER_RECENT = "最近"
 }

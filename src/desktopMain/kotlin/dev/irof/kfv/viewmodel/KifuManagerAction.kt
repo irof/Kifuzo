@@ -20,7 +20,7 @@ sealed class KifuManagerAction {
     data class DetectAndWriteSenkei(val path: Path) : KifuManagerAction()
     data object ToggleSidebar : KifuManagerAction()
     data class SetViewMode(val mode: FileViewMode) : KifuManagerAction()
-    data class SetFileFilter(val filter: FileFilter) : KifuManagerAction()
+    data class ToggleFileFilter(val filter: FileFilter) : KifuManagerAction()
     data object SelectNextFile : KifuManagerAction()
     data object SelectPrevFile : KifuManagerAction()
 

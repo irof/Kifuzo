@@ -20,7 +20,7 @@ class FileTreeManager(
     fun buildTree(
         root: Path,
         currentNodes: List<FileTreeNode>,
-        filter: FileFilter = FileFilter.ALL,
+        filters: Set<FileFilter> = emptySet(),
     ): List<FileTreeNode> {
         val expandedPaths = currentNodes.filter { it.isExpanded }.map { it.path }.toSet()
         val newNodes = mutableListOf<FileTreeNode>()
@@ -34,10 +34,11 @@ class FileTreeManager(
                 val isExpanded = expandedPaths.contains(path)
 
                 // フィルタの適用
-                val matchesFilter = when (filter) {
-                    FileFilter.ALL -> true
-                    FileFilter.KIFU_ONLY -> isDir || isKifuFile(path)
-                    FileFilter.RECENT -> isDir || isRecentFile(path, twentyFourHoursAgo)
+                val matchesFilter = isDir || filters.all { filter ->
+                    when (filter) {
+                        FileFilter.KIFU_ONLY -> isKifuFile(path)
+                        FileFilter.RECENT -> isRecentFile(path, twentyFourHoursAgo)
+                    }
                 }
 
                 if (matchesFilter) {
@@ -60,17 +61,18 @@ class FileTreeManager(
      */
     fun buildFlatList(
         root: Path,
-        filter: FileFilter = FileFilter.ALL,
+        filters: Set<FileFilter> = emptySet(),
     ): List<FileTreeNode> {
         val newNodes = mutableListOf<FileTreeNode>()
         val now = Instant.now()
         val twentyFourHoursAgo = now.minus(24, ChronoUnit.HOURS)
 
         Files.walk(root).filter { it.isRegularFile() }.forEach { path ->
-            val matchesFilter = when (filter) {
-                FileFilter.ALL -> true
-                FileFilter.KIFU_ONLY -> isKifuFile(path)
-                FileFilter.RECENT -> isRecentFile(path, twentyFourHoursAgo)
+            val matchesFilter = filters.all { filter ->
+                when (filter) {
+                    FileFilter.KIFU_ONLY -> isKifuFile(path)
+                    FileFilter.RECENT -> isRecentFile(path, twentyFourHoursAgo)
+                }
             }
 
             if (matchesFilter) {

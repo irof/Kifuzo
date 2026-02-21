@@ -10,7 +10,6 @@ enum class FileViewMode {
 }
 
 enum class FileFilter {
-    ALL,
     KIFU_ONLY,
     RECENT,
 }
@@ -30,5 +29,5 @@ data class KifuManagerUiState(
     val myNameRegex: String = "",
     val isSidebarVisible: Boolean = true,
     val viewMode: FileViewMode = FileViewMode.HIERARCHY,
-    val fileFilter: FileFilter = FileFilter.ALL,
+    val fileFilters: Set<FileFilter> = emptySet(),
 )

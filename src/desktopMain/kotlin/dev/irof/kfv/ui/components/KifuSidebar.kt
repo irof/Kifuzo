@@ -55,7 +55,7 @@ fun KifuSidebar(
     onSelectFile: (Path) -> Unit,
     onShowText: (String) -> Unit,
     onSetViewMode: (dev.irof.kfv.viewmodel.FileViewMode) -> Unit,
-    onSetFileFilter: (dev.irof.kfv.viewmodel.FileFilter) -> Unit,
+    onToggleFileFilter: (dev.irof.kfv.viewmodel.FileFilter) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxHeight().padding(ShogiDimensions.PaddingLarge)) {
@@ -76,12 +76,10 @@ fun KifuSidebar(
 
         // --- フィルタ選択 ---
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            val currentFilter = state.fileFilter
-            FilterChip(AppStrings.FILTER_ALL, currentFilter == dev.irof.kfv.viewmodel.FileFilter.ALL) { onSetFileFilter(dev.irof.kfv.viewmodel.FileFilter.ALL) }
+            val currentFilters = state.fileFilters
+            FilterChip(AppStrings.FILTER_KIFU, currentFilters.contains(dev.irof.kfv.viewmodel.FileFilter.KIFU_ONLY)) { onToggleFileFilter(dev.irof.kfv.viewmodel.FileFilter.KIFU_ONLY) }
             Spacer(Modifier.width(4.dp))
-            FilterChip(AppStrings.FILTER_KIFU, currentFilter == dev.irof.kfv.viewmodel.FileFilter.KIFU_ONLY) { onSetFileFilter(dev.irof.kfv.viewmodel.FileFilter.KIFU_ONLY) }
-            Spacer(Modifier.width(4.dp))
-            FilterChip(AppStrings.FILTER_RECENT, currentFilter == dev.irof.kfv.viewmodel.FileFilter.RECENT) { onSetFileFilter(dev.irof.kfv.viewmodel.FileFilter.RECENT) }
+            FilterChip(AppStrings.FILTER_RECENT, currentFilters.contains(dev.irof.kfv.viewmodel.FileFilter.RECENT)) { onToggleFileFilter(dev.irof.kfv.viewmodel.FileFilter.RECENT) }
         }
 
         Card(

@@ -66,8 +66,15 @@ class KifuManagerViewModel(
                 updateState { it.copy(viewMode = action.mode) }
                 refreshFiles()
             }
-            is KifuManagerAction.SetFileFilter -> {
-                updateState { it.copy(fileFilter = action.filter) }
+            is KifuManagerAction.ToggleFileFilter -> {
+                updateState {
+                    val newFilters = if (it.fileFilters.contains(action.filter)) {
+                        it.fileFilters - action.filter
+                    } else {
+                        it.fileFilters + action.filter
+                    }
+                    it.copy(fileFilters = newFilters)
+                }
                 refreshFiles()
             }
             is KifuManagerAction.SelectNextFile -> selectAdjacentFile(forward = true)
@@ -106,16 +113,16 @@ class KifuManagerViewModel(
     fun refreshFiles() {
         val root = currentRootDirectory ?: return
         val mode = uiState.viewMode
-        val filter = uiState.fileFilter
+        val filters = uiState.fileFilters
 
         if (mode == FileViewMode.HIERARCHY) {
-            val newNodes = fileTreeManager.buildTree(root, uiState.treeNodes, filter)
+            val newNodes = fileTreeManager.buildTree(root, uiState.treeNodes, filters)
             updateState { it.copy(treeNodes = newNodes) }
         } else {
             scope.launch {
                 updateState { it.copy(isScanning = true) }
                 val newNodes = withContext(Dispatchers.IO) {
-                    fileTreeManager.buildFlatList(root, filter)
+                    fileTreeManager.buildFlatList(root, filters)
                 }
                 updateState { it.copy(treeNodes = newNodes, isScanning = false) }
             }
