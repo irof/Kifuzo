@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -31,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.irof.kfv.models.BoardSnapshot
 import dev.irof.kfv.models.ShogiBoardState
 import dev.irof.kfv.ui.ShogiBoardView
 import dev.irof.kfv.ui.theme.ShogiColors
@@ -136,10 +140,9 @@ fun KifuPreviewPanel(
             KifuOperationBar(
                 currentStep = boardState.currentStep,
                 maxStep = boardState.session.maxStep,
-                lastMoveText = boardState.currentBoard?.lastMoveText ?: "",
+                history = boardState.session.history,
                 isStandardStart = boardState.session.isStandardStart,
                 firstContactStep = boardState.session.firstContactStep,
-                evaluations = boardState.session.history.map { it.evaluation },
                 isFlipped = state.isFlipped,
                 onStepChange = onStepChange,
             )
@@ -147,17 +150,21 @@ fun KifuPreviewPanel(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun KifuOperationBar(
     currentStep: Int,
     maxStep: Int,
-    lastMoveText: String,
+    history: List<BoardSnapshot>,
     isStandardStart: Boolean,
     firstContactStep: Int,
-    evaluations: List<Int?>,
     isFlipped: Boolean,
     onStepChange: (Int) -> Unit,
 ) {
+    val currentBoard = history.getOrNull(currentStep)
+    val lastMoveText = currentBoard?.lastMoveText ?: ""
+    val evaluations = history.map { it.evaluation }
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         val currentEval = evaluations.getOrNull(currentStep)
         val evalText = if (currentEval != null) {
@@ -221,5 +228,46 @@ private fun KifuOperationBar(
 
         Spacer(Modifier.height(4.dp))
         Text(text = "($currentStep / $maxStep$evalText)", style = MaterialTheme.typography.caption)
+
+        // --- 局面が大きく動いた手 ---
+        val significantMoves = mutableListOf<Triple<Int, String, Int>>() // step, label, diff
+        for (i in 1 until history.size) {
+            val prevEval = history[i - 1].evaluation ?: 0
+            val curEval = history[i].evaluation ?: continue
+            val diff = curEval - prevEval
+            if (kotlin.math.abs(diff) >= 500) {
+                val moveText = history[i].lastMoveText.trim().split(Regex("\\s+")).getOrNull(1)?.substringBefore("(") ?: ""
+                val colorSymbol = if (i % 2 != 0) "▲" else "△"
+                significantMoves.add(Triple(i, "$i $colorSymbol$moveText", diff))
+            }
+        }
+
+        if (significantMoves.isNotEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            Text("局面が大きく動いた手", style = MaterialTheme.typography.subtitle2, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                significantMoves.forEach { (step, label, diff) ->
+                    val diffText = if (diff > 0) "+$diff" else diff.toString()
+                    val diffColor = if (diff > 0) ShogiColors.EvalPositive.copy(alpha = 0.8f) else ShogiColors.EvalNegative.copy(alpha = 0.8f)
+
+                    OutlinedButton(
+                        onClick = { onStepChange(step) },
+                        modifier = Modifier.padding(horizontal = 2.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                        colors = if (currentStep == step) ButtonDefaults.outlinedButtonColors(backgroundColor = Color.LightGray) else ButtonDefaults.outlinedButtonColors(),
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = label, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(text = diffText, fontSize = 9.sp, color = if (kotlin.math.abs(diff) >= 1000) Color.Red else Color.DarkGray)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
