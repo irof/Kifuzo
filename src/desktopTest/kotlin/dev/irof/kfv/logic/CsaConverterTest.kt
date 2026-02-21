@@ -45,6 +45,38 @@ class CsaConverterTest {
     }
 
     @Test
+    fun testConvertCsaToPromotedMove() {
+        val csaLines = listOf(
+            "+7776FU", // 1. 7六歩
+            "-3334FU", // 2. 3四歩
+            "+7675FU", // 3. 7五歩
+            "-3435FU", // 4. 3五歩
+            "+7574FU", // 5. 7四歩
+            "-3536FU", // 6. 3六歩
+            "+7473TO", // 7. 7三歩成 (成る: CSAではTO)
+        )
+        val kifLines = convertCsaToKifuLines(csaLines)
+
+        // 7手目が「７三歩成」となっていること (「７三と」ではない)
+        assertTrue(kifLines.any { it.contains("7 ７三歩成(74)") }, "7手目が「７三歩成」であること")
+
+        val csaLines2 = listOf(
+            "+7776FU",
+            "-3334FU",
+            "+7675FU",
+            "-3435FU",
+            "+7574FU",
+            "-3536FU",
+            "+7473TO", // 7. 7三歩成 (CSAではTO)
+            "-3132GI",
+            "+7363TO", // 9. 6三と (成り駒の移動)
+        )
+        val kifLines2 = convertCsaToKifuLines(csaLines2)
+        assertTrue(kifLines2.any { it.contains("7 ７三歩成(74)") }, "成った瞬間は「歩成」")
+        assertTrue(kifLines2.any { it.contains("9 ６三と(73)") }, "成った後の移動は「と」")
+    }
+
+    @Test
     fun testConvertCsaDrop() {
         val csaLines = listOf(
             "+0045KA",

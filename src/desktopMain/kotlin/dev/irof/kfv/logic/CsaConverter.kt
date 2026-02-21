@@ -1,6 +1,8 @@
 package dev.irof.kfv.logic
 
-import dev.irof.kfv.logic.readLinesWithEncoding
+import dev.irof.kfv.models.BoardSnapshot
+import dev.irof.kfv.models.Piece
+import dev.irof.kfv.models.PieceColor
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.nameWithoutExtension
@@ -17,10 +19,13 @@ fun convertCsaToKifuLines(lines: List<String>): List<String> {
     val kifLines = mutableListOf<String>()
     kifLines.add("# KIF version=2.0 encoding=UTF-8")
 
-    val pieceMap = mapOf(
-        "FU" to "歩", "KY" to "香", "KE" to "桂", "GI" to "銀", "KI" to "金",
-        "KA" to "角", "HI" to "飛", "OU" to "玉",
-        "TO" to "と", "NY" to "成香", "NK" to "成桂", "NG" to "成銀", "UM" to "馬", "RY" to "龍",
+    // 盤面管理用
+    val currentCells = BoardSnapshot.getInitialCells().map { it.toMutableList() }.toMutableList()
+
+    val csaToPiece = mapOf(
+        "FU" to Piece.FU, "KY" to Piece.KY, "KE" to Piece.KE, "GI" to Piece.GI, "KI" to Piece.KI,
+        "KA" to Piece.KA, "HI" to Piece.HI, "OU" to Piece.OU,
+        "TO" to Piece.TO, "NY" to Piece.NY, "NK" to Piece.NK, "NG" to Piece.NG, "UM" to Piece.UM, "RY" to Piece.RY,
     )
 
     val fullWidthDigits = "１２３４５６７８９"
@@ -68,11 +73,41 @@ fun convertCsaToKifuLines(lines: List<String>): List<String> {
             val tx = line[3] - '0'
             val ty = line[4] - '0'
             val pieceCsa = line.substring(5, 7)
-            val isPromote = line.endsWith("+")
-            val basePieceName = pieceMap[pieceCsa] ?: pieceCsa
-            val pieceKif = if (isPromote && !listOf("TO", "NY", "NK", "NG", "UM", "RY").contains(pieceCsa)) "${basePieceName}成" else basePieceName
+            val isPromoteMarker = line.endsWith("+")
+
+            val targetPiece = csaToPiece[pieceCsa] ?: Piece.FU
+
+            val pieceKifName: String
+            if (fx == 0) {
+                // 打つ場合
+                pieceKifName = targetPiece.symbol + "打"
+            } else {
+                // 盤上の移動
+                val fyIdx = fy - 1
+                val fxIdx = 9 - fx
+                val tyIdx = ty - 1
+                val txIdx = 9 - tx
+
+                val movingPiece = currentCells[fyIdx][fxIdx]?.first ?: targetPiece
+
+                // 「成」を付ける条件:
+                // 1. 移動前の駒が成り駒でない && 移動後の駒が成り駒
+                // 2. あるいは明示的に末尾に + がある場合(一部の変換ツール用)
+                val isActuallyPromoted = (!movingPiece.isPromoted() && targetPiece.isPromoted()) || isPromoteMarker
+
+                pieceKifName = if (isActuallyPromoted) {
+                    movingPiece.symbol + "成"
+                } else {
+                    movingPiece.symbol
+                }
+
+                // 盤面更新
+                currentCells[fyIdx][fxIdx] = null
+                currentCells[tyIdx][txIdx] = targetPiece to (if (isSente) PieceColor.Black else PieceColor.White)
+            }
+
             val toPosStr = if (tx == lastToX && ty == lastToY) "同　" else "${fullWidthDigits[tx - 1]}${kanjiDigits[ty - 1]}"
-            val fromStr = if (fx == 0) "打" else "($fx$fy)"
+            val fromStr = if (fx == 0) "" else "($fx$fy)"
 
             var seconds = 0
             if (i + 1 < lines.size && lines[i + 1].trim().startsWith("T")) {
@@ -84,7 +119,7 @@ fun convertCsaToKifuLines(lines: List<String>): List<String> {
             val totalSec = if (isSente) totalSenteSeconds else totalGoteSeconds
             val totalTimeStr = String.format(Locale.US, "%02d:%02d:%02d", totalSec / 3600, (totalSec % 3600) / 60, totalSec % 60)
 
-            kifLines.add(String.format(Locale.US, "%4d %s%s%-7s   ( %s/%s)", moveCount++, toPosStr, pieceKif, fromStr, moveTimeStr, totalTimeStr))
+            kifLines.add(String.format(Locale.US, "%4d %s%s%-7s   ( %s/%s)", moveCount++, toPosStr, pieceKifName, fromStr, moveTimeStr, totalTimeStr))
             lastToX = tx
             lastToY = ty
         }
