@@ -165,8 +165,26 @@ private fun KifuOperationBar(
             ""
         }
 
-        Text(text = "${AppStrings.MOVE_COUNT}: $currentStep / $maxStep$evalText", style = MaterialTheme.typography.caption)
-        Text(text = lastMoveText, style = MaterialTheme.typography.body2, modifier = Modifier.height(24.dp))
+        // 表示用の指し手テキストを作成 (例: "1 ▲７六歩")
+        val displayMove = if (currentStep == 0) {
+            "開始局面"
+        } else {
+            val colorSymbol = if (currentStep % 2 != 0) "▲" else "△"
+            // "1 ７六歩(77)" -> "1 ▲７六歩"
+            // 手数と指し手部分を分離
+            val parts = lastMoveText.trim().split(Regex("\\s+"))
+            if (parts.size >= 2) {
+                val stepNum = parts[0]
+                val move = parts[1].substringBefore("(")
+                "$stepNum $colorSymbol$move"
+            } else {
+                "$currentStep $colorSymbol$lastMoveText"
+            }
+        }
+
+        Text(text = displayMove, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
+        Text(text = "($currentStep / $maxStep$evalText)", style = MaterialTheme.typography.caption)
+        Spacer(Modifier.height(8.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = { onStepChange(0) }, modifier = Modifier.height(32.dp)) { Text(AppStrings.START, fontSize = 10.sp) }
