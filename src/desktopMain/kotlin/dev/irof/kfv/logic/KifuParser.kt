@@ -130,6 +130,13 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
                         history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare))
                         lastTo = toSquare
                     }
+                    is KifuParsedMove.Result -> {
+                        // 投了などの終局。盤面は変えず、評価値を勝敗に合わせて設定する
+                        val turnColor = if (parsedMove.moveNum % 2 != 0) PieceColor.Black else PieceColor.White
+                        // 手番側が負け（投了など）なので、評価値は逆にする
+                        val evaluation = if (turnColor == PieceColor.Black) -31111 else 31111
+                        history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, evaluation = evaluation))
+                    }
                 }
             } catch (e: Exception) {
                 throw KifuParseException("${i + 1}行目: ${e.message}\n(内容: $line)", e)
@@ -267,24 +274,29 @@ private fun parseHeader(lines: List<String>): KifuHeader {
 
 private sealed class KifuParsedMove {
     abstract val moveNum: Int
-    abstract val to: Square
 
     data class Move(
         override val moveNum: Int,
-        override val to: Square,
+        val to: Square,
         val from: Square,
         val isPromote: Boolean,
     ) : KifuParsedMove()
 
     data class Drop(
         override val moveNum: Int,
-        override val to: Square,
+        val to: Square,
         val piece: Piece,
+    ) : KifuParsedMove()
+
+    data class Result(
+        override val moveNum: Int,
+        val result: String,
     ) : KifuParsedMove()
 }
 
 private val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*""")
 private val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*""")
+private val resultRegex = Regex("""^\s*(\d+)\s+(投了|切れ負け|中断|不戦敗|反則負け|持将棋|千日手|詰み).*""")
 
 private fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
     if (!Regex("""^\s*\d+\s+.*""").matches(line)) return null
@@ -318,6 +330,13 @@ private fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
         val toSquare = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
         val piece = Piece.entries.find { it.symbol == pieceSym || (pieceSym == "王" && it == Piece.OU) || (pieceSym == "玉" && it == Piece.OU) || (pieceSym == "竜" && it == Piece.RY) || (pieceSym == "龍" && it == Piece.RY) || (pieceSym == "馬" && it == Piece.UM) } ?: throw KifuParseException("不明な駒種: $pieceSym")
         return KifuParsedMove.Drop(moveNum, toSquare, piece)
+    }
+
+    val resultMatch = resultRegex.find(line)
+    if (resultMatch != null) {
+        val moveNum = resultMatch.groupValues[1].toInt()
+        val result = resultMatch.groupValues[2]
+        return KifuParsedMove.Result(moveNum, result)
     }
 
     return null

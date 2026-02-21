@@ -106,6 +106,23 @@ class KifuParserTest {
     }
 
     @Test
+    fun testParseKifuWithResignation() {
+        val lines = listOf(
+            "1 ７六歩(77)",
+            "2 ３四歩(33)",
+            "3 投了",
+        )
+        val state = ShogiBoardState()
+        parseKifu(lines, state)
+
+        val session = state.session
+        assertEquals(3, session.maxStep)
+        // 3手目（投了）は先手の番なので、先手が負け -> 後手勝ち評価値
+        assertEquals(-31111, session.history[3].evaluation)
+        assertEquals("3 投了", session.history[3].lastMoveText)
+    }
+
+    @Test
     fun testScanKifuInfo() {
         val lines = listOf(
             "先手：先手太郎",
@@ -225,9 +242,10 @@ class KifuParserTest {
         parseKifu(lines, state)
 
         val session = state.session
-        assertEquals(2, session.maxStep, "投了などの特殊行は手数としてカウントされないこと")
+        assertEquals(3, session.maxStep, "投了などの特殊行も手数としてカウントされること")
         assertEquals("1 ７六歩(77)", session.history[1].lastMoveText)
         assertEquals("2 ３四歩(33)", session.history[2].lastMoveText)
+        assertEquals("3 投了", session.history[3].lastMoveText)
     }
 
     @Test
