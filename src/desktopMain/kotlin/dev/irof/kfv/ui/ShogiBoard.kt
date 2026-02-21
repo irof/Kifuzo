@@ -36,37 +36,66 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
 
             Spacer(Modifier.height(4.dp))
 
-            Column(modifier = Modifier.background(ShogiColors.BoardBackground).border(1.5.dp, ShogiColors.BoardLine).padding(2.dp)) {
-                val range = if (isFlipped) (8 downTo 0) else (0..8)
-                for (y in range) {
-                    Row {
-                        for (x in range) {
-                            val currentSquare = Square.fromIndex(x, y)
-                            val isLastFrom = board.lastFrom == currentSquare
-                            val isLastTo = board.lastTo == currentSquare
-                            Box(
-                                modifier = Modifier.size(cellSize).background(
-                                    when {
-                                        isLastTo -> ShogiColors.HighlightLastTo
-                                        isLastFrom -> ShogiColors.HighlightLastFrom
-                                        else -> Color.Transparent
-                                    },
-                                ).border(0.5.dp, ShogiColors.CellBorder),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                board.cells[y][x]?.let { (piece, color) ->
-                                    val isSentePiece = color == PieceColor.Black
-                                    val rotation = when {
-                                        isFlipped -> if (isSentePiece) 180f else 0f
-                                        else -> if (isSentePiece) 0f else 180f
+            val rangeX = if (isFlipped) (0..8) else (8 downTo 0)
+            val rangeY = if (isFlipped) (8 downTo 0) else (0..8)
+            val sujiLabels = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
+            val danLabels = listOf("一", "二", "三", "四", "五", "六", "七", "八", "九")
+            val labelSize = (cellSize.value * 0.3f).sp
+
+            Column(horizontalAlignment = Alignment.End) {
+                // 筋の符号
+                Row(modifier = Modifier.padding(end = 12.dp)) {
+                    for (x in rangeX) {
+                        Box(modifier = Modifier.size(cellSize), contentAlignment = Alignment.Center) {
+                            Text(text = sujiLabels[8 - x], fontSize = labelSize, color = Color.Gray)
+                        }
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // 盤面
+                    Column(modifier = Modifier.background(ShogiColors.BoardBackground).border(1.5.dp, ShogiColors.BoardLine).padding(2.dp)) {
+                        for (y in rangeY) {
+                            Row {
+                                for (x in rangeX) {
+                                    val currentSquare = Square.fromIndex(x, y)
+                                    val isLastFrom = board.lastFrom == currentSquare
+                                    val isLastTo = board.lastTo == currentSquare
+                                    Box(
+                                        modifier = Modifier.size(cellSize).background(
+                                            when {
+                                                isLastTo -> ShogiColors.HighlightLastTo
+                                                isLastFrom -> ShogiColors.HighlightLastFrom
+                                                else -> Color.Transparent
+                                            },
+                                        ).border(0.5.dp, ShogiColors.CellBorder),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        board.cells[y][x]?.let { (piece, color) ->
+                                            val isSentePiece = color == PieceColor.Black
+                                            val rotation = when {
+                                                isFlipped -> if (isSentePiece) 180f else 0f
+                                                else -> if (isSentePiece) 0f else 180f
+                                            }
+                                            Text(text = piece.symbol, fontSize = fontSize, color = if (piece.isPromoted()) ShogiColors.PiecePromoted else ShogiColors.PieceSente, modifier = Modifier.rotate(rotation))
+                                        }
                                     }
-                                    Text(text = piece.symbol, fontSize = fontSize, color = if (piece.isPromoted()) ShogiColors.PiecePromoted else ShogiColors.PieceSente, modifier = Modifier.rotate(rotation))
                                 }
+                            }
+                        }
+                    }
+
+                    // 段の符号
+                    Column {
+                        for (y in rangeY) {
+                            Box(modifier = Modifier.size(cellSize), contentAlignment = Alignment.Center) {
+                                Text(text = danLabels[y], fontSize = labelSize, color = Color.Gray)
                             }
                         }
                     }
                 }
             }
+
             Spacer(Modifier.height(4.dp))
             if (isFlipped) {
                 MochigomaView(PieceColor.White.toSymbol() + session.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
