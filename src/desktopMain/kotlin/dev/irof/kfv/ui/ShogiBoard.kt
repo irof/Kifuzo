@@ -36,10 +36,10 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
 
             Spacer(Modifier.height(4.dp))
 
-            val rangeX = if (isFlipped) (8 downTo 0) else (0..8)
-            val rangeY = if (isFlipped) (8 downTo 0) else (0..8)
-            val sujiLabels = listOf("９", "８", "７", "６", "５", "４", "３", "２", "１")
-            val danLabels = listOf("一", "二", "三", "四", "五", "六", "七", "八", "九")
+            val rangeX = BoardLayout.getRangeX(isFlipped)
+            val rangeY = BoardLayout.getRangeY(isFlipped)
+            val sujiLabels = BoardLayout.getSujiLabels()
+            val danLabels = BoardLayout.getDanLabels()
             val labelSize = (cellSize.value * 0.3f).sp
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {

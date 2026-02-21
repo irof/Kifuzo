@@ -25,3 +25,13 @@ data class Square(val file: Int, val rank: Int) {
         fun fromIndex(x: Int, y: Int): Square = Square(9 - x, y + 1)
     }
 }
+
+object BoardLayout {
+    fun getSujiLabels(): List<String> = listOf("９", "８", "７", "６", "５", "４", "３", "２", "１")
+
+    fun getDanLabels(): List<String> = listOf("一", "二", "三", "四", "五", "六", "七", "八", "九")
+
+    fun getRangeX(isFlipped: Boolean): IntProgression = if (isFlipped) (8 downTo 0) else (0..8)
+
+    fun getRangeY(isFlipped: Boolean): IntProgression = if (isFlipped) (8 downTo 0) else (0..8)
+}

@@ -23,9 +23,40 @@ class SquareTest {
     }
 
     @Test
-    fun testFromIndex() {
-        val s = Square.fromIndex(0, 0) // x=0 (9筋), y=0 (1段)
-        assertEquals(9, s.file)
-        assertEquals(1, s.rank)
+    fun testBoardLayoutStandard() {
+        val isFlipped = false
+        val rangeX = BoardLayout.getRangeX(isFlipped) // 0..8
+        val labels = BoardLayout.getSujiLabels() // 9, 8, ..., 1
+
+        // 左端 (x = rangeX.first = 0)
+        val x0 = rangeX.first
+        assertEquals(0, x0)
+        assertEquals("９", labels[x0])
+        assertEquals(9, Square.fromIndex(x0, 0).file)
+
+        // 右端 (x = rangeX.last = 8)
+        val x8 = rangeX.last
+        assertEquals(8, x8)
+        assertEquals("１", labels[x8])
+        assertEquals(1, Square.fromIndex(x8, 0).file)
+    }
+
+    @Test
+    fun testBoardLayoutFlipped() {
+        val isFlipped = true
+        val rangeX = BoardLayout.getRangeX(isFlipped) // 8 downTo 0
+        val labels = BoardLayout.getSujiLabels() // 9, 8, ..., 1
+
+        // 左端 (x = rangeX.first = 8)
+        val xFirst = rangeX.first
+        assertEquals(8, xFirst)
+        assertEquals("１", labels[xFirst])
+        assertEquals(1, Square.fromIndex(xFirst, 0).file)
+
+        // 右端 (x = rangeX.last = 0)
+        val xLast = rangeX.last
+        assertEquals(0, xLast)
+        assertEquals("９", labels[xLast])
+        assertEquals(9, Square.fromIndex(xLast, 0).file)
     }
 }
