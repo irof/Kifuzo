@@ -224,7 +224,18 @@ private fun parseHeader(lines: List<String>): KifuHeader {
         }
     }
 
-    val finalCells = if (isStandardStart) BoardSnapshot.getInitialCells() else currentCells.map { it.toList() }
+    val finalCells = if (isStandardStart) {
+        BoardSnapshot.getInitialCells()
+    } else {
+        if (boardY < 9) {
+            throw KifuParseException("盤面図が不完全です（${boardY}行しか見つかりませんでした）。")
+        }
+        val pieceCount = currentCells.sumOf { row -> row.count { it != null } }
+        if (pieceCount == 0) {
+            throw KifuParseException("盤面図から駒を読み取れませんでした。盤面図の形式が解析に対応していない可能性があります。")
+        }
+        currentCells.map { it.toList() }
+    }
 
     return KifuHeader(
         senteName = senteName,
