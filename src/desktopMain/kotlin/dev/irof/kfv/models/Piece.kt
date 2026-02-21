@@ -1,13 +1,13 @@
 package dev.irof.kfv.models
 
-enum class Piece(val symbol: String) {
-    FU("歩"),
-    KY("香"),
-    KE("桂"),
-    GI("銀"),
-    KI("金"),
-    KA("角"),
-    HI("飛"),
+enum class Piece(val symbol: String, val mochigomaOrder: Int = 99) {
+    FU("歩", 6),
+    KY("香", 5),
+    KE("桂", 4),
+    GI("銀", 3),
+    KI("金", 2),
+    KA("角", 1),
+    HI("飛", 0),
     OU("玉"),
     TO("と"),
     NY("杏"),

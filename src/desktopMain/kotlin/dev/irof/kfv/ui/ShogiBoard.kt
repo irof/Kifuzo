@@ -125,6 +125,7 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
 @Composable
 fun MochigomaView(name: String, pieces: List<Piece>, isSente: Boolean, isTurn: Boolean, isFlipped: Boolean, cellSize: androidx.compose.ui.unit.Dp) {
     val grouped = pieces.groupBy { it }.mapValues { it.value.size }
+        .toSortedMap(compareBy { it.mochigomaOrder })
     val fontSize = (cellSize.value * 0.45f).sp
     val nameColor = if (isTurn) Color.Black else Color.Gray
     Row(modifier = Modifier.fillMaxWidth().background(if (isTurn) ShogiColors.TurnHighlight else Color.Transparent).padding(horizontal = 8.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = if (isSente) Arrangement.Start else Arrangement.End) {
