@@ -20,9 +20,10 @@ KifuManager is a macOS GUI application built with **Compose Multiplatform** and 
     - Skips comments, branch/variation sections (`変化`), and game results (e.g., `投了`, `切れ負け`).
 - **Senkei Detection:** Automatically detects opening patterns (Senkei) like "Yagura", "Gokigen Nakabisha", etc.
 - **Format Conversion:** Converts `.csa` files to standard `.kifu` (UTF-8) format with proper notation.
-- **Import Utility:** Imports Shogi Quest game records from a user-specified directory to the **current root directory**.
-    - Detects `.txt` files containing CSA formatted records.
-    - Automatically renames files to `{YYYYMMDD}-{Sente}-{Gote}.csa` based on game metadata and file timestamps.
+- **Import Utility:** Imports game records from various services (e.g., Shogi Quest, Shogi Wars) from a user-specified directory to the **current root directory**.
+    - Automatically detects `.txt` or `.csa` formatted records.
+    - Renames files to `{YYYYMMDD}-{Sente}-{Gote}.csa` based on game metadata.
+    - Extracts date from `$START_TIME` in the kifu, falling back to file modification time if unavailable.
     - Remembers the last used import source directory in application settings.
 - **Clipboard Integration:** Buttons to copy kifu text or error logs for easy sharing.
 
@@ -75,11 +76,13 @@ The project uses **Gradle** as the build tool.
 
 ## Development Conventions
 
-- **Language:** Comments and documentation in the code must be written in **Japanese**.
+- **Language:**
+    - **GEMINI.md:** Must be written in **English**.
+    - **Code Comments/Documentation:** Must be written in **Japanese**.
 - **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation. **Before committing, you MUST run `./gradlew verify` and ensure it passes. Additionally, if a change affects the content of `GEMINI.md` (e.g., new features, structural changes, or updated conventions), you MUST update `GEMINI.md` accordingly in the same task.**
 - **UI Framework:** Jetpack Compose (Desktop).
 - **State Management:** Uses a **ViewModel** pattern with `UiState` and `Action` objects for predictable state transitions.
-- **Error Handling:** パースエラーや予期せぬ例外を安易に握りつぶさないでください。特に `KifuParseException` を使用して、エラーの原因（行番号や内容）をユーザーが視認できる形で上位に伝播させてください。ファイルスキャンなどのバルク処理で個別のエラーを許容する場合でも、デバッグが困難にならないようログ出力やエラー状態の保持を検討してください。
+- **Error Handling:** Do not swallow exceptions silently. Use `KifuParseException` to propagate errors (line numbers, content) to the UI. For bulk processing, record error states (e.g., `isError` in `KifuInfo`) to ensure visibility for the user.
 - **Parsing:** Primarily uses Regex and line-by-line processing for game records.
 - **Encoding:** Standardizes on **UTF-8** for all file operations.
 - **Naming:** Uses standard Kotlin/JVM naming conventions.
