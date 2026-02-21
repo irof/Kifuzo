@@ -81,6 +81,10 @@ fun convertCsaToKifuLines(lines: List<String>): List<String> {
             if (fx == 0) {
                 // 打つ場合
                 pieceKifName = targetPiece.symbol + "打"
+                // 盤面更新 (打つ場合も盤面に反映させないと後の移動で駒が特定できない)
+                val tyIdx = ty - 1
+                val txIdx = 9 - tx
+                currentCells[tyIdx][txIdx] = targetPiece to (if (isSente) PieceColor.Black else PieceColor.White)
             } else {
                 // 盤上の移動
                 val fyIdx = fy - 1

@@ -77,6 +77,38 @@ class CsaConverterTest {
     }
 
     @Test
+    fun testConvertCsaCornerPromotion() {
+        val csaLines = listOf(
+            "+7776FU", // 1. 7六歩
+            "-3334FU", // 2. 3四歩
+            "+8822UM", // 3. 2二角成 (8八の角が2二に移動して成る)
+        )
+        val kifLines = convertCsaToKifuLines(csaLines)
+        // 3手目が「２二角成(88)」となっていること
+        assertTrue(kifLines.any { it.contains("3 ２二角成(88)") }, "3手目が「角成」であること")
+
+        val csaLines2 = listOf(
+            "+7776FU",
+            "-3334FU",
+            "+8822KA+", // 末尾に + がある形式も確認
+        )
+        val kifLines2 = convertCsaToKifuLines(csaLines2)
+        assertTrue(kifLines2.any { it.contains("3 ２二角成(88)") }, "3手目が「角成」であること(KA+)")
+    }
+
+    @Test
+    fun testConvertCsaDropAndPromote() {
+        val csaLines = listOf(
+            "+0022KA", // 1. 2二角打
+            "-3132GI", // 2. 3二銀
+            "+2211UM", // 3. 1一角成 (2二の角が1一へ移動して成る)
+        )
+        val kifLines = convertCsaToKifuLines(csaLines)
+        // 3手目が「１一角成(22)」となっていること
+        assertTrue(kifLines.any { it.contains("3 １一角成(22)") }, "打った角が成った時に「角成」と表示されること")
+    }
+
+    @Test
     fun testConvertCsaDrop() {
         val csaLines = listOf(
             "+0045KA",
