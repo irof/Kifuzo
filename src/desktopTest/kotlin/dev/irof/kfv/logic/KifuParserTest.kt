@@ -58,6 +58,28 @@ class KifuParserTest {
     }
 
     @Test
+    fun testParseKifuWithTsumiEvaluations() {
+        val lines = listOf(
+            "1 ７六歩(77)",
+            "*#詰み=先手勝ち",
+            "2 ３四歩(33)",
+            "*#詰み=先手勝ち:4手",
+            "3 ２二角成(88)",
+            "*#詰み=後手勝ち",
+            "4 ４二銀(31)",
+            "*#詰み=後手勝ち:11手",
+        )
+        val state = ShogiBoardState()
+        parseKifu(lines, state)
+
+        val session = state.session
+        assertEquals(31111, session.history[1].evaluation)
+        assertEquals(31111, session.history[2].evaluation)
+        assertEquals(-31111, session.history[3].evaluation)
+        assertEquals(-31111, session.history[4].evaluation)
+    }
+
+    @Test
     fun testScanKifuInfo() {
         val lines = listOf(
             "先手：先手太郎",

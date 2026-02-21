@@ -61,6 +61,8 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
             if (line.startsWith("*")) {
                 // 形式1: *#評価値=1234
                 // 形式2: * 1234
+                // 形式3: *#詰み=先手勝ち
+                // 形式4: *#詰み=後手勝ち
                 val evalMatch = Regex("""\*#評価値=([+-]?\d+)""").find(line)
                     ?: Regex("""\* ([+-]?\d+)""").find(line)
 
@@ -69,6 +71,14 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
                     if (eval != null) {
                         val last = history.last()
                         history[history.size - 1] = last.copy(evaluation = eval)
+                    }
+                } else if (history.isNotEmpty()) {
+                    if (line.contains("#詰み=先手勝ち")) {
+                        val last = history.last()
+                        history[history.size - 1] = last.copy(evaluation = 31111)
+                    } else if (line.contains("#詰み=後手勝ち")) {
+                        val last = history.last()
+                        history[history.size - 1] = last.copy(evaluation = -31111)
                     }
                 }
                 continue
