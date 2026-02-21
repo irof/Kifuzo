@@ -74,7 +74,25 @@ fun EvaluationGraph(
         val width = size.width
         val height = size.height
         val centerY = height / 2f
-        val maxEval = 10000f // 評価値の表示上限/下限（スケーリング基準）
+
+        // 評価値の表示制御用の定数
+        val maxEval = 10000f
+        val threshold = 2000f
+        val compression = 0.5f
+
+        // 非線形スケーリング関数: thresholdを超えた分を圧縮する
+        fun getScaledEval(value: Float): Float {
+            val absVal = kotlin.math.abs(value)
+            return if (absVal <= threshold) {
+                value
+            } else {
+                val sign = if (value >= 0) 1f else -1f
+                sign * (threshold + (absVal - threshold) * compression)
+            }
+        }
+
+        // スケーリング後の最大表示値 (2000 + (10000-2000)*0.5 = 6000)
+        val displayMax = threshold + (maxEval - threshold) * compression
 
         // 領域の色分け
         drawRect(
@@ -90,14 +108,19 @@ fun EvaluationGraph(
 
         // 横線（1000ごと）
         for (i in -10..10) {
-            if (i == 0) continue
-            val y = centerY - (i * 1000f / maxEval * centerY)
+            val evalValue = i * 1000f
+            if (i == 0 || kotlin.math.abs(evalValue) > maxEval) continue
+
+            val scaledValue = getScaledEval(evalValue)
+            val y = centerY - (scaledValue / displayMax * centerY)
+
             if (y in 0f..height) {
+                val isThreshold = kotlin.math.abs(evalValue) == threshold
                 drawLine(
-                    color = Color.Gray.copy(alpha = 0.2f),
+                    color = if (isThreshold) Color.Gray.copy(alpha = 0.5f) else Color.Gray.copy(alpha = 0.2f),
                     start = Offset(0f, y),
                     end = Offset(width, y),
-                    strokeWidth = 1f,
+                    strokeWidth = if (isThreshold) 1.5f else 1f,
                 )
             }
         }
@@ -120,9 +143,9 @@ fun EvaluationGraph(
             for (i in evaluations.indices) {
                 val eval = evaluations[i] ?: continue
                 val x = i * stepWidth
-                // 評価値を画面高さに合わせて変換（上を先手プラス、下を後手マイナス）
-                // 10000以上は端に固定
-                val y = centerY - (eval.coerceIn(-10000, 10000) / maxEval * centerY)
+                // 評価値を画面高さに合わせて変換
+                val scaledEval = getScaledEval(eval.coerceIn(-10000, 10000).toFloat())
+                val y = centerY - (scaledEval / displayMax * centerY)
 
                 val currentPoint = Offset(x, y)
                 if (lastPoint != null) {
@@ -153,7 +176,7 @@ fun EvaluationGraph(
             color = Color.Gray,
             topLeft = Offset(0f, 0f),
             size = size,
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx()),
+            style = Stroke(width = 1.dp.toPx()),
         )
 
         // ホバー時のツールチップ描画
@@ -187,7 +210,8 @@ fun EvaluationGraph(
                     tooltipX = x - tooltipWidth - 8.dp.toPx()
                 }
 
-                val tooltipY = (centerY - (eval.coerceIn(-10000, 10000) / maxEval * centerY) - tooltipHeight / 2).coerceIn(0f, height - tooltipHeight)
+                val scaledEval = getScaledEval(eval.coerceIn(-10000, 10000).toFloat())
+                val tooltipY = (centerY - (scaledEval / displayMax * centerY) - tooltipHeight / 2).coerceIn(0f, height - tooltipHeight)
 
                 drawRoundRect(
                     color = Color.Black.copy(alpha = 0.7f),
