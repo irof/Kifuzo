@@ -63,7 +63,7 @@ The project uses **Gradle** as the build tool.
 
 ## Project Structure
 
-- `src/desktopMain/kotlin/dev/irof/kfv/`: Root package.
+- `src/desktopMain/kotlin/dev/irof/kifuzo/`: Root package.
     - `Main.kt`: Application entry point.
     - `logic/`: Business logic (parsers, converters, IO, repository, senkei detection).
     - `models/`: Domain models (Piece, BoardState) and app configuration.

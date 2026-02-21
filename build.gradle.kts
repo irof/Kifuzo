@@ -7,7 +7,7 @@ plugins {
     id("com.diffplug.spotless") version "8.2.1"
 }
 
-group = "dev.irof.kfv"
+group = "dev.irof.kifuzo"
 version = "1.0.0"
 
 kotlin {
@@ -31,7 +31,7 @@ kotlin {
 
 compose.desktop {
     application {
-        mainClass = "dev.irof.kfv.MainKt"
+        mainClass = "dev.irof.kifuzo.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg)
             packageName = "Kifuzo"
