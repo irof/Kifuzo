@@ -70,9 +70,29 @@ class KifuManagerViewModel(
                 updateState { it.copy(fileFilter = action.filter) }
                 refreshFiles()
             }
+            is KifuManagerAction.SelectNextFile -> selectAdjacentFile(forward = true)
+            is KifuManagerAction.SelectPrevFile -> selectAdjacentFile(forward = false)
             is KifuManagerAction.ChangeStep -> boardState.currentStep = action.step
             is KifuManagerAction.NextStep -> boardState.currentStep++
             is KifuManagerAction.PrevStep -> boardState.currentStep--
+        }
+    }
+
+    private fun selectAdjacentFile(forward: Boolean) {
+        val selected = uiState.selectedFile ?: return
+        val nodes = uiState.treeNodes
+        val currentIndex = nodes.indexOfFirst { it.path == selected }
+        if (currentIndex == -1) return
+
+        val step = if (forward) 1 else -1
+        var nextIndex = currentIndex + step
+        while (nextIndex in nodes.indices) {
+            val node = nodes[nextIndex]
+            if (!node.isDirectory) {
+                selectFile(node.path)
+                return
+            }
+            nextIndex += step
         }
     }
 

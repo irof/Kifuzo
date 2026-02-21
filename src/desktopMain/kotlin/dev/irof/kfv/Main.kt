@@ -99,6 +99,14 @@ fun KifuManagerApp() {
                                 viewModel.dispatch(KifuManagerAction.PrevStep)
                                 true
                             }
+                            Key.DirectionDown -> {
+                                viewModel.dispatch(KifuManagerAction.SelectNextFile)
+                                true
+                            }
+                            Key.DirectionUp -> {
+                                viewModel.dispatch(KifuManagerAction.SelectPrevFile)
+                                true
+                            }
                             else -> false
                         }
                     } else {

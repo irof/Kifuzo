@@ -21,6 +21,8 @@ sealed class KifuManagerAction {
     data object ToggleSidebar : KifuManagerAction()
     data class SetViewMode(val mode: FileViewMode) : KifuManagerAction()
     data class SetFileFilter(val filter: FileFilter) : KifuManagerAction()
+    data object SelectNextFile : KifuManagerAction()
+    data object SelectPrevFile : KifuManagerAction()
 
     // 指し手操作
     data class ChangeStep(val step: Int) : KifuManagerAction()
