@@ -25,7 +25,7 @@ fun EvaluationGraph(
         val width = size.width
         val height = size.height
         val centerY = height / 2f
-        val maxEval = 2000f // 評価値の表示上限/下限（スケーリング基準）
+        val maxEval = 5000f // 評価値の表示上限/下限（スケーリング基準）
 
         // 背景（0ライン）
         drawLine(
@@ -56,8 +56,8 @@ fun EvaluationGraph(
                 val eval = evaluations[i] ?: continue
                 val x = i * stepWidth
                 // 評価値を画面高さに合わせて変換（上を先手プラス、下を後手マイナス）
-                // 2000以上は端に固定
-                val y = centerY - (eval.coerceIn(-2000, 2000) / maxEval * centerY)
+                // 5000以上は端に固定
+                val y = centerY - (eval.coerceIn(-5000, 5000) / maxEval * centerY)
 
                 val currentPoint = Offset(x, y)
                 if (lastPoint != null) {
