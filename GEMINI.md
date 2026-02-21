@@ -77,6 +77,7 @@ The project uses **Gradle** as the build tool.
 
 - **Language:**
     - **GEMINI.md:** Must be written in **English**.
+    - **Commit Messages:** Must be written in **Japanese**.
     - **Code Comments/Documentation:** Must be written in **Japanese**.
 - **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation. **Before committing, you MUST run `./gradlew verify` and ensure it passes. Additionally, if a change affects the content of `GEMINI.md` (e.g., new features, structural changes, or updated conventions), you MUST update `GEMINI.md` accordingly in the same task.**
 - **UI Framework:** Jetpack Compose (Desktop).
