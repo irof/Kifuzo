@@ -51,10 +51,6 @@ The project uses **Gradle** as the build tool.
   ```bash
   ./gradlew verify
   ```
-- **Run tests:**
-  ```bash
-  ./gradlew test
-  ```
 - **Clean build artifacts:**
   ```bash
   ./gradlew clean
