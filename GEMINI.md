@@ -31,7 +31,7 @@ KifuManager is a macOS GUI application built with **Compose Multiplatform** and 
 The project uses **Gradle** as the build tool.
 
 ### Prerequisites
-- **JDK:** 21 or higher (optimized for JDK 25 with Kotlin 2.3.10).
+- **JDK:** 25 or higher (optimized for Kotlin 2.3.10).
 
 ### Key Commands
 

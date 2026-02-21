@@ -11,6 +11,7 @@ group = "dev.irof.kfv"
 version = "1.0.0"
 
 kotlin {
+    jvmToolchain(25)
     jvm("desktop")
     sourceSets {
         val desktopMain by getting {
