@@ -40,7 +40,6 @@ class KifuManagerViewModel(
             is KifuManagerAction.SetRootDirectory -> setRootDirectory(action.path)
             is KifuManagerAction.ToggleDirectory -> toggleDirectory(action.node)
             is KifuManagerAction.SelectFile -> selectFile(action.path)
-            is KifuManagerAction.SetSelectedSenkei -> updateState { it.copy(selectedSenkei = action.senkei) }
             is KifuManagerAction.SaveSettings -> saveSettings(action.regex)
             is KifuManagerAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
             is KifuManagerAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
@@ -87,7 +86,7 @@ class KifuManagerViewModel(
     fun setRootDirectory(path: Path) {
         currentRootDirectory = path
         AppSettings.lastRootDir = path.toString()
-        updateState { it.copy(selectedSenkei = null, treeNodes = emptyList()) } // ルート変更時は展開状態をクリア
+        updateState { it.copy(treeNodes = emptyList()) } // ルート変更時は展開状態をクリア
         refreshFiles()
     }
 

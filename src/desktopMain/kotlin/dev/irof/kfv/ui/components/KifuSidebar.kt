@@ -38,7 +38,6 @@ fun KifuSidebar(
     onSetRoot: (Path) -> Unit,
     onImport: () -> Unit,
     onShowSettings: () -> Unit,
-    onSelectSenkei: (String?) -> Unit,
     onToggleDir: (dev.irof.kfv.models.FileTreeNode) -> Unit,
     onSelectFile: (Path) -> Unit,
     onShowText: (String) -> Unit,
@@ -88,21 +87,10 @@ fun KifuSidebar(
 
         Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
 
-        if (state.availableSenkei.isNotEmpty() || state.isScanning) {
-            if (state.isScanning) LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
-            Row(modifier = Modifier.fillMaxWidth().padding(vertical = ShogiDimensions.PaddingSmall).horizontalScroll(rememberScrollState())) {
-                TextButton(onClick = { onSelectSenkei(null) }, colors = ButtonDefaults.textButtonColors(contentColor = if (state.selectedSenkei == null) Color.Blue else Color.Gray)) { Text(AppStrings.ALL_SENKEI, fontSize = ShogiDimensions.FontSizeCaption) }
-                state.availableSenkei.forEach { senkei ->
-                    TextButton(onClick = { onSelectSenkei(senkei) }, colors = ButtonDefaults.textButtonColors(contentColor = if (state.selectedSenkei == senkei) Color.Blue else Color.Gray)) { Text(senkei, fontSize = ShogiDimensions.FontSizeCaption) }
-                }
-            }
-            Divider()
-        }
-
         val treeHorizontalScroll = rememberScrollState()
         Box(modifier = Modifier.weight(1f).fillMaxWidth().horizontalScroll(treeHorizontalScroll)) {
             LazyColumn(modifier = Modifier.fillMaxHeight()) {
-                items(state.filteredNodes) { node ->
+                items(state.treeNodes) { node ->
                     FileTreeItem(
                         node = node,
                         isSelected = (node.path == state.selectedFile),

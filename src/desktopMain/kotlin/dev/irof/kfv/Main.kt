@@ -100,7 +100,6 @@ fun KifuManagerApp() {
                 onSetRoot = { viewModel.dispatch(KifuManagerAction.SetRootDirectory(it)) },
                 onImport = { viewModel.dispatch(KifuManagerAction.ShowImportDialog(true)) },
                 onShowSettings = { viewModel.dispatch(KifuManagerAction.ShowSettings(true)) },
-                onSelectSenkei = { viewModel.dispatch(KifuManagerAction.SetSelectedSenkei(it)) },
                 onToggleDir = { viewModel.dispatch(KifuManagerAction.ToggleDirectory(it)) },
                 onSelectFile = { viewModel.dispatch(KifuManagerAction.SelectFile(it)) },
                 onShowText = { viewModel.dispatch(KifuManagerAction.SetViewingText(it)) },

@@ -7,7 +7,6 @@ sealed class KifuManagerAction {
     data class SetRootDirectory(val path: Path) : KifuManagerAction()
     data class ToggleDirectory(val node: FileTreeNode) : KifuManagerAction()
     data class SelectFile(val path: Path) : KifuManagerAction()
-    data class SetSelectedSenkei(val senkei: String?) : KifuManagerAction()
     data class SaveSettings(val regex: String) : KifuManagerAction()
     data class SetViewingText(val text: String?) : KifuManagerAction()
     data object ToggleFlipped : KifuManagerAction()
