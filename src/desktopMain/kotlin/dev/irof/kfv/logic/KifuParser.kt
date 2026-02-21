@@ -65,26 +65,25 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
 
             // コメント行の処理（評価値抽出）
             if (line.startsWith("*")) {
-                // 形式1: *#評価値=1234
-                // 形式2: * 1234
-                // 形式3: *#詰み=先手勝ち
-                // 形式4: *#詰み=後手勝ち
-                val evalMatch = Regex("""\*#評価値=([+-]?\d+)""").find(line)
-                    ?: Regex("""\* ([+-]?\d+)""").find(line)
+                if (history.isNotEmpty()) {
+                    val lastIdx = history.size - 1
+                    val currentEval = history[lastIdx].evaluation
+                    val isCurrentMate = currentEval != null && (currentEval >= 30000 || currentEval <= -30000)
 
-                if (evalMatch != null && history.isNotEmpty()) {
-                    val eval = evalMatch.groupValues[1].toIntOrNull()
-                    if (eval != null) {
-                        val last = history.last()
-                        history[history.size - 1] = last.copy(evaluation = eval)
-                    }
-                } else if (history.isNotEmpty()) {
                     if (line.contains("#詰み=先手勝ち")) {
-                        val last = history.last()
-                        history[history.size - 1] = last.copy(evaluation = 31111)
+                        history[lastIdx] = history[lastIdx].copy(evaluation = 31111)
                     } else if (line.contains("#詰み=後手勝ち")) {
-                        val last = history.last()
-                        history[history.size - 1] = last.copy(evaluation = -31111)
+                        history[lastIdx] = history[lastIdx].copy(evaluation = -31111)
+                    } else if (!isCurrentMate) {
+                        // すでに詰みが検出されている場合は、通常の評価値で上書きしない
+                        val evalMatch = Regex("""\*#評価値=([+-]?\d+)""").find(line)
+                            ?: Regex("""\* ([+-]?\d+)""").find(line)
+                        if (evalMatch != null) {
+                            val eval = evalMatch.groupValues[1].toIntOrNull()
+                            if (eval != null) {
+                                history[lastIdx] = history[lastIdx].copy(evaluation = eval)
+                            }
+                        }
                     }
                 }
                 continue

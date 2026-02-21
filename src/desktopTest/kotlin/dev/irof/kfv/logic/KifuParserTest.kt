@@ -86,6 +86,26 @@ class KifuParserTest {
     }
 
     @Test
+    fun testParseKifuPrioritizeMate() {
+        val lines = listOf(
+            "1 ７六歩(77)",
+            "* 123",
+            "*#詰み=先手勝ち",
+            "2 ３四歩(33)",
+            "*#詰み=後手勝ち",
+            "* -456",
+        )
+        val state = ShogiBoardState()
+        parseKifu(lines, state)
+
+        val session = state.session
+        // 1手目: 123 より 詰み(31111) を優先
+        assertEquals(31111, session.history[1].evaluation)
+        // 2手目: -456 より 詰み(-31111) を優先
+        assertEquals(-31111, session.history[2].evaluation)
+    }
+
+    @Test
     fun testScanKifuInfo() {
         val lines = listOf(
             "先手：先手太郎",
