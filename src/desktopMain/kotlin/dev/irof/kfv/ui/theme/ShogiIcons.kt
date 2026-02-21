@@ -15,4 +15,5 @@ object ShogiIcons {
 
     val ExpandMore = Icons.Default.ArrowDropDown
     val ExpandLess = Icons.AutoMirrored.Filled.ArrowForward
+    val Warning = Icons.Default.Warning
 }

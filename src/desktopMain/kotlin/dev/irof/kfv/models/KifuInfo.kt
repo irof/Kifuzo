@@ -10,4 +10,5 @@ data class KifuInfo(
     val senteName: String = "",
     val goteName: String = "",
     val senkei: String = "",
+    val isError: Boolean = false,
 )

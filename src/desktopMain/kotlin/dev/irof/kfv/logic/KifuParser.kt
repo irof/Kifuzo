@@ -9,8 +9,10 @@ fun scanKifuInfo(path: Path): KifuInfo = try {
     val lines = readLinesWithEncoding(path)
     scanKifuInfo(lines).copy(path = path)
 } catch (e: Exception) {
+    // スキャン時のエラーは、ファイルリスト表示を止めないようログに記録し、
+    // UI上でエラー状態であることがわかるように KifuInfo を構築して返します。
     System.err.println("Failed to scan header for ${path.name}: ${e.message}")
-    KifuInfo(path, "", "", "")
+    KifuInfo(path, isError = true)
 }
 
 fun scanKifuInfo(lines: List<String>): KifuInfo {

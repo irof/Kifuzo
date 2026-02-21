@@ -79,6 +79,7 @@ The project uses **Gradle** as the build tool.
 - **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation. **Before committing, you MUST run `./gradlew verify` and ensure it passes. Additionally, if a change affects the content of `GEMINI.md` (e.g., new features, structural changes, or updated conventions), you MUST update `GEMINI.md` accordingly in the same task.**
 - **UI Framework:** Jetpack Compose (Desktop).
 - **State Management:** Uses a **ViewModel** pattern with `UiState` and `Action` objects for predictable state transitions.
+- **Error Handling:** パースエラーや予期せぬ例外を安易に握りつぶさないでください。特に `KifuParseException` を使用して、エラーの原因（行番号や内容）をユーザーが視認できる形で上位に伝播させてください。ファイルスキャンなどのバルク処理で個別のエラーを許容する場合でも、デバッグが困難にならないようログ出力やエラー状態の保持を検討してください。
 - **Parsing:** Primarily uses Regex and line-by-line processing for game records.
 - **Encoding:** Standardizes on **UTF-8** for all file operations.
 - **Naming:** Uses standard Kotlin/JVM naming conventions.

@@ -94,6 +94,7 @@ fun KifuSidebar(
                     FileTreeItem(
                         node = node,
                         isSelected = (node.path == state.selectedFile),
+                        isError = state.kifuInfos[node.path]?.isError ?: false,
                         onToggle = onToggleDir,
                         onSelect = onSelectFile,
                         onShowText = { onShowText(readTextWithEncoding(it)) },

@@ -19,6 +19,7 @@ import kotlin.io.path.name
 fun FileTreeItem(
     node: FileTreeNode,
     isSelected: Boolean = false,
+    isError: Boolean = false,
     onToggle: (FileTreeNode) -> Unit,
     onSelect: (Path) -> Unit,
     onShowText: (Path) -> Unit,
@@ -55,7 +56,16 @@ fun FileTreeItem(
                     tint = Color.Gray,
                 )
             } else {
-                Spacer(Modifier.width(16.dp))
+                if (isError) {
+                    Icon(
+                        imageVector = ShogiIcons.Warning,
+                        contentDescription = "解析エラー",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Red,
+                    )
+                } else {
+                    Spacer(Modifier.width(16.dp))
+                }
             }
 
             Spacer(Modifier.width(4.dp))
@@ -63,7 +73,13 @@ fun FileTreeItem(
             Text(
                 text = node.name + if (node.isDirectory) "/" else "",
                 fontSize = 13.sp,
-                color = if (node.isDirectory) Color.Blue else Color.Black,
+                color = if (node.isDirectory) {
+                    Color.Blue
+                } else if (isError) {
+                    Color.Red
+                } else {
+                    Color.Black
+                },
                 lineHeight = 16.sp,
                 softWrap = false,
                 maxLines = 1,
