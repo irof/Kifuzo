@@ -130,11 +130,6 @@ private fun KifuOperationBar(
         Text(text = "${AppStrings.MOVE_COUNT}: $currentStep / $maxStep$evalText", style = MaterialTheme.typography.caption)
         Text(text = lastMoveText, style = MaterialTheme.typography.body2, modifier = Modifier.height(24.dp))
 
-        if (evaluations.any { it != null }) {
-            EvaluationGraph(evaluations = evaluations, currentStep = currentStep)
-            Spacer(Modifier.height(4.dp))
-        }
-
         Row(verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = { onStepChange(0) }, modifier = Modifier.height(32.dp)) { Text(AppStrings.START, fontSize = 10.sp) }
             Spacer(Modifier.width(4.dp))
@@ -153,7 +148,13 @@ private fun KifuOperationBar(
             onValueChange = { onStepChange(it.toInt()) },
             valueRange = 0f..maxStep.toFloat(),
             steps = if (maxStep > 1) maxStep - 1 else 0,
-            modifier = Modifier.width(280.dp),
+            modifier = Modifier.width(320.dp),
         )
+
+        if (evaluations.any { it != null }) {
+            Spacer(Modifier.height(8.dp))
+            EvaluationGraph(evaluations = evaluations, currentStep = currentStep)
+            Spacer(Modifier.height(4.dp))
+        }
     }
 }
