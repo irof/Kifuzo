@@ -36,20 +36,18 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
 
             Spacer(Modifier.height(4.dp))
 
-            val rangeX = if (isFlipped) (0..8) else (8 downTo 0)
+            val rangeX = if (isFlipped) (8 downTo 0) else (0..8)
             val rangeY = if (isFlipped) (8 downTo 0) else (0..8)
-            val sujiLabels = listOf("１", "２", "３", "４", "５", "６", "７", "８", "９")
+            val sujiLabels = listOf("９", "８", "７", "６", "５", "４", "３", "２", "１")
             val danLabels = listOf("一", "二", "三", "四", "五", "六", "七", "八", "九")
             val labelSize = (cellSize.value * 0.3f).sp
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 // 筋の符号
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // 盤面の枠線(1.5dp) + padding(2dp) 分のオフセットは特になしで、セルの中心に合わせる
                     for (x in rangeX) {
                         Box(modifier = Modifier.size(cellSize), contentAlignment = Alignment.Center) {
-                            val sujiIndex = if (isFlipped) x else 8 - x
-                            Text(text = sujiLabels[sujiIndex], fontSize = labelSize, color = Color.Gray)
+                            Text(text = sujiLabels[x], fontSize = labelSize, color = Color.Gray)
                         }
                     }
                     // 段の符号の幅分を空ける
