@@ -140,6 +140,7 @@ fun KifuPreviewPanel(
                 isStandardStart = boardState.session.isStandardStart,
                 firstContactStep = boardState.session.firstContactStep,
                 evaluations = boardState.session.history.map { it.evaluation },
+                isFlipped = state.isFlipped,
                 onStepChange = onStepChange,
             )
         }
@@ -154,6 +155,7 @@ private fun KifuOperationBar(
     isStandardStart: Boolean,
     firstContactStep: Int,
     evaluations: List<Int?>,
+    isFlipped: Boolean,
     onStepChange: (Int) -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -208,7 +210,13 @@ private fun KifuOperationBar(
 
         if (evaluations.any { it != null }) {
             Spacer(Modifier.height(8.dp))
-            EvaluationGraph(evaluations = evaluations, currentStep = currentStep, onStepClick = onStepChange, modifier = Modifier.height(240.dp).fillMaxWidth().padding(horizontal = 16.dp))
+            EvaluationGraph(
+                evaluations = evaluations,
+                currentStep = currentStep,
+                isFlipped = isFlipped,
+                onStepClick = onStepChange,
+                modifier = Modifier.height(240.dp).fillMaxWidth().padding(horizontal = 16.dp),
+            )
         }
 
         Spacer(Modifier.height(4.dp))

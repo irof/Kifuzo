@@ -36,6 +36,7 @@ import dev.irof.kfv.ui.theme.ShogiColors
 fun EvaluationGraph(
     evaluations: List<Int?>,
     currentStep: Int,
+    isFlipped: Boolean = false,
     onStepClick: (Int) -> Unit = {},
     modifier: Modifier = Modifier.height(240.dp).fillMaxWidth(),
 ) {
@@ -83,25 +84,27 @@ fun EvaluationGraph(
         // 非線形スケーリング関数: thresholdを超えた分を圧縮する
         fun getScaledEval(value: Float): Float {
             val absVal = kotlin.math.abs(value)
-            return if (absVal <= threshold) {
+            val base = if (absVal <= threshold) {
                 value
             } else {
                 val sign = if (value >= 0) 1f else -1f
                 sign * (threshold + (absVal - threshold) * compression)
             }
+            // 盤面反転時はグラフも上下反転させる
+            return if (isFlipped) -base else base
         }
 
-        // スケーリング後の最大表示値 (2000 + (10000-2000)*0.5 = 6000)
+        // スケーリング後の最大表示値
         val displayMax = threshold + (maxEval - threshold) * compression
 
-        // 領域の色分け
+        // 領域の色分け (反転時は色も入れ替える)
         drawRect(
-            color = ShogiColors.EvalPositive,
+            color = if (isFlipped) ShogiColors.EvalNegative else ShogiColors.EvalPositive,
             topLeft = Offset(0f, 0f),
             size = Size(width, centerY),
         )
         drawRect(
-            color = ShogiColors.EvalNegative,
+            color = if (isFlipped) ShogiColors.EvalPositive else ShogiColors.EvalNegative,
             topLeft = Offset(0f, centerY),
             size = Size(width, height - centerY),
         )
@@ -124,7 +127,6 @@ fun EvaluationGraph(
                 )
             }
         }
-
         // 背景（0ライン）
         drawLine(
             color = Color.Gray.copy(alpha = 0.5f),
