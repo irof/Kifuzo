@@ -32,6 +32,7 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "dev.irof.kifuzo.MainKt"
+        jvmArgs += "--enable-native-access=ALL-UNNAMED"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg)
             packageName = "Kifuzo"
