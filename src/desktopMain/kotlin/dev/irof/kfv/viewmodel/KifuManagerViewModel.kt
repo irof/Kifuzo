@@ -52,6 +52,14 @@ class KifuManagerViewModel(
             is KifuManagerAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
             is KifuManagerAction.DetectAndWriteSenkei -> detectAndWriteSenkei(action.path)
             is KifuManagerAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
+            is KifuManagerAction.SetViewMode -> {
+                updateState { it.copy(viewMode = action.mode) }
+                refreshFiles()
+            }
+            is KifuManagerAction.SetFileFilter -> {
+                updateState { it.copy(fileFilter = action.filter) }
+                refreshFiles()
+            }
             is KifuManagerAction.ChangeStep -> boardState.currentStep = action.step
             is KifuManagerAction.NextStep -> boardState.currentStep++
             is KifuManagerAction.PrevStep -> boardState.currentStep--
@@ -67,10 +75,23 @@ class KifuManagerViewModel(
      */
     fun refreshFiles() {
         val root = currentRootDirectory ?: return
-        val newNodes = fileTreeManager.buildTree(root, uiState.treeNodes)
-        updateState { it.copy(treeNodes = newNodes) }
+        val mode = uiState.viewMode
+        val filter = uiState.fileFilter
 
-        // 戦型情報のスキャン（サブディレクトリも含めて最新にする）
+        if (mode == FileViewMode.HIERARCHY) {
+            val newNodes = fileTreeManager.buildTree(root, uiState.treeNodes, filter)
+            updateState { it.copy(treeNodes = newNodes) }
+        } else {
+            scope.launch {
+                updateState { it.copy(isScanning = true) }
+                val newNodes = withContext(Dispatchers.IO) {
+                    fileTreeManager.buildFlatList(root, filter)
+                }
+                updateState { it.copy(treeNodes = newNodes, isScanning = false) }
+            }
+        }
+
+        // 戦型情報のスキャン
         scope.launch {
             updateState { it.copy(isScanning = true) }
             val allKifuFiles = mutableListOf<Path>()

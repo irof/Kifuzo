@@ -19,6 +19,8 @@ sealed class KifuManagerAction {
     data object HideOverwriteConfirm : KifuManagerAction()
     data class DetectAndWriteSenkei(val path: Path) : KifuManagerAction()
     data object ToggleSidebar : KifuManagerAction()
+    data class SetViewMode(val mode: FileViewMode) : KifuManagerAction()
+    data class SetFileFilter(val filter: FileFilter) : KifuManagerAction()
 
     // 指し手操作
     data class ChangeStep(val step: Int) : KifuManagerAction()

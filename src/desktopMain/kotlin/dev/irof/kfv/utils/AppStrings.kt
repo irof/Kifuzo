@@ -30,4 +30,9 @@ object AppStrings {
     const val SELECT_KIFU_HINT = "kifuファイルを選択してください"
     const val SELECT_KIFU_ROOT = "棋譜フォルダを選択してください"
     const val DELETE = "削除"
+    const val HIERARCHY = "階層"
+    const val FLAT = "フラット"
+    const val FILTER_ALL = "すべて"
+    const val FILTER_KIFU = "棋譜のみ"
+    const val FILTER_RECENT = "最近"
 }

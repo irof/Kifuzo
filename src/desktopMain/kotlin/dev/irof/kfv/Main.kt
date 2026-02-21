@@ -104,6 +104,8 @@ fun KifuManagerApp() {
                     onToggleDir = { viewModel.dispatch(KifuManagerAction.ToggleDirectory(it)) },
                     onSelectFile = { viewModel.dispatch(KifuManagerAction.SelectFile(it)) },
                     onShowText = { viewModel.dispatch(KifuManagerAction.SetViewingText(it)) },
+                    onSetViewMode = { viewModel.dispatch(KifuManagerAction.SetViewMode(it)) },
+                    onSetFileFilter = { viewModel.dispatch(KifuManagerAction.SetFileFilter(it)) },
                     modifier = Modifier.weight(ShogiDimensions.SidebarWidthRatio),
                 )
             }

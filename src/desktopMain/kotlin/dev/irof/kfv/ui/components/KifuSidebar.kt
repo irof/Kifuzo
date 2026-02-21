@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.irof.kfv.logic.readTextWithEncoding
 import dev.irof.kfv.ui.FileTreeItem
 import dev.irof.kfv.ui.theme.ShogiColors
@@ -41,6 +42,8 @@ fun KifuSidebar(
     onToggleDir: (dev.irof.kfv.models.FileTreeNode) -> Unit,
     onSelectFile: (Path) -> Unit,
     onShowText: (String) -> Unit,
+    onSetViewMode: (dev.irof.kfv.viewmodel.FileViewMode) -> Unit,
+    onSetFileFilter: (dev.irof.kfv.viewmodel.FileFilter) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxHeight().padding(ShogiDimensions.PaddingLarge)) {
@@ -57,11 +60,28 @@ fun KifuSidebar(
                         Icon(ShogiIcons.Import, contentDescription = AppStrings.IMPORT_KIFU, tint = if (currentRoot != null) ShogiColors.Primary else Color.Gray)
                     }
                 }
+                Spacer(Modifier.width(8.dp))
+                // --- 表示モード切替 ---
+                Row(modifier = Modifier.border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(2.dp)) {
+                    val mode = state.viewMode
+                    ViewModeButton(AppStrings.HIERARCHY, mode == dev.irof.kfv.viewmodel.FileViewMode.HIERARCHY) { onSetViewMode(dev.irof.kfv.viewmodel.FileViewMode.HIERARCHY) }
+                    ViewModeButton(AppStrings.FLAT, mode == dev.irof.kfv.viewmodel.FileViewMode.FLAT) { onSetViewMode(dev.irof.kfv.viewmodel.FileViewMode.FLAT) }
+                }
             }
             SidebarIconButton(AppStrings.SETTINGS, ShogiIcons.Settings, Color.Gray, onShowSettings)
         }
 
         Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
+
+        // --- フィルタ選択 ---
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            val currentFilter = state.fileFilter
+            FilterChip(AppStrings.FILTER_ALL, currentFilter == dev.irof.kfv.viewmodel.FileFilter.ALL) { onSetFileFilter(dev.irof.kfv.viewmodel.FileFilter.ALL) }
+            Spacer(Modifier.width(4.dp))
+            FilterChip(AppStrings.FILTER_KIFU, currentFilter == dev.irof.kfv.viewmodel.FileFilter.KIFU_ONLY) { onSetFileFilter(dev.irof.kfv.viewmodel.FileFilter.KIFU_ONLY) }
+            Spacer(Modifier.width(4.dp))
+            FilterChip(AppStrings.FILTER_RECENT, currentFilter == dev.irof.kfv.viewmodel.FileFilter.RECENT) { onSetFileFilter(dev.irof.kfv.viewmodel.FileFilter.RECENT) }
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth().clickable {
@@ -95,6 +115,7 @@ fun KifuSidebar(
                         node = node,
                         isSelected = (node.path == state.selectedFile),
                         isError = state.kifuInfos[node.path]?.isError ?: false,
+                        showParentName = (state.viewMode == dev.irof.kfv.viewmodel.FileViewMode.FLAT),
                         onToggle = onToggleDir,
                         onSelect = onSelectFile,
                         onShowText = { onShowText(readTextWithEncoding(it)) },
@@ -102,6 +123,39 @@ fun KifuSidebar(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ViewModeButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
+    Surface(
+        color = if (isSelected) ShogiColors.Primary else Color.Transparent,
+        shape = MaterialTheme.shapes.small,
+        modifier = Modifier.clickable { onClick() },
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            color = if (isSelected) Color.White else Color.Gray,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
+    Surface(
+        color = if (isSelected) ShogiColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
+        border = BorderStroke(1.dp, if (isSelected) ShogiColors.Primary else Color.LightGray),
+        shape = androidx.compose.foundation.shape.CircleShape,
+        modifier = Modifier.clickable { onClick() },
+    ) {
+        Text(
+            text = label,
+            fontSize = 10.sp,
+            color = if (isSelected) ShogiColors.Primary else Color.Gray,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+        )
     }
 }
 

@@ -4,6 +4,17 @@ import dev.irof.kfv.models.FileTreeNode
 import dev.irof.kfv.models.KifuInfo
 import java.nio.file.Path
 
+enum class FileViewMode {
+    HIERARCHY,
+    FLAT,
+}
+
+enum class FileFilter {
+    ALL,
+    KIFU_ONLY,
+    RECENT,
+}
+
 data class KifuManagerUiState(
     val treeNodes: List<FileTreeNode> = emptyList(),
     val kifuInfos: Map<Path, KifuInfo> = emptyMap(),
@@ -18,4 +29,6 @@ data class KifuManagerUiState(
     val showImportDialog: Boolean = false,
     val myNameRegex: String = "",
     val isSidebarVisible: Boolean = true,
+    val viewMode: FileViewMode = FileViewMode.HIERARCHY,
+    val fileFilter: FileFilter = FileFilter.ALL,
 )

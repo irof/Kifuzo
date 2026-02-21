@@ -20,6 +20,7 @@ fun FileTreeItem(
     node: FileTreeNode,
     isSelected: Boolean = false,
     isError: Boolean = false,
+    showParentName: Boolean = false,
     onToggle: (FileTreeNode) -> Unit,
     onSelect: (Path) -> Unit,
     onShowText: (Path) -> Unit,
@@ -45,7 +46,7 @@ fun FileTreeItem(
                         }
                     },
                 )
-                .padding(start = (node.level * 16).dp, top = 4.dp, bottom = 4.dp, end = 8.dp),
+                .padding(start = if (showParentName) 8.dp else (node.level * 16).dp, top = 4.dp, bottom = 4.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (node.isDirectory) {
@@ -64,14 +65,20 @@ fun FileTreeItem(
                         tint = Color.Red,
                     )
                 } else {
-                    Spacer(Modifier.width(16.dp))
+                    Spacer(Modifier.width(if (showParentName) 4.dp else 16.dp))
                 }
             }
 
             Spacer(Modifier.width(4.dp))
 
+            val displayName = if (showParentName && !node.isDirectory) {
+                "${node.path.parent?.name ?: ""}/${node.name}"
+            } else {
+                node.name + if (node.isDirectory) "/" else ""
+            }
+
             Text(
-                text = node.name + if (node.isDirectory) "/" else "",
+                text = displayName,
                 fontSize = 13.sp,
                 color = if (node.isDirectory) {
                     Color.Blue
