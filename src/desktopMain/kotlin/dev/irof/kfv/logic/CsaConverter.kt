@@ -9,7 +9,7 @@ import kotlin.text.Charsets
 fun convertCsaToKifu(path: Path) {
     val lines = readLinesWithEncoding(path)
     val kifLines = convertCsaToKifuLines(lines)
-    val kifuFile = (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
+    val kifuFile = (path.getParent() ?: path).resolve(path.nameWithoutExtension + ".kifu")
     java.nio.file.Files.write(kifuFile, kifLines.joinToString("\n", postfix = "\n").toByteArray(Charsets.UTF_8))
 }
 

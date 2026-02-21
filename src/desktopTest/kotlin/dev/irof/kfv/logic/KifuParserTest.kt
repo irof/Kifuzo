@@ -1,7 +1,13 @@
 package dev.irof.kfv.logic
 
-import dev.irof.kfv.models.*
-import kotlin.test.*
+import dev.irof.kfv.models.Piece
+import dev.irof.kfv.models.PieceColor
+import dev.irof.kfv.models.ShogiBoardState
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.fail
 
 class KifuParserTest {
 

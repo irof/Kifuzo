@@ -1,8 +1,19 @@
 package dev.irof.kfv.ui
 
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.foundation.ContextMenuItem
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +83,7 @@ fun FileTreeItem(
             Spacer(Modifier.width(4.dp))
 
             val displayName = if (showParentName && !node.isDirectory) {
-                "${node.path.parent?.name ?: ""}/${node.name}"
+                "${node.path.getParent()?.name ?: ""}/${node.name}"
             } else {
                 node.name + if (node.isDirectory) "/" else ""
             }

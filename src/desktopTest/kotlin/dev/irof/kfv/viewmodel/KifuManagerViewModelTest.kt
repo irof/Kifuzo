@@ -1,9 +1,16 @@
 package dev.irof.kfv.viewmodel
 
-import dev.irof.kfv.logic.*
-import dev.irof.kfv.models.*
+import dev.irof.kfv.logic.KifuRepository
+import dev.irof.kfv.models.BoardSnapshot
+import dev.irof.kfv.models.KifuInfo
+import dev.irof.kfv.models.KifuSession
+import dev.irof.kfv.models.ShogiBoardState
 import java.nio.file.Path
-import kotlin.test.*
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class KifuManagerViewModelTest {
 

@@ -1,6 +1,7 @@
 package dev.irof.kfv.logic
 
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 class CsaConverterTest {
 

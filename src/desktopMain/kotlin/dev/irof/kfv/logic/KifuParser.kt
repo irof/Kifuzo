@@ -1,6 +1,12 @@
 package dev.irof.kfv.logic
 
-import dev.irof.kfv.models.*
+import dev.irof.kfv.models.BoardSnapshot
+import dev.irof.kfv.models.KifuInfo
+import dev.irof.kfv.models.KifuSession
+import dev.irof.kfv.models.Piece
+import dev.irof.kfv.models.PieceColor
+import dev.irof.kfv.models.ShogiBoardState
+import dev.irof.kfv.models.Square
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.text.Charsets

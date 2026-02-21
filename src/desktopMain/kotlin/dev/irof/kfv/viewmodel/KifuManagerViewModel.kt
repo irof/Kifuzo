@@ -3,9 +3,19 @@ package dev.irof.kfv.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dev.irof.kfv.logic.*
-import dev.irof.kfv.models.*
-import kotlinx.coroutines.*
+import dev.irof.kfv.logic.FileTreeManager
+import dev.irof.kfv.logic.KifuParseException
+import dev.irof.kfv.logic.KifuRepository
+import dev.irof.kfv.logic.KifuRepositoryImpl
+import dev.irof.kfv.logic.detectSenkei
+import dev.irof.kfv.models.AppSettings
+import dev.irof.kfv.models.FileTreeNode
+import dev.irof.kfv.models.ShogiBoardState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
@@ -171,7 +181,7 @@ class KifuManagerViewModel(
     }
 
     private fun convertCsa(path: Path) {
-        val targetFile = path.parent.resolve(path.nameWithoutExtension + ".kifu")
+        val targetFile = (path.getParent() ?: path).resolve(path.nameWithoutExtension + ".kifu")
         if (java.nio.file.Files.exists(targetFile)) {
             updateState { it.copy(showOverwriteConfirm = path) }
         } else {

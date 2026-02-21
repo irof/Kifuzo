@@ -1,6 +1,6 @@
 package dev.irof.kfv.logic
 
-import dev.irof.kfv.models.*
+import dev.irof.kfv.models.BoardSnapshot
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

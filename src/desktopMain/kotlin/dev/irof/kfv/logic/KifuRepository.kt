@@ -1,8 +1,14 @@
 package dev.irof.kfv.logic
 
-import dev.irof.kfv.models.*
+import dev.irof.kfv.models.KifuInfo
+import dev.irof.kfv.models.ShogiBoardState
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
 
 interface KifuRepository {
     fun scanDirectory(directory: Path): List<Path>
@@ -30,7 +36,7 @@ class KifuRepositoryImpl : KifuRepository {
 
     override fun convertCsa(path: Path): Path {
         convertCsaToKifu(path)
-        return (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
+        return (path.getParent() ?: path).resolve(path.nameWithoutExtension + ".kifu")
     }
 
     override fun updateSenkei(path: Path, senkei: String) {
