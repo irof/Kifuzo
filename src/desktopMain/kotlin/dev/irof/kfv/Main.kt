@@ -30,6 +30,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.irof.kfv.models.AppSettings
+import dev.irof.kfv.ui.components.KifuMenuBar
 import dev.irof.kfv.ui.components.KifuPreviewPanel
 import dev.irof.kfv.ui.components.KifuSidebar
 import dev.irof.kfv.ui.dialogs.ImportDialog
@@ -105,13 +106,18 @@ fun KifuManagerApp() {
                     }
                 },
         ) {
+            KifuMenuBar(
+                isSidebarVisible = state.isSidebarVisible,
+                onToggleSidebar = { viewModel.dispatch(KifuManagerAction.ToggleSidebar) },
+                onImport = { viewModel.dispatch(KifuManagerAction.ShowImportDialog(true)) },
+                onShowSettings = { viewModel.dispatch(KifuManagerAction.ShowSettings(true)) },
+            )
+
             if (state.isSidebarVisible) {
                 KifuSidebar(
                     state = state,
                     currentRoot = viewModel.currentRootDirectory,
                     onSetRoot = { viewModel.dispatch(KifuManagerAction.SetRootDirectory(it)) },
-                    onImport = { viewModel.dispatch(KifuManagerAction.ShowImportDialog(true)) },
-                    onShowSettings = { viewModel.dispatch(KifuManagerAction.ShowSettings(true)) },
                     onToggleDir = { viewModel.dispatch(KifuManagerAction.ToggleDirectory(it)) },
                     onSelectFile = { viewModel.dispatch(KifuManagerAction.SelectFile(it)) },
                     onShowText = { viewModel.dispatch(KifuManagerAction.SetViewingText(it)) },
@@ -125,7 +131,6 @@ fun KifuManagerApp() {
                 state = state,
                 boardState = viewModel.boardState,
                 onToggleFlip = { viewModel.dispatch(KifuManagerAction.ToggleFlipped) },
-                onToggleSidebar = { viewModel.dispatch(KifuManagerAction.ToggleSidebar) },
                 onDetectSenkei = { viewModel.dispatch(KifuManagerAction.DetectAndWriteSenkei(it)) },
                 onConvertCsa = { viewModel.dispatch(KifuManagerAction.ConvertCsa(it)) },
                 onStepChange = { viewModel.dispatch(KifuManagerAction.ChangeStep(it)) },

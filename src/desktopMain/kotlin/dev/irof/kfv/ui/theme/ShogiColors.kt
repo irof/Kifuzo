@@ -16,6 +16,7 @@ object ShogiColors {
 
     val TurnHighlight = Color.Yellow.copy(alpha = 0.3f)
     val PanelBackground = Color(0xFFEEEEEE)
+    val MenuBarBackground = Color(0xFFE0E0E0)
 
     val Primary = Color(0xFF6200EE)
     val Success = Color(0xFF4CAF50)

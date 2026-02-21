@@ -49,7 +49,6 @@ fun KifuPreviewPanel(
     state: KifuManagerUiState,
     boardState: ShogiBoardState,
     onToggleFlip: () -> Unit,
-    onToggleSidebar: () -> Unit,
     onDetectSenkei: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
     onStepChange: (Int) -> Unit,
@@ -71,14 +70,6 @@ fun KifuPreviewPanel(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
-            IconButton(onClick = onToggleSidebar, modifier = Modifier.size(24.dp)) {
-                Icon(
-                    imageVector = dev.irof.kfv.ui.theme.ShogiIcons.SidebarToggle,
-                    contentDescription = "サイドバー切替",
-                    tint = Color.Gray,
-                )
-            }
-            Spacer(Modifier.width(8.dp))
             Text(
                 text = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT,
                 style = MaterialTheme.typography.subtitle1,
@@ -87,7 +78,6 @@ fun KifuPreviewPanel(
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
-            Spacer(Modifier.width(24.dp)) // ボタン分とのバランス調整用
         }
 
         state.selectedFile?.let { selected ->

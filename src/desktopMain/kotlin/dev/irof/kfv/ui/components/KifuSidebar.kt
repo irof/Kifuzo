@@ -51,8 +51,6 @@ fun KifuSidebar(
     state: KifuManagerUiState,
     currentRoot: Path?,
     onSetRoot: (Path) -> Unit,
-    onImport: () -> Unit,
-    onShowSettings: () -> Unit,
     onToggleDir: (dev.irof.kfv.models.FileTreeNode) -> Unit,
     onSelectFile: (Path) -> Unit,
     onShowText: (String) -> Unit,
@@ -61,28 +59,17 @@ fun KifuSidebar(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxHeight().padding(ShogiDimensions.PaddingLarge)) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TooltipArea(
-                    tooltip = {
-                        Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                            Text(AppStrings.IMPORT_KIFU, modifier = Modifier.padding(8.dp), color = Color.White, fontSize = ShogiDimensions.FontSizeCaption)
-                        }
-                    },
-                ) {
-                    IconButton(onClick = onImport, enabled = currentRoot != null) {
-                        Icon(ShogiIcons.Import, contentDescription = AppStrings.IMPORT_KIFU, tint = if (currentRoot != null) ShogiColors.Primary else Color.Gray)
-                    }
-                }
-                Spacer(Modifier.width(8.dp))
-                // --- 表示モード切替 ---
-                Row(modifier = Modifier.border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(2.dp)) {
-                    val mode = state.viewMode
-                    ViewModeButton(AppStrings.HIERARCHY, mode == dev.irof.kfv.viewmodel.FileViewMode.HIERARCHY) { onSetViewMode(dev.irof.kfv.viewmodel.FileViewMode.HIERARCHY) }
-                    ViewModeButton(AppStrings.FLAT, mode == dev.irof.kfv.viewmodel.FileViewMode.FLAT) { onSetViewMode(dev.irof.kfv.viewmodel.FileViewMode.FLAT) }
-                }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            // --- 表示モード切替 ---
+            Row(modifier = Modifier.border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(2.dp)) {
+                val mode = state.viewMode
+                ViewModeButton(AppStrings.HIERARCHY, mode == dev.irof.kfv.viewmodel.FileViewMode.HIERARCHY) { onSetViewMode(dev.irof.kfv.viewmodel.FileViewMode.HIERARCHY) }
+                ViewModeButton(AppStrings.FLAT, mode == dev.irof.kfv.viewmodel.FileViewMode.FLAT) { onSetViewMode(dev.irof.kfv.viewmodel.FileViewMode.FLAT) }
             }
-            SidebarIconButton(AppStrings.SETTINGS, ShogiIcons.Settings, Color.Gray, onShowSettings)
         }
 
         Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
@@ -170,26 +157,5 @@ private fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) 
             color = if (isSelected) ShogiColors.Primary else Color.Gray,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
         )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun SidebarIconButton(
-    label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    tint: Color,
-    onClick: () -> Unit,
-) {
-    TooltipArea(
-        tooltip = {
-            Surface(modifier = Modifier.shadow(4.dp), color = Color(0xFF333333), shape = MaterialTheme.shapes.small) {
-                Text(label, modifier = Modifier.padding(ShogiDimensions.PaddingMedium), color = Color.White, fontSize = ShogiDimensions.FontSizeCaption)
-            }
-        },
-    ) {
-        IconButton(onClick = onClick) {
-            Icon(icon, contentDescription = label, tint = tint)
-        }
     }
 }
