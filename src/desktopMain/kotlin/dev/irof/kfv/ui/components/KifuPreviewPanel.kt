@@ -175,7 +175,7 @@ private fun KifuOperationBar(
 
         if (evaluations.any { it != null }) {
             Spacer(Modifier.height(8.dp))
-            EvaluationGraph(evaluations = evaluations, currentStep = currentStep, modifier = Modifier.height(240.dp).fillMaxWidth().padding(horizontal = 16.dp))
+            EvaluationGraph(evaluations = evaluations, currentStep = currentStep, onStepClick = onStepChange, modifier = Modifier.height(240.dp).fillMaxWidth().padding(horizontal = 16.dp))
             Spacer(Modifier.height(4.dp))
         }
     }

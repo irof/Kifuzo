@@ -26,6 +26,7 @@ import dev.irof.kfv.ui.theme.ShogiColors
 fun EvaluationGraph(
     evaluations: List<Int?>,
     currentStep: Int,
+    onStepClick: (Int) -> Unit = {},
     modifier: Modifier = Modifier.height(240.dp).fillMaxWidth(),
 ) {
     if (evaluations.isEmpty() || evaluations.all { it == null }) return
@@ -44,6 +45,14 @@ fun EvaluationGraph(
                             change.position.x
                         } else {
                             null
+                        }
+
+                        // クリック（離した瞬間）の判定
+                        if (event.type == PointerEventType.Release && change.position.x in 0f..size.width.toFloat()) {
+                            val stepCount = evaluations.size
+                            val stepWidth = if (stepCount > 1) size.width.toFloat() / (stepCount - 1) else size.width.toFloat()
+                            val stepIndex = (change.position.x / stepWidth.coerceAtLeast(1f)).toInt().coerceIn(0, stepCount - 1)
+                            onStepClick(stepIndex)
                         }
                     }
                 }
