@@ -57,7 +57,11 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
 
             // コメント行の処理（評価値抽出）
             if (line.startsWith("*")) {
-                val evalMatch = Regex("""\* ([+-]?\d+)""").find(line)
+                // 形式1: *#評価値=1234
+                // 形式2: * 1234
+                val evalMatch = Regex("""\*#評価値=([+-]?\d+)""").find(line)
+                    ?: Regex("""\* ([+-]?\d+)""").find(line)
+
                 if (evalMatch != null && history.isNotEmpty()) {
                     val eval = evalMatch.groupValues[1].toIntOrNull()
                     if (eval != null) {

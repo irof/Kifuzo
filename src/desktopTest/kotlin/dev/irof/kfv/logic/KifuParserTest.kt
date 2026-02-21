@@ -14,6 +14,8 @@ class KifuParserTest {
             "* -456",
             "3 ２二角成(88)",
             "* +2000",
+            "4 ４二銀(31)",
+            "*#評価値=-500",
         )
         val state = ShogiBoardState()
         parseKifu(lines, state)
@@ -22,6 +24,7 @@ class KifuParserTest {
         assertEquals(123, session.history[1].evaluation)
         assertEquals(-456, session.history[2].evaluation)
         assertEquals(2000, session.history[3].evaluation)
+        assertEquals(-500, session.history[4].evaluation)
     }
 
     @Test
