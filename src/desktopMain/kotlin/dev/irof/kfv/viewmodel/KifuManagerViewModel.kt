@@ -181,7 +181,7 @@ class KifuManagerViewModel(
     }
 
     private fun convertCsa(path: Path) {
-        val targetFile = (path.getParent() ?: path).resolve(path.nameWithoutExtension + ".kifu")
+        val targetFile = (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
         if (java.nio.file.Files.exists(targetFile)) {
             updateState { it.copy(showOverwriteConfirm = path) }
         } else {

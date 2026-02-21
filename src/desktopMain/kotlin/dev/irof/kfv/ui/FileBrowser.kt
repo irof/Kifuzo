@@ -83,7 +83,7 @@ fun FileTreeItem(
             Spacer(Modifier.width(4.dp))
 
             val displayName = if (showParentName && !node.isDirectory) {
-                "${node.path.getParent()?.name ?: ""}/${node.name}"
+                "${node.path.parent?.name ?: ""}/${node.name}"
             } else {
                 node.name + if (node.isDirectory) "/" else ""
             }

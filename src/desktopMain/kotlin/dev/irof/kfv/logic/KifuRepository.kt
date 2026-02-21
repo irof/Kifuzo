@@ -36,7 +36,7 @@ class KifuRepositoryImpl : KifuRepository {
 
     override fun convertCsa(path: Path): Path {
         convertCsaToKifu(path)
-        return (path.getParent() ?: path).resolve(path.nameWithoutExtension + ".kifu")
+        return (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
     }
 
     override fun updateSenkei(path: Path, senkei: String) {
