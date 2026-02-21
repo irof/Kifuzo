@@ -29,6 +29,7 @@ fun KifuPreviewPanel(
     state: KifuManagerUiState,
     boardState: ShogiBoardState,
     onToggleFlip: () -> Unit,
+    onToggleSidebar: () -> Unit,
     onDetectSenkei: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
     onStepChange: (Int) -> Unit,
@@ -45,8 +46,29 @@ fun KifuPreviewPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
-        Spacer(Modifier.height(8.dp))
-        Text(text = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT, style = MaterialTheme.typography.subtitle1, fontWeight = FontWeight.Bold)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            IconButton(onClick = onToggleSidebar, modifier = Modifier.size(24.dp)) {
+                Icon(
+                    imageVector = dev.irof.kfv.ui.theme.ShogiIcons.SidebarToggle,
+                    contentDescription = "サイドバー切替",
+                    tint = Color.Gray,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT,
+                style = MaterialTheme.typography.subtitle1,
+                fontWeight = FontWeight.Bold,
+                softWrap = false,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.width(24.dp)) // ボタン分とのバランス調整用
+        }
 
         state.selectedFile?.let { selected ->
             val ext = selected.extension.lowercase()
@@ -148,12 +170,12 @@ private fun KifuOperationBar(
             onValueChange = { onStepChange(it.toInt()) },
             valueRange = 0f..maxStep.toFloat(),
             steps = if (maxStep > 1) maxStep - 1 else 0,
-            modifier = Modifier.width(320.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
 
         if (evaluations.any { it != null }) {
             Spacer(Modifier.height(8.dp))
-            EvaluationGraph(evaluations = evaluations, currentStep = currentStep)
+            EvaluationGraph(evaluations = evaluations, currentStep = currentStep, modifier = Modifier.height(60.dp).fillMaxWidth().padding(horizontal = 16.dp))
             Spacer(Modifier.height(4.dp))
         }
     }

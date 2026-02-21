@@ -12,6 +12,7 @@ object ShogiIcons {
     val Back = Icons.AutoMirrored.Filled.ArrowBack
     val Delete = Icons.Default.Delete
     val Refresh = Icons.Default.Refresh
+    val SidebarToggle = Icons.Default.List
 
     val ExpandMore = Icons.Default.ArrowDropDown
     val ExpandLess = Icons.AutoMirrored.Filled.ArrowForward

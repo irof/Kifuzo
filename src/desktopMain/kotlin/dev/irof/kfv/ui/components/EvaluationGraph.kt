@@ -17,7 +17,7 @@ import dev.irof.kfv.ui.theme.ShogiColors
 fun EvaluationGraph(
     evaluations: List<Int?>,
     currentStep: Int,
-    modifier: Modifier = Modifier.height(60.dp).width(320.dp),
+    modifier: Modifier = Modifier.height(60.dp).fillMaxWidth(),
 ) {
     if (evaluations.isEmpty() || evaluations.all { it == null }) return
 

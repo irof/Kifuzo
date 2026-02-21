@@ -51,6 +51,7 @@ class KifuManagerViewModel(
             is KifuManagerAction.ConfirmOverwrite -> confirmOverwrite()
             is KifuManagerAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
             is KifuManagerAction.DetectAndWriteSenkei -> detectAndWriteSenkei(action.path)
+            is KifuManagerAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
             is KifuManagerAction.ChangeStep -> boardState.currentStep = action.step
             is KifuManagerAction.NextStep -> boardState.currentStep++
             is KifuManagerAction.PrevStep -> boardState.currentStep--

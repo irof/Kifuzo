@@ -94,26 +94,29 @@ fun KifuManagerApp() {
                     }
                 },
         ) {
-            KifuSidebar(
-                state = state,
-                currentRoot = viewModel.currentRootDirectory,
-                onSetRoot = { viewModel.dispatch(KifuManagerAction.SetRootDirectory(it)) },
-                onImport = { viewModel.dispatch(KifuManagerAction.ShowImportDialog(true)) },
-                onShowSettings = { viewModel.dispatch(KifuManagerAction.ShowSettings(true)) },
-                onToggleDir = { viewModel.dispatch(KifuManagerAction.ToggleDirectory(it)) },
-                onSelectFile = { viewModel.dispatch(KifuManagerAction.SelectFile(it)) },
-                onShowText = { viewModel.dispatch(KifuManagerAction.SetViewingText(it)) },
-                modifier = Modifier.weight(ShogiDimensions.SidebarWidthRatio),
-            )
+            if (state.isSidebarVisible) {
+                KifuSidebar(
+                    state = state,
+                    currentRoot = viewModel.currentRootDirectory,
+                    onSetRoot = { viewModel.dispatch(KifuManagerAction.SetRootDirectory(it)) },
+                    onImport = { viewModel.dispatch(KifuManagerAction.ShowImportDialog(true)) },
+                    onShowSettings = { viewModel.dispatch(KifuManagerAction.ShowSettings(true)) },
+                    onToggleDir = { viewModel.dispatch(KifuManagerAction.ToggleDirectory(it)) },
+                    onSelectFile = { viewModel.dispatch(KifuManagerAction.SelectFile(it)) },
+                    onShowText = { viewModel.dispatch(KifuManagerAction.SetViewingText(it)) },
+                    modifier = Modifier.weight(ShogiDimensions.SidebarWidthRatio),
+                )
+            }
 
             KifuPreviewPanel(
                 state = state,
                 boardState = viewModel.boardState,
                 onToggleFlip = { viewModel.dispatch(KifuManagerAction.ToggleFlipped) },
+                onToggleSidebar = { viewModel.dispatch(KifuManagerAction.ToggleSidebar) },
                 onDetectSenkei = { viewModel.dispatch(KifuManagerAction.DetectAndWriteSenkei(it)) },
                 onConvertCsa = { viewModel.dispatch(KifuManagerAction.ConvertCsa(it)) },
                 onStepChange = { viewModel.dispatch(KifuManagerAction.ChangeStep(it)) },
-                modifier = Modifier.weight(ShogiDimensions.PreviewWidthRatio),
+                modifier = Modifier.weight(if (state.isSidebarVisible) ShogiDimensions.PreviewWidthRatio else 1.0f),
             )
         }
 

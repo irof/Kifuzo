@@ -17,4 +17,5 @@ data class KifuManagerUiState(
     val showSettings: Boolean = false,
     val showImportDialog: Boolean = false,
     val myNameRegex: String = "",
+    val isSidebarVisible: Boolean = true,
 )
