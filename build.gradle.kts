@@ -4,7 +4,7 @@ plugins {
     kotlin("multiplatform") version "2.3.10"
     id("org.jetbrains.compose") version "1.7.0"
     kotlin("plugin.compose") version "2.3.10"
-    id("com.diffplug.spotless") version "6.25.0"
+    id("com.diffplug.spotless") version "8.2.1"
 }
 
 group = "dev.irof.kfv"
@@ -43,10 +43,11 @@ compose.desktop {
 spotless {
     kotlin {
         target("**/*.kt")
-        ktlint("1.5.0").editorConfigOverride(
+        ktlint().editorConfigOverride(
             mapOf(
                 "ktlint_standard_no-wildcard-imports" to "disabled",
-                "ktlint_standard_function-naming" to "disabled"
+                "ktlint_standard_function-naming" to "disabled",
+                "ktlint_standard_blank-line-between-when-conditions" to "disabled"
             )
         )
         trimTrailingWhitespace()
