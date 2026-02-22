@@ -14,7 +14,7 @@ class ImportLogicTest {
         .toEpochMilli()
 
     @Test
-    fun testCalculateImportTargetSuccess() {
+    fun `インポート後のファイル名を正しく計算できること`() {
         val lines = """
             V2.2
             N+SentePlayer(1500)
@@ -29,7 +29,7 @@ class ImportLogicTest {
     }
 
     @Test
-    fun testCalculateImportTargetUnknown() {
+    fun `後手が不明な場合にunknownとしてファイル名を計算すること`() {
         val lines = """
             V2.2
             N+Sente
@@ -43,7 +43,7 @@ class ImportLogicTest {
     }
 
     @Test
-    fun testCalculateImportTargetNonCsa() {
+    fun `CSA形式でないファイルの場合はnullを返すこと`() {
         val lines = """
             これは棋譜ではありません
             ただのテキストファイルです
@@ -55,7 +55,7 @@ class ImportLogicTest {
     }
 
     @Test
-    fun testCalculateImportTargetEmpty() {
+    fun `空のファイルリストの場合はnullを返すこと`() {
         assertNull(calculateImportTarget(emptyList(), 0L))
     }
 }

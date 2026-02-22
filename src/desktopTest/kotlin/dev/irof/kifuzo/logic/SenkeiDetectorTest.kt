@@ -2,8 +2,8 @@ package dev.irof.kifuzo.logic
 
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
-import dev.irof.kifuzo.models.Square
 import dev.irof.kifuzo.models.ShogiBoardState
+import dev.irof.kifuzo.models.Square
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -16,7 +16,7 @@ class SenkeiDetectorTest {
     }
 
     @Test
-    fun testDetectShikaHisha() {
+    fun `四間飛車を判定できること`() {
         // 四間飛車にするための手順
         val result = detect(
             """
@@ -38,7 +38,7 @@ class SenkeiDetectorTest {
     }
 
     @Test
-    fun testDetectGoteNakabisha() {
+    fun `後手中飛車を判定できること`() {
         // 後手中飛車にするための手順
         val result = detect(
             """

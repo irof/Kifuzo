@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class SquareTest {
     @Test
-    fun testIndexConversion() {
+    fun `筋と段からインデックスへの変換が正しいこと`() {
         // 1筋1段 (11) -> x=8, y=0
         val s11 = Square(1, 1)
         assertEquals(8, s11.xIndex)
@@ -23,7 +23,7 @@ class SquareTest {
     }
 
     @Test
-    fun testBoardLayoutStandard() {
+    fun `通常時の盤面レイアウトが正しいこと`() {
         val isFlipped = false
         val rangeX = BoardLayout.getRangeX(isFlipped) // 0..8
         val labels = BoardLayout.getSujiLabels() // 9, 8, ..., 1
@@ -42,7 +42,7 @@ class SquareTest {
     }
 
     @Test
-    fun testBoardLayoutFlipped() {
+    fun `反転時の盤面レイアウトが正しいこと`() {
         val isFlipped = true
         val rangeX = BoardLayout.getRangeX(isFlipped) // 8 downTo 0
         val labels = BoardLayout.getSujiLabels() // 9, 8, ..., 1

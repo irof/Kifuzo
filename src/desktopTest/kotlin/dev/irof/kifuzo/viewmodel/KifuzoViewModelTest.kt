@@ -39,7 +39,7 @@ class KifuzoViewModelTest {
     }
 
     @Test
-    fun `selectFile loads kifu and updates session info`() {
+    fun `ファイルを選択すると棋譜が読み込まれセッション情報が更新されること`() {
         val path = java.nio.file.Paths.get("test.kifu")
         stubRepository.parseAction = { state ->
             state.updateSession(
@@ -58,7 +58,7 @@ class KifuzoViewModelTest {
     }
 
     @Test
-    fun `step navigation updates current step correctly`() {
+    fun `手数移動のアクションで現在のステップが正しく更新されること`() {
         // 3手ある棋譜をセット
         viewModel.boardState.updateSession(
             KifuSession(
@@ -81,7 +81,7 @@ class KifuzoViewModelTest {
     }
 
     @Test
-    fun `settings visibility can be toggled`() {
+    fun `設定ダイアログの表示状態を切り替えられること`() {
         assertFalse(viewModel.uiState.showSettings)
 
         viewModel.dispatch(KifuzoAction.ShowSettings(true))
@@ -92,14 +92,14 @@ class KifuzoViewModelTest {
     }
 
     @Test
-    fun `saveSettings updates regex and hides dialog`() {
+    fun `設定を保存すると正規表現が更新されダイアログが閉じること`() {
         viewModel.dispatch(KifuzoAction.SaveSettings("MyName"))
         assertEquals("MyName", viewModel.uiState.myNameRegex)
         assertFalse(viewModel.uiState.showSettings)
     }
 
     @Test
-    fun `autoFlip flips board based on myNameRegex`() {
+    fun `設定された自分の名前によって盤面が自動的に反転されること`() {
         // 自分の名前を "irof" に設定
         viewModel.dispatch(KifuzoAction.SaveSettings("irof"))
 

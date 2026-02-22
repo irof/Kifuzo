@@ -24,7 +24,7 @@ class KifuIOTest {
     }
 
     @Test
-    fun testReadTextWithUtf8() {
+    fun `UTF8エンコーディングのテキストを読み込めること`() {
         val text = "あいうえお"
         tempFile.writeBytes(text.toByteArray(Charsets.UTF_8))
 
@@ -33,7 +33,7 @@ class KifuIOTest {
     }
 
     @Test
-    fun testReadTextWithShiftJis() {
+    fun `ShiftJISエンコーディングのテキストを読み込めること`() {
         val text = "あいうえお"
         val sjis = Charset.forName("Shift_JIS")
         tempFile.writeBytes(text.toByteArray(sjis))
@@ -43,7 +43,7 @@ class KifuIOTest {
     }
 
     @Test
-    fun testReadTextWithAscii() {
+    fun `ASCIIエンコーディングのテキストを読み込めること`() {
         val text = "abcde12345"
         tempFile.writeBytes(text.toByteArray(Charsets.US_ASCII))
 

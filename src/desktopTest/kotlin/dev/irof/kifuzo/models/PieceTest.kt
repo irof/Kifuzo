@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 class PieceTest {
 
     @Test
-    fun testFindPieceBySymbol() {
+    fun `文字列から駒を検索できること`() {
         assertEquals(Piece.FU, Piece.findPieceBySymbol("歩"))
         assertEquals(Piece.OU, Piece.findPieceBySymbol("玉"))
         assertEquals(Piece.OU, Piece.findPieceBySymbol("王"))
@@ -18,7 +18,7 @@ class PieceTest {
     }
 
     @Test
-    fun testToBase() {
+    fun `成り駒を元の駒に変換できること`() {
         assertEquals(Piece.FU, Piece.TO.toBase())
         assertEquals(Piece.KA, Piece.UM.toBase())
         assertEquals(Piece.HI, Piece.RY.toBase())
@@ -26,7 +26,7 @@ class PieceTest {
     }
 
     @Test
-    fun testIsPromoted() {
+    fun `成っているかどうかを判定できること`() {
         assertTrue(Piece.TO.isPromoted())
         assertTrue(Piece.UM.isPromoted())
         assertFalse(Piece.FU.isPromoted())
@@ -34,7 +34,7 @@ class PieceTest {
     }
 
     @Test
-    fun testParseMochigoma() {
+    fun `持駒文字列をパースできること`() {
         // 空、なし
         assertTrue(Piece.parseMochigoma("").isEmpty())
         assertTrue(Piece.parseMochigoma("なし").isEmpty())
