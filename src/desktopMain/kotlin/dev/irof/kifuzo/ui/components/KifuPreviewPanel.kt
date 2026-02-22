@@ -124,19 +124,79 @@ fun KifuPreviewPanel(
         }
 
         if (boardState.session.history.isNotEmpty()) {
-            Spacer(Modifier.height(8.dp))
-            ShogiBoardView(boardState, isFlipped = state.isFlipped)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
 
-            KifuOperationBar(
-                currentStep = boardState.currentStep,
-                maxStep = boardState.session.maxStep,
-                history = boardState.session.history,
-                isStandardStart = boardState.session.isStandardStart,
-                firstContactStep = boardState.session.firstContactStep,
-                isFlipped = state.isFlipped,
-                onStepChange = onStepChange,
-            )
+            // 盤面領域と指し手一覧領域を横に並べる
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                // 左側: 盤面、スライダー、評価値グラフ、局面が大きく動いた手
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    ShogiBoardView(boardState, isFlipped = state.isFlipped)
+                    Spacer(Modifier.height(16.dp))
+
+                    KifuOperationBar(
+                        currentStep = boardState.currentStep,
+                        maxStep = boardState.session.maxStep,
+                        history = boardState.session.history,
+                        isStandardStart = boardState.session.isStandardStart,
+                        firstContactStep = boardState.session.firstContactStep,
+                        isFlipped = state.isFlipped,
+                        onStepChange = onStepChange,
+                    )
+                }
+
+                // 右側: 指し手一覧
+                MoveList(
+                    history = boardState.session.history,
+                    currentStep = boardState.currentStep,
+                    onStepChange = onStepChange,
+                    modifier = Modifier.width(280.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MoveList(
+    history: List<BoardSnapshot>,
+    currentStep: Int,
+    onStepChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .background(Color.White, MaterialTheme.shapes.medium)
+            .border(1.dp, Color.LightGray, MaterialTheme.shapes.medium)
+            .padding(vertical = 4.dp),
+    ) {
+        Text(
+            AppStrings.MOVE_LIST,
+            modifier = Modifier.padding(8.dp),
+            style = MaterialTheme.typography.subtitle2,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(4.dp))
+
+        // 0手目（開始局面）
+        MoveRow(0, AppStrings.START_POSITION, null, null, currentStep == 0, onStepChange)
+
+        for (i in 1 until history.size) {
+            val board = history[i]
+            val prevEval = history[i - 1].evaluation ?: 0
+            val curEval = board.evaluation
+            val diff = if (curEval != null) curEval - prevEval else null
+
+            val colorSymbol = if (i % 2 != 0) "▲" else "△"
+            // "1 ７六歩(77)" -> "７六歩"
+            val moveText = board.lastMoveText.trim().split(Regex("\\s+")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
+
+            MoveRow(i, "$colorSymbol$moveText", curEval, diff, currentStep == i, onStepChange)
         }
     }
 }
@@ -258,36 +318,6 @@ private fun KifuOperationBar(
                         }
                     }
                 }
-            }
-        }
-
-        // --- 全指し手一覧 ---
-        Spacer(Modifier.height(16.dp))
-        Text(AppStrings.MOVE_LIST, style = MaterialTheme.typography.subtitle2, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
-
-        // 全体の Column が verticalScroll されているので、ここは単純な Column で出す
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White, MaterialTheme.shapes.medium)
-                .border(1.dp, Color.LightGray, MaterialTheme.shapes.medium)
-                .padding(vertical = 4.dp),
-        ) {
-            // 0手目（開始局面）
-            MoveRow(0, AppStrings.START_POSITION, null, null, currentStep == 0, onStepChange)
-
-            for (i in 1 until history.size) {
-                val board = history[i]
-                val prevEval = history[i - 1].evaluation ?: 0
-                val curEval = board.evaluation
-                val diff = if (curEval != null) curEval - prevEval else null
-
-                val colorSymbol = if (i % 2 != 0) "▲" else "△"
-                // "1 ７六歩(77)" -> "７六歩"
-                val moveText = board.lastMoveText.trim().split(Regex("\\s+")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
-
-                MoveRow(i, "$colorSymbol$moveText", curEval, diff, currentStep == i, onStepChange)
             }
         }
     }
