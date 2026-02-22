@@ -70,7 +70,7 @@ The project uses **Gradle** as the build tool.
     - `ui/`: Compose UI components, themes, and dialogs.
     - `viewmodel/`: State management using the ViewModel pattern (UI State & Actions).
     - `utils/`: Common utilities (Strings, Clipboard).
-- `src/desktopTest/kotlin/dev/irof/kfv/`: Unit tests for logic and models.
+- `src/desktopTest/kotlin/dev/irof/kifuzo/`: Unit tests for logic and models.
 - `build.gradle.kts`: Project dependencies and Compose Multiplatform configuration.
 - `gradle.properties`: Build environment settings.
 
