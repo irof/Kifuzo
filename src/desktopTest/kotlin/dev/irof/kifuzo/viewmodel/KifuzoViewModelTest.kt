@@ -30,6 +30,7 @@ class KifuzoViewModelTest {
 
         override fun convertCsa(path: Path): Path = path
         override fun updateSenkei(path: Path, senkei: String) {}
+        override fun renameKifuFile(path: Path, template: String): Path? = path
         override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = 0
     }
 
@@ -93,7 +94,7 @@ class KifuzoViewModelTest {
 
     @Test
     fun 設定を保存すると正規表現が更新されダイアログが閉じること() {
-        viewModel.dispatch(KifuzoAction.SaveSettings("MyName"))
+        viewModel.dispatch(KifuzoAction.SaveSettings("MyName", "{Sente}"))
         assertEquals("MyName", viewModel.uiState.myNameRegex)
         assertFalse(viewModel.uiState.showSettings)
     }
@@ -101,7 +102,7 @@ class KifuzoViewModelTest {
     @Test
     fun 設定された自分の名前によって盤面が自動的に反転されること() {
         // 自分の名前を "irof" に設定
-        viewModel.dispatch(KifuzoAction.SaveSettings("irof"))
+        viewModel.dispatch(KifuzoAction.SaveSettings("irof", "{Sente}"))
 
         // 後手が "irof" の棋譜を読み込む
         val path = Paths.get("test.kifu")

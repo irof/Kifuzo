@@ -28,14 +28,16 @@ fun scanKifuInfo(lines: List<String>): KifuInfo {
     var sente = ""
     var gote = ""
     var senkei = ""
+    var startTime = ""
     for (line in lines) {
         val trimmed = line.trim()
         if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) sente = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("後手：")) gote = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("戦型：")) senkei = trimmed.substringAfter("：").trim()
+        if (trimmed.startsWith("開始日時：")) startTime = trimmed.substringAfter("：").trim()
         if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) break
     }
-    return KifuInfo(java.nio.file.Paths.get(""), sente, gote, senkei)
+    return KifuInfo(java.nio.file.Paths.get(""), sente, gote, senkei, startTime)
 }
 
 fun parseKifu(path: Path, state: ShogiBoardState) {

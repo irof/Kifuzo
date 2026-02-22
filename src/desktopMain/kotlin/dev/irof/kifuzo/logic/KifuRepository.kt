@@ -16,6 +16,7 @@ interface KifuRepository {
     fun parse(path: Path, state: ShogiBoardState)
     fun convertCsa(path: Path): Path
     fun updateSenkei(path: Path, senkei: String)
+    fun renameKifuFile(path: Path, template: String): Path?
     fun importQuestFiles(sourceDir: Path, targetDir: Path): Int
 }
 
@@ -41,6 +42,32 @@ class KifuRepositoryImpl : KifuRepository {
 
     override fun updateSenkei(path: Path, senkei: String) {
         updateKifuSenkei(path, senkei)
+    }
+
+    override fun renameKifuFile(path: Path, template: String): Path? {
+        val info = scanKifuInfo(path)
+        if (info.isError) return null
+
+        // "2026/02/21 12:00:00" -> "20260221"
+        val yyyymmdd = info.startTime.replace("/", "").substringBefore(" ").take(8)
+            .ifEmpty { "00000000" }
+
+        val newName = template
+            .replace("{YYYYMMDD}", yyyymmdd)
+            .replace("{Sente}", info.senteName.ifEmpty { "unknown" })
+            .replace("{Gote}", info.goteName.ifEmpty { "unknown" })
+            .replace("{Senkei}", info.senkei.ifEmpty { "unknown" })
+            .let { it + "." + path.extension }
+
+        val targetPath = path.parent?.resolve(newName) ?: return null
+        if (path == targetPath) return path
+
+        return try {
+            java.nio.file.Files.move(path, targetPath)
+            targetPath
+        } catch (e: Exception) {
+            null
+        }
     }
 
     override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = importShogiQuestFiles(sourceDir, targetDir)

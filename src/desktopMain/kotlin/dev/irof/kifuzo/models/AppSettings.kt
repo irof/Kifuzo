@@ -67,6 +67,14 @@ object AppSettings {
             prefs.flush()
         }
 
+    private const val KEY_FILENAME_TEMPLATE = "kifu_filename_template"
+    var filenameTemplate: String
+        get() = prefs.get(KEY_FILENAME_TEMPLATE, "{YYYYMMDD}-{Sente}-{Gote}")
+        set(value) {
+            prefs.put(KEY_FILENAME_TEMPLATE, value)
+            prefs.flush()
+        }
+
     fun getAllSettings(): Map<String, String> {
         val map = mutableMapOf<String, String>()
         prefs.keys().forEach { key -> map[key] = prefs.get(key, "") }

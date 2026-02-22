@@ -41,10 +41,12 @@ import dev.irof.kifuzo.utils.AppStrings
 @Composable
 fun SettingsDialog(
     initialRegex: String,
+    initialTemplate: String,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit,
+    onSave: (String, String) -> Unit,
 ) {
     var tempRegex by remember { mutableStateOf(initialRegex) }
+    var tempTemplate by remember { mutableStateOf(initialTemplate) }
     var rawSettings by remember { mutableStateOf(AppSettings.getAllSettings()) }
 
     AlertDialog(
@@ -62,6 +64,18 @@ fun SettingsDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Text(AppStrings.AUTO_FLIP_HINT, fontSize = 10.sp, color = Color.Gray)
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(AppStrings.FILENAME_TEMPLATE_LABEL, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                TextField(
+                    value = tempTemplate,
+                    onValueChange = { tempTemplate = it },
+                    placeholder = { Text("例: {YYYYMMDD}-{Sente}-{Gote}") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(AppStrings.FILENAME_TEMPLATE_HINT, fontSize = 10.sp, color = Color.Gray)
 
                 Spacer(Modifier.height(24.dp))
                 Divider()
@@ -102,7 +116,7 @@ fun SettingsDialog(
             Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onDismiss) { Text(AppStrings.CLOSE) }
                 Spacer(Modifier.width(8.dp))
-                Button(onClick = { onSave(tempRegex) }) { Text(AppStrings.SAVE_NAME_SETTING) }
+                Button(onClick = { onSave(tempRegex, tempTemplate) }) { Text(AppStrings.SAVE_SETTINGS) }
             }
         },
     )

@@ -167,6 +167,7 @@ fun KifuzoApp() {
                 onToggleFlip = { viewModel.dispatch(KifuzoAction.ToggleFlipped) },
                 onDetectSenkei = { viewModel.dispatch(KifuzoAction.DetectAndWriteSenkei(it)) },
                 onConvertCsa = { viewModel.dispatch(KifuzoAction.ConvertCsa(it)) },
+                onRename = { viewModel.dispatch(KifuzoAction.RenameFile(it)) },
                 onStepChange = { viewModel.dispatch(KifuzoAction.ChangeStep(it)) },
                 modifier = Modifier.weight(1.0f),
             )
@@ -214,8 +215,9 @@ fun KifuzoApp() {
         if (state.showSettings) {
             SettingsDialog(
                 initialRegex = state.myNameRegex,
+                initialTemplate = state.filenameTemplate,
                 onDismiss = { viewModel.dispatch(KifuzoAction.ShowSettings(false)) },
-                onSave = { viewModel.dispatch(KifuzoAction.SaveSettings(it)) },
+                onSave = { regex, template -> viewModel.dispatch(KifuzoAction.SaveSettings(regex, template)) },
             )
         }
 

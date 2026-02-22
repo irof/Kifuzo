@@ -44,6 +44,7 @@ class KifuzoViewModel(
     var uiState by mutableStateOf(
         KifuzoUiState(
             myNameRegex = AppSettings.myNameRegex,
+            filenameTemplate = AppSettings.filenameTemplate,
             sidebarWidth = AppSettings.sidebarWidth,
         ),
     )
@@ -56,13 +57,14 @@ class KifuzoViewModel(
             is KifuzoAction.SetRootDirectory -> setRootDirectory(action.path)
             is KifuzoAction.ToggleDirectory -> toggleDirectory(action.node)
             is KifuzoAction.SelectFile -> selectFile(action.path)
-            is KifuzoAction.SaveSettings -> saveSettings(action.regex)
+            is KifuzoAction.SaveSettings -> saveSettings(action.regex, action.template)
             is KifuzoAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
             is KifuzoAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
             is KifuzoAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
             is KifuzoAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
             is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, infoMessage = null) }
             is KifuzoAction.ImportFiles -> importFiles(action.sourceDir)
+            is KifuzoAction.RenameFile -> renameFile(action.path)
             is KifuzoAction.ConvertCsa -> convertCsa(action.path)
             is KifuzoAction.ConfirmOverwrite -> confirmOverwrite()
             is KifuzoAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
@@ -205,9 +207,10 @@ class KifuzoViewModel(
         }
     }
 
-    fun saveSettings(newRegex: String) {
+    fun saveSettings(newRegex: String, newTemplate: String) {
         AppSettings.myNameRegex = newRegex
-        updateState { it.copy(myNameRegex = newRegex, showSettings = false) }
+        AppSettings.filenameTemplate = newTemplate
+        updateState { it.copy(myNameRegex = newRegex, filenameTemplate = newTemplate, showSettings = false) }
         updateAutoFlip()
     }
 
@@ -221,6 +224,16 @@ class KifuzoViewModel(
             refreshFiles()
         } else {
             updateState { it.copy(infoMessage = "指定されたフォルダに該当する棋譜が見つかりませんでした。") }
+        }
+    }
+
+    private fun renameFile(path: Path) {
+        val newPath = repository.renameKifuFile(path, uiState.filenameTemplate)
+        if (newPath != null) {
+            refreshFiles()
+            selectFile(newPath)
+        } else {
+            updateState { it.copy(errorMessage = "ファイルのリネームに失敗しました。棋譜内に必要な情報が不足しているか、同名のファイルが既に存在する可能性があります。") }
         }
     }
 

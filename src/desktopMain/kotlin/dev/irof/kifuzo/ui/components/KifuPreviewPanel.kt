@@ -57,6 +57,7 @@ fun KifuPreviewPanel(
     onToggleFlip: () -> Unit,
     onDetectSenkei: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
+    onRename: (Path) -> Unit,
     onStepChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -107,6 +108,11 @@ fun KifuPreviewPanel(
                                 Button(onClick = { onDetectSenkei(selected) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Info, contentColor = Color.White), modifier = Modifier.height(32.dp)) {
                                     Text(AppStrings.DETECT_SENKEI, fontSize = 10.sp)
                                 }
+                            }
+
+                            Spacer(Modifier.width(8.dp))
+                            Button(onClick = { onRename(selected) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Primary, contentColor = Color.White), modifier = Modifier.height(32.dp)) {
+                                Text(AppStrings.RENAME, fontSize = 10.sp)
                             }
                         }
                     }

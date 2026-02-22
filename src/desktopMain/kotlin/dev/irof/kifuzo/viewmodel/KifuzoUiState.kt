@@ -27,6 +27,7 @@ data class KifuzoUiState(
     val showSettings: Boolean = false,
     val showImportDialog: Boolean = false,
     val myNameRegex: String = "",
+    val filenameTemplate: String = "{YYYYMMDD}-{Sente}-{Gote}",
     val isSidebarVisible: Boolean = true,
     val sidebarWidth: Float = 250f,
     val viewMode: FileViewMode = FileViewMode.FLAT,
