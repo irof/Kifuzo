@@ -7,6 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class KifuParserTest {
@@ -313,5 +314,48 @@ class KifuParserTest {
         assertEquals(8, step0.goteMochigoma.size)
         assertEquals(4, step0.goteMochigoma.count { it == Piece.KI })
         assertEquals(4, step0.goteMochigoma.count { it == Piece.GI })
+    }
+
+    @Test
+    fun testParseKifuWithSpecialNotations() {
+        val lines = listOf(
+            "1 ７六歩(77)",
+            "2 ３四歩(33)",
+            "3 同　歩(76)",
+            "4 ５五角打",
+            "5 ８八角成(55)",
+            "6 同　銀(79)",
+        )
+        val state = ShogiBoardState()
+        parseKifu(lines, state)
+
+        val history = state.session.history
+        // 3手目: 「同　歩」が直前の 3四(x=6, y=3) を指しているか
+        val step3 = history[3]
+        assertEquals(Piece.FU, step3.cells[3][6]?.first, "3四(xIndex=6, yIndex=3)に歩が移動")
+
+        // 4手目: 「打」のパース
+        val step4 = history[4]
+        assertEquals(Piece.KA, step4.cells[4][4]?.first, "5五(xIndex=4, yIndex=4)に角が打たれている")
+
+        // 6手目: 「同　銀」が直前の 8八(x=1, y=7) を指しているか
+        val step6 = history[6]
+        assertEquals(Piece.GI, step6.cells[7][1]?.first, "8八(xIndex=1, yIndex=7)に銀が移動")
+    }
+
+    @Test
+    fun testParseKifuGameResults() {
+        // 様々な終局条件
+        val results = listOf("投了", "持将棋", "千日手", "切れ負け", "反則負け")
+        results.forEach { result ->
+            val lines = listOf(
+                "1 ７六歩(77)",
+                "2 $result",
+            )
+            val state = ShogiBoardState()
+            parseKifu(lines, state)
+            assertEquals(2, state.session.maxStep, "$result が正しく終局手数としてカウントされること")
+            assertTrue(state.session.history[2].lastMoveText.contains(result))
+        }
     }
 }

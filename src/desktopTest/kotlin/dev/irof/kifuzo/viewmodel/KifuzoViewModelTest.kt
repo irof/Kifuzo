@@ -2,10 +2,12 @@ package dev.irof.kifuzo.viewmodel
 
 import dev.irof.kifuzo.logic.KifuRepository
 import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.KifuSession
 import dev.irof.kifuzo.models.ShogiBoardState
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -91,5 +93,43 @@ class KifuzoViewModelTest {
         viewModel.dispatch(KifuzoAction.SaveSettings("MyName"))
         assertEquals("MyName", viewModel.uiState.myNameRegex)
         assertFalse(viewModel.uiState.showSettings)
+    }
+
+    @Test
+    fun testAutoFlip() {
+        // 自分の名前を "irof" に設定
+        viewModel.dispatch(KifuzoAction.SaveSettings("irof"))
+
+        // 後手が "irof" の棋譜を読み込む
+        val path = Paths.get("test.kifu")
+        parseResultAction = { state ->
+            state.updateSession(
+                KifuSession(
+                    history = listOf(BoardSnapshot(List(9) { List(9) { null } })),
+                    senteName = "相手",
+                    goteName = "irof",
+                ),
+            )
+        }
+
+        viewModel.dispatch(KifuzoAction.SelectFile(path))
+
+        // 後手が自分の名前なので、反転されているはず
+        assertTrue(viewModel.uiState.isFlipped)
+
+        // 先手が "irof" の棋譜を読み込む
+        parseResultAction = { state ->
+            state.updateSession(
+                KifuSession(
+                    history = listOf(BoardSnapshot(List(9) { List(9) { null } })),
+                    senteName = "irof",
+                    goteName = "相手",
+                ),
+            )
+        }
+        viewModel.dispatch(KifuzoAction.SelectFile(path))
+
+        // 先手が自分なので、反転されていないはず
+        assertFalse(viewModel.uiState.isFlipped)
     }
 }

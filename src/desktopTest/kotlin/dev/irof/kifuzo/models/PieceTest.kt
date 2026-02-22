@@ -52,5 +52,10 @@ class PieceTest {
         assertEquals(2, result.count { it == Piece.HI })
         assertEquals(1, result.count { it == Piece.KA })
         assertEquals(3, result.count { it == Piece.GI })
+
+        // 10枚以上（数値）
+        val manyFu = Piece.parseMochigoma("歩18")
+        assertEquals(18, manyFu.size)
+        assertTrue(manyFu.all { it == Piece.FU })
     }
 }
