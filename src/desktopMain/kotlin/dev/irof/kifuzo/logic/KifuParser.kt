@@ -7,9 +7,12 @@ import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.models.Square
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.text.Charsets
+
+private val logger = KotlinLogging.logger {}
 
 fun scanKifuInfo(path: Path): KifuInfo = try {
     val lines = readLinesWithEncoding(path)
@@ -17,7 +20,7 @@ fun scanKifuInfo(path: Path): KifuInfo = try {
 } catch (e: Exception) {
     // スキャン時のエラーは、ファイルリスト表示を止めないようログに記録し、
     // UI上でエラー状態であることがわかるように KifuInfo を構築して返します。
-    System.err.println("Failed to scan header for ${path.name}: ${e.message}")
+    logger.error(e) { "Failed to scan header for ${path.name}" }
     KifuInfo(path, isError = true)
 }
 

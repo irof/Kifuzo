@@ -1,9 +1,12 @@
 package dev.irof.kifuzo.logic
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.charset.Charset
 import java.nio.file.Path
 import kotlin.io.path.readBytes
 import kotlin.text.Charsets
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * 棋譜ファイルからテキストを読み込みます。
@@ -15,7 +18,7 @@ fun readTextWithEncoding(path: Path): String {
         val text = bytes.toString(Charsets.UTF_8)
         if (!text.contains("\uFFFD")) return text
     } catch (e: Exception) {
-        System.err.println("UTF-8 decoding failed for $path, trying Shift_JIS...")
+        logger.debug { "UTF-8 decoding failed for $path, trying Shift_JIS..." }
     }
     return bytes.toString(Charset.forName("Shift_JIS"))
 }

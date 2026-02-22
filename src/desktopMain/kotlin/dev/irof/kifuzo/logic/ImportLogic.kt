@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.logic
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
 import java.time.Instant
 import java.time.ZoneId
@@ -12,6 +13,8 @@ import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * 指定されたフォルダから特定のテキストファイルを検出し、
@@ -35,7 +38,7 @@ fun importShogiQuestFiles(sourceDir: Path, targetDir: Path): Int {
             file.deleteExisting()
             count++
         } catch (e: Exception) {
-            println("Failed to import ${file.name}: ${e.message}")
+            logger.warn(e) { "Failed to import ${file.name}" }
         }
     }
     return count
