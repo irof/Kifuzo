@@ -319,17 +319,19 @@ private fun MoveRow(
             Text(
                 text = "$evalSign$evaluation",
                 style = MaterialTheme.typography.caption,
-                color = if (evaluation > 0) ShogiColors.EvalPositive.copy(alpha = 1f) else ShogiColors.EvalNegative.copy(alpha = 1f),
+                fontWeight = FontWeight.Bold,
+                color = if (evaluation > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative,
                 modifier = Modifier.width(50.dp),
                 textAlign = androidx.compose.ui.text.style.TextAlign.End,
             )
 
             if (diff != null && diff != 0) {
                 val diffSign = if (diff > 0) "+" else ""
-                val diffColor = if (diff > 0) ShogiColors.EvalPositive.copy(alpha = 1f) else ShogiColors.EvalNegative.copy(alpha = 1f)
+                val diffColor = if (diff > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
                 Text(
                     text = " ($diffSign$diff)",
                     style = MaterialTheme.typography.caption.copy(fontSize = 9.sp),
+                    fontWeight = FontWeight.Bold,
                     color = diffColor,
                     modifier = Modifier.width(50.dp),
                     textAlign = androidx.compose.ui.text.style.TextAlign.End,

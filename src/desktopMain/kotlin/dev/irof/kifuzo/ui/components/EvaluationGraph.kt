@@ -98,15 +98,32 @@ fun EvaluationGraph(
         val displayMax = threshold + (maxEval - threshold) * compression
 
         // 領域の色分け (反転時は色も入れ替える)
+        val posColor = if (isFlipped) ShogiColors.EvalNegative else ShogiColors.EvalPositive
+        val negColor = if (isFlipped) ShogiColors.EvalPositive else ShogiColors.EvalNegative
+
+        // 0-2000 領域
+        val thresholdY = centerY * (threshold / displayMax)
         drawRect(
-            color = if (isFlipped) ShogiColors.EvalNegative else ShogiColors.EvalPositive,
-            topLeft = Offset(0f, 0f),
-            size = Size(width, centerY),
+            color = posColor.copy(alpha = 0.15f),
+            topLeft = Offset(0f, centerY - thresholdY),
+            size = Size(width, thresholdY),
         )
         drawRect(
-            color = if (isFlipped) ShogiColors.EvalPositive else ShogiColors.EvalNegative,
+            color = negColor.copy(alpha = 0.15f),
             topLeft = Offset(0f, centerY),
-            size = Size(width, height - centerY),
+            size = Size(width, thresholdY),
+        )
+
+        // 2000以上 領域 (より濃く)
+        drawRect(
+            color = posColor.copy(alpha = 0.35f),
+            topLeft = Offset(0f, 0f),
+            size = Size(width, centerY - thresholdY),
+        )
+        drawRect(
+            color = negColor.copy(alpha = 0.35f),
+            topLeft = Offset(0f, centerY + thresholdY),
+            size = Size(width, height - (centerY + thresholdY)),
         )
 
         // 横線（1000ごと）
@@ -155,7 +172,7 @@ fun EvaluationGraph(
                         color = ShogiColors.EvalLine,
                         start = lastPoint,
                         end = currentPoint,
-                        strokeWidth = 2f,
+                        strokeWidth = 3f,
                     )
                 }
                 lastPoint = currentPoint
