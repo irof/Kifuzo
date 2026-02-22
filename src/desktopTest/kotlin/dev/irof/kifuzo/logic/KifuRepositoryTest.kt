@@ -12,7 +12,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@Suppress("FunctionName")
 class KifuRepositoryTest {
 
     private var tempDir = createTempDirectory()

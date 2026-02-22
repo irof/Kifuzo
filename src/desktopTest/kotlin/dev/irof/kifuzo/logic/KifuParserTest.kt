@@ -13,7 +13,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-@Suppress("FunctionName")
 class KifuParserTest {
 
     private fun parse(kifu: String): KifuSession {

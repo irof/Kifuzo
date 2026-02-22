@@ -3,7 +3,6 @@ package dev.irof.kifuzo.logic
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-@Suppress("FunctionName")
 class CsaConverterTest {
 
     @Test

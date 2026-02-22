@@ -3,7 +3,6 @@ package dev.irof.kifuzo.models
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-@Suppress("FunctionName")
 class SquareTest {
     @Test
     fun 筋と段からインデックスへの変換が正しいこと() {

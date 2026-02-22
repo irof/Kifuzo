@@ -7,7 +7,6 @@ import dev.irof.kifuzo.models.Square
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-@Suppress("FunctionName")
 class SenkeiDetectorTest {
 
     private fun detect(kifu: String): String {

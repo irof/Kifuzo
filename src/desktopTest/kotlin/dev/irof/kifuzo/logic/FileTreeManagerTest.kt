@@ -10,7 +10,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-@Suppress("FunctionName")
 class FileTreeManagerTest {
 
     private val mockRepository = object : KifuRepository {

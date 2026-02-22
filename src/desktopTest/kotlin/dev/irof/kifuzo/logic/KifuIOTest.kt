@@ -9,7 +9,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-@Suppress("FunctionName")
 class KifuIOTest {
 
     private var tempFile = createTempFile()

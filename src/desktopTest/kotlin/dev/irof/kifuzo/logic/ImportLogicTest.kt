@@ -6,7 +6,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-@Suppress("FunctionName")
 class ImportLogicTest {
 
     private fun getMillis(year: Int, month: Int, day: Int): Long = LocalDateTime.of(year, month, day, 12, 0)

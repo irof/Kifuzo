@@ -89,4 +89,4 @@ The project uses **Gradle** as the build tool.
 - **Parsing:** Primarily uses Regex and line-by-line processing for game records.
 - **Encoding:** Standardizes on **UTF-8** for all file operations.
 - **Naming:** Uses standard Kotlin/JVM naming conventions.
-- **Testing:** Test methods are named in Japanese without backticks for better readability. Use `@Suppress("FunctionName")` at the class level to satisfy linter requirements. Multi-line strings (`"""..."""`) are preferred for defining game records and board states within tests.
+- **Testing:** Test methods are named in Japanese without backticks for better readability. Function naming rules are globally disabled for `@Test` annotated methods in `build.gradle.kts`. Multi-line strings (`"""..."""`) are preferred for defining game records and board states within tests.

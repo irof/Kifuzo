@@ -14,7 +14,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-@Suppress("FunctionName")
 class KifuzoViewModelTest {
 
     private lateinit var viewModel: KifuzoViewModel
