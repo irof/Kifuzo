@@ -1,18 +1,10 @@
 package dev.irof.kifuzo.viewmodel
 
+import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileTreeNode
+import dev.irof.kifuzo.models.FileViewMode
 import dev.irof.kifuzo.models.KifuInfo
 import java.nio.file.Path
-
-enum class FileViewMode {
-    HIERARCHY,
-    FLAT,
-}
-
-enum class FileFilter {
-    KIFU_ONLY,
-    RECENT,
-}
 
 data class KifuzoUiState(
     val treeNodes: List<FileTreeNode> = emptyList(),

@@ -1,6 +1,8 @@
 package dev.irof.kifuzo.viewmodel
 
+import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileTreeNode
+import dev.irof.kifuzo.models.FileViewMode
 import java.nio.file.Path
 
 sealed class KifuzoAction {

@@ -1,7 +1,7 @@
 package dev.irof.kifuzo.logic
 
+import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileTreeNode
-import dev.irof.kifuzo.viewmodel.FileFilter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes

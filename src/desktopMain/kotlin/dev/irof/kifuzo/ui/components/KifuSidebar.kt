@@ -55,8 +55,8 @@ fun KifuSidebar(
     onToggleDir: (dev.irof.kifuzo.models.FileTreeNode) -> Unit,
     onSelectFile: (Path) -> Unit,
     onShowText: (String) -> Unit,
-    onSetViewMode: (dev.irof.kifuzo.viewmodel.FileViewMode) -> Unit,
-    onToggleFileFilter: (dev.irof.kifuzo.viewmodel.FileFilter) -> Unit,
+    onSetViewMode: (dev.irof.kifuzo.models.FileViewMode) -> Unit,
+    onToggleFileFilter: (dev.irof.kifuzo.models.FileFilter) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxHeight().padding(ShogiDimensions.PaddingLarge)) {
@@ -68,8 +68,8 @@ fun KifuSidebar(
             // --- 表示モード切替 ---
             Row(modifier = Modifier.border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(2.dp)) {
                 val mode = state.viewMode
-                ViewModeButton(AppStrings.HIERARCHY, mode == dev.irof.kifuzo.viewmodel.FileViewMode.HIERARCHY) { onSetViewMode(dev.irof.kifuzo.viewmodel.FileViewMode.HIERARCHY) }
-                ViewModeButton(AppStrings.FLAT, mode == dev.irof.kifuzo.viewmodel.FileViewMode.FLAT) { onSetViewMode(dev.irof.kifuzo.viewmodel.FileViewMode.FLAT) }
+                ViewModeButton(AppStrings.HIERARCHY, mode == dev.irof.kifuzo.models.FileViewMode.HIERARCHY) { onSetViewMode(dev.irof.kifuzo.models.FileViewMode.HIERARCHY) }
+                ViewModeButton(AppStrings.FLAT, mode == dev.irof.kifuzo.models.FileViewMode.FLAT) { onSetViewMode(dev.irof.kifuzo.models.FileViewMode.FLAT) }
             }
         }
 
@@ -78,9 +78,9 @@ fun KifuSidebar(
         // --- フィルタ選択 ---
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             val currentFilters = state.fileFilters
-            FilterChip(AppStrings.FILTER_KIFU, currentFilters.contains(dev.irof.kifuzo.viewmodel.FileFilter.KIFU_ONLY)) { onToggleFileFilter(dev.irof.kifuzo.viewmodel.FileFilter.KIFU_ONLY) }
+            FilterChip(AppStrings.FILTER_KIFU, currentFilters.contains(dev.irof.kifuzo.models.FileFilter.KIFU_ONLY)) { onToggleFileFilter(dev.irof.kifuzo.models.FileFilter.KIFU_ONLY) }
             Spacer(Modifier.width(4.dp))
-            FilterChip(AppStrings.FILTER_RECENT, currentFilters.contains(dev.irof.kifuzo.viewmodel.FileFilter.RECENT)) { onToggleFileFilter(dev.irof.kifuzo.viewmodel.FileFilter.RECENT) }
+            FilterChip(AppStrings.FILTER_RECENT, currentFilters.contains(dev.irof.kifuzo.models.FileFilter.RECENT)) { onToggleFileFilter(dev.irof.kifuzo.models.FileFilter.RECENT) }
         }
 
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -124,7 +124,7 @@ fun KifuSidebar(
                         node = node,
                         isSelected = (node.path == state.selectedFile),
                         isError = state.kifuInfos[node.path]?.isError ?: false,
-                        showParentName = (state.viewMode == dev.irof.kifuzo.viewmodel.FileViewMode.FLAT),
+                        showParentName = (state.viewMode == dev.irof.kifuzo.models.FileViewMode.FLAT),
                         onToggle = onToggleDir,
                         onSelect = onSelectFile,
                         onShowText = { onShowText(readTextWithEncoding(it)) },

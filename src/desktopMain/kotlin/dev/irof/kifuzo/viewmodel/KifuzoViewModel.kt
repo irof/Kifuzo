@@ -9,7 +9,9 @@ import dev.irof.kifuzo.logic.KifuRepository
 import dev.irof.kifuzo.logic.KifuRepositoryImpl
 import dev.irof.kifuzo.logic.detectSenkei
 import dev.irof.kifuzo.models.AppSettings
+import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileTreeNode
+import dev.irof.kifuzo.models.FileViewMode
 import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import kotlinx.coroutines.CoroutineScope

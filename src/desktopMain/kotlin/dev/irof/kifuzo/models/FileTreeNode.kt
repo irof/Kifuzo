@@ -14,3 +14,13 @@ data class FileTreeNode(
 ) {
     val name: String get() = path.fileName?.toString() ?: "/"
 }
+
+enum class FileViewMode {
+    HIERARCHY,
+    FLAT,
+}
+
+enum class FileFilter {
+    KIFU_ONLY,
+    RECENT,
+}
