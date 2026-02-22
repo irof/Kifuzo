@@ -23,6 +23,7 @@ object AppStrings {
     const val START = "開始"
     const val END = "終局"
     const val CONTACT = "衝突"
+    const val MOVE_LIST = "指し手一覧"
     const val MY_NAME_REGEX_LABEL = "自分の名前の判定用（正規表現）:"
     const val AUTO_FLIP_HINT = "※自分が後手の場合、自動的に盤面を反転します。"
     const val RAW_PREFS_LABEL = "保存されている詳細データ (Preferences):"

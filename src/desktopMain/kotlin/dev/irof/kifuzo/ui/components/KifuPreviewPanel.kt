@@ -2,6 +2,7 @@ package dev.irof.kifuzo.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -257,6 +258,96 @@ private fun KifuOperationBar(
                         }
                     }
                 }
+            }
+        }
+
+        // --- 全指し手一覧 ---
+        Spacer(Modifier.height(16.dp))
+        Text(AppStrings.MOVE_LIST, style = MaterialTheme.typography.subtitle2, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+
+        // 全体の Column が verticalScroll されているので、ここは単純な Column で出す
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White, MaterialTheme.shapes.medium)
+                .border(1.dp, Color.LightGray, MaterialTheme.shapes.medium)
+                .padding(vertical = 4.dp),
+        ) {
+            // 0手目（開始局面）
+            MoveRow(0, AppStrings.START_POSITION, null, null, currentStep == 0, onStepChange)
+
+            for (i in 1 until history.size) {
+                val board = history[i]
+                val prevEval = history[i - 1].evaluation ?: 0
+                val curEval = board.evaluation
+                val diff = if (curEval != null) curEval - prevEval else null
+
+                val colorSymbol = if (i % 2 != 0) "▲" else "△"
+                // "1 ７六歩(77)" -> "７六歩"
+                val moveText = board.lastMoveText.trim().split(Regex("\\s+")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
+
+                MoveRow(i, "$colorSymbol$moveText", curEval, diff, currentStep == i, onStepChange)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MoveRow(
+    step: Int,
+    label: String,
+    evaluation: Int?,
+    diff: Int?,
+    isSelected: Boolean,
+    onStepChange: (Int) -> Unit,
+) {
+    val backgroundColor = if (isSelected) ShogiColors.Primary.copy(alpha = 0.15f) else Color.Transparent
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor)
+            .clickable { onStepChange(step) }
+            .padding(vertical = 4.dp, horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = if (step == 0) "" else step.toString(),
+            modifier = Modifier.width(32.dp),
+            style = MaterialTheme.typography.caption,
+            color = Color.Gray,
+        )
+
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.body2,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+        )
+
+        if (evaluation != null) {
+            val evalSign = if (evaluation > 0) "+" else ""
+            Text(
+                text = "$evalSign$evaluation",
+                style = MaterialTheme.typography.caption,
+                color = if (evaluation > 0) ShogiColors.EvalPositive.copy(alpha = 1f) else ShogiColors.EvalNegative.copy(alpha = 1f),
+                modifier = Modifier.width(50.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.End,
+            )
+
+            if (diff != null && diff != 0) {
+                val diffSign = if (diff > 0) "+" else ""
+                val diffColor = if (diff > 0) ShogiColors.EvalPositive.copy(alpha = 1f) else ShogiColors.EvalNegative.copy(alpha = 1f)
+                Text(
+                    text = " ($diffSign$diff)",
+                    style = MaterialTheme.typography.caption.copy(fontSize = 9.sp),
+                    color = diffColor,
+                    modifier = Modifier.width(50.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                )
+            } else {
+                Spacer(Modifier.width(50.dp))
             }
         }
     }
