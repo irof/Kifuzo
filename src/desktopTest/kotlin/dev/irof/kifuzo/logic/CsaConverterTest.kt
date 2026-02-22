@@ -21,7 +21,7 @@ class CsaConverterTest {
             -3122GI
             T15
             %TORYO
-        """.trimIndent().lines().filter { it.isNotBlank() }
+        """.trimIndent().lines()
 
         val kifLines = convertCsaToKifuLines(csaLines)
 
@@ -54,7 +54,7 @@ class CsaConverterTest {
             +7574FU
             -3536FU
             +7473TO
-        """.trimIndent().lines().filter { it.isNotBlank() }
+        """.trimIndent().lines()
         val kifLines = convertCsaToKifuLines(csaLines)
 
         // 7手目が「７三歩成」となっていること (「７三と」ではない)
@@ -70,7 +70,7 @@ class CsaConverterTest {
             +7473TO
             -3132GI
             +7363TO
-        """.trimIndent().lines().filter { it.isNotBlank() }
+        """.trimIndent().lines()
         val kifLines2 = convertCsaToKifuLines(csaLines2)
         assertTrue(kifLines2.any { it.contains("7 ７三歩成(74)") }, "成った瞬間は「歩成」")
         assertTrue(kifLines2.any { it.contains("9 ６三と(73)") }, "成った後の移動は「と」")
@@ -82,7 +82,7 @@ class CsaConverterTest {
             +7776FU
             -3334FU
             +8822UM
-        """.trimIndent().lines().filter { it.isNotBlank() }
+        """.trimIndent().lines()
         val kifLines = convertCsaToKifuLines(csaLines)
         // 3手目が「２二角成(88)」となっていること
         assertTrue(kifLines.any { it.contains("3 ２二角成(88)") }, "3手目が「角成」であること")
@@ -91,7 +91,7 @@ class CsaConverterTest {
             +7776FU
             -3334FU
             +8822KA+
-        """.trimIndent().lines().filter { it.isNotBlank() }
+        """.trimIndent().lines()
         val kifLines2 = convertCsaToKifuLines(csaLines2)
         assertTrue(kifLines2.any { it.contains("3 ２二角成(88)") }, "3手目が「角成」であること(KA+)")
     }
@@ -102,7 +102,7 @@ class CsaConverterTest {
             +0022KA
             -3132GI
             +2211UM
-        """.trimIndent().lines().filter { it.isNotBlank() }
+        """.trimIndent().lines()
         val kifLines = convertCsaToKifuLines(csaLines)
         // 3手目が「１一角成(22)」となっていること
         assertTrue(kifLines.any { it.contains("3 １一角成(22)") }, "打った角が成った時に「角成」と表示されること")
@@ -113,7 +113,7 @@ class CsaConverterTest {
         val csaLines = """
             +0045KA
             T5
-        """.trimIndent().lines().filter { it.isNotBlank() }
+        """.trimIndent().lines()
         val kifLines = convertCsaToKifuLines(csaLines)
         // 0045KA -> 4五角打
         assertTrue(kifLines.any { it.contains("1 ４五角打") })
