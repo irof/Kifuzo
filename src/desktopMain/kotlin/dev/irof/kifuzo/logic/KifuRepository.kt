@@ -16,6 +16,7 @@ interface KifuRepository {
     fun parse(path: Path, state: ShogiBoardState)
     fun convertCsa(path: Path): Path
     fun updateSenkei(path: Path, senkei: String)
+    fun updateResult(path: Path, result: String)
     fun renameKifuFile(path: Path, template: String): Path?
     fun importQuestFiles(sourceDir: Path, targetDir: Path): Int
 }
@@ -42,6 +43,10 @@ class KifuRepositoryImpl : KifuRepository {
 
     override fun updateSenkei(path: Path, senkei: String) {
         updateKifuSenkei(path, senkei)
+    }
+
+    override fun updateResult(path: Path, result: String) {
+        updateKifuResult(path, result)
     }
 
     override fun renameKifuFile(path: Path, template: String): Path? {

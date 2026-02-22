@@ -371,4 +371,29 @@ fun updateKifuSenkei(path: Path, senkei: String) {
     java.nio.file.Files.write(path, lines.joinToString("\n").toByteArray(Charsets.UTF_8))
 }
 
+fun updateKifuResult(path: Path, result: String) {
+    if (result.isEmpty()) return
+    val lines = readLinesWithEncoding(path).toMutableList()
+    // 最後の指し手番号を探す
+    var lastMoveNum = 0
+    for (i in lines.indices) {
+        val match = Regex("""^\s*(\d+)\s+.*""").find(lines[i])
+        if (match != null) {
+            val num = match.groupValues[1].toIntOrNull() ?: 0
+            if (num > lastMoveNum) lastMoveNum = num
+        }
+    }
+
+    val resultLine = "まで${lastMoveNum}手で$result"
+
+    // すでに終局行があるかチェック
+    val existingResultIndex = lines.indexOfFirst { it.startsWith("まで") }
+    if (existingResultIndex != -1) {
+        lines[existingResultIndex] = resultLine
+    } else {
+        lines.add(resultLine)
+    }
+    java.nio.file.Files.write(path, lines.joinToString("\n").toByteArray(Charsets.UTF_8))
+}
+
 class KifuParseException(message: String, cause: Throwable? = null) : Exception(message, cause)

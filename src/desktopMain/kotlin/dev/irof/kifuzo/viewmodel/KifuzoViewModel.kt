@@ -69,6 +69,7 @@ class KifuzoViewModel(
             is KifuzoAction.ConfirmOverwrite -> confirmOverwrite()
             is KifuzoAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
             is KifuzoAction.DetectAndWriteSenkei -> detectAndWriteSenkei(action.path)
+            is KifuzoAction.WriteGameResult -> writeGameResult(action.path, action.result)
             is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
             is KifuzoAction.SetViewMode -> {
                 updateState { it.copy(viewMode = action.mode) }
@@ -271,5 +272,12 @@ class KifuzoViewModel(
             refreshFiles()
             updateState { it.copy(infoMessage = "戦型を「$senkei」として追記しました。") }
         }
+    }
+
+    fun writeGameResult(path: Path, result: String) {
+        repository.updateResult(path, result)
+        refreshFiles()
+        selectFile(path) // 再読み込み
+        updateState { it.copy(infoMessage = "終局結果を「$result」として追記しました。") }
     }
 }

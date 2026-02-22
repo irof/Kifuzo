@@ -58,6 +58,7 @@ fun KifuPreviewPanel(
     onDetectSenkei: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
     onRename: (Path) -> Unit,
+    onWriteResult: (Path, String) -> Unit,
     onStepChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -113,6 +114,20 @@ fun KifuPreviewPanel(
                             Spacer(Modifier.width(8.dp))
                             Button(onClick = { onRename(selected) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Primary, contentColor = Color.White), modifier = Modifier.height(32.dp)) {
                                 Text(AppStrings.RENAME, fontSize = 10.sp)
+                            }
+
+                            // 終局結果ボタンの追加 (終局していない場合のみ)
+                            val lastMove = boardState.session.history.lastOrNull()?.lastMoveText ?: ""
+                            val isFinished = listOf("投了", "千日手", "持将棋", "切れ負け", "不戦敗", "反則負け", "中断").any { lastMove.contains(it) }
+                            if (!isFinished) {
+                                Spacer(Modifier.width(8.dp))
+                                OutlinedButton(onClick = { onWriteResult(selected, "投了") }, modifier = Modifier.height(32.dp)) {
+                                    Text("投了を追加", fontSize = 10.sp)
+                                }
+                                Spacer(Modifier.width(4.dp))
+                                OutlinedButton(onClick = { onWriteResult(selected, "千日手") }, modifier = Modifier.height(32.dp)) {
+                                    Text("千日手", fontSize = 10.sp)
+                                }
                             }
                         }
                     }

@@ -30,6 +30,7 @@ class KifuzoViewModelTest {
 
         override fun convertCsa(path: Path): Path = path
         override fun updateSenkei(path: Path, senkei: String) {}
+        override fun updateResult(path: Path, result: String) {}
         override fun renameKifuFile(path: Path, template: String): Path? = path
         override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = 0
     }

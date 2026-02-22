@@ -19,6 +19,7 @@ sealed class KifuzoAction {
     data object ConfirmOverwrite : KifuzoAction()
     data object HideOverwriteConfirm : KifuzoAction()
     data class DetectAndWriteSenkei(val path: Path) : KifuzoAction()
+    data class WriteGameResult(val path: Path, val result: String) : KifuzoAction()
     data object ToggleSidebar : KifuzoAction()
     data class SetViewMode(val mode: FileViewMode) : KifuzoAction()
     data class ToggleFileFilter(val filter: FileFilter) : KifuzoAction()
