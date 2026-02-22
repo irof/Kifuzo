@@ -93,6 +93,7 @@ class KifuzoViewModel(
                     it.copy(sidebarWidth = newWidth)
                 }
             }
+            is KifuzoAction.RefreshFiles -> refreshFiles()
             is KifuzoAction.SelectNextFile -> selectAdjacentFile(forward = true)
             is KifuzoAction.SelectPrevFile -> selectAdjacentFile(forward = false)
             is KifuzoAction.ChangeStep -> boardState.currentStep = action.step

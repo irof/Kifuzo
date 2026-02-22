@@ -51,6 +51,7 @@ fun KifuSidebar(
     state: KifuzoUiState,
     currentRoot: Path?,
     onSetRoot: (Path) -> Unit,
+    onRefresh: () -> Unit,
     onToggleDir: (dev.irof.kifuzo.models.FileTreeNode) -> Unit,
     onSelectFile: (Path) -> Unit,
     onShowText: (String) -> Unit,
@@ -82,25 +83,34 @@ fun KifuSidebar(
             FilterChip(AppStrings.FILTER_RECENT, currentFilters.contains(dev.irof.kifuzo.viewmodel.FileFilter.RECENT)) { onToggleFileFilter(dev.irof.kifuzo.viewmodel.FileFilter.RECENT) }
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth().clickable {
-                val chooser = JFileChooser().apply {
-                    fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                    val initialDir = currentRoot?.toFile() ?: dev.irof.kifuzo.models.AppConfig.USER_HOME_PATH.toFile()
-                    currentDirectory = initialDir
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Card(
+                modifier = Modifier.weight(1f).clickable {
+                    val chooser = JFileChooser().apply {
+                        fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                        val initialDir = currentRoot?.toFile() ?: dev.irof.kifuzo.models.AppConfig.USER_HOME_PATH.toFile()
+                        currentDirectory = initialDir
+                    }
+                    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                        onSetRoot(chooser.selectedFile.toPath())
+                    }
+                },
+                elevation = 0.dp,
+                backgroundColor = Color.White,
+                border = BorderStroke(1.dp, Color.LightGray),
+            ) {
+                Row(modifier = Modifier.padding(ShogiDimensions.PaddingMedium), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(ShogiIcons.FolderSelect, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(ShogiDimensions.IconSizeSmall))
+                    Spacer(Modifier.width(ShogiDimensions.PaddingMedium))
+                    Text(text = currentRoot?.toString() ?: AppStrings.SELECT_KIFU_ROOT, fontSize = ShogiDimensions.FontSizeCaption, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f), color = if (currentRoot == null) Color.Gray else Color.Black)
                 }
-                if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                    onSetRoot(chooser.selectedFile.toPath())
+            }
+
+            if (currentRoot != null) {
+                Spacer(Modifier.width(4.dp))
+                IconButton(onClick = onRefresh, modifier = Modifier.size(32.dp)) {
+                    Icon(ShogiIcons.Refresh, contentDescription = "再読み込み", tint = ShogiColors.Primary)
                 }
-            },
-            elevation = 0.dp,
-            backgroundColor = Color.White,
-            border = BorderStroke(1.dp, Color.LightGray),
-        ) {
-            Row(modifier = Modifier.padding(ShogiDimensions.PaddingMedium), verticalAlignment = Alignment.CenterVertically) {
-                Icon(ShogiIcons.FolderSelect, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(ShogiDimensions.IconSizeSmall))
-                Spacer(Modifier.width(ShogiDimensions.PaddingMedium))
-                Text(text = currentRoot?.toString() ?: AppStrings.SELECT_KIFU_ROOT, fontSize = ShogiDimensions.FontSizeCaption, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f), color = if (currentRoot == null) Color.Gray else Color.Black)
             }
         }
 

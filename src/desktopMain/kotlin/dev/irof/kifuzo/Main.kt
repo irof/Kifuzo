@@ -136,6 +136,7 @@ fun KifuzoApp() {
                     state = state,
                     currentRoot = viewModel.currentRootDirectory,
                     onSetRoot = { viewModel.dispatch(KifuzoAction.SetRootDirectory(it)) },
+                    onRefresh = { viewModel.dispatch(KifuzoAction.RefreshFiles) },
                     onToggleDir = { viewModel.dispatch(KifuzoAction.ToggleDirectory(it)) },
                     onSelectFile = { viewModel.dispatch(KifuzoAction.SelectFile(it)) },
                     onShowText = { viewModel.dispatch(KifuzoAction.SetViewingText(it)) },

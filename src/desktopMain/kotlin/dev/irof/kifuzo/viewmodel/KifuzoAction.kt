@@ -22,6 +22,7 @@ sealed class KifuzoAction {
     data class SetViewMode(val mode: FileViewMode) : KifuzoAction()
     data class ToggleFileFilter(val filter: FileFilter) : KifuzoAction()
     data class UpdateSidebarWidth(val delta: Float) : KifuzoAction()
+    data object RefreshFiles : KifuzoAction()
     data object SelectNextFile : KifuzoAction()
     data object SelectPrevFile : KifuzoAction()
 
