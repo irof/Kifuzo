@@ -2,8 +2,7 @@ package dev.irof.kifuzo.logic
 
 import java.nio.file.Files
 import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.assertEquals
 import kotlin.text.Charsets
 
 class KifuUpdateTest {
@@ -23,9 +22,12 @@ class KifuUpdateTest {
             updateKifuResult(tempFile, "投了")
 
             val resultText = Files.readString(tempFile, Charsets.UTF_8)
-            // 空行が含まれていないことを確認
-            assertFalse(resultText.contains("\n\n"), "空行が含まれていないこと:\n$resultText")
-            assertTrue(resultText.contains("   3 投了"), "終局行が含まれていること:\n$resultText")
+            val expected = """
+                1 ７六歩(77)
+                2 ３四歩(33)
+                   3 投了
+            """.trimIndent()
+            assertEquals(expected, resultText)
         } finally {
             Files.deleteIfExists(tempFile)
         }
@@ -44,8 +46,11 @@ class KifuUpdateTest {
             updateKifuResult(tempFile, "中断")
 
             val resultText = Files.readString(tempFile, Charsets.UTF_8)
-            assertFalse(resultText.contains("投了"), "古い結果が残っていないこと")
-            assertTrue(resultText.contains("   2 中断"), "新しい結果が書き込まれていること")
+            val expected = """
+                1 ７六歩(77)
+                   2 中断
+            """.trimIndent()
+            assertEquals(expected, resultText)
         } finally {
             Files.deleteIfExists(tempFile)
         }
@@ -68,8 +73,15 @@ class KifuUpdateTest {
             updateKifuSenkei(tempFile, "矢倉")
 
             val resultText = Files.readString(tempFile, Charsets.UTF_8)
-            assertFalse(resultText.contains("\n\n\n"), "空行が連続して増えていないこと")
-            assertTrue(resultText.contains("戦型：矢倉"), "戦型が追記されていること")
+            val expected = """
+                先手：先手
+                後手：後手
+
+                戦型：矢倉
+                1 ７六歩(77)
+                2 ３四歩(33)
+            """.trimIndent()
+            assertEquals(expected, resultText)
         } finally {
             Files.deleteIfExists(tempFile)
         }
