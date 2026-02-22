@@ -117,8 +117,11 @@ fun KifuPreviewPanel(
                             }
 
                             // 終局結果ボタンの追加 (終局していない場合のみ)
-                            val lastMove = boardState.session.history.lastOrNull()?.lastMoveText ?: ""
-                            val isFinished = listOf("投了", "千日手", "持将棋", "切れ負け", "不戦敗", "反則負け", "中断").any { lastMove.contains(it) }
+                            val lastSnapshot = boardState.session.history.lastOrNull()
+                            val lastMove = lastSnapshot?.lastMoveText ?: ""
+                            val evaluation = lastSnapshot?.evaluation ?: 0
+                            val isMate = kotlin.math.abs(evaluation) >= 30000
+                            val isFinished = isMate || listOf("投了", "千日手", "持将棋", "切れ負け", "不戦敗", "反則負け", "中断", "詰み").any { lastMove.contains(it) }
                             if (!isFinished) {
                                 Spacer(Modifier.width(8.dp))
                                 OutlinedButton(onClick = { onWriteResult(selected, "投了") }, modifier = Modifier.height(32.dp)) {
