@@ -24,6 +24,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -34,6 +36,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -124,12 +130,21 @@ fun KifuPreviewPanel(
                             val isFinished = isMate || listOf("投了", "千日手", "持将棋", "切れ負け", "不戦敗", "反則負け", "中断", "詰み").any { lastMove.contains(it) }
                             if (!isFinished) {
                                 Spacer(Modifier.width(8.dp))
-                                OutlinedButton(onClick = { onWriteResult(selected, "投了") }, modifier = Modifier.height(32.dp)) {
-                                    Text("投了を追加", fontSize = 10.sp)
-                                }
-                                Spacer(Modifier.width(4.dp))
-                                OutlinedButton(onClick = { onWriteResult(selected, "千日手") }, modifier = Modifier.height(32.dp)) {
-                                    Text("千日手", fontSize = 10.sp)
+                                var showMenu by remember { mutableStateOf(false) }
+                                Box {
+                                    OutlinedButton(onClick = { showMenu = true }, modifier = Modifier.height(32.dp)) {
+                                        Text("終局結果を追加", fontSize = 10.sp)
+                                    }
+                                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                                        listOf("投了", "詰み", "千日手", "持将棋", "中断").forEach { result ->
+                                            DropdownMenuItem(onClick = {
+                                                showMenu = false
+                                                onWriteResult(selected, result)
+                                            }) {
+                                                Text(result, fontSize = 12.sp)
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
