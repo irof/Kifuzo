@@ -384,10 +384,16 @@ fun updateKifuResult(path: Path, result: String) {
         }
     }
 
-    val resultLine = "まで${lastMoveNum}手で$result"
+    val nextMoveNum = lastMoveNum + 1
+    val resultLine = String.format(java.util.Locale.US, "%4d %s", nextMoveNum, result)
 
     // すでに終局行があるかチェック
-    val existingResultIndex = lines.indexOfFirst { it.startsWith("まで") }
+    // 終局キーワードを含む行を探す
+    val keywords = listOf("投了", "詰み", "千日手", "持将棋", "中断", "不戦敗", "反則負け", "切れ負け")
+    val existingResultIndex = lines.indexOfLast { line ->
+        keywords.any { line.contains(it) } && !line.contains("▲") && !line.contains("△")
+    }
+
     if (existingResultIndex != -1) {
         lines[existingResultIndex] = resultLine
     } else {
