@@ -20,7 +20,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
                 implementation("io.github.oshai:kotlin-logging-jvm:8.0.01")
-                implementation("ch.qos.logback:logback-classic:1.5.16")
+                implementation("ch.qos.logback:logback-classic:1.5.32")
             }
         }
         val desktopTest by getting {
