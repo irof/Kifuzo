@@ -220,39 +220,9 @@ private fun KifuOperationBar(
     isFlipped: Boolean,
     onStepChange: (Int) -> Unit,
 ) {
-    val currentBoard = history.getOrNull(currentStep)
-    val lastMoveText = currentBoard?.lastMoveText ?: ""
     val evaluations = history.map { it.evaluation }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        val currentEval = evaluations.getOrNull(currentStep)
-        val evalText = if (currentEval != null) {
-            val sign = if (currentEval > 0) "+" else ""
-            " (評価値: $sign$currentEval)"
-        } else {
-            ""
-        }
-
-        // 表示用の指し手テキストを作成 (例: "1 ▲７六歩")
-        val displayMove = if (currentStep == 0) {
-            "開始局面"
-        } else {
-            val colorSymbol = if (currentStep % 2 != 0) "▲" else "△"
-            // "1 ７六歩(77)" -> "1 ▲７六歩"
-            // 手数と指し手部分を分離
-            val parts = lastMoveText.trim().split(Regex("\\s+"))
-            if (parts.size >= 2) {
-                val stepNum = parts[0]
-                val move = parts[1].substringBefore("(")
-                "$stepNum $colorSymbol$move"
-            } else {
-                "$currentStep $colorSymbol$lastMoveText"
-            }
-        }
-
-        Text(text = displayMove, style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
-
         Row(verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = { onStepChange(0) }, modifier = Modifier.height(32.dp)) { Text(AppStrings.START, fontSize = 10.sp) }
             Spacer(Modifier.width(4.dp))
@@ -284,9 +254,6 @@ private fun KifuOperationBar(
                 modifier = Modifier.height(240.dp).fillMaxWidth().padding(horizontal = 16.dp),
             )
         }
-
-        Spacer(Modifier.height(4.dp))
-        Text(text = "($currentStep / $maxStep$evalText)", style = MaterialTheme.typography.caption)
     }
 }
 
