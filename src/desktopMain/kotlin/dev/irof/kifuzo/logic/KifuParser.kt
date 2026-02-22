@@ -301,7 +301,7 @@ private sealed class KifuParsedMove {
 
 private val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*""")
 private val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*""")
-private val resultRegex = Regex("""^\s*(\d+)\s+(投了|切れ負け|中断|不戦敗|反則負け|持将棋|千日手|詰み).*""")
+private val resultRegex = Regex("""^\s*(\d+)\s+(${dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.joinToString("|")}).*""")
 
 private fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
     if (!Regex("""^\s*\d+\s+.*""").matches(line)) return null
@@ -376,13 +376,11 @@ fun updateKifuResult(path: Path, result: String) {
     val lines = readLinesWithEncoding(path).toMutableList()
 
     // 最後の「指し手」（終局行以外）の番号を探す
-    val keywords = listOf("投了", "詰み", "千日手", "持将棋", "中断", "不戦敗", "反則負け", "切れ負け")
     var lastActualMoveNum = 0
     for (line in lines) {
         val match = Regex("""^\s*(\d+)\s+.*""").find(line)
         if (match != null) {
-            val isResult = keywords.any { line.contains(it) } && !line.contains("▲") && !line.contains("△")
-            if (!isResult) {
+            if (!dev.irof.kifuzo.models.GameResult.isResultLine(line)) {
                 val num = match.groupValues[1].toIntOrNull() ?: 0
                 if (num > lastActualMoveNum) lastActualMoveNum = num
             }
@@ -394,7 +392,7 @@ fun updateKifuResult(path: Path, result: String) {
 
     // すでに終局行があるかチェック
     val existingResultIndex = lines.indexOfLast { line ->
-        keywords.any { line.contains(it) } && !line.contains("▲") && !line.contains("△")
+        dev.irof.kifuzo.models.GameResult.isResultLine(line)
     }
 
     if (existingResultIndex != -1) {

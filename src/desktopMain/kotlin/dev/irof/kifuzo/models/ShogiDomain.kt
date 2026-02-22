@@ -26,6 +26,17 @@ data class Square(val file: Int, val rank: Int) {
     }
 }
 
+object GameResult {
+    /** 棋譜パースや判定に使用する、すべての終局キーワード */
+    val ALL_KEYWORDS = listOf("投了", "詰み", "千日手", "持将棋", "中断", "不戦敗", "反則負け", "切れ負け", "タイムアップ", "入玉勝ち")
+
+    /** UI の「終局手を追加」メニューに表示する、一般的な終局キーワード */
+    val UI_SELECTIONS = listOf("投了", "詰み", "千日手", "持将棋", "中断")
+
+    /** 指定されたテキストが終局行（指し手ではない）であるか判定します */
+    fun isResultLine(line: String): Boolean = ALL_KEYWORDS.any { line.contains(it) } && !line.contains("▲") && !line.contains("△")
+}
+
 object BoardLayout {
     fun getSujiLabels(): List<String> = listOf("９", "８", "７", "６", "５", "４", "３", "２", "１")
 

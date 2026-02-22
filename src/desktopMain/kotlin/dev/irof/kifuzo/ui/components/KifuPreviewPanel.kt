@@ -127,7 +127,7 @@ fun KifuPreviewPanel(
                             val lastMove = lastSnapshot?.lastMoveText ?: ""
                             val evaluation = lastSnapshot?.evaluation ?: 0
                             val isMate = kotlin.math.abs(evaluation) >= 30000
-                            val isFinished = isMate || listOf("投了", "千日手", "持将棋", "切れ負け", "不戦敗", "反則負け", "中断", "詰み").any { lastMove.contains(it) }
+                            val isFinished = isMate || dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.any { lastMove.contains(it) }
                             if (!isFinished) {
                                 Spacer(Modifier.width(8.dp))
                                 var showMenu by remember { mutableStateOf(false) }
@@ -137,7 +137,7 @@ fun KifuPreviewPanel(
                                     }
 
                                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                                        listOf("投了", "詰み", "千日手", "持将棋", "中断").forEach { result ->
+                                        dev.irof.kifuzo.models.GameResult.UI_SELECTIONS.forEach { result ->
                                             DropdownMenuItem(onClick = {
                                                 showMenu = false
                                                 onWriteResult(selected, result)
