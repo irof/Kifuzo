@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -11,11 +12,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
@@ -29,6 +33,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,13 +60,10 @@ fun KifuPreviewPanel(
     onStepChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scrollState = rememberScrollState()
-
     Column(
         modifier = modifier
             .fillMaxHeight()
             .background(ShogiColors.PanelBackground)
-            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
@@ -90,13 +92,9 @@ fun KifuPreviewPanel(
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                     if (hasHistory) {
-                        OutlinedButton(onClick = onToggleFlip, modifier = Modifier.height(32.dp), colors = ButtonDefaults.outlinedButtonColors(backgroundColor = if (state.isFlipped) Color.LightGray else Color.White)) { Text(AppStrings.FLIP_BOARD, fontSize = 10.sp) }
-
                         if (isKifuFile) {
                             val kifuInfo = state.kifuInfos[selected]
                             val existingSenkei = kifuInfo?.senkei
-                            Spacer(Modifier.width(8.dp))
-
                             if (!existingSenkei.isNullOrEmpty()) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
                                     Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -128,15 +126,19 @@ fun KifuPreviewPanel(
 
             // 盤面領域と指し手一覧領域を横に並べる
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                // 左側: 盤面、スライダー、評価値グラフ、局面が大きく動いた手
+                // 左側: 盤面、スライダー、評価値グラフ
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    ShogiBoardView(boardState, isFlipped = state.isFlipped)
+                    ShogiBoardView(
+                        boardState,
+                        isFlipped = state.isFlipped,
+                        onToggleFlip = onToggleFlip,
+                    )
                     Spacer(Modifier.height(16.dp))
 
                     KifuOperationBar(
@@ -155,7 +157,7 @@ fun KifuPreviewPanel(
                     history = boardState.session.history,
                     currentStep = boardState.currentStep,
                     onStepChange = onStepChange,
-                    modifier = Modifier.width(280.dp),
+                    modifier = Modifier.width(280.dp).fillMaxHeight(),
                 )
             }
         }
@@ -169,34 +171,40 @@ private fun MoveList(
     onStepChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(currentStep) {
+        if (currentStep in 0 until history.size) {
+            listState.animateScrollToItem(currentStep)
+        }
+    }
+
+    Box(
         modifier = modifier
             .background(Color.White, MaterialTheme.shapes.medium)
-            .border(1.dp, Color.LightGray, MaterialTheme.shapes.medium)
-            .padding(vertical = 4.dp),
+            .border(1.dp, Color.LightGray, MaterialTheme.shapes.medium),
     ) {
-        Text(
-            AppStrings.MOVE_LIST,
-            modifier = Modifier.padding(8.dp),
-            style = MaterialTheme.typography.subtitle2,
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(Modifier.height(4.dp))
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize().padding(vertical = 4.dp),
+        ) {
+            item {
+                MoveRow(0, AppStrings.START_POSITION, null, null, currentStep == 0, onStepChange)
+            }
 
-        // 0手目（開始局面）
-        MoveRow(0, AppStrings.START_POSITION, null, null, currentStep == 0, onStepChange)
+            items(history.size - 1) { index ->
+                val i = index + 1
+                val board = history[i]
+                val prevEval = history[i - 1].evaluation ?: 0
+                val curEval = board.evaluation
+                val diff = if (curEval != null) curEval - prevEval else null
 
-        for (i in 1 until history.size) {
-            val board = history[i]
-            val prevEval = history[i - 1].evaluation ?: 0
-            val curEval = board.evaluation
-            val diff = if (curEval != null) curEval - prevEval else null
+                val colorSymbol = if (i % 2 != 0) "▲" else "△"
+                // "1 ７六歩(77)" -> "７六歩"
+                val moveText = board.lastMoveText.trim().split(Regex("\\s+")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
 
-            val colorSymbol = if (i % 2 != 0) "▲" else "△"
-            // "1 ７六歩(77)" -> "７六歩"
-            val moveText = board.lastMoveText.trim().split(Regex("\\s+")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
-
-            MoveRow(i, "$colorSymbol$moveText", curEval, diff, currentStep == i, onStepChange)
+                MoveRow(i, "$colorSymbol$moveText", curEval, diff, currentStep == i, onStepChange)
+            }
         }
     }
 }
@@ -317,13 +325,19 @@ private fun MoveRow(
             if (diff != null && kotlin.math.abs(diff) >= 500) {
                 val marker = if (kotlin.math.abs(diff) >= 1000) "!!" else "!"
                 val markerColor = if (diff > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
-                Text(
-                    text = marker,
-                    color = markerColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(start = 4.dp),
-                )
+                Box(
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                        .background(markerColor, shape = MaterialTheme.shapes.small)
+                        .padding(horizontal = 4.dp, vertical = 1.dp),
+                ) {
+                    Text(
+                        text = marker,
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                    )
+                }
             }
         }
 

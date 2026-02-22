@@ -13,7 +13,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,9 +33,14 @@ import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.models.Square
 import dev.irof.kifuzo.ui.theme.ShogiColors
+import dev.irof.kifuzo.utils.AppStrings
 
 @Composable
-fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
+fun ShogiBoardView(
+    state: ShogiBoardState,
+    isFlipped: Boolean = false,
+    onToggleFlip: (() -> Unit)? = null,
+) {
     val board = state.currentBoard ?: return
     val session = state.session
     val isSenteTurn = state.currentStep % 2 == 0
@@ -64,8 +73,18 @@ fun ShogiBoardView(state: ShogiBoardState, isFlipped: Boolean = false) {
                             Text(text = sujiLabels[x], fontSize = labelSize, color = Color.Gray)
                         }
                     }
-                    // 段の符号の幅分を空ける
-                    Spacer(Modifier.width(cellSize))
+                    // 盤右上の角に反転ボタンを配置
+                    Box(modifier = Modifier.size(cellSize), contentAlignment = Alignment.Center) {
+                        onToggleFlip?.let {
+                            IconButton(onClick = it, modifier = Modifier.size(cellSize * 0.6f)) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = AppStrings.FLIP_BOARD,
+                                    tint = Color.Gray.copy(alpha = 0.7f),
+                                )
+                            }
+                        }
+                    }
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
