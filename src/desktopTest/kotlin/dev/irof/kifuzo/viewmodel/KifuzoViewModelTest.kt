@@ -17,28 +17,31 @@ import kotlin.test.assertTrue
 class KifuzoViewModelTest {
 
     private lateinit var viewModel: KifuzoViewModel
-    private var parseResultAction: (ShogiBoardState) -> Unit = {}
+    private val stubRepository = StubKifuRepository()
+
+    class StubKifuRepository : KifuRepository {
+        var parseAction: (ShogiBoardState) -> Unit = {}
+
+        override fun scanDirectory(directory: Path): List<Path> = emptyList()
+        override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = emptyMap()
+        override fun parse(path: Path, state: ShogiBoardState) {
+            parseAction(state)
+        }
+
+        override fun convertCsa(path: Path): Path = path
+        override fun updateSenkei(path: Path, senkei: String) {}
+        override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = 0
+    }
 
     @BeforeTest
     fun setup() {
-        val stubRepository = object : KifuRepository {
-            override fun scanDirectory(directory: Path): List<Path> = emptyList()
-            override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = emptyMap()
-            override fun parse(path: Path, state: ShogiBoardState) {
-                parseResultAction(state)
-            }
-
-            override fun convertCsa(path: Path): Path = path
-            override fun updateSenkei(path: Path, senkei: String) {}
-            override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = 0
-        }
         viewModel = KifuzoViewModel(stubRepository)
     }
 
     @Test
-    fun testSelectFile() {
+    fun `selectFile loads kifu and updates session info`() {
         val path = java.nio.file.Paths.get("test.kifu")
-        parseResultAction = { state ->
+        stubRepository.parseAction = { state ->
             state.updateSession(
                 KifuSession(
                     history = listOf(BoardSnapshot(List(9) { List(9) { null } })),
@@ -55,7 +58,7 @@ class KifuzoViewModelTest {
     }
 
     @Test
-    fun testStepNavigation() {
+    fun `step navigation updates current step correctly`() {
         // 3手ある棋譜をセット
         viewModel.boardState.updateSession(
             KifuSession(
@@ -78,7 +81,7 @@ class KifuzoViewModelTest {
     }
 
     @Test
-    fun testToggleSettings() {
+    fun `settings visibility can be toggled`() {
         assertFalse(viewModel.uiState.showSettings)
 
         viewModel.dispatch(KifuzoAction.ShowSettings(true))
@@ -89,20 +92,20 @@ class KifuzoViewModelTest {
     }
 
     @Test
-    fun testSaveSettings() {
+    fun `saveSettings updates regex and hides dialog`() {
         viewModel.dispatch(KifuzoAction.SaveSettings("MyName"))
         assertEquals("MyName", viewModel.uiState.myNameRegex)
         assertFalse(viewModel.uiState.showSettings)
     }
 
     @Test
-    fun testAutoFlip() {
+    fun `autoFlip flips board based on myNameRegex`() {
         // 自分の名前を "irof" に設定
         viewModel.dispatch(KifuzoAction.SaveSettings("irof"))
 
         // 後手が "irof" の棋譜を読み込む
         val path = Paths.get("test.kifu")
-        parseResultAction = { state ->
+        stubRepository.parseAction = { state ->
             state.updateSession(
                 KifuSession(
                     history = listOf(BoardSnapshot(List(9) { List(9) { null } })),
@@ -118,7 +121,7 @@ class KifuzoViewModelTest {
         assertTrue(viewModel.uiState.isFlipped)
 
         // 先手が "irof" の棋譜を読み込む
-        parseResultAction = { state ->
+        stubRepository.parseAction = { state ->
             state.updateSession(
                 KifuSession(
                     history = listOf(BoardSnapshot(List(9) { List(9) { null } })),
