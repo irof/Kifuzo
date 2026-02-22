@@ -26,4 +26,14 @@ fun readTextWithEncoding(path: Path): String {
 /**
  * 棋譜ファイルから各行を読み込みます。
  */
-fun readLinesWithEncoding(path: Path): List<String> = readTextWithEncoding(path).lines()
+fun readLinesWithEncoding(path: Path): List<String> {
+    val text = readTextWithEncoding(path)
+    if (text.isEmpty()) return emptyList()
+    val lines = text.lines()
+    // String.lines() が末尾の改行により空文字列を返す場合、それを除去する
+    return if (lines.isNotEmpty() && lines.last().isEmpty()) {
+        lines.dropLast(1)
+    } else {
+        lines
+    }
+}

@@ -374,22 +374,25 @@ fun updateKifuSenkei(path: Path, senkei: String) {
 fun updateKifuResult(path: Path, result: String) {
     if (result.isEmpty()) return
     val lines = readLinesWithEncoding(path).toMutableList()
-    // 最後の指し手番号を探す
-    var lastMoveNum = 0
-    for (i in lines.indices) {
-        val match = Regex("""^\s*(\d+)\s+.*""").find(lines[i])
+
+    // 最後の「指し手」（終局行以外）の番号を探す
+    val keywords = listOf("投了", "詰み", "千日手", "持将棋", "中断", "不戦敗", "反則負け", "切れ負け")
+    var lastActualMoveNum = 0
+    for (line in lines) {
+        val match = Regex("""^\s*(\d+)\s+.*""").find(line)
         if (match != null) {
-            val num = match.groupValues[1].toIntOrNull() ?: 0
-            if (num > lastMoveNum) lastMoveNum = num
+            val isResult = keywords.any { line.contains(it) } && !line.contains("▲") && !line.contains("△")
+            if (!isResult) {
+                val num = match.groupValues[1].toIntOrNull() ?: 0
+                if (num > lastActualMoveNum) lastActualMoveNum = num
+            }
         }
     }
 
-    val nextMoveNum = lastMoveNum + 1
+    val nextMoveNum = lastActualMoveNum + 1
     val resultLine = String.format(java.util.Locale.US, "%4d %s", nextMoveNum, result)
 
     // すでに終局行があるかチェック
-    // 終局キーワードを含む行を探す
-    val keywords = listOf("投了", "詰み", "千日手", "持将棋", "中断", "不戦敗", "反則負け", "切れ負け")
     val existingResultIndex = lines.indexOfLast { line ->
         keywords.any { line.contains(it) } && !line.contains("▲") && !line.contains("△")
     }
