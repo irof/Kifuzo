@@ -15,6 +15,7 @@ object AppStrings {
     const val NOTIFICATION = "通知"
     const val ERROR = "エラー"
     const val OK = "OK"
+    const val COPY = "コピー"
     const val START_POSITION = "開始局面"
     const val MOVE_COUNT = "手数"
     const val FLIP_BOARD = "盤面反転"

@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -180,8 +181,22 @@ fun KifuzoApp() {
                 title = { Text(title) },
                 text = { Text(msg) },
                 buttons = {
-                    Box(modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.PaddingMedium), contentAlignment = Alignment.CenterEnd) {
-                        Button(onClick = { viewModel.dispatch(KifuzoAction.ClearErrorAndInfo) }) { Text(AppStrings.OK) }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.PaddingMedium),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (state.errorMessage != null) {
+                            androidx.compose.material.OutlinedButton(
+                                onClick = { copyToClipboard(msg) },
+                                modifier = Modifier.padding(end = 8.dp),
+                            ) {
+                                Text(AppStrings.COPY)
+                            }
+                        }
+                        Button(onClick = { viewModel.dispatch(KifuzoAction.ClearErrorAndInfo) }) {
+                            Text(AppStrings.OK)
+                        }
                     }
                 },
             )
