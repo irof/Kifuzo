@@ -13,7 +13,6 @@ import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.FileViewMode
 import dev.irof.kifuzo.models.ShogiBoardState
-import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -91,8 +90,8 @@ class KifuzoViewModel(
             is KifuzoAction.UpdateSidebarWidth -> {
                 updateState {
                     val newWidth = (it.sidebarWidth + action.delta).coerceIn(
-                        ShogiDimensions.MinSidebarWidth.value,
-                        ShogiDimensions.MaxSidebarWidth.value,
+                        dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH,
+                        dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH,
                     )
                     AppSettings.sidebarWidth = newWidth
                     it.copy(sidebarWidth = newWidth)

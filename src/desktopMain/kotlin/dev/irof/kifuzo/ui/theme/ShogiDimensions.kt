@@ -13,9 +13,9 @@ object ShogiDimensions {
 
     val ButtonHeight = 32.dp
     val MenuBarWidth = 48.dp
-    val DefaultSidebarWidth = 250.dp
-    val MinSidebarWidth = 150.dp
-    val MaxSidebarWidth = 600.dp
+    val DefaultSidebarWidth = dev.irof.kifuzo.models.AppConfig.DEFAULT_SIDEBAR_WIDTH.dp
+    val MinSidebarWidth = dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH.dp
+    val MaxSidebarWidth = dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH.dp
 
     val FontSizeCaption = 10.sp
     val FontSizeBody = 12.sp
