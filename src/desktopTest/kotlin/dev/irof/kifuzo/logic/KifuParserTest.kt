@@ -15,9 +15,9 @@ import kotlin.test.fail
 
 class KifuParserTest {
 
-    private fun parse(vararg lines: String): KifuSession {
+    private fun parse(kifu: String): KifuSession {
         val state = ShogiBoardState()
-        parseKifu(lines.toList(), state)
+        parseKifu(kifu.trimIndent().lines(), state)
         return state.session
     }
 
@@ -29,17 +29,19 @@ class KifuParserTest {
     @Test
     fun testParseKifuWithBoxBoard() {
         val session = parse(
-            "| ・v桂 ・v金 ・v玉 ・v桂v香|一",
-            "| ・ ・ ・ ・ ・ ・ ・ 馬 ・|二",
-            "| ・ ・ ・v飛 ・v金 ・v歩 ・|三",
-            "| ・ ・v歩v銀 ・ ・v歩 ・v歩|四",
-            "| ・ 歩 ・ ・ ・ ・ ・ ・ ・|五",
-            "| ・ 馬 歩 ・ 歩 ・ ・ ・ 歩|六",
-            "| 歩 ・ ・ ・ ・ 歩 歩 ・v龍|七",
-            "| ・ ・ 玉 ・ ・ ・ ・ ・ ・|八",
-            "| ・ ・ ・ ・ ・ ・ ・ ・ ・|九",
-            "1 ３二銀打",
-            "2 ５二玉(41)",
+            """
+                | ・v桂 ・v金 ・v玉 ・v桂v香|一
+                | ・ ・ ・ ・ ・ ・ ・ 馬 ・|二
+                | ・ ・ ・v飛 ・v金 ・v歩 ・|三
+                | ・ ・v歩v銀 ・ ・v歩 ・v歩|四
+                | ・ 歩 ・ ・ ・ ・ ・ ・ ・|五
+                | ・ 馬 歩 ・ 歩 ・ ・ ・ 歩|六
+                | 歩 ・ ・ ・ ・ 歩 歩 ・v龍|七
+                | ・ ・ 玉 ・ ・ ・ ・ ・ ・|八
+                | ・ ・ ・ ・ ・ ・ ・ ・ ・|九
+                1 ３二銀打
+                2 ５二玉(41)
+            """,
         )
 
         // 0手目: 4一に玉(White)がいるか
@@ -55,14 +57,16 @@ class KifuParserTest {
     @Test
     fun testParseKifuWithEvaluations() {
         val session = parse(
-            "1 ７六歩(77)",
-            "* 123",
-            "2 ３四歩(33)",
-            "* -456",
-            "3 ２二角成(88)",
-            "* +2000",
-            "4 ４二銀(31)",
-            "*#評価値=-500",
+            """
+                1 ７六歩(77)
+                * 123
+                2 ３四歩(33)
+                * -456
+                3 ２二角成(88)
+                * +2000
+                4 ４二銀(31)
+                *#評価値=-500
+            """,
         )
 
         assertEquals(123, session.history[1].evaluation)
@@ -74,14 +78,16 @@ class KifuParserTest {
     @Test
     fun testParseKifuWithTsumiEvaluations() {
         val session = parse(
-            "1 ７六歩(77)",
-            "*#詰み=先手勝ち",
-            "2 ３四歩(33)",
-            "*#詰み=先手勝ち:4手",
-            "3 ２二角成(88)",
-            "*#詰み=後手勝ち",
-            "4 ４二銀(31)",
-            "*#詰み=後手勝ち:11手",
+            """
+                1 ７六歩(77)
+                *#詰み=先手勝ち
+                2 ３四歩(33)
+                *#詰み=先手勝ち:4手
+                3 ２二角成(88)
+                *#詰み=後手勝ち
+                4 ４二銀(31)
+                *#詰み=後手勝ち:11手
+            """,
         )
 
         assertEquals(31111, session.history[1].evaluation)
@@ -93,12 +99,14 @@ class KifuParserTest {
     @Test
     fun testParseKifuPrioritizeMate() {
         val session = parse(
-            "1 ７六歩(77)",
-            "* 123",
-            "*#詰み=先手勝ち",
-            "2 ３四歩(33)",
-            "*#詰み=後手勝ち",
-            "* -456",
+            """
+                1 ７六歩(77)
+                * 123
+                *#詰み=先手勝ち
+                2 ３四歩(33)
+                *#詰み=後手勝ち
+                * -456
+            """,
         )
 
         // 1手目: 123 より 詰み(31111) を優先
@@ -110,9 +118,11 @@ class KifuParserTest {
     @Test
     fun testParseKifuWithResignation() {
         val session = parse(
-            "1 ７六歩(77)",
-            "2 ３四歩(33)",
-            "3 投了",
+            """
+                1 ７六歩(77)
+                2 ３四歩(33)
+                3 投了
+            """,
         )
 
         assertEquals(3, session.maxStep)
@@ -123,13 +133,14 @@ class KifuParserTest {
 
     @Test
     fun testScanKifuInfo() {
-        val lines = listOf(
-            "先手：先手太郎",
-            "後手：後手花子",
-            "戦型：矢倉",
-            "1 ７六歩(77)",
+        val info = scanKifuInfo(
+            """
+                先手：先手太郎
+                後手：後手花子
+                戦型：矢倉
+                1 ７六歩(77)
+            """.trimIndent().lines(),
         )
-        val info = scanKifuInfo(lines)
         assertEquals("先手太郎", info.senteName)
         assertEquals("後手花子", info.goteName)
         assertEquals("矢倉", info.senkei)
@@ -138,11 +149,13 @@ class KifuParserTest {
     @Test
     fun testParseKifuStandard() {
         val session = parse(
-            "先手：先手",
-            "後手：後手",
-            "手数---指手---消費時間--",
-            "1 ７六歩(77)",
-            "2 ３四歩(33)",
+            """
+                先手：先手
+                後手：後手
+                手数---指手---消費時間--
+                1 ７六歩(77)
+                2 ３四歩(33)
+            """,
         )
 
         assertFalse(session.history.isEmpty())
@@ -164,11 +177,13 @@ class KifuParserTest {
     @Test
     fun testParseKifuWithCaptureAndDrop() {
         val session = parse(
-            "1 ７六歩(77)",
-            "2 ３四歩(33)",
-            "3 ２二角成(88)",
-            "4 同　銀(31)",
-            "5 ４五角打",
+            """
+                1 ７六歩(77)
+                2 ３四歩(33)
+                3 ２二角成(88)
+                4 同　銀(31)
+                5 ４五角打
+            """,
         )
 
         // 3手目: 2二角成 (88から2二、2二には後手の角がいる)
@@ -191,16 +206,18 @@ class KifuParserTest {
     fun testParseKifuInitialPosition() {
         // 途中図からの開始（| で囲まれた配置）
         val session = parse(
-            "|・|・|・|・|・|・|・|・|・|一",
-            "|・|・|・|・|・|・|・|・|・|二",
-            "|・|・|・|・|・|・|・|・|・|三",
-            "|・|・|・|・|・|・|・|・|・|四",
-            "|・|・|・|・|・|・|・|・|・|五",
-            "|・|・|・|・|・|・|・|・|・|六",
-            "|・|・|・|・|・|・|・|・|・|七",
-            "|・|・|・|・|・|・|・|・|・|八",
-            "|・|・|・|・|王|金|・|・|・|九",
-            "1 ５八金(49)",
+            """
+                |・|・|・|・|・|・|・|・|・|一
+                |・|・|・|・|・|・|・|・|・|二
+                |・|・|・|・|・|・|・|・|・|三
+                |・|・|・|・|・|・|・|・|・|四
+                |・|・|・|・|・|・|・|・|・|五
+                |・|・|・|・|・|・|・|・|・|六
+                |・|・|・|・|・|・|・|・|・|七
+                |・|・|・|・|・|・|・|・|・|八
+                |・|・|・|・|王|金|・|・|・|九
+                1 ５八金(49)
+            """,
         )
         val history = session.history
         assertFalse(history.isEmpty())
@@ -213,12 +230,14 @@ class KifuParserTest {
     @Test
     fun testParseKifuWithResultAndComments() {
         val session = parse(
-            "1 ７六歩(77)",
-            "* この手は定跡です",
-            "2 ３四歩(33)",
-            "# ここから中盤です",
-            "3 投了",
-            "& その他付随情報",
+            """
+                1 ７六歩(77)
+                * この手は定跡です
+                2 ３四歩(33)
+                # ここから中盤です
+                3 投了
+                & その他付随情報
+            """,
         )
 
         assertEquals(3, session.maxStep, "投了などの特殊行も手数としてカウントされること")
@@ -230,11 +249,13 @@ class KifuParserTest {
     @Test
     fun testParseKifuWithVariations() {
         val session = parse(
-            "1 ７六歩(77)",
-            "2 ３四歩(33)",
-            "変化：2手",
-            "2 ８四歩(83)",
-            "3 ２六歩(27)",
+            """
+                1 ７六歩(77)
+                2 ３四歩(33)
+                変化：2手
+                2 ８四歩(83)
+                3 ２六歩(27)
+            """,
         )
 
         assertEquals(2, session.maxStep, "変化セクションの内容は本譜に含まれないこと")
@@ -244,11 +265,13 @@ class KifuParserTest {
     @Test
     fun testParseKifuPromotionDetails() {
         val session = parse(
-            "1 ７六歩(77)",
-            "2 ３四歩(33)",
-            "3 ２二角成(88)", // 通常の成り
-            "4 ４二銀(31)", // 3一の銀が4二へ
-            "5 ２一馬(22)", // 2二の馬が2一の桂馬を取る
+            """
+                1 ７六歩(77)
+                2 ３四歩(33)
+                3 ２二角成(88)
+                4 ４二銀(31)
+                5 ２一馬(22)
+            """,
         )
 
         assertEquals(Piece.UM, session.history[3].at(2, 2)?.first, "2二が馬になっていること")
@@ -260,18 +283,20 @@ class KifuParserTest {
     @Test
     fun testParseKifuInitialMochigoma() {
         val session = parse(
-            "先手持駒：飛二 角",
-            "後手持駒：金四 銀四",
-            "|・|・|・|・|・|・|・|・|・|一",
-            "|・|・|・|・|・|・|・|・|・|二",
-            "|・|・|・|・|・|・|・|・|・|三",
-            "|・|・|・|・|・|・|・|・|・|四",
-            "|・|・|・|・|・|・|・|・|・|五",
-            "|・|・|・|・|・|・|・|・|・|六",
-            "|・|・|・|・|・|・|・|・|・|七",
-            "|・|・|・|・|・|・|・|・|・|八",
-            "|・|・|・|・|王|・|・|・|・|九",
-            "1 ５八玉(59)",
+            """
+                先手持駒：飛二 角
+                後手持駒：金四 銀四
+                |・|・|・|・|・|・|・|・|・|一
+                |・|・|・|・|・|・|・|・|・|二
+                |・|・|・|・|・|・|・|・|・|三
+                |・|・|・|・|・|・|・|・|・|四
+                |・|・|・|・|・|・|・|・|・|五
+                |・|・|・|・|・|・|・|・|・|六
+                |・|・|・|・|・|・|・|・|・|七
+                |・|・|・|・|・|・|・|・|・|八
+                |・|・|・|・|王|・|・|・|・|九
+                1 ５八玉(59)
+            """,
         )
 
         val step0 = session.history[0]
@@ -289,12 +314,14 @@ class KifuParserTest {
     @Test
     fun testParseKifuWithSpecialNotations() {
         val session = parse(
-            "1 ７六歩(77)",
-            "2 ３四歩(33)",
-            "3 同　歩(76)",
-            "4 ５五角打",
-            "5 ８八角成(55)",
-            "6 同　銀(79)",
+            """
+                1 ７六歩(77)
+                2 ３四歩(33)
+                3 同　歩(76)
+                4 ５五角打
+                5 ８八角成(55)
+                6 同　銀(79)
+            """,
         )
 
         val history = session.history
@@ -317,8 +344,10 @@ class KifuParserTest {
         val results = listOf("投了", "持将棋", "千日手", "切れ負け", "反則負け")
         results.forEach { result ->
             val session = parse(
-                "1 ７六歩(77)",
-                "2 $result",
+                """
+                    1 ７六歩(77)
+                    2 $result
+                """,
             )
             assertEquals(2, session.maxStep, "$result が正しく終局手数としてカウントされること")
             assertTrue(session.history[2].lastMoveText.contains(result))

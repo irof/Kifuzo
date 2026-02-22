@@ -15,12 +15,12 @@ class ImportLogicTest {
 
     @Test
     fun testCalculateImportTargetSuccess() {
-        val lines = listOf(
-            "V2.2",
-            "N+SentePlayer(1500)",
-            "N-GotePlayer(1450)",
-            "+7776FU",
-        )
+        val lines = """
+            V2.2
+            N+SentePlayer(1500)
+            N-GotePlayer(1450)
+            +7776FU
+        """.trimIndent().lines()
         val millis = getMillis(2026, 2, 21)
         val result = calculateImportTarget(lines, millis)
 
@@ -30,11 +30,11 @@ class ImportLogicTest {
 
     @Test
     fun testCalculateImportTargetUnknown() {
-        val lines = listOf(
-            "V2.2",
-            "N+Sente",
-            "+7776FU",
-        )
+        val lines = """
+            V2.2
+            N+Sente
+            +7776FU
+        """.trimIndent().lines()
         val millis = getMillis(2026, 1, 1)
         val result = calculateImportTarget(lines, millis)
 
@@ -44,10 +44,10 @@ class ImportLogicTest {
 
     @Test
     fun testCalculateImportTargetNonCsa() {
-        val lines = listOf(
-            "これは棋譜ではありません",
-            "ただのテキストファイルです",
-        )
+        val lines = """
+            これは棋譜ではありません
+            ただのテキストファイルです
+        """.trimIndent().lines()
         val result = calculateImportTarget(lines, 0L)
 
         // CSAマーカーがない場合は null
