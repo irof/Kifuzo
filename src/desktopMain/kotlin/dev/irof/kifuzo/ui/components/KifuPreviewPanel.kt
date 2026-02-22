@@ -133,8 +133,9 @@ fun KifuPreviewPanel(
                                 var showMenu by remember { mutableStateOf(false) }
                                 Box {
                                     OutlinedButton(onClick = { showMenu = true }, modifier = Modifier.height(32.dp)) {
-                                        Text("終局結果を追加", fontSize = 10.sp)
+                                        Text("終局手を追加", fontSize = 10.sp)
                                     }
+
                                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                                         listOf("投了", "詰み", "千日手", "持将棋", "中断").forEach { result ->
                                             DropdownMenuItem(onClick = {
