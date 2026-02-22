@@ -52,7 +52,7 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
     var firstContactStep = -1
 
     val history = mutableListOf<BoardSnapshot>()
-    history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), "開始局面"))
+    history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), "開始局面", evaluation = 0))
 
     if (header.moveStartIndex != -1) {
         var lastTo: Square? = null
