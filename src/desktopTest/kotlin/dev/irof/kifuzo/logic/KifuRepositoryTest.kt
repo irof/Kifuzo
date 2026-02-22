@@ -12,6 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@Suppress("FunctionName")
 class KifuRepositoryTest {
 
     private var tempDir = createTempDirectory()
@@ -28,7 +29,7 @@ class KifuRepositoryTest {
     }
 
     @Test
-    fun `ディレクトリ走査の結果がディレクトリ優先かつ名前順であること`() {
+    fun ディレクトリ走査の結果がディレクトリ優先かつ名前順であること() {
         // ディレクトリとファイルを作成
         // 期待される順序: ディレクトリが先 (名前順)、次にファイル (名前順)
         val dirB = tempDir.resolve("dirB").createDirectory()
@@ -50,13 +51,13 @@ class KifuRepositoryTest {
     }
 
     @Test
-    fun `空のディレクトリ走査で空リストを返すこと`() {
+    fun 空のディレクトリ走査で空リストを返すこと() {
         val contents = repository.scanDirectory(tempDir)
         assertTrue(contents.isEmpty())
     }
 
     @Test
-    fun `存在しないディレクトリ走査で空リストを返すこと`() {
+    fun 存在しないディレクトリ走査で空リストを返すこと() {
         val nonExistent = tempDir.resolve("non_existent")
         val contents = repository.scanDirectory(nonExistent)
         assertTrue(contents.isEmpty())

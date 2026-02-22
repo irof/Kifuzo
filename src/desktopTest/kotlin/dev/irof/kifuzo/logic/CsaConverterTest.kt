@@ -3,10 +3,11 @@ package dev.irof.kifuzo.logic
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
+@Suppress("FunctionName")
 class CsaConverterTest {
 
     @Test
-    fun `CSA形式の行リストをKIF形式に変換できること`() {
+    fun CSA形式の行リストをKIF形式に変換できること() {
         val csaLines = """
             V2.2
             N+SenteUser
@@ -45,7 +46,7 @@ class CsaConverterTest {
     }
 
     @Test
-    fun `成り駒への成りを正しく処理できること`() {
+    fun 成り駒への成りを正しく処理できること() {
         val csaLines = """
             +7776FU
             -3334FU
@@ -77,7 +78,7 @@ class CsaConverterTest {
     }
 
     @Test
-    fun `角の成りを正しく処理できること`() {
+    fun 角の成りを正しく処理できること() {
         val csaLines = """
             +7776FU
             -3334FU
@@ -97,7 +98,7 @@ class CsaConverterTest {
     }
 
     @Test
-    fun `駒打ち直後の成りを正しく処理できること`() {
+    fun 駒打ち直後の成りを正しく処理できること() {
         val csaLines = """
             +0022KA
             -3132GI
@@ -109,7 +110,7 @@ class CsaConverterTest {
     }
 
     @Test
-    fun `駒打ちを正しく処理できること`() {
+    fun 駒打ちを正しく処理できること() {
         val csaLines = """
             +0045KA
             T5

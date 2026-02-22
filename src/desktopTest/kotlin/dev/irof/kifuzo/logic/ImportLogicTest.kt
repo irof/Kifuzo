@@ -6,6 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
+@Suppress("FunctionName")
 class ImportLogicTest {
 
     private fun getMillis(year: Int, month: Int, day: Int): Long = LocalDateTime.of(year, month, day, 12, 0)
@@ -14,7 +15,7 @@ class ImportLogicTest {
         .toEpochMilli()
 
     @Test
-    fun `インポート後のファイル名を正しく計算できること`() {
+    fun インポート後のファイル名を正しく計算できること() {
         val lines = """
             V2.2
             N+SentePlayer(1500)
@@ -29,7 +30,7 @@ class ImportLogicTest {
     }
 
     @Test
-    fun `後手が不明な場合にunknownとしてファイル名を計算すること`() {
+    fun 後手が不明な場合にunknownとしてファイル名を計算すること() {
         val lines = """
             V2.2
             N+Sente
@@ -43,7 +44,7 @@ class ImportLogicTest {
     }
 
     @Test
-    fun `CSA形式でないファイルの場合はnullを返すこと`() {
+    fun CSA形式でないファイルの場合はnullを返すこと() {
         val lines = """
             これは棋譜ではありません
             ただのテキストファイルです
@@ -55,7 +56,7 @@ class ImportLogicTest {
     }
 
     @Test
-    fun `空のファイルリストの場合はnullを返すこと`() {
+    fun 空のファイルリストの場合はnullを返すこと() {
         assertNull(calculateImportTarget(emptyList(), 0L))
     }
 }

@@ -10,6 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+@Suppress("FunctionName")
 class FileTreeManagerTest {
 
     private val mockRepository = object : KifuRepository {
@@ -29,7 +30,7 @@ class FileTreeManagerTest {
     private val manager = FileTreeManager(mockRepository)
 
     @Test
-    fun `ディレクトリノードを展開できること`() {
+    fun ディレクトリノードを展開できること() {
         val rootNode = FileTreeNode(Paths.get("/root"), 0, true, isExpanded = false)
         val initialNodes = listOf(rootNode)
 
@@ -45,7 +46,7 @@ class FileTreeManagerTest {
     }
 
     @Test
-    fun `ディレクトリノードを閉じることができること`() {
+    fun ディレクトリノードを閉じることができること() {
         val rootPath = Paths.get("/root")
         val dir1Path = Paths.get("/root/dir1")
         val file1Path = Paths.get("/root/file1.kifu")
@@ -69,7 +70,7 @@ class FileTreeManagerTest {
     }
 
     @Test
-    fun `ファイルノードをクリックしても何も起きないこと`() {
+    fun ファイルノードをクリックしても何も起きないこと() {
         val filePath = Paths.get("/root/file1.kifu")
         val fileNode = FileTreeNode(filePath, 1, false, isExpanded = false)
         val initialNodes = listOf(fileNode)

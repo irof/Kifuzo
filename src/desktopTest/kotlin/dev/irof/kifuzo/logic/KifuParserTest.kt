@@ -13,6 +13,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
+@Suppress("FunctionName")
 class KifuParserTest {
 
     private fun parse(kifu: String): KifuSession {
@@ -27,7 +28,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `盤面図が含まれる棋譜を正しくパースできること`() {
+    fun 盤面図が含まれる棋譜を正しくパースできること() {
         val session = parse(
             """
                 | ・v桂 ・v金 ・v玉 ・v桂v香|一
@@ -55,7 +56,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `評価値コメントが含まれる棋譜から評価値を抽出できること`() {
+    fun 評価値コメントが含まれる棋譜から評価値を抽出できること() {
         val session = parse(
             """
                 1 ７六歩(77)
@@ -76,7 +77,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `詰みコメントから評価値を設定できること`() {
+    fun 詰みコメントから評価値を設定できること() {
         val session = parse(
             """
                 1 ７六歩(77)
@@ -97,7 +98,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `評価値よりも詰み情報を優先すること`() {
+    fun 評価値よりも詰み情報を優先すること() {
         val session = parse(
             """
                 1 ７六歩(77)
@@ -116,7 +117,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `投了行から評価値を設定できること`() {
+    fun 投了行から評価値を設定できること() {
         val session = parse(
             """
                 1 ７六歩(77)
@@ -132,7 +133,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `対局者名や戦型情報をスキャンできること`() {
+    fun 対局者名や戦型情報をスキャンできること() {
         val info = scanKifuInfo(
             """
                 先手：先手太郎
@@ -147,7 +148,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `標準的な平手棋譜をパースできること`() {
+    fun 標準的な平手棋譜をパースできること() {
         val session = parse(
             """
                 先手：先手
@@ -175,7 +176,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `駒取りと駒打ちを正しく処理できること`() {
+    fun 駒取りと駒打ちを正しく処理できること() {
         val session = parse(
             """
                 1 ７六歩(77)
@@ -203,7 +204,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `盤面図からの初期配置をパースできること`() {
+    fun 盤面図からの初期配置をパースできること() {
         // 途中図からの開始（| で囲まれた配置）
         val session = parse(
             """
@@ -228,7 +229,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `結果行やコメント行が含まれていても手数としてカウントすること`() {
+    fun 結果行やコメント行が含まれていても手数としてカウントすること() {
         val session = parse(
             """
                 1 ７六歩(77)
@@ -247,7 +248,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `変化セクションの内容を無視すること`() {
+    fun 変化セクションの内容を無視すること() {
         val session = parse(
             """
                 1 ７六歩(77)
@@ -263,7 +264,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `成りや駒取りを含む詳細な手順をパースできること`() {
+    fun 成りや駒取りを含む詳細な手順をパースできること() {
         val session = parse(
             """
                 1 ７六歩(77)
@@ -281,7 +282,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `初期持駒がある盤面図をパースできること`() {
+    fun 初期持駒がある盤面図をパースできること() {
         val session = parse(
             """
                 先手持駒：飛二 角
@@ -312,7 +313,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `同や打を含む特殊な表記をパースできること`() {
+    fun 同や打を含む特殊な表記をパースできること() {
         val session = parse(
             """
                 1 ７六歩(77)
@@ -339,7 +340,7 @@ class KifuParserTest {
     }
 
     @Test
-    fun `様々な終局結果を手数としてカウントできること`() {
+    fun 様々な終局結果を手数としてカウントできること() {
         // 様々な終局条件
         val results = listOf("投了", "持将棋", "千日手", "切れ負け", "反則負け")
         results.forEach { result ->

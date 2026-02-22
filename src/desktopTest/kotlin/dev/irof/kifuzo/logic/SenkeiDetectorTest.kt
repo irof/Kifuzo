@@ -7,6 +7,7 @@ import dev.irof.kifuzo.models.Square
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+@Suppress("FunctionName")
 class SenkeiDetectorTest {
 
     private fun detect(kifu: String): String {
@@ -16,7 +17,7 @@ class SenkeiDetectorTest {
     }
 
     @Test
-    fun `四間飛車を判定できること`() {
+    fun 四間飛車を判定できること() {
         // 四間飛車にするための手順
         val result = detect(
             """
@@ -38,7 +39,7 @@ class SenkeiDetectorTest {
     }
 
     @Test
-    fun `後手中飛車を判定できること`() {
+    fun 後手中飛車を判定できること() {
         // 後手中飛車にするための手順
         val result = detect(
             """
