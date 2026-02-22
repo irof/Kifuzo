@@ -29,6 +29,6 @@ data class KifuzoUiState(
     val myNameRegex: String = "",
     val isSidebarVisible: Boolean = true,
     val sidebarWidth: Float = 250f,
-    val viewMode: FileViewMode = FileViewMode.HIERARCHY,
-    val fileFilters: Set<FileFilter> = emptySet(),
+    val viewMode: FileViewMode = FileViewMode.FLAT,
+    val fileFilters: Set<FileFilter> = setOf(FileFilter.RECENT),
 )
