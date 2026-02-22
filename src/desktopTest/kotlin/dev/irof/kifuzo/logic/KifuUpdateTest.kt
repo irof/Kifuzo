@@ -11,22 +11,14 @@ class KifuUpdateTest {
     fun 終局行を追記する際に空行が挿入されないこと() {
         val tempFile = Files.createTempFile("kifuzo_test", ".kifu")
         try {
-            // 末尾に改行があるファイルを用意
-            val content = """
-                1 ７六歩(77)
-                2 ３四歩(33)
-
-            """.trimIndent()
+            // KIF標準の形式（4桁右詰め）に合わせてスペースを入れる
+            val content = "   1 ７六歩(77)\n   2 ３四歩(33)\n"
             Files.write(tempFile, content.toByteArray(Charsets.UTF_8))
 
             updateKifuResult(tempFile, "投了")
 
             val resultText = Files.readString(tempFile, Charsets.UTF_8)
-            val expected = """
-                1 ７六歩(77)
-                2 ３四歩(33)
-                   3 投了
-            """.trimIndent()
+            val expected = "   1 ７六歩(77)\n   2 ３四歩(33)\n   3 投了"
             assertEquals(expected, resultText)
         } finally {
             Files.deleteIfExists(tempFile)
@@ -37,19 +29,13 @@ class KifuUpdateTest {
     fun すでに終局行がある場合は上書きすること() {
         val tempFile = Files.createTempFile("kifuzo_test", ".kifu")
         try {
-            val content = """
-                1 ７六歩(77)
-                2 投了
-            """.trimIndent()
+            val content = "   1 ７六歩(77)\n   2 投了"
             Files.write(tempFile, content.toByteArray(Charsets.UTF_8))
 
             updateKifuResult(tempFile, "中断")
 
             val resultText = Files.readString(tempFile, Charsets.UTF_8)
-            val expected = """
-                1 ７六歩(77)
-                   2 中断
-            """.trimIndent()
+            val expected = "   1 ７六歩(77)\n   2 中断"
             assertEquals(expected, resultText)
         } finally {
             Files.deleteIfExists(tempFile)
@@ -60,27 +46,13 @@ class KifuUpdateTest {
     fun 戦型を追記する際に空行が挿入されないこと() {
         val tempFile = Files.createTempFile("kifuzo_test", ".kifu")
         try {
-            val content = """
-                先手：先手
-                後手：後手
-
-                1 ７六歩(77)
-                2 ３四歩(33)
-
-            """.trimIndent()
+            val content = "先手：先手\n後手：後手\n\n   1 ７六歩(77)\n   2 ３四歩(33)\n"
             Files.write(tempFile, content.toByteArray(Charsets.UTF_8))
 
             updateKifuSenkei(tempFile, "矢倉")
 
             val resultText = Files.readString(tempFile, Charsets.UTF_8)
-            val expected = """
-                先手：先手
-                後手：後手
-
-                戦型：矢倉
-                1 ７六歩(77)
-                2 ３四歩(33)
-            """.trimIndent()
+            val expected = "先手：先手\n後手：後手\n\n戦型：矢倉\n   1 ７六歩(77)\n   2 ３四歩(33)"
             assertEquals(expected, resultText)
         } finally {
             Files.deleteIfExists(tempFile)
