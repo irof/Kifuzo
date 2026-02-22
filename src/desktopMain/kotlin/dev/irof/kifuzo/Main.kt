@@ -101,20 +101,12 @@ fun KifuzoApp() {
                 .onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown) {
                         when (event.key) {
-                            Key.DirectionRight -> {
+                            Key.DirectionRight, Key.DirectionDown -> {
                                 viewModel.dispatch(KifuzoAction.NextStep)
                                 true
                             }
-                            Key.DirectionLeft -> {
+                            Key.DirectionLeft, Key.DirectionUp -> {
                                 viewModel.dispatch(KifuzoAction.PrevStep)
-                                true
-                            }
-                            Key.DirectionDown -> {
-                                viewModel.dispatch(KifuzoAction.SelectNextFile)
-                                true
-                            }
-                            Key.DirectionUp -> {
-                                viewModel.dispatch(KifuzoAction.SelectPrevFile)
                                 true
                             }
                             else -> false
