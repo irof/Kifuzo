@@ -80,157 +80,184 @@ fun main() = application {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun KifuzoApp() {
     val viewModel = remember { KifuzoViewModel() }
     val state = viewModel.uiState
-    val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
         viewModel.refreshFiles()
-        focusRequester.requestFocus()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .focusRequester(focusRequester)
-                .focusable()
-                .onPreviewKeyEvent { event ->
-                    if (event.type == KeyEventType.KeyDown) {
-                        when (event.key) {
-                            Key.DirectionRight, Key.DirectionDown -> {
-                                viewModel.dispatch(KifuzoAction.NextStep)
-                                true
-                            }
-                            Key.DirectionLeft, Key.DirectionUp -> {
-                                viewModel.dispatch(KifuzoAction.PrevStep)
-                                true
-                            }
-                            else -> false
-                        }
-                    } else {
-                        false
-                    }
-                },
-        ) {
-            KifuMenuBar(
-                isSidebarVisible = state.isSidebarVisible,
-                onToggleSidebar = { viewModel.dispatch(KifuzoAction.ToggleSidebar) },
-                onImport = { viewModel.dispatch(KifuzoAction.ShowImportDialog(true)) },
-                onShowSettings = { viewModel.dispatch(KifuzoAction.ShowSettings(true)) },
-            )
-
-            if (state.isSidebarVisible) {
-                KifuSidebar(
-                    state = state,
-                    currentRoot = viewModel.currentRootDirectory,
-                    onSetRoot = { viewModel.dispatch(KifuzoAction.SetRootDirectory(it)) },
-                    onRefresh = { viewModel.dispatch(KifuzoAction.RefreshFiles) },
-                    onToggleDir = { viewModel.dispatch(KifuzoAction.ToggleDirectory(it)) },
-                    onSelectFile = { viewModel.dispatch(KifuzoAction.SelectFile(it)) },
-                    onShowText = { viewModel.dispatch(KifuzoAction.SetViewingText(it)) },
-                    onSetViewMode = { viewModel.dispatch(KifuzoAction.SetViewMode(it)) },
-                    onToggleFileFilter = { viewModel.dispatch(KifuzoAction.ToggleFileFilter(it)) },
-                    modifier = Modifier.width(state.sidebarWidth.dp),
-                )
-
-                // ドラッグ可能な境界線
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(4.dp)
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
-                                viewModel.dispatch(KifuzoAction.UpdateSidebarWidth(dragAmount.x))
-                            }
-                        }
-                        .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
-                        .background(Color.LightGray.copy(alpha = 0.5f)),
-                )
-            }
-
-            KifuPreviewPanel(
-                state = state,
-                boardState = viewModel.boardState,
-                onToggleFlip = { viewModel.dispatch(KifuzoAction.ToggleFlipped) },
-                onDetectSenkei = { viewModel.dispatch(KifuzoAction.DetectAndWriteSenkei(it)) },
-                onConvertCsa = { viewModel.dispatch(KifuzoAction.ConvertCsa(it)) },
-                onRename = { viewModel.dispatch(KifuzoAction.RenameFile(it)) },
-                onWriteResult = { path, result -> viewModel.dispatch(KifuzoAction.WriteGameResult(path, result)) },
-                onStepChange = { viewModel.dispatch(KifuzoAction.ChangeStep(it)) },
-                modifier = Modifier.weight(1.0f),
-            )
-        }
-
-        // --- オーバーレイ・ダイアログ類 ---
-
-        if (state.errorMessage != null || state.infoMessage != null) {
-            val title = if (state.errorMessage != null) AppStrings.ERROR else AppStrings.NOTIFICATION
-            val msg = state.errorMessage ?: state.infoMessage!!
-            AlertDialog(
-                onDismissRequest = { viewModel.dispatch(KifuzoAction.ClearErrorAndInfo) },
-                title = { Text(title) },
-                text = { Text(msg) },
-                buttons = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.PaddingMedium),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (state.errorMessage != null) {
-                            androidx.compose.material.OutlinedButton(
-                                onClick = { copyToClipboard(msg) },
-                                modifier = Modifier.padding(end = 8.dp),
-                            ) {
-                                Text(AppStrings.COPY)
-                            }
-                        }
-                        Button(onClick = { viewModel.dispatch(KifuzoAction.ClearErrorAndInfo) }) {
-                            Text(AppStrings.OK)
-                        }
-                    }
-                },
-            )
-        }
-
-        if (state.showOverwriteConfirm != null) {
-            OverwriteConfirmDialog(
-                file = state.showOverwriteConfirm.toFile(),
-                onDismiss = { viewModel.dispatch(KifuzoAction.HideOverwriteConfirm) },
-                onConfirm = { viewModel.dispatch(KifuzoAction.ConfirmOverwrite) },
-            )
-        }
-
-        if (state.showSettings) {
-            SettingsDialog(
-                initialRegex = state.myNameRegex,
-                initialTemplate = state.filenameTemplate,
-                onDismiss = { viewModel.dispatch(KifuzoAction.ShowSettings(false)) },
-                onSave = { regex, template -> viewModel.dispatch(KifuzoAction.SaveSettings(regex, template)) },
-            )
-        }
-
-        if (state.showImportDialog) {
-            ImportDialog(
-                initialSourceDir = AppSettings.importSourceDir,
-                onDismiss = { viewModel.dispatch(KifuzoAction.ShowImportDialog(false)) },
-                onImport = { viewModel.dispatch(KifuzoAction.ImportFiles(it)) },
-            )
-        }
-
-        if (state.viewingText != null) {
-            KifuTextViewer(
-                text = state.viewingText,
-                onDismiss = { viewModel.dispatch(KifuzoAction.SetViewingText(null)) },
-                onCopy = {
-                    copyToClipboard(state.viewingText)
-                    viewModel.dispatch(KifuzoAction.SetViewingText(null))
-                },
-            )
-        }
+        KifuzoAppContent(viewModel)
+        KifuzoDialogs(viewModel)
     }
+}
+
+@Composable
+private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
+    val state = viewModel.uiState
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .focusRequester(focusRequester)
+            .focusable()
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when (event.key) {
+                    Key.DirectionRight, Key.DirectionDown -> {
+                        viewModel.dispatch(KifuzoAction.NextStep)
+                        true
+                    }
+                    Key.DirectionLeft, Key.DirectionUp -> {
+                        viewModel.dispatch(KifuzoAction.PrevStep)
+                        true
+                    }
+                    else -> false
+                }
+            },
+    ) {
+        KifuMenuBar(
+            isSidebarVisible = state.isSidebarVisible,
+            onToggleSidebar = { viewModel.dispatch(KifuzoAction.ToggleSidebar) },
+            onImport = { viewModel.dispatch(KifuzoAction.ShowImportDialog(true)) },
+            onShowSettings = { viewModel.dispatch(KifuzoAction.ShowSettings(true)) },
+        )
+
+        if (state.isSidebarVisible) {
+            KifuSidebar(
+                state = state,
+                currentRoot = viewModel.currentRootDirectory,
+                onSetRoot = { viewModel.dispatch(KifuzoAction.SetRootDirectory(it)) },
+                onRefresh = { viewModel.dispatch(KifuzoAction.RefreshFiles) },
+                onToggleDir = { viewModel.dispatch(KifuzoAction.ToggleDirectory(it)) },
+                onSelectFile = { viewModel.dispatch(KifuzoAction.SelectFile(it)) },
+                onShowText = { viewModel.dispatch(KifuzoAction.SetViewingText(it)) },
+                onSetViewMode = { viewModel.dispatch(KifuzoAction.SetViewMode(it)) },
+                onToggleFileFilter = { viewModel.dispatch(KifuzoAction.ToggleFileFilter(it)) },
+                modifier = Modifier.width(state.sidebarWidth.dp),
+            )
+
+            SidebarResizer { viewModel.dispatch(KifuzoAction.UpdateSidebarWidth(it)) }
+        }
+
+        KifuPreviewPanel(
+            state = state,
+            boardState = viewModel.boardState,
+            onToggleFlip = { viewModel.dispatch(KifuzoAction.ToggleFlipped) },
+            onDetectSenkei = { viewModel.dispatch(KifuzoAction.DetectAndWriteSenkei(it)) },
+            onConvertCsa = { viewModel.dispatch(KifuzoAction.ConvertCsa(it)) },
+            onRename = { viewModel.dispatch(KifuzoAction.RenameFile(it)) },
+            onWriteResult = { path, result -> viewModel.dispatch(KifuzoAction.WriteGameResult(path, result)) },
+            onStepChange = { viewModel.dispatch(KifuzoAction.ChangeStep(it)) },
+            modifier = Modifier.weight(1.0f),
+        )
+    }
+}
+
+@Composable
+private fun SidebarResizer(onWidthChange: (Float) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(4.dp)
+            .pointerInput(Unit) {
+                detectDragGestures { change, dragAmount ->
+                    change.consume()
+                    onWidthChange(dragAmount.x)
+                }
+            }
+            .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
+            .background(Color.LightGray.copy(alpha = 0.5f)),
+    )
+}
+
+@Composable
+private fun KifuzoDialogs(viewModel: KifuzoViewModel) {
+    val state = viewModel.uiState
+
+    if (state.errorMessage != null || state.infoMessage != null) {
+        MessageDialog(
+            errorMessage = state.errorMessage,
+            infoMessage = state.infoMessage,
+            onDismiss = { viewModel.dispatch(KifuzoAction.ClearErrorAndInfo) },
+        )
+    }
+
+    if (state.showOverwriteConfirm != null) {
+        OverwriteConfirmDialog(
+            file = state.showOverwriteConfirm.toFile(),
+            onDismiss = { viewModel.dispatch(KifuzoAction.HideOverwriteConfirm) },
+            onConfirm = { viewModel.dispatch(KifuzoAction.ConfirmOverwrite) },
+        )
+    }
+
+    if (state.showSettings) {
+        SettingsDialog(
+            initialRegex = state.myNameRegex,
+            initialTemplate = state.filenameTemplate,
+            onDismiss = { viewModel.dispatch(KifuzoAction.ShowSettings(false)) },
+            onSave = { regex, template -> viewModel.dispatch(KifuzoAction.SaveSettings(regex, template)) },
+        )
+    }
+
+    if (state.showImportDialog) {
+        ImportDialog(
+            initialSourceDir = AppSettings.importSourceDir,
+            onDismiss = { viewModel.dispatch(KifuzoAction.ShowImportDialog(false)) },
+            onImport = { viewModel.dispatch(KifuzoAction.ImportFiles(it)) },
+        )
+    }
+
+    if (state.viewingText != null) {
+        KifuTextViewer(
+            text = state.viewingText,
+            onDismiss = { viewModel.dispatch(KifuzoAction.SetViewingText(null)) },
+            onCopy = {
+                copyToClipboard(state.viewingText)
+                viewModel.dispatch(KifuzoAction.SetViewingText(null))
+            },
+        )
+    }
+}
+
+@Composable
+private fun MessageDialog(
+    errorMessage: String?,
+    infoMessage: String?,
+    onDismiss: () -> Unit,
+) {
+    val title = if (errorMessage != null) AppStrings.ERROR else AppStrings.NOTIFICATION
+    val msg = errorMessage ?: infoMessage ?: ""
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(msg) },
+        buttons = {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.PaddingMedium),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (errorMessage != null) {
+                    androidx.compose.material.OutlinedButton(
+                        onClick = { copyToClipboard(msg) },
+                        modifier = Modifier.padding(end = 8.dp),
+                    ) {
+                        Text(AppStrings.COPY)
+                    }
+                }
+                Button(onClick = onDismiss) {
+                    Text(AppStrings.OK)
+                }
+            }
+        },
+    )
 }
