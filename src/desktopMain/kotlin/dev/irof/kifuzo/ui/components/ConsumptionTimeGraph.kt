@@ -17,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -30,7 +29,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
@@ -38,14 +36,6 @@ import kotlin.math.max
 
 private object TimeGraphConstants {
     const val ALPHA_BAR = 0.6f
-    const val ALPHA_GRID = 0.2f
-    const val ALPHA_TOOLTIP = 0.7f
-    const val ALPHA_LABEL = 0.8f
-    val TOOLTIP_PADDING = 4.dp
-    val TOOLTIP_OFFSET = 8.dp
-    val TOOLTIP_CORNER_RADIUS = 4.dp
-    const val LINE_WIDTH_THIN = 1f
-    const val LINE_WIDTH_INDICATOR = 2f
     const val MIN_MAX_SECONDS = 60f // デフォルトの最低表示秒数
 
     const val GRID_SEC_5 = 5f
@@ -63,26 +53,8 @@ private object TimeGraphConstants {
     const val INTERVAL_SEC_300 = 300f
     const val INTERVAL_SEC_600 = 600f
 
-    val LABEL_FONT_SIZE = 8.sp
-    val LABEL_OFFSET_X = 4.dp
-
     const val SCALE_THRESHOLD = 60f // 1分を超えたら圧縮
     const val SCALE_COMPRESSION = 0.2f // 圧縮率
-}
-
-private class TimeScaler(private val maxSeconds: Float, private val height: Float) {
-    val displayMax = calculateScaledValue(maxSeconds)
-
-    fun getScaledY(seconds: Float): Float {
-        val scaledValue = calculateScaledValue(seconds)
-        return height - (scaledValue / displayMax * height)
-    }
-
-    private fun calculateScaledValue(value: Float): Float = if (value <= TimeGraphConstants.SCALE_THRESHOLD) {
-        value
-    } else {
-        TimeGraphConstants.SCALE_THRESHOLD + (value - TimeGraphConstants.SCALE_THRESHOLD) * TimeGraphConstants.SCALE_COMPRESSION
-    }
 }
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalTextApi::class)
@@ -132,14 +104,29 @@ fun ConsumptionTimeGraph(
                 maxSecondsActual < 20f -> 20f
                 else -> max(TimeGraphConstants.MIN_MAX_SECONDS, maxSecondsActual)
             }
-            val scaler = TimeScaler(maxSeconds, size.height)
+            val scaler = NonLinearScaler(
+                maxActualValue = maxSeconds,
+                height = size.height,
+                threshold = TimeGraphConstants.SCALE_THRESHOLD,
+                compression = TimeGraphConstants.SCALE_COMPRESSION,
+                mode = ScalerMode.BOTTOM_ZERO,
+            )
 
             drawTimeGridLines(maxSeconds, scaler, textMeasurer)
             drawTimeBars(times, stepWidth, scaler)
             drawTimeIndicator(currentStep, totalSteps, stepWidth)
 
             hoverStep?.let { step ->
-                drawTimeTooltip(step, times.getOrNull(step), stepWidth, scaler, textMeasurer)
+                val seconds = times.getOrNull(step)
+                if (seconds != null) {
+                    val timeStr = "${seconds / ShogiConstants.SECONDS_IN_MINUTE}:${(seconds % ShogiConstants.SECONDS_IN_MINUTE).toString().padStart(2, '0')}"
+                    drawGraphTooltip(
+                        x = step * stepWidth,
+                        y = scaler.getScaledY(seconds.toFloat()),
+                        label = "${step}手目: $timeStr",
+                        textMeasurer = textMeasurer,
+                    )
+                }
             }
         }
     }
@@ -147,7 +134,7 @@ fun ConsumptionTimeGraph(
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeGridLines(
     maxSeconds: Float,
-    scaler: TimeScaler,
+    scaler: NonLinearScaler,
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
 ) {
     val gridInterval = when {
@@ -165,10 +152,10 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeGridLines(
         if (y < 0) break
 
         drawLine(
-            color = Color.Gray.copy(alpha = TimeGraphConstants.ALPHA_GRID),
+            color = Color.Gray.copy(alpha = GraphCommonConstants.ALPHA_GRID_LIGHT),
             start = Offset(0f, y),
             end = Offset(size.width, y),
-            strokeWidth = TimeGraphConstants.LINE_WIDTH_THIN,
+            strokeWidth = GraphCommonConstants.LINE_WIDTH_THIN,
         )
 
         val label = when {
@@ -182,11 +169,11 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeGridLines(
         }
         val textLayoutResult = textMeasurer.measure(
             text = AnnotatedString(label),
-            style = TextStyle(color = Color.Gray.copy(alpha = TimeGraphConstants.ALPHA_LABEL), fontSize = TimeGraphConstants.LABEL_FONT_SIZE),
+            style = TextStyle(color = Color.Gray.copy(alpha = GraphCommonConstants.ALPHA_LABEL), fontSize = GraphCommonConstants.LABEL_FONT_SIZE),
         )
         drawText(
             textLayoutResult,
-            topLeft = Offset(TimeGraphConstants.LABEL_OFFSET_X.toPx(), y - textLayoutResult.size.height),
+            topLeft = Offset(GraphCommonConstants.LABEL_OFFSET_X.toPx(), y - textLayoutResult.size.height),
         )
 
         gridSeconds += gridInterval
@@ -196,7 +183,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeGridLines(
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeBars(
     times: List<Int?>,
     stepWidth: Float,
-    scaler: TimeScaler,
+    scaler: NonLinearScaler,
 ) {
     for (i in times.indices) {
         val seconds = times[i]?.toFloat() ?: continue
@@ -208,7 +195,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeBars(
         drawRect(
             color = color.copy(alpha = TimeGraphConstants.ALPHA_BAR),
             topLeft = Offset(i * stepWidth, y),
-            size = Size(stepWidth.coerceAtLeast(TimeGraphConstants.LINE_WIDTH_THIN), barHeight),
+            size = Size(stepWidth.coerceAtLeast(GraphCommonConstants.LINE_WIDTH_THIN), barHeight),
         )
     }
 }
@@ -219,39 +206,6 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeIndicator(c
         color = Color.Black,
         start = Offset(currentX, 0f),
         end = Offset(currentX, size.height),
-        strokeWidth = TimeGraphConstants.LINE_WIDTH_INDICATOR,
+        strokeWidth = GraphCommonConstants.LINE_WIDTH_INDICATOR,
     )
-}
-
-@OptIn(ExperimentalTextApi::class)
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeTooltip(
-    step: Int,
-    seconds: Int?,
-    stepWidth: Float,
-    scaler: TimeScaler,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
-) {
-    if (seconds == null) return
-    val x = step * stepWidth
-    val timeStr = "${seconds / ShogiConstants.SECONDS_IN_MINUTE}:${(seconds % ShogiConstants.SECONDS_IN_MINUTE).toString().padStart(2, '0')}"
-    val textLayoutResult = textMeasurer.measure(
-        text = AnnotatedString("${step}手目: $timeStr"),
-        style = TextStyle(color = Color.White, fontSize = 10.sp),
-    )
-
-    val padding = TimeGraphConstants.TOOLTIP_PADDING.toPx()
-    val tooltipWidth = textLayoutResult.size.width + padding * 2
-    val tooltipHeight = textLayoutResult.size.height + padding * 2
-
-    var tooltipX = x + TimeGraphConstants.TOOLTIP_OFFSET.toPx()
-    if (tooltipX + tooltipWidth > this.size.width) tooltipX = x - tooltipWidth - TimeGraphConstants.TOOLTIP_OFFSET.toPx()
-    val tooltipY = (scaler.getScaledY(seconds.toFloat()) - tooltipHeight).coerceIn(0f, this.size.height - tooltipHeight)
-
-    drawRoundRect(
-        color = Color.Black.copy(alpha = TimeGraphConstants.ALPHA_TOOLTIP),
-        topLeft = Offset(tooltipX, tooltipY),
-        size = Size(tooltipWidth, tooltipHeight),
-        cornerRadius = CornerRadius(TimeGraphConstants.TOOLTIP_CORNER_RADIUS.toPx()),
-    )
-    drawText(textLayoutResult, color = Color.White, topLeft = Offset(tooltipX + padding, tooltipY + padding))
 }
