@@ -42,7 +42,7 @@ enum class ScalerMode {
  * 閾値を超えた値を指定された比率で圧縮します。
  */
 class NonLinearScaler(
-    maxActualValue: Float,
+    private val maxActualValue: Float,
     private val height: Float,
     private val threshold: Float,
     private val compression: Float,
@@ -52,7 +52,8 @@ class NonLinearScaler(
     private val displayMax = calculateScaledValue(maxActualValue)
 
     fun getScaledY(value: Float): Float {
-        val scaledValue = calculateScaledValue(value)
+        val clampedValue = value.coerceIn(-maxActualValue, maxActualValue)
+        val scaledValue = calculateScaledValue(clampedValue)
         return when (mode) {
             ScalerMode.CENTER_ZERO -> {
                 val centerY = height / 2f
