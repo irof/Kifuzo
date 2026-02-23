@@ -28,6 +28,33 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.ui.theme.ShogiColors
 
+private object GraphConstants {
+    const val MAX_EVAL = 10000f
+    const val THRESHOLD = 2000f
+    const val COMPRESSION = 0.5f
+    val DISPLAY_MAX = THRESHOLD + (MAX_EVAL - THRESHOLD) * COMPRESSION
+}
+
+private class GraphScaler(private val isFlipped: Boolean, private val height: Float) {
+    private val centerY = height / 2f
+
+    fun getScaledY(eval: Int?): Float {
+        if (eval == null) return centerY
+        val value = eval.coerceIn(-10000, 10000).toFloat()
+        val absVal = kotlin.math.abs(value)
+        val base = if (absVal <= GraphConstants.THRESHOLD) {
+            value
+        } else {
+            val sign = if (value >= 0) 1f else -1f
+            sign * (GraphConstants.THRESHOLD + (absVal - GraphConstants.THRESHOLD) * GraphConstants.COMPRESSION)
+        }
+        val scaledValue = if (isFlipped) -base else base
+        return centerY - (scaledValue / GraphConstants.DISPLAY_MAX * centerY)
+    }
+
+    fun getThresholdY(): Float = centerY * (GraphConstants.THRESHOLD / GraphConstants.DISPLAY_MAX)
+}
+
 /**
  * 評価値の推移をグラフ表示するコンポーネント
  */
@@ -58,7 +85,6 @@ fun EvaluationGraph(
                             null
                         }
 
-                        // クリック（離した瞬間）の判定
                         if (event.type == PointerEventType.Release && change.position.x in 0f..size.width.toFloat()) {
                             val stepCount = evaluations.size
                             val stepWidth = if (stepCount > 1) size.width.toFloat() / (stepCount - 1) else size.width.toFloat()
@@ -72,179 +98,120 @@ fun EvaluationGraph(
                 hoverX = null
             },
     ) {
-        val width = size.width
-        val height = size.height
-        val centerY = height / 2f
-
-        // 評価値の表示制御用の定数
-        val maxEval = 10000f
-        val threshold = 2000f
-        val compression = 0.5f
-
-        // 非線形スケーリング関数: thresholdを超えた分を圧縮する
-        fun getScaledEval(value: Float): Float {
-            val absVal = kotlin.math.abs(value)
-            val base = if (absVal <= threshold) {
-                value
-            } else {
-                val sign = if (value >= 0) 1f else -1f
-                sign * (threshold + (absVal - threshold) * compression)
-            }
-            // 盤面反転時はグラフも上下反転させる
-            return if (isFlipped) -base else base
-        }
-
-        // スケーリング後の最大表示値
-        val displayMax = threshold + (maxEval - threshold) * compression
-
-        // 領域の色分け (反転時は色も入れ替える)
-        val posColor = if (isFlipped) ShogiColors.EvalNegative else ShogiColors.EvalPositive
-        val negColor = if (isFlipped) ShogiColors.EvalPositive else ShogiColors.EvalNegative
-
-        // 0-2000 領域
-        val thresholdY = centerY * (threshold / displayMax)
-        drawRect(
-            color = posColor.copy(alpha = 0.15f),
-            topLeft = Offset(0f, centerY - thresholdY),
-            size = Size(width, thresholdY),
-        )
-        drawRect(
-            color = negColor.copy(alpha = 0.15f),
-            topLeft = Offset(0f, centerY),
-            size = Size(width, thresholdY),
-        )
-
-        // 2000以上 領域 (より濃く)
-        drawRect(
-            color = posColor.copy(alpha = 0.35f),
-            topLeft = Offset(0f, 0f),
-            size = Size(width, centerY - thresholdY),
-        )
-        drawRect(
-            color = negColor.copy(alpha = 0.35f),
-            topLeft = Offset(0f, centerY + thresholdY),
-            size = Size(width, height - (centerY + thresholdY)),
-        )
-
-        // 横線（1000ごと）
-        for (i in -10..10) {
-            val evalValue = i * 1000f
-            if (i == 0 || kotlin.math.abs(evalValue) > maxEval) continue
-
-            val scaledValue = getScaledEval(evalValue)
-            val y = centerY - (scaledValue / displayMax * centerY)
-
-            if (y in 0f..height) {
-                val isThreshold = kotlin.math.abs(evalValue) == threshold
-                drawLine(
-                    color = if (isThreshold) Color.Gray.copy(alpha = 0.5f) else Color.Gray.copy(alpha = 0.2f),
-                    start = Offset(0f, y),
-                    end = Offset(width, y),
-                    strokeWidth = if (isThreshold) 1.5f else 1f,
-                )
-            }
-        }
-        // 背景（0ライン）
-        drawLine(
-            color = Color.Gray.copy(alpha = 0.5f),
-            start = Offset(0f, centerY),
-            end = Offset(width, centerY),
-            strokeWidth = 1f,
-        )
-
+        val scaler = GraphScaler(isFlipped, size.height)
         val stepCount = evaluations.size
-        val stepWidth = if (stepCount > 1) width / (stepCount - 1) else width
+        val stepWidth = if (stepCount > 1) size.width / (stepCount - 1) else size.width
 
-        // 折れ線の描画
-        if (stepCount > 1) {
-            var lastPoint: Offset? = null
+        drawGraphBackground(scaler, isFlipped)
+        drawEvaluationLine(evaluations, scaler, stepWidth)
+        drawCurrentStepLine(currentStep, evaluations.size, stepWidth)
 
-            for (i in evaluations.indices) {
-                val eval = evaluations[i] ?: continue
-                val x = i * stepWidth
-                // 評価値を画面高さに合わせて変換
-                val scaledEval = getScaledEval(eval.coerceIn(-10000, 10000).toFloat())
-                val y = centerY - (scaledEval / displayMax * centerY)
-
-                val currentPoint = Offset(x, y)
-                if (lastPoint != null) {
-                    drawLine(
-                        color = ShogiColors.EvalLine,
-                        start = lastPoint,
-                        end = currentPoint,
-                        strokeWidth = 3f,
-                    )
-                }
-                lastPoint = currentPoint
-            }
-        }
-
-        // 現在の手数位置を示す縦棒
-        if (evaluations.isNotEmpty()) {
-            val currentX = currentStep.coerceIn(0, evaluations.size - 1) * stepWidth
-            drawLine(
-                color = ShogiColors.EvalCurrentPos,
-                start = Offset(currentX, 0f),
-                end = Offset(currentX, height),
-                strokeWidth = 2f,
-            )
-        }
-
-        // 外枠
         drawRect(
             color = Color.Gray,
-            topLeft = Offset(0f, 0f),
-            size = size,
             style = Stroke(width = 1.dp.toPx()),
         )
 
-        // ホバー時のツールチップ描画
         hoverX?.let { hx ->
             val stepIndex = (hx / stepWidth).toInt().coerceIn(0, evaluations.size - 1)
-            val eval = evaluations[stepIndex]
-            val x = stepIndex * stepWidth
-
-            // ガイド線
-            drawLine(
-                color = Color.Black.copy(alpha = 0.3f),
-                start = Offset(x, 0f),
-                end = Offset(x, height),
-                strokeWidth = 1f,
-            )
-
-            if (eval != null) {
-                val sign = if (eval > 0) "+" else ""
-                val text = "${stepIndex}手目: $sign$eval"
-                val textLayoutResult = textMeasurer.measure(
-                    text = AnnotatedString(text),
-                    style = TextStyle(color = Color.White, fontSize = 10.sp),
-                )
-
-                val padding = 4.dp.toPx()
-                val tooltipWidth = textLayoutResult.size.width + padding * 2
-                val tooltipHeight = textLayoutResult.size.height + padding * 2
-
-                var tooltipX = x + 8.dp.toPx()
-                if (tooltipX + tooltipWidth > width) {
-                    tooltipX = x - tooltipWidth - 8.dp.toPx()
-                }
-
-                val scaledEval = getScaledEval(eval.coerceIn(-10000, 10000).toFloat())
-                val tooltipY = (centerY - (scaledEval / displayMax * centerY) - tooltipHeight / 2).coerceIn(0f, height - tooltipHeight)
-
-                drawRoundRect(
-                    color = Color.Black.copy(alpha = 0.7f),
-                    topLeft = Offset(tooltipX, tooltipY),
-                    size = Size(tooltipWidth, tooltipHeight),
-                    cornerRadius = CornerRadius(4.dp.toPx()),
-                    style = Fill,
-                )
-
-                drawText(
-                    textLayoutResult = textLayoutResult,
-                    topLeft = Offset(tooltipX + padding, tooltipY + padding),
-                )
-            }
+            drawHoverTooltip(stepIndex, evaluations[stepIndex], stepWidth, scaler, textMeasurer)
         }
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGraphBackground(
+    scaler: GraphScaler,
+    isFlipped: Boolean,
+) {
+    val width = size.width
+    val height = size.height
+    val centerY = height / 2f
+    val thresholdY = scaler.getThresholdY()
+
+    val posColor = if (isFlipped) ShogiColors.EvalNegative else ShogiColors.EvalPositive
+    val negColor = if (isFlipped) ShogiColors.EvalPositive else ShogiColors.EvalNegative
+
+    // Background zones
+    drawRect(posColor.copy(alpha = 0.15f), Offset(0f, centerY - thresholdY), Size(width, thresholdY))
+    drawRect(negColor.copy(alpha = 0.15f), Offset(0f, centerY), Size(width, thresholdY))
+    drawRect(posColor.copy(alpha = 0.35f), Offset(0f, 0f), Size(width, centerY - thresholdY))
+    drawRect(negColor.copy(alpha = 0.35f), Offset(0f, centerY + thresholdY), Size(width, height - (centerY + thresholdY)))
+
+    // Grid lines
+    for (i in -10..10) {
+        if (i == 0) continue
+        val y = scaler.getScaledY(i * 1000)
+        if (y in 0f..height) {
+            val isThreshold = kotlin.math.abs(i * 1000) == 2000
+            drawLine(
+                color = Color.Gray.copy(alpha = if (isThreshold) 0.5f else 0.2f),
+                start = Offset(0f, y),
+                end = Offset(width, y),
+                strokeWidth = if (isThreshold) 1.5f else 1f,
+            )
+        }
+    }
+    drawLine(Color.Gray.copy(alpha = 0.5f), Offset(0f, centerY), Offset(width, centerY), 1f)
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawEvaluationLine(
+    evaluations: List<Int?>,
+    scaler: GraphScaler,
+    stepWidth: Float,
+) {
+    if (evaluations.size <= 1) return
+    var lastPoint: Offset? = null
+    for (i in evaluations.indices) {
+        val eval = evaluations[i] ?: continue
+        val currentPoint = Offset(i * stepWidth, scaler.getScaledY(eval))
+        if (lastPoint != null) {
+            drawLine(ShogiColors.EvalLine, lastPoint, currentPoint, 3f)
+        }
+        lastPoint = currentPoint
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCurrentStepLine(
+    currentStep: Int,
+    totalSteps: Int,
+    stepWidth: Float,
+) {
+    if (totalSteps == 0) return
+    val currentX = currentStep.coerceIn(0, totalSteps - 1) * stepWidth
+    drawLine(ShogiColors.EvalCurrentPos, Offset(currentX, 0f), Offset(currentX, size.height), 2f)
+}
+
+@OptIn(ExperimentalTextApi::class)
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHoverTooltip(
+    stepIndex: Int,
+    eval: Int?,
+    stepWidth: Float,
+    scaler: GraphScaler,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+) {
+    val x = stepIndex * stepWidth
+    drawLine(Color.Black.copy(alpha = 0.3f), Offset(x, 0f), Offset(x, size.height), 1f)
+
+    if (eval != null) {
+        val sign = if (eval > 0) "+" else ""
+        val textLayoutResult = textMeasurer.measure(
+            text = AnnotatedString("${stepIndex}手目: $sign$eval"),
+            style = TextStyle(color = Color.White, fontSize = 10.sp),
+        )
+
+        val padding = 4.dp.toPx()
+        val tooltipWidth = textLayoutResult.size.width + padding * 2
+        val tooltipHeight = textLayoutResult.size.height + padding * 2
+
+        var tooltipX = x + 8.dp.toPx()
+        if (tooltipX + tooltipWidth > size.width) tooltipX = x - tooltipWidth - 8.dp.toPx()
+        val tooltipY = (scaler.getScaledY(eval) - tooltipHeight / 2).coerceIn(0f, size.height - tooltipHeight)
+
+        drawRoundRect(
+            color = Color.Black.copy(alpha = 0.7f),
+            topLeft = Offset(tooltipX, tooltipY),
+            size = Size(tooltipWidth, tooltipHeight),
+            cornerRadius = CornerRadius(4.dp.toPx()),
+        )
+        drawText(textLayoutResult, Offset(tooltipX + padding, tooltipY + padding))
     }
 }
