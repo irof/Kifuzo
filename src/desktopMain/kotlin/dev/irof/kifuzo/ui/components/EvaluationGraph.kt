@@ -114,9 +114,24 @@ fun EvaluationGraph(
                 is Evaluation.Unknown -> null
             }
             if (label != null) {
+                val pointX = (stepIndex + 0.5f) * stepWidth
+                val pointY = scaler.getScaledY(eval.orNull()?.toFloat() ?: 0f)
+
+                // データポイントの丸点を表示
+                drawCircle(
+                    color = ShogiColors.EvalLine,
+                    radius = 4.dp.toPx(),
+                    center = Offset(pointX, pointY),
+                )
+                drawCircle(
+                    color = Color.White,
+                    radius = 2.dp.toPx(),
+                    center = Offset(pointX, pointY),
+                )
+
                 drawGraphTooltip(
                     x = stepIndex * stepWidth,
-                    y = scaler.getScaledY(eval.orNull()?.toFloat() ?: 0f),
+                    y = pointY,
                     label = label,
                     textMeasurer = textMeasurer,
                 )
