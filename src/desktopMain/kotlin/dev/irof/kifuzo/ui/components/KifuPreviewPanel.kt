@@ -229,21 +229,25 @@ private fun KifuOperationBar(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
                 verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingSmall),
             ) {
-                if (evaluations.any { it != null }) {
+                val hasEval = evaluations.any { it != null }
+                val hasTime = consumptionTimes.any { it != null }
+                val targetHeight = if (hasEval && hasTime) ShogiDimensions.DualGraphHeight else ShogiDimensions.GraphHeight
+
+                if (hasEval) {
                     EvaluationGraph(
                         evaluations = evaluations,
                         currentStep = currentStep,
                         isFlipped = isFlipped,
                         onStepClick = onStepChange,
-                        modifier = Modifier.height(ShogiDimensions.GraphHeight / 2),
+                        modifier = Modifier.height(targetHeight),
                     )
                 }
-                if (consumptionTimes.any { it != null }) {
+                if (hasTime) {
                     ConsumptionTimeGraph(
                         times = consumptionTimes,
                         currentStep = currentStep,
                         onStepClick = onStepChange,
-                        modifier = Modifier.height(ShogiDimensions.GraphHeight / 2),
+                        modifier = Modifier.height(targetHeight),
                     )
                 }
             }

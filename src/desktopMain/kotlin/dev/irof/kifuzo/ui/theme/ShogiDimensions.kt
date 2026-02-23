@@ -29,6 +29,7 @@ object ShogiDimensions {
 
     val MoveListWidth = 280.dp
     val GraphHeight = 240.dp
+    val DualGraphHeight = 160.dp
 
     const val CHIP_SELECTED_ALPHA = 0.1f
 }

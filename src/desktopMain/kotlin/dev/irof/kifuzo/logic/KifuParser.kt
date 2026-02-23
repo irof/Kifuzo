@@ -277,8 +277,8 @@ private class HeaderParser {
     }
 }
 
-private val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*(?:\(\s*(\d+):(\d+)/.*\))?.*""")
-private val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*(?:\(\s*(\d+):(\d+)/.*\))?.*""")
+private val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*?(?:\(\s*(\d+):(\d+)/.*\))?.*""")
+private val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*?(?:\(\s*(\d+):(\d+)/.*\))?.*""")
 private val resultRegex = Regex("""^\s*(\d+)\s+(${dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.joinToString("|")}).*""")
 
 private object RegexGroups {
