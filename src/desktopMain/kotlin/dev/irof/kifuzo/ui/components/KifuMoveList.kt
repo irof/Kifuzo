@@ -48,7 +48,11 @@ fun KifuMoveList(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val showEvaluation = history.any { it.evaluation is Evaluation.Score && it.evaluation.value != 0 }
+    val showEvaluation = history.any {
+        it.evaluation is Evaluation.SenteWin ||
+            it.evaluation is Evaluation.GoteWin ||
+            (it.evaluation is Evaluation.Score && it.evaluation.value != 0)
+    }
 
     LaunchedEffect(currentStep) {
         if (currentStep in history.indices) {
@@ -156,9 +160,35 @@ private fun SignificantMoveBadge(diff: Int?) {
 
 @Composable
 private fun EvaluationInfo(evaluation: Evaluation, diff: Int?) {
-    if (evaluation !is Evaluation.Score) return
-    EvaluationBadge(evaluation.value)
-    EvaluationDiff(diff)
+    when (evaluation) {
+        is Evaluation.Score -> {
+            EvaluationBadge(evaluation.value)
+            EvaluationDiff(diff)
+        }
+        is Evaluation.SenteWin -> {
+            Text(
+                text = "先手勝ち",
+                style = MaterialTheme.typography.caption,
+                fontWeight = FontWeight.Bold,
+                color = ShogiColors.EvalPositive,
+                modifier = Modifier.width(MoveListConstants.EVALUATION_INFO_WIDTH * 2),
+                textAlign = TextAlign.End,
+            )
+        }
+        is Evaluation.GoteWin -> {
+            Text(
+                text = "後手勝ち",
+                style = MaterialTheme.typography.caption,
+                fontWeight = FontWeight.Bold,
+                color = ShogiColors.EvalNegative,
+                modifier = Modifier.width(MoveListConstants.EVALUATION_INFO_WIDTH * 2),
+                textAlign = TextAlign.End,
+            )
+        }
+        is Evaluation.Unknown -> {
+            // Do nothing
+        }
+    }
 }
 
 @Composable

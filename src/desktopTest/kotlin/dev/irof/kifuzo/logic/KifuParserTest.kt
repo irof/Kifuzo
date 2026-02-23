@@ -45,17 +45,17 @@ class KifuParserTest {
     @Test
     fun 詰みコメントから評価値を設定できること() {
         val session = parse(KifuTestData.KIFU_WITH_MATE)
-        assertEquals(Evaluation.Score(31111), session.history[1].evaluation)
-        assertEquals(Evaluation.Score(31111), session.history[2].evaluation)
-        assertEquals(Evaluation.Score(-31111), session.history[3].evaluation)
-        assertEquals(Evaluation.Score(-31111), session.history[4].evaluation)
+        assertEquals(Evaluation.SenteWin, session.history[1].evaluation)
+        assertEquals(Evaluation.SenteWin, session.history[2].evaluation)
+        assertEquals(Evaluation.GoteWin, session.history[3].evaluation)
+        assertEquals(Evaluation.GoteWin, session.history[4].evaluation)
     }
 
     @Test
     fun 評価値よりも詰み情報を優先すること() {
         val session = parse(KifuTestData.KIFU_WITH_PRIORITY_MATE)
-        assertEquals(Evaluation.Score(31111), session.history[1].evaluation)
-        assertEquals(Evaluation.Score(-31111), session.history[2].evaluation)
+        assertEquals(Evaluation.SenteWin, session.history[1].evaluation)
+        assertEquals(Evaluation.GoteWin, session.history[2].evaluation)
     }
 
     @Test
@@ -72,7 +72,7 @@ class KifuParserTest {
         assertEquals(Evaluation.Unknown, session.history[0].evaluation)
         assertEquals(Evaluation.Unknown, session.history[1].evaluation)
         assertEquals(Evaluation.Unknown, session.history[2].evaluation)
-        assertEquals(Evaluation.Score(-31111), session.history[3].evaluation)
+        assertEquals(Evaluation.GoteWin, session.history[3].evaluation)
     }
 
     @Test

@@ -232,11 +232,20 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHoverTooltip(
     val x = stepIndex * stepWidth
     drawLine(Color.Black.copy(alpha = 0.3f), Offset(x, 0f), Offset(x, size.height), GraphConstants.LINE_WIDTH_THIN)
 
-    if (eval is Evaluation.Score) {
-        val score = eval.value
-        val sign = if (score > 0) "+" else ""
+    val label = when (eval) {
+        is Evaluation.Score -> {
+            val score = eval.value
+            val sign = if (score > 0) "+" else ""
+            "${stepIndex}手目: $sign$score"
+        }
+        is Evaluation.SenteWin -> "${stepIndex}手目: 先手勝ち"
+        is Evaluation.GoteWin -> "${stepIndex}手目: 後手勝ち"
+        is Evaluation.Unknown -> null
+    }
+
+    if (label != null) {
         val textLayoutResult = textMeasurer.measure(
-            text = AnnotatedString("${stepIndex}手目: $sign$score"),
+            text = AnnotatedString(label),
             style = TextStyle(color = Color.White, fontSize = 10.sp),
         )
 

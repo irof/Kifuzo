@@ -21,16 +21,17 @@ object ShogiConstants {
 sealed interface Evaluation {
     object Unknown : Evaluation
     data class Score(val value: Int) : Evaluation
+    object SenteWin : Evaluation
+    object GoteWin : Evaluation
 
     fun orNull(): Int? = when (this) {
         is Score -> value
+        is SenteWin -> ShogiConstants.WIN_SCORE
+        is GoteWin -> ShogiConstants.LOSE_SCORE
         is Unknown -> null
     }
 
-    fun orZero(): Int = when (this) {
-        is Score -> value
-        is Unknown -> 0
-    }
+    fun orZero(): Int = orNull() ?: 0
 }
 
 enum class PieceColor {
