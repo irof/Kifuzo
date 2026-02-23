@@ -3,11 +3,10 @@ package dev.irof.kifuzo.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import dev.irof.kifuzo.logic.FileActionHandler
 import dev.irof.kifuzo.logic.FileTreeManager
-import dev.irof.kifuzo.logic.KifuParseException
-import dev.irof.kifuzo.logic.KifuRepository
-import dev.irof.kifuzo.logic.KifuRepositoryImpl
-import dev.irof.kifuzo.logic.detectSenkei
+import dev.irof.kifuzo.logic.ImportHandler
+import dev.irof.kifuzo.logic.SettingsHandler
 import dev.irof.kifuzo.models.AppSettings
 import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileTreeNode
@@ -20,10 +19,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import java.util.regex.PatternSyntaxException
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
 private val logger = KotlinLogging.logger {}
@@ -37,6 +34,31 @@ class KifuzoViewModel(
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val fileTreeManager = FileTreeManager(repository)
+    val boardState = ShogiBoardState()
+
+    private val fileActionHandler = FileActionHandler(
+        repository = repository,
+        boardState = boardState,
+        onError = { msg -> updateState { it.copy(errorMessage = msg) } },
+        onInfo = { msg -> updateState { it.copy(infoMessage = msg) } },
+        onFileRenamed = { path -> updateState { it.copy(selectedFile = path) } },
+        onFilesChanged = { refreshFiles() },
+        onAutoFlip = { settingsHandler.updateAutoFlip(uiState.myNameRegex) },
+    )
+
+    private val importHandler = ImportHandler(
+        repository = repository,
+        onInfo = { msg -> updateState { it.copy(infoMessage = msg) } },
+        onImported = {
+            updateState { it.copy(showImportDialog = false) }
+            refreshFiles()
+        },
+    )
+
+    private val settingsHandler = SettingsHandler(
+        boardState = boardState,
+        onAutoFlip = { flipped -> updateState { it.copy(isFlipped = flipped) } },
+    )
 
     var currentRootDirectory by mutableStateOf<Path?>(
         AppSettings.lastRootDir.let {
@@ -59,26 +81,27 @@ class KifuzoViewModel(
     )
         private set
 
-    val boardState = ShogiBoardState()
-
     fun dispatch(action: KifuzoAction) {
         when (action) {
             is KifuzoAction.SetRootDirectory -> setRootDirectory(action.path)
             is KifuzoAction.ToggleDirectory -> toggleDirectory(action.node)
-            is KifuzoAction.SelectFile -> selectFile(action.path)
-            is KifuzoAction.SaveSettings -> saveSettings(action.regex, action.template)
+            is KifuzoAction.SelectFile -> fileActionHandler.selectFile(action.path).also { updateState { it.copy(selectedFile = action.path) } }
+            is KifuzoAction.SaveSettings -> {
+                settingsHandler.saveSettings(action.regex, action.template)
+                updateState { it.copy(myNameRegex = action.regex, filenameTemplate = action.template, showSettings = false) }
+            }
             is KifuzoAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
             is KifuzoAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
             is KifuzoAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
             is KifuzoAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
             is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, infoMessage = null) }
-            is KifuzoAction.ImportFiles -> importFiles(action.sourceDir)
-            is KifuzoAction.RenameFile -> renameFile(action.path)
+            is KifuzoAction.ImportFiles -> importHandler.importFiles(action.sourceDir, currentRootDirectory)
+            is KifuzoAction.RenameFile -> fileActionHandler.renameFile(action.path, uiState.filenameTemplate)
             is KifuzoAction.ConvertCsa -> convertCsa(action.path)
             is KifuzoAction.ConfirmOverwrite -> confirmOverwrite()
             is KifuzoAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
-            is KifuzoAction.DetectAndWriteSenkei -> detectAndWriteSenkei(action.path)
-            is KifuzoAction.WriteGameResult -> writeGameResult(action.path, action.result)
+            is KifuzoAction.DetectAndWriteSenkei -> fileActionHandler.detectAndWriteSenkei(action.path)
+            is KifuzoAction.WriteGameResult -> fileActionHandler.writeGameResult(action.path, action.result)
             is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
             is KifuzoAction.SetViewMode -> {
                 updateState { it.copy(viewMode = action.mode) }
@@ -86,25 +109,12 @@ class KifuzoViewModel(
             }
             is KifuzoAction.ToggleFileFilter -> {
                 updateState {
-                    val newFilters = if (it.fileFilters.contains(action.filter)) {
-                        it.fileFilters - action.filter
-                    } else {
-                        it.fileFilters + action.filter
-                    }
+                    val newFilters = if (it.fileFilters.contains(action.filter)) it.fileFilters - action.filter else it.fileFilters + action.filter
                     it.copy(fileFilters = newFilters)
                 }
                 refreshFiles()
             }
-            is KifuzoAction.UpdateSidebarWidth -> {
-                updateState {
-                    val newWidth = (it.sidebarWidth + action.delta).coerceIn(
-                        dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH,
-                        dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH,
-                    )
-                    AppSettings.sidebarWidth = newWidth
-                    it.copy(sidebarWidth = newWidth)
-                }
-            }
+            is KifuzoAction.UpdateSidebarWidth -> updateSidebarWidth(action.delta)
             is KifuzoAction.RefreshFiles -> refreshFiles()
             is KifuzoAction.SelectNextFile -> selectAdjacentFile(forward = true)
             is KifuzoAction.SelectPrevFile -> selectAdjacentFile(forward = false)
@@ -112,6 +122,15 @@ class KifuzoViewModel(
             is KifuzoAction.NextStep -> boardState.currentStep++
             is KifuzoAction.PrevStep -> boardState.currentStep--
         }
+    }
+
+    private fun updateSidebarWidth(delta: Float) {
+        val newWidth = (uiState.sidebarWidth + delta).coerceIn(
+            dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH,
+            dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH,
+        )
+        AppSettings.sidebarWidth = newWidth
+        updateState { it.copy(sidebarWidth = newWidth) }
     }
 
     private fun selectAdjacentFile(forward: Boolean) {
@@ -125,7 +144,8 @@ class KifuzoViewModel(
         while (nextIndex in nodes.indices) {
             val node = nodes[nextIndex]
             if (!node.isDirectory) {
-                selectFile(node.path)
+                fileActionHandler.selectFile(node.path)
+                updateState { it.copy(selectedFile = node.path) }
                 return
             }
             nextIndex += step
@@ -136,9 +156,6 @@ class KifuzoViewModel(
         uiState = update(uiState)
     }
 
-    /**
-     * 現在の展開状態を維持したまま、ファイル一覧を更新します。
-     */
     fun refreshFiles() {
         val root = currentRootDirectory ?: return
         val mode = uiState.viewMode
@@ -183,113 +200,19 @@ class KifuzoViewModel(
         updateState { it.copy(treeNodes = newNodes) }
     }
 
-    private fun selectFile(path: Path) {
-        updateState { it.copy(selectedFile = path) }
-        val ext = path.extension.lowercase()
-        if (ext == "kifu" || ext == "kif") {
-            try {
-                repository.parse(path, boardState)
-                updateAutoFlip()
-            } catch (e: KifuParseException) {
-                updateState { it.copy(errorMessage = "棋譜パースエラー: ${path.name}\n\n${e.message}") }
-                boardState.clear()
-            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                updateState { it.copy(errorMessage = "予期せぬエラー: ${path.name}\n\n${e.message}") }
-                boardState.clear()
-            }
-        } else {
-            boardState.clear()
-        }
-    }
-
-    private fun updateAutoFlip() {
-        val myRegexStr = uiState.myNameRegex
-        if (myRegexStr.isEmpty()) return
-        val regex = try {
-            Regex(myRegexStr)
-        } catch (e: PatternSyntaxException) {
-            logger.warn(e) { "Invalid regex pattern: $myRegexStr" }
-            null
-        } ?: return
-        if (regex.containsMatchIn(boardState.session.goteName) && !regex.containsMatchIn(boardState.session.senteName)) {
-            updateState { it.copy(isFlipped = true) }
-        } else if (regex.containsMatchIn(boardState.session.senteName)) {
-            updateState { it.copy(isFlipped = false) }
-        }
-    }
-
-    fun saveSettings(newRegex: String, newTemplate: String) {
-        AppSettings.myNameRegex = newRegex
-        AppSettings.filenameTemplate = newTemplate
-        updateState { it.copy(myNameRegex = newRegex, filenameTemplate = newTemplate, showSettings = false) }
-        updateAutoFlip()
-    }
-
-    private fun importFiles(sourceDir: Path) {
-        val root = currentRootDirectory ?: return
-        val count = repository.importQuestFiles(sourceDir, root)
-        AppSettings.importSourceDir = sourceDir.toString()
-        updateState { it.copy(showImportDialog = false) }
-        if (count > 0) {
-            updateState { it.copy(infoMessage = "${count}件の棋譜をインポートしました。") }
-            refreshFiles()
-        } else {
-            updateState { it.copy(infoMessage = "指定されたフォルダに該当する棋譜が見つかりませんでした。") }
-        }
-    }
-
-    private fun renameFile(path: Path) {
-        val newPath = repository.renameKifuFile(path, uiState.filenameTemplate)
-        if (newPath != null) {
-            refreshFiles()
-            selectFile(newPath)
-        } else {
-            updateState { it.copy(errorMessage = "ファイルのリネームに失敗しました。棋譜内に必要な情報が不足しているか、同名のファイルが既に存在する可能性があります。") }
-        }
-    }
-
     private fun convertCsa(path: Path) {
         val targetFile = (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
         if (java.nio.file.Files.exists(targetFile)) {
             updateState { it.copy(showOverwriteConfirm = path) }
         } else {
-            performCsaConversion(path)
+            fileActionHandler.performCsaConversion(path)
         }
     }
 
     fun confirmOverwrite() {
         uiState.showOverwriteConfirm?.let {
-            performCsaConversion(it)
+            fileActionHandler.performCsaConversion(it)
             updateState { it.copy(showOverwriteConfirm = null) }
         }
-    }
-
-    private fun performCsaConversion(path: Path) {
-        val targetFile = repository.convertCsa(path)
-        try {
-            val tempState = ShogiBoardState()
-            repository.parse(targetFile, tempState)
-            val senkei = detectSenkei(tempState.session.history)
-            if (senkei.isNotEmpty()) repository.updateSenkei(targetFile, senkei)
-        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            logger.error(e) { "Failed to parse converted CSA file or update senkei: $targetFile" }
-        }
-        refreshFiles()
-    }
-
-    fun detectAndWriteSenkei(path: Path) {
-        val senkei = detectSenkei(boardState.session.history)
-        if (senkei.isNotEmpty()) {
-            repository.updateSenkei(path, senkei)
-            refreshFiles()
-            updateState { it.copy(infoMessage = "戦型を「$senkei」として追記しました。") }
-        }
-    }
-
-    fun writeGameResult(path: Path, result: String) {
-        repository.updateResult(path, result)
-        refreshFiles()
-        selectFile(path) // 再読み込み
-        updateState { it.copy(infoMessage = "終局結果を「$result」として追記しました。") }
     }
 }
