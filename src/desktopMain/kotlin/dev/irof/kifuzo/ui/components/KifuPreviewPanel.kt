@@ -228,7 +228,7 @@ private fun KifuOperationBar(
             Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
-                verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingSmall),
+                verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge),
             ) {
                 val hasEval = evaluations.any { it is Evaluation.Score }
                 val hasTime = consumptionTimes.any { it != null }
