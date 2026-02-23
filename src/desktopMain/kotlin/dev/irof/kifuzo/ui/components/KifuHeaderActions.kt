@@ -97,7 +97,7 @@ private fun SenkeiAction(path: Path, existingSenkei: String?, onDetectSenkei: (P
 @Composable
 private fun GameResultAction(path: Path, lastSnapshot: BoardSnapshot?, onWriteResult: (Path, String) -> Unit) {
     val lastMove = lastSnapshot?.lastMoveText ?: ""
-    val evaluation = lastSnapshot?.evaluation ?: 0
+    val evaluation = lastSnapshot?.evaluation?.orZero() ?: 0
     val isMate = kotlin.math.abs(evaluation) >= ShogiConstants.MATE_SCORE_THRESHOLD
     val isFinished = isMate || dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.any { lastMove.contains(it) }
 

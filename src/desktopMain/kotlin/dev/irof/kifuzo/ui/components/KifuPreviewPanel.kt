@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.ui.ShogiBoardView
 import dev.irof.kifuzo.ui.theme.ShogiColors
@@ -223,13 +224,13 @@ private fun KifuOperationBar(
             modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
         )
 
-        if (evaluations.any { it != null } || consumptionTimes.any { it != null }) {
+        if (evaluations.any { it is Evaluation.Score } || consumptionTimes.any { it != null }) {
             Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
                 verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingSmall),
             ) {
-                val hasEval = evaluations.any { it != null }
+                val hasEval = evaluations.any { it is Evaluation.Score }
                 val hasTime = consumptionTimes.any { it != null }
                 val targetHeight = if (hasEval && hasTime) ShogiDimensions.DualGraphHeight else ShogiDimensions.GraphHeight
 

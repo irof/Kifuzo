@@ -26,6 +26,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.ui.theme.ShogiColors
 
 private object GraphConstants {
@@ -59,9 +60,9 @@ private object GraphConstants {
 private class GraphScaler(private val isFlipped: Boolean, private val height: Float) {
     private val centerY = height / 2f
 
-    fun getScaledY(eval: Int?): Float {
-        if (eval == null) return centerY
-        val value = eval.coerceIn(-GraphConstants.MAX_EVAL.toInt(), GraphConstants.MAX_EVAL.toInt()).toFloat()
+    fun getScaledY(eval: Evaluation): Float {
+        val score = eval.orNull() ?: return centerY
+        val value = score.coerceIn(-GraphConstants.MAX_EVAL.toInt(), GraphConstants.MAX_EVAL.toInt()).toFloat()
         val absVal = kotlin.math.abs(value)
         val base = if (absVal <= GraphConstants.THRESHOLD) {
             value
@@ -82,13 +83,13 @@ private class GraphScaler(private val isFlipped: Boolean, private val height: Fl
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalTextApi::class)
 @Composable
 fun EvaluationGraph(
-    evaluations: List<Int?>,
+    evaluations: List<Evaluation>,
     currentStep: Int,
     isFlipped: Boolean = false,
     onStepClick: (Int) -> Unit = {},
     modifier: Modifier = Modifier.height(240.dp).fillMaxWidth(),
 ) {
-    if (evaluations.isEmpty() || evaluations.all { it == null }) return
+    if (evaluations.isEmpty() || evaluations.all { it is Evaluation.Unknown }) return
 
     var hoverX by remember { mutableStateOf<Float?>(null) }
     val textMeasurer = rememberTextMeasurer()
@@ -173,7 +174,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
 
     for (i in GraphConstants.GRID_RANGE) {
         if (i == 0) continue
-        val y = scaler.getScaledY(i * GraphConstants.GRID_STEP)
+        val y = scaler.getScaledY(Evaluation.Score(i * GraphConstants.GRID_STEP))
         if (y in 0f..height) {
             val isThreshold = kotlin.math.abs(i * GraphConstants.GRID_STEP) == GraphConstants.THRESHOLD.toInt()
             val alpha = if (isThreshold) GraphConstants.ALPHA_GRID_DARK else GraphConstants.ALPHA_GRID_LIGHT
@@ -190,14 +191,18 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawEvaluationLine(
-    evaluations: List<Int?>,
+    evaluations: List<Evaluation>,
     scaler: GraphScaler,
     stepWidth: Float,
 ) {
     if (evaluations.size <= 1) return
     var lastPoint: Offset? = null
     for (i in evaluations.indices) {
-        val eval = evaluations[i] ?: continue
+        val eval = evaluations[i]
+        if (eval is Evaluation.Unknown) {
+            lastPoint = null
+            continue
+        }
         val currentPoint = Offset(i * stepWidth, scaler.getScaledY(eval))
         if (lastPoint != null) {
             drawLine(ShogiColors.EvalLine, lastPoint, currentPoint, GraphConstants.LINE_WIDTH_THICK)
@@ -219,7 +224,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCurrentStepLine
 @OptIn(ExperimentalTextApi::class)
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHoverTooltip(
     stepIndex: Int,
-    eval: Int?,
+    eval: Evaluation,
     stepWidth: Float,
     scaler: GraphScaler,
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
@@ -227,10 +232,11 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHoverTooltip(
     val x = stepIndex * stepWidth
     drawLine(Color.Black.copy(alpha = 0.3f), Offset(x, 0f), Offset(x, size.height), GraphConstants.LINE_WIDTH_THIN)
 
-    if (eval != null) {
-        val sign = if (eval > 0) "+" else ""
+    if (eval is Evaluation.Score) {
+        val score = eval.value
+        val sign = if (score > 0) "+" else ""
         val textLayoutResult = textMeasurer.measure(
-            text = AnnotatedString("${stepIndex}手目: $sign$eval"),
+            text = AnnotatedString("${stepIndex}手目: $sign$score"),
             style = TextStyle(color = Color.White, fontSize = 10.sp),
         )
 

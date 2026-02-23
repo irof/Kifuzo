@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic
 
 import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuSession
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
@@ -35,43 +36,43 @@ class KifuParserTest {
     @Test
     fun 評価値コメントを抽出できること() {
         val session = parse(KifuTestData.KIFU_WITH_EVALUATION)
-        assertEquals(123, session.history[1].evaluation)
-        assertEquals(-456, session.history[2].evaluation)
-        assertEquals(2000, session.history[3].evaluation)
-        assertEquals(-500, session.history[4].evaluation)
+        assertEquals(Evaluation.Score(123), session.history[1].evaluation)
+        assertEquals(Evaluation.Score(-456), session.history[2].evaluation)
+        assertEquals(Evaluation.Score(2000), session.history[3].evaluation)
+        assertEquals(Evaluation.Score(-500), session.history[4].evaluation)
     }
 
     @Test
     fun 詰みコメントから評価値を設定できること() {
         val session = parse(KifuTestData.KIFU_WITH_MATE)
-        assertEquals(31111, session.history[1].evaluation)
-        assertEquals(31111, session.history[2].evaluation)
-        assertEquals(-31111, session.history[3].evaluation)
-        assertEquals(-31111, session.history[4].evaluation)
+        assertEquals(Evaluation.Score(31111), session.history[1].evaluation)
+        assertEquals(Evaluation.Score(31111), session.history[2].evaluation)
+        assertEquals(Evaluation.Score(-31111), session.history[3].evaluation)
+        assertEquals(Evaluation.Score(-31111), session.history[4].evaluation)
     }
 
     @Test
     fun 評価値よりも詰み情報を優先すること() {
         val session = parse(KifuTestData.KIFU_WITH_PRIORITY_MATE)
-        assertEquals(31111, session.history[1].evaluation)
-        assertEquals(-31111, session.history[2].evaluation)
+        assertEquals(Evaluation.Score(31111), session.history[1].evaluation)
+        assertEquals(Evaluation.Score(-31111), session.history[2].evaluation)
     }
 
     @Test
-    fun 評価値コメントがない棋譜ではすべての局面の評価値がnullであること() {
+    fun 評価値コメントがない棋譜ではすべての局面の評価値がUnknownであること() {
         val session = parse("1 ７六歩(77)\n2 ３四歩(33)")
-        assertNull(session.history[0].evaluation)
-        assertNull(session.history[1].evaluation)
-        assertNull(session.history[2].evaluation)
+        assertEquals(Evaluation.Unknown, session.history[0].evaluation)
+        assertEquals(Evaluation.Unknown, session.history[1].evaluation)
+        assertEquals(Evaluation.Unknown, session.history[2].evaluation)
     }
 
     @Test
     fun 終局行のみ評価値が設定されるケースを検証すること() {
         val session = parse("1 ７六歩(77)\n2 ３四歩(33)\n3 投了")
-        assertNull(session.history[0].evaluation)
-        assertNull(session.history[1].evaluation)
-        assertNull(session.history[2].evaluation)
-        assertEquals(-31111, session.history[3].evaluation)
+        assertEquals(Evaluation.Unknown, session.history[0].evaluation)
+        assertEquals(Evaluation.Unknown, session.history[1].evaluation)
+        assertEquals(Evaluation.Unknown, session.history[2].evaluation)
+        assertEquals(Evaluation.Score(-31111), session.history[3].evaluation)
     }
 
     @Test

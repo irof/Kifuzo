@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic
 
 import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.KifuSession
 import dev.irof.kifuzo.models.Piece
@@ -107,18 +108,18 @@ private class ParserState(header: KifuHeader) {
     fun extractEvaluation(line: String) {
         if (history.isEmpty()) return
         val lastIdx = history.size - 1
-        val currentEval = history[lastIdx].evaluation
+        val currentEval = history[lastIdx].evaluation.orNull()
         val isCurrentMate = currentEval != null && (kotlin.math.abs(currentEval) >= ShogiConstants.MATE_SCORE_THRESHOLD)
 
         if (line.contains("#詰み=先手勝ち")) {
-            history[lastIdx] = history[lastIdx].copy(evaluation = ShogiConstants.WIN_SCORE)
+            history[lastIdx] = history[lastIdx].copy(evaluation = Evaluation.Score(ShogiConstants.WIN_SCORE))
         } else if (line.contains("#詰み=後手勝ち")) {
-            history[lastIdx] = history[lastIdx].copy(evaluation = ShogiConstants.LOSE_SCORE)
+            history[lastIdx] = history[lastIdx].copy(evaluation = Evaluation.Score(ShogiConstants.LOSE_SCORE))
         } else if (!isCurrentMate) {
             val evalMatch = Regex("""\*#評価値=([+-]?\d+)""").find(line)
                 ?: Regex("""\* ([+-]?\d+)""").find(line)
             evalMatch?.groupValues?.get(1)?.toIntOrNull()?.let { eval ->
-                history[lastIdx] = history[lastIdx].copy(evaluation = eval)
+                history[lastIdx] = history[lastIdx].copy(evaluation = Evaluation.Score(eval))
             }
         }
     }
@@ -150,7 +151,7 @@ private class ParserState(header: KifuHeader) {
                 lastTo = toSquare
             }
             is KifuParsedMove.Result -> {
-                val evaluation = if (turnColor == PieceColor.Black) ShogiConstants.LOSE_SCORE else ShogiConstants.WIN_SCORE
+                val evaluation = if (turnColor == PieceColor.Black) Evaluation.Score(ShogiConstants.LOSE_SCORE) else Evaluation.Score(ShogiConstants.WIN_SCORE)
                 history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, evaluation = evaluation))
             }
         }

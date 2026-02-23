@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
@@ -47,7 +48,7 @@ fun KifuMoveList(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val showEvaluation = history.any { it.evaluation != null && it.evaluation != 0 }
+    val showEvaluation = history.any { it.evaluation is Evaluation.Score && it.evaluation.value != 0 }
 
     LaunchedEffect(currentStep) {
         if (currentStep in history.indices) {
@@ -65,20 +66,20 @@ fun KifuMoveList(
             modifier = Modifier.fillMaxSize().padding(vertical = ShogiDimensions.PaddingSmall),
         ) {
             item {
-                MoveRow(0, AppStrings.START_POSITION, null, null, currentStep == 0, showEvaluation, onStepChange)
+                MoveRow(0, AppStrings.START_POSITION, history[0].evaluation, null, currentStep == 0, showEvaluation, onStepChange)
             }
 
             items(history.size - 1) { index ->
                 val i = index + 1
                 val board = history[i]
-                val prevEval = history[i - 1].evaluation ?: 0
-                val curEval = board.evaluation
-                val diff = if (curEval != null) curEval - prevEval else null
+                val prevEval = history[i - 1].evaluation.orZero()
+                val currentEvaluation = board.evaluation
+                val diff = if (currentEvaluation is Evaluation.Score) currentEvaluation.value - prevEval else null
 
                 val colorSymbol = if (i % 2 != 0) "▲" else "△"
                 val moveText = board.lastMoveText.trim().split(Regex("""\s+""")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
 
-                MoveRow(i, "$colorSymbol$moveText", curEval, diff, currentStep == i, showEvaluation, onStepChange)
+                MoveRow(i, "$colorSymbol$moveText", currentEvaluation, diff, currentStep == i, showEvaluation, onStepChange)
             }
         }
     }
@@ -88,7 +89,7 @@ fun KifuMoveList(
 private fun MoveRow(
     step: Int,
     label: String,
-    evaluation: Int?,
+    evaluation: Evaluation,
     diff: Int?,
     isSelected: Boolean,
     showEvaluation: Boolean,
@@ -154,9 +155,9 @@ private fun SignificantMoveBadge(diff: Int?) {
 }
 
 @Composable
-private fun EvaluationInfo(evaluation: Int?, diff: Int?) {
-    if (evaluation == null) return
-    EvaluationBadge(evaluation)
+private fun EvaluationInfo(evaluation: Evaluation, diff: Int?) {
+    if (evaluation !is Evaluation.Score) return
+    EvaluationBadge(evaluation.value)
     EvaluationDiff(diff)
 }
 

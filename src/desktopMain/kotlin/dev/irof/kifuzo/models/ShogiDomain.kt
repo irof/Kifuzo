@@ -18,6 +18,21 @@ object ShogiConstants {
     const val GOTE_CAMP_RANK_END = 3
 }
 
+sealed interface Evaluation {
+    object Unknown : Evaluation
+    data class Score(val value: Int) : Evaluation
+
+    fun orNull(): Int? = when (this) {
+        is Score -> value
+        is Unknown -> null
+    }
+
+    fun orZero(): Int = when (this) {
+        is Score -> value
+        is Unknown -> 0
+    }
+}
+
 enum class PieceColor {
     Black, // 先手 (▲)
     White, // 後手 (△)
