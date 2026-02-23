@@ -130,7 +130,7 @@ private class ParserState(header: KifuHeader) {
                 val piece = if (parsedMove.isPromote) current.first.promote() else current.first
                 currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
                 currentCells[fromSquare.yIndex][fromSquare.xIndex] = null
-                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare, consumptionSeconds = parsedMove.consumptionSeconds))
+                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare, consumptionSeconds = parsedMove.consumptionSeconds, evaluation = history.last().evaluation))
                 lastTo = toSquare
             }
             is KifuParsedMove.Drop -> {
@@ -138,7 +138,7 @@ private class ParserState(header: KifuHeader) {
                 val piece = parsedMove.piece
                 if (turnColor == PieceColor.Black) senteMochi.remove(piece) else goteMochi.remove(piece)
                 currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
-                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare, consumptionSeconds = parsedMove.consumptionSeconds))
+                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare, consumptionSeconds = parsedMove.consumptionSeconds, evaluation = history.last().evaluation))
                 lastTo = toSquare
             }
             is KifuParsedMove.Result -> {
@@ -277,18 +277,9 @@ private class HeaderParser {
     }
 }
 
-private val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*?(?:\(\s*(\d+):(\d+)/.*\))?.*""")
-private val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*?(?:\(\s*(\d+):(\d+)/.*\))?.*""")
+private val moveRegex = Regex("""^\s*(?<moveNum>\d+)\s+(?<toPos>[^\s(]{2}|同\s*)(?<pieceName>[^\s(]+)\((?<fromPos>[1-9]{2})\)\s*(?:\(\s*(?<timeMin>\d+)\s*:\s*(?<timeSec>\d+)\s*/.*?\))?.*""")
+private val dropRegex = Regex("""^\s*(?<moveNum>\d+)\s+(?<toPos>[^\s(]{2})(?<pieceName>[^\s(]+?)打\s*(?:\(\s*(?<timeMin>\d+)\s*:\s*(?<timeSec>\d+)\s*/.*?\))?.*""")
 private val resultRegex = Regex("""^\s*(\d+)\s+(${dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.joinToString("|")}).*""")
-
-private object RegexGroups {
-    const val MOVE_NUM = 1
-    const val TO_POS = 2
-    const val PIECE_NAME = 3
-    const val FROM_POS = 4
-    const val TIME_MIN = 5
-    const val TIME_SEC = 6
-}
 
 private sealed class KifuParsedMove {
     abstract val moveNum: Int
@@ -327,12 +318,12 @@ private fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
 
 private fun parseNormalMove(line: String, lastTo: Square?): KifuParsedMove.Move? {
     val match = moveRegex.find(line) ?: return null
-    val moveNum = match.groupValues[RegexGroups.MOVE_NUM].toInt()
-    val toPosStr = match.groupValues[RegexGroups.TO_POS].trim()
-    val pieceName = match.groupValues[RegexGroups.PIECE_NAME].trim()
-    val fromPosStr = match.groupValues[RegexGroups.FROM_POS]
+    val moveNum = match.groups["moveNum"]?.value?.toIntOrNull() ?: return null
+    val toPosStr = match.groups["toPos"]?.value?.trim() ?: ""
+    val pieceName = match.groups["pieceName"]?.value?.trim() ?: ""
+    val fromPosStr = match.groups["fromPos"]?.value ?: ""
 
-    val consumptionSeconds = parseTime(match, RegexGroups.TIME_MIN, RegexGroups.TIME_SEC)
+    val consumptionSeconds = parseTime(match)
 
     val isPromote = pieceName.contains("成") || pieceName in listOf("竜", "馬", "龍", "圭", "杏", "全")
     val toSquare = if (toPosStr.startsWith("同")) {
@@ -347,11 +338,11 @@ private fun parseNormalMove(line: String, lastTo: Square?): KifuParsedMove.Move?
 
 private fun parseDropMove(line: String): KifuParsedMove.Drop? {
     val match = dropRegex.find(line) ?: return null
-    val moveNum = match.groupValues[RegexGroups.MOVE_NUM].toInt()
-    val toPosStr = match.groupValues[RegexGroups.TO_POS]
-    val pieceSym = match.groupValues[RegexGroups.PIECE_NAME].substring(0, 1)
+    val moveNum = match.groups["moveNum"]?.value?.toIntOrNull() ?: return null
+    val toPosStr = match.groups["toPos"]?.value ?: ""
+    val pieceSym = match.groups["pieceName"]?.value?.substring(0, 1) ?: ""
 
-    val consumptionSeconds = parseTime(match, RegexGroups.TIME_MIN, RegexGroups.TIME_SEC)
+    val consumptionSeconds = parseTime(match)
 
     val toSquare = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
     val piece = Piece.entries.find {
@@ -366,19 +357,16 @@ private fun parseDropMove(line: String): KifuParsedMove.Drop? {
     return KifuParsedMove.Drop(moveNum, toSquare, piece, consumptionSeconds)
 }
 
-private fun parseTime(match: MatchResult, minIdx: Int, secIdx: Int): Int? {
-    if (match.groupValues.size <= secIdx) return null
-    val minStr = match.groupValues.getOrNull(minIdx)
-    val secStr = match.groupValues.getOrNull(secIdx)
-    val mins = minStr?.toIntOrNull() ?: return null
-    val secs = secStr?.toIntOrNull() ?: return null
+private fun parseTime(match: MatchResult): Int? {
+    val mins = match.groups["timeMin"]?.value?.trim()?.toIntOrNull() ?: return null
+    val secs = match.groups["timeSec"]?.value?.trim()?.toIntOrNull() ?: return null
     return mins * ShogiConstants.SECONDS_IN_MINUTE + secs
 }
 
 private fun parseResultMove(line: String): KifuParsedMove.Result? {
     val match = resultRegex.find(line) ?: return null
-    val moveNum = match.groupValues[RegexGroups.MOVE_NUM].toInt()
-    val result = match.groupValues[RegexGroups.TO_POS]
+    val moveNum = match.groupValues[1].toInt()
+    val result = match.groupValues[2]
     return KifuParsedMove.Result(moveNum, result)
 }
 
