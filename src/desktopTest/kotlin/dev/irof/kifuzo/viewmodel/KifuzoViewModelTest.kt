@@ -31,6 +31,8 @@ class KifuzoViewModelTest {
 
         override fun convertCsa(path: Path): Path = path
         override fun updateResult(path: Path, result: String) {}
+        override fun generateProposedName(path: Path, template: String): String? = null
+        override fun renameFileTo(path: Path, newName: String): Path? = null
         override fun renameKifuFile(path: Path, template: String): Path? = path
         override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = 0
     }

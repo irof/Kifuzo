@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic
 
 import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuSession
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
@@ -36,6 +37,9 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
         when {
             line.startsWith("N+") -> senteName = line.substring(2)
             line.startsWith("N-") -> goteName = line.substring(2)
+            line.startsWith("'") -> {
+                extractCsaEvaluation(line, history)
+            }
             line.startsWith("+") || line.startsWith("-") -> {
                 if (line.length < 7) continue
                 val isSente = line.startsWith("+")
@@ -105,4 +109,27 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
             isStandardStart = true, // 簡易化のため平手のみ対応
         ),
     )
+}
+
+private fun extractCsaEvaluation(line: String, history: MutableList<BoardSnapshot>) {
+    if (history.isEmpty()) return
+    val lastIdx = history.size - 1
+    val currentEval = history[lastIdx].evaluation.orNull()
+    val isCurrentMate = currentEval != null && (kotlin.math.abs(currentEval) >= ShogiConstants.MATE_SCORE_THRESHOLD)
+
+    if (line.contains("#詰み=先手勝ち")) {
+        history[lastIdx] = history[lastIdx].copy(evaluation = Evaluation.SenteWin)
+    } else if (line.contains("#詰み=後手勝ち")) {
+        history[lastIdx] = history[lastIdx].copy(evaluation = Evaluation.GoteWin)
+    } else if (!isCurrentMate) {
+        val evalMatch = Regex("""'\*#評価値=([+-]?\d+)""").find(line)
+        evalMatch?.groupValues?.get(1)?.toIntOrNull()?.let { eval ->
+            val evaluation = when {
+                eval >= ShogiConstants.MATE_SCORE_THRESHOLD -> Evaluation.SenteWin
+                eval <= -ShogiConstants.MATE_SCORE_THRESHOLD -> Evaluation.GoteWin
+                else -> Evaluation.Score(eval)
+            }
+            history[lastIdx] = history[lastIdx].copy(evaluation = evaluation)
+        }
+    }
 }

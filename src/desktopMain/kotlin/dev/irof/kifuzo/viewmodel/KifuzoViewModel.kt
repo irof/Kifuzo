@@ -96,7 +96,9 @@ class KifuzoViewModel(
             is KifuzoAction.SelectFile,
             is KifuzoAction.SelectNextFile,
             is KifuzoAction.SelectPrevFile,
-            is KifuzoAction.RenameFile,
+            is KifuzoAction.ShowRenameDialog,
+            is KifuzoAction.HideRenameDialog,
+            is KifuzoAction.PerformRename,
             is KifuzoAction.ConvertCsa,
             is KifuzoAction.ConfirmOverwrite,
             is KifuzoAction.HideOverwriteConfirm,
@@ -159,7 +161,15 @@ class KifuzoViewModel(
             is KifuzoAction.SelectFile -> fileActionHandler.selectFile(action.path).also { updateState { it.copy(selectedFile = action.path) } }
             is KifuzoAction.SelectNextFile -> selectAdjacentFile(forward = true)
             is KifuzoAction.SelectPrevFile -> selectAdjacentFile(forward = false)
-            is KifuzoAction.RenameFile -> fileActionHandler.renameFile(action.path, uiState.filenameTemplate)
+            is KifuzoAction.ShowRenameDialog -> {
+                val proposedName = repository.generateProposedName(action.path, uiState.filenameTemplate) ?: action.path.fileName.toString()
+                updateState { it.copy(renameTarget = action.path, proposedRenameName = proposedName) }
+            }
+            is KifuzoAction.HideRenameDialog -> updateState { it.copy(renameTarget = null, proposedRenameName = null) }
+            is KifuzoAction.PerformRename -> {
+                fileActionHandler.performRename(action.path, action.newName)
+                updateState { it.copy(renameTarget = null, proposedRenameName = null) }
+            }
             is KifuzoAction.ConvertCsa -> {
                 val targetFile = (action.path.parent ?: action.path).resolve(action.path.nameWithoutExtension + ".kifu")
                 if (java.nio.file.Files.exists(targetFile)) {

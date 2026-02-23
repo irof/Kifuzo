@@ -27,4 +27,6 @@ data class KifuzoUiState(
     val viewMode: FileViewMode = FileViewMode.FLAT,
     val fileFilters: Set<FileFilter> = setOf(FileFilter.RECENT),
     val fileSortOption: FileSortOption = dev.irof.kifuzo.models.AppSettings.fileSortOption,
+    val renameTarget: Path? = null,
+    val proposedRenameName: String? = null,
 )

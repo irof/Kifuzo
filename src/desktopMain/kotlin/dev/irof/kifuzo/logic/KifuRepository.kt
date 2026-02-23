@@ -22,6 +22,8 @@ interface KifuRepository {
     fun parse(path: Path, state: ShogiBoardState)
     fun convertCsa(path: Path): Path
     fun updateResult(path: Path, result: String)
+    fun generateProposedName(path: Path, template: String): String?
+    fun renameFileTo(path: Path, newName: String): Path?
     fun renameKifuFile(path: Path, template: String): Path?
     fun importQuestFiles(sourceDir: Path, targetDir: Path): Int
 }
@@ -73,7 +75,7 @@ class KifuRepositoryImpl : KifuRepository {
         updateKifuResult(path, result)
     }
 
-    override fun renameKifuFile(path: Path, template: String): Path? {
+    override fun generateProposedName(path: Path, template: String): String? {
         val info = scanKifuInfo(path)
         if (info.isError) return null
 
@@ -81,12 +83,14 @@ class KifuRepositoryImpl : KifuRepository {
         val yyyymmdd = info.startTime.replace("/", "").substringBefore(" ").take(DATE_STRING_LENGTH)
             .ifEmpty { "00000000" }
 
-        val newName = template
+        return template
             .replace("{YYYYMMDD}", yyyymmdd)
             .replace("{Sente}", info.senteName.ifEmpty { "unknown" })
             .replace("{Gote}", info.goteName.ifEmpty { "unknown" })
             .let { it + "." + path.extension }
+    }
 
+    override fun renameFileTo(path: Path, newName: String): Path? {
         val targetPath = path.parent?.resolve(newName) ?: return null
         if (path == targetPath) return path
 
@@ -97,6 +101,11 @@ class KifuRepositoryImpl : KifuRepository {
             logger.error(e) { "Failed to rename file from $path to $targetPath" }
             null
         }
+    }
+
+    override fun renameKifuFile(path: Path, template: String): Path? {
+        val proposedName = generateProposedName(path, template) ?: return null
+        return renameFileTo(path, proposedName)
     }
 
     override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = importShogiQuestFiles(sourceDir, targetDir)

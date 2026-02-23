@@ -46,6 +46,7 @@ import dev.irof.kifuzo.ui.components.KifuSidebar
 import dev.irof.kifuzo.ui.dialogs.ImportDialog
 import dev.irof.kifuzo.ui.dialogs.KifuTextViewer
 import dev.irof.kifuzo.ui.dialogs.OverwriteConfirmDialog
+import dev.irof.kifuzo.ui.dialogs.RenameDialog
 import dev.irof.kifuzo.ui.dialogs.SettingsDialog
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
@@ -141,7 +142,7 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
                 onToggleDir = { viewModel.dispatch(KifuzoAction.ToggleDirectory(it)) },
                 onSelectFile = { viewModel.dispatch(KifuzoAction.SelectFile(it)) },
                 onShowText = { viewModel.dispatch(KifuzoAction.SetViewingText(it)) },
-                onRename = { viewModel.dispatch(KifuzoAction.RenameFile(it)) },
+                onRename = { viewModel.dispatch(KifuzoAction.ShowRenameDialog(it)) },
                 onConvertCsa = { viewModel.dispatch(KifuzoAction.ConvertCsa(it)) },
                 onSetViewMode = { viewModel.dispatch(KifuzoAction.SetViewMode(it)) },
                 onSetFileSortOption = { viewModel.dispatch(KifuzoAction.SetFileSortOption(it)) },
@@ -219,6 +220,15 @@ private fun KifuzoDialogs(viewModel: KifuzoViewModel) {
             initialSourceDir = AppSettings.importSourceDir,
             onDismiss = { viewModel.dispatch(KifuzoAction.ShowImportDialog(false)) },
             onImport = { viewModel.dispatch(KifuzoAction.ImportFiles(it)) },
+        )
+    }
+
+    if (state.renameTarget != null && state.proposedRenameName != null) {
+        RenameDialog(
+            file = state.renameTarget,
+            proposedName = state.proposedRenameName,
+            onDismiss = { viewModel.dispatch(KifuzoAction.HideRenameDialog) },
+            onConfirm = { viewModel.dispatch(KifuzoAction.PerformRename(state.renameTarget, it)) },
         )
     }
 

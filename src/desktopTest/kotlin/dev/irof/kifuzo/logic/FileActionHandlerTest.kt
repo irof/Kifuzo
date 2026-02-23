@@ -35,6 +35,8 @@ class FileActionHandlerTest {
         }
         override fun convertCsa(path: Path): Path = path
         override fun updateResult(path: Path, result: String) {}
+        override fun generateProposedName(path: Path, template: String): String? = path.fileName.toString()
+        override fun renameFileTo(path: Path, newName: String): Path? = renameResult
         override fun renameKifuFile(path: Path, template: String): Path? = renameResult
         override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = 0
     }
@@ -87,7 +89,7 @@ class FileActionHandlerTest {
         val newPath = Paths.get("new.kifu")
         repository.renameResult = newPath
 
-        handler.renameFile(oldPath, "{Sente}")
+        handler.performRename(oldPath, "new.kifu")
 
         assertEquals(newPath, renamedPath)
         assertEquals(true, filesChangedCalled)

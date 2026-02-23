@@ -29,8 +29,8 @@ class FileActionHandler(
         }
     }
 
-    fun renameFile(path: Path, template: String) {
-        val newPath = repository.renameKifuFile(path, template)
+    fun performRename(path: Path, newName: String) {
+        val newPath = repository.renameFileTo(path, newName)
         if (newPath != null) {
             onFileRenamed(newPath)
             onFilesChanged()

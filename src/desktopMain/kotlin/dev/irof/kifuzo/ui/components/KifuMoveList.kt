@@ -9,14 +9,28 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
+import dev.irof.kifuzo.models.GameResult
+import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
@@ -45,6 +61,7 @@ fun KifuMoveList(
     history: List<BoardSnapshot>,
     currentStep: Int,
     onStepChange: (Int) -> Unit,
+    onWriteResult: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -53,6 +70,12 @@ fun KifuMoveList(
             it.evaluation is Evaluation.GoteWin ||
             (it.evaluation is Evaluation.Score && it.evaluation.value != 0)
     }
+
+    val lastSnapshot = history.lastOrNull()
+    val lastMove = lastSnapshot?.lastMoveText ?: ""
+    val evaluation = lastSnapshot?.evaluation?.orZero() ?: 0
+    val isMate = kotlin.math.abs(evaluation) >= ShogiConstants.MATE_SCORE_THRESHOLD
+    val isFinished = isMate || GameResult.ALL_KEYWORDS.any { lastMove.contains(it) }
 
     LaunchedEffect(currentStep) {
         if (currentStep in history.indices) {
@@ -84,6 +107,47 @@ fun KifuMoveList(
                 val moveText = board.lastMoveText.trim().split(Regex("""\s+""")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
 
                 MoveRow(i, "$colorSymbol$moveText", currentEvaluation, diff, currentStep == i, showEvaluation, onStepChange)
+            }
+
+            if (!isFinished) {
+                item {
+                    AddResultRow(onWriteResult)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddResultRow(onWriteResult: (String) -> Unit) {
+    var showMenu by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = ShogiDimensions.PaddingSmall, horizontal = ShogiDimensions.PaddingLarge),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Spacer(Modifier.width(MoveListConstants.STEP_NUMBER_WIDTH))
+        Box {
+            OutlinedButton(
+                onClick = { showMenu = true },
+                modifier = Modifier.height(ShogiDimensions.ButtonHeight),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("終局手を追加", fontSize = 11.sp)
+            }
+            DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                GameResult.UI_SELECTIONS.forEach { result ->
+                    DropdownMenuItem(onClick = {
+                        showMenu = false
+                        onWriteResult(result)
+                    }) {
+                        Text(result, fontSize = ShogiDimensions.FontSizeBody)
+                    }
+                }
             }
         }
     }
