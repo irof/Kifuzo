@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import dev.irof.kifuzo.logic.FileActionHandler
 import dev.irof.kifuzo.logic.FileTreeManager
 import dev.irof.kifuzo.logic.ImportHandler
+import dev.irof.kifuzo.logic.KifuRepository
+import dev.irof.kifuzo.logic.KifuRepositoryImpl
 import dev.irof.kifuzo.logic.SettingsHandler
 import dev.irof.kifuzo.models.AppSettings
 import dev.irof.kifuzo.models.FileFilter

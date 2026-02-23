@@ -29,14 +29,10 @@ class FileActionHandler(
                 repository.parse(path, boardState)
                 onAutoFlip()
             } catch (e: KifuParseException) {
-                onError("棋譜パースエラー: ${path.name}
-
-${e.message}")
+                onError("棋譜パースエラー: ${path.name}\n\n${e.message}")
                 boardState.clear()
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                onError("予期せぬエラー: ${path.name}
-
-${e.message}")
+                onError("予期せぬエラー: ${path.name}\n\n${e.message}")
                 boardState.clear()
             }
         } else {
