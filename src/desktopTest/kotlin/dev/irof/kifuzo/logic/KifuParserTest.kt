@@ -76,11 +76,10 @@ class KifuParserTest {
     }
 
     @Test
-    fun 対局者名や戦型情報をスキャンできること() {
+    fun 対局者名や開始日時情報をスキャンできること() {
         val info = scanKifuInfo(KifuTestData.KIFU_WITH_PLAYER_INFO.lines())
         assertEquals("先手太郎", info.senteName)
         assertEquals("後手花子", info.goteName)
-        assertEquals("矢倉", info.senkei)
     }
 
     @Test

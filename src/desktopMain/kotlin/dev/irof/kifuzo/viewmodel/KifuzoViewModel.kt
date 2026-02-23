@@ -100,7 +100,6 @@ class KifuzoViewModel(
             is KifuzoAction.ConvertCsa,
             is KifuzoAction.ConfirmOverwrite,
             is KifuzoAction.HideOverwriteConfirm,
-            is KifuzoAction.DetectAndWriteSenkei,
             is KifuzoAction.WriteGameResult,
             -> handleFileAction(action)
 
@@ -176,7 +175,6 @@ class KifuzoViewModel(
                 }
             }
             is KifuzoAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
-            is KifuzoAction.DetectAndWriteSenkei -> fileActionHandler.detectAndWriteSenkei(action.path)
             is KifuzoAction.WriteGameResult -> fileActionHandler.writeGameResult(action.path, action.result)
             else -> {}
         }
@@ -260,7 +258,7 @@ class KifuzoViewModel(
             }
         }
 
-        // 戦型情報のスキャン
+        // 棋譜情報のスキャン（対局者名、開始日時など）
         scope.launch {
             updateState { it.copy(isScanning = true) }
             val allKifuFiles = mutableListOf<Path>()

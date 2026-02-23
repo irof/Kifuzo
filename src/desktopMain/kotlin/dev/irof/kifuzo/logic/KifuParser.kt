@@ -28,14 +28,12 @@ fun scanKifuInfo(path: Path): KifuInfo = try {
 fun scanKifuInfo(lines: List<String>): KifuInfo {
     var sente = ""
     var gote = ""
-    var senkei = ""
     var startTime = ""
     for (line in lines) {
         val trimmed = line.trim()
         // KIF format
         if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) sente = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("後手：")) gote = trimmed.substringAfter("：").trim()
-        if (trimmed.startsWith("戦型：")) senkei = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("開始日時：")) startTime = trimmed.substringAfter("：").trim()
 
         // CSA format
@@ -46,7 +44,7 @@ fun scanKifuInfo(lines: List<String>): KifuInfo {
         if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) break
         if (trimmed.startsWith("+") || trimmed.startsWith("-")) break
     }
-    return KifuInfo(java.nio.file.Paths.get(""), sente, gote, senkei, startTime)
+    return KifuInfo(java.nio.file.Paths.get(""), sente, gote, startTime)
 }
 
 fun parseKifu(path: Path, state: ShogiBoardState) {
@@ -392,30 +390,6 @@ private fun decodeX(c: Char): Int {
 private fun decodeY(c: Char): Int {
     val idx = "一二三四五六七八九１２３４５６７８９1234567８９".indexOf(c)
     return if (idx == -1) -1 else (idx % ShogiConstants.BOARD_SIZE) + 1
-}
-
-fun updateKifuSenkei(path: Path, senkei: String) {
-    if (senkei.isEmpty()) return
-    val lines = readLinesWithEncoding(path).toMutableList()
-    var senkeiLineIndex = -1
-    var headerEndIndex = 0
-    for (i in lines.indices) {
-        val line = lines[i].trim()
-        if (line.startsWith("戦型：")) {
-            senkeiLineIndex = i
-            break
-        }
-        if (Regex("""^\s*\d+\s+.*""").matches(line)) {
-            headerEndIndex = i
-            break
-        }
-    }
-    if (senkeiLineIndex != -1) {
-        lines[senkeiLineIndex] = "戦型：$senkei"
-    } else {
-        lines.add(headerEndIndex, "戦型：$senkei")
-    }
-    java.nio.file.Files.write(path, lines.joinToString("\n").toByteArray(Charsets.UTF_8))
 }
 
 fun updateKifuResult(path: Path, result: String) {

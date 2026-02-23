@@ -44,9 +44,7 @@ import kotlin.io.path.extension
 @Composable
 fun KifuHeaderActions(
     selectedFile: Path,
-    state: KifuzoUiState,
     history: List<BoardSnapshot>,
-    onDetectSenkei: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
     onRename: (Path) -> Unit,
     onWriteResult: (Path, String) -> Unit,
@@ -60,8 +58,6 @@ fun KifuHeaderActions(
     Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
     Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         if (hasHistory && isKifuFile) {
-            SenkeiAction(selectedFile, state.kifuInfos[selectedFile]?.senkei, onDetectSenkei)
-            Spacer(Modifier.width(ShogiDimensions.PaddingMedium))
             Button(onClick = { onRename(selectedFile) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Primary, contentColor = Color.White), modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
                 Text(AppStrings.RENAME, fontSize = ShogiDimensions.FontSizeCaption)
             }
@@ -73,23 +69,6 @@ fun KifuHeaderActions(
             Button(onClick = { onConvertCsa(selectedFile) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Success, contentColor = Color.White), modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
                 Text(AppStrings.CONVERT_TO_KIFU, fontSize = ShogiDimensions.FontSizeCaption)
             }
-        }
-    }
-}
-
-@Composable
-private fun SenkeiAction(path: Path, existingSenkei: String?, onDetectSenkei: (Path) -> Unit) {
-    if (!existingSenkei.isNullOrEmpty()) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(ShogiDimensions.ButtonHeight).background(Color.White, MaterialTheme.shapes.small).border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = ShogiDimensions.PaddingMedium)) {
-            Text("戦型: $existingSenkei", fontSize = ShogiDimensions.FontSizeCaption, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
-            IconButton(onClick = { onDetectSenkei(path) }, modifier = Modifier.size(18.dp)) {
-                Icon(Icons.Default.Refresh, contentDescription = AppStrings.DETECT_SENKEI, tint = ShogiColors.Info)
-            }
-        }
-    } else {
-        Button(onClick = { onDetectSenkei(path) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Info, contentColor = Color.White), modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
-            Text(AppStrings.DETECT_SENKEI, fontSize = ShogiDimensions.FontSizeCaption)
         }
     }
 }

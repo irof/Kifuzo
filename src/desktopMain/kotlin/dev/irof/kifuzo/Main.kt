@@ -156,7 +156,6 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
             state = state,
             boardState = viewModel.boardState,
             onToggleFlip = { viewModel.dispatch(KifuzoAction.ToggleFlipped) },
-            onDetectSenkei = { viewModel.dispatch(KifuzoAction.DetectAndWriteSenkei(it)) },
             onConvertCsa = { viewModel.dispatch(KifuzoAction.ConvertCsa(it)) },
             onRename = { viewModel.dispatch(KifuzoAction.RenameFile(it)) },
             onWriteResult = { path, result -> viewModel.dispatch(KifuzoAction.WriteGameResult(path, result)) },

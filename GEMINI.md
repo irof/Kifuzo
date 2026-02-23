@@ -21,11 +21,11 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
 - **Analysis Tools:** 
     - **Evaluation Graph:** Visualizes the game's evaluation values. Features non-linear scaling (compressing values > 2000) for better readability and automatic inversion when the board is flipped.
     - **Significant Moves:** Automatically detects moves with large evaluation changes (500+ points) and marks them in the move list with "!" or "!!".
-- **Kifu Parser:** A robust parser for `.kifu` (UTF-8) files.
-    - Handles full-width digits and Kanji notation (e.g., `７六歩`, `同　`).
-    - Skips comments, branch/variation sections (`変化`), and game results (e.g., `投了`, `切れ負け`).
-- **Senkei Detection:** Automatically detects opening patterns (Senkei) like "Yagura", "Gokigen Nakabisha", etc.
-- **Format Conversion:** Converts `.csa` files to standard `.kifu` (UTF-8) format with proper notation.
+    - **Kifu Parser:** A robust parser for `.kifu` (UTF-8) files.
+        - Handles full-width digits and Kanji notation (e.g., `７六歩`, `同　`).
+        - Skips comments, branch/variation sections (`変化`), and game results (e.g., `投了`, `切れ負け`).
+    - **Format Conversion:** Converts `.csa` files to standard `.kifu` (UTF-8) format with proper notation.
+    
 - **Import Utility:** Imports Shogi Quest game records from a user-specified directory to the **current root directory**.
     - Detects `.txt` files containing CSA formatted records.
     - Automatically renames files to `{YYYYMMDD}-{Sente}-{Gote}.csa` based on game metadata and file timestamps.
@@ -66,7 +66,7 @@ The project uses **Gradle** as the build tool.
 
 - `src/desktopMain/kotlin/dev/irof/kifuzo/`: Root package.
     - `Main.kt`: Application entry point.
-    - `logic/`: Business logic (parsers, converters, IO, repository, senkei detection).
+    - `logic/`: Business logic (parsers, converters, IO, repository).
         - Includes action handlers (`FileActionHandler`, `ImportHandler`, `SettingsHandler`) to offload logic from the ViewModel.
     - `models/`: Domain models (Piece, BoardState) and app configuration.
     - `ui/`: Compose UI components, themes, and dialogs.

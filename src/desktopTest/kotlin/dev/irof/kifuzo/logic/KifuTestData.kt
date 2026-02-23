@@ -114,7 +114,6 @@ object KifuTestData {
     val KIFU_WITH_PLAYER_INFO = """
         先手：先手太郎
         後手：後手花子
-        戦型：矢倉
         1 ７六歩(77)
     """.trimIndent()
 }

@@ -9,7 +9,6 @@ data class KifuInfo(
     val path: Path,
     val senteName: String = "",
     val goteName: String = "",
-    val senkei: String = "",
     val startTime: String = "",
     val isError: Boolean = false,
 )

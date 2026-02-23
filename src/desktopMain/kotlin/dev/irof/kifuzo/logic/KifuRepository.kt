@@ -21,7 +21,6 @@ interface KifuRepository {
     fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo>
     fun parse(path: Path, state: ShogiBoardState)
     fun convertCsa(path: Path): Path
-    fun updateSenkei(path: Path, senkei: String)
     fun updateResult(path: Path, result: String)
     fun renameKifuFile(path: Path, template: String): Path?
     fun importQuestFiles(sourceDir: Path, targetDir: Path): Int
@@ -70,10 +69,6 @@ class KifuRepositoryImpl : KifuRepository {
         return (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
     }
 
-    override fun updateSenkei(path: Path, senkei: String) {
-        updateKifuSenkei(path, senkei)
-    }
-
     override fun updateResult(path: Path, result: String) {
         updateKifuResult(path, result)
     }
@@ -90,7 +85,6 @@ class KifuRepositoryImpl : KifuRepository {
             .replace("{YYYYMMDD}", yyyymmdd)
             .replace("{Sente}", info.senteName.ifEmpty { "unknown" })
             .replace("{Gote}", info.goteName.ifEmpty { "unknown" })
-            .replace("{Senkei}", info.senkei.ifEmpty { "unknown" })
             .let { it + "." + path.extension }
 
         val targetPath = path.parent?.resolve(newName) ?: return null

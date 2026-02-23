@@ -55,35 +55,4 @@ class KifuUpdateTest {
             Files.deleteIfExists(tempFile)
         }
     }
-
-    @Test
-    fun 戦型を追記する際に空行が挿入されないこと() {
-        val tempFile = Files.createTempFile("kifuzo_test", ".kifu")
-        try {
-            val content = """
-                |先手：先手
-                |後手：後手
-                |
-                |   1 ７六歩(77)
-                |   2 ３四歩(33)
-                |
-            """.trimMargin()
-            Files.write(tempFile, content.toByteArray(Charsets.UTF_8))
-
-            updateKifuSenkei(tempFile, "矢倉")
-
-            val resultText = Files.readString(tempFile, Charsets.UTF_8)
-            val expected = """
-                |先手：先手
-                |後手：後手
-                |
-                |戦型：矢倉
-                |   1 ７六歩(77)
-                |   2 ３四歩(33)
-            """.trimMargin()
-            assertEquals(expected, resultText)
-        } finally {
-            Files.deleteIfExists(tempFile)
-        }
-    }
 }

@@ -74,7 +74,6 @@ fun KifuPreviewPanel(
     state: KifuzoUiState,
     boardState: ShogiBoardState,
     onToggleFlip: () -> Unit,
-    onDetectSenkei: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
     onRename: (Path) -> Unit,
     onWriteResult: (Path, String) -> Unit,
@@ -117,9 +116,7 @@ fun KifuPreviewPanel(
         state.selectedFile?.let { selected ->
             KifuHeaderActions(
                 selectedFile = selected,
-                state = state,
                 history = boardState.session.history,
-                onDetectSenkei = onDetectSenkei,
                 onConvertCsa = onConvertCsa,
                 onRename = onRename,
                 onWriteResult = onWriteResult,

@@ -21,7 +21,6 @@ class ImportHandlerTest {
         override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = emptyMap()
         override fun parse(path: Path, state: ShogiBoardState) {}
         override fun convertCsa(path: Path): Path = path
-        override fun updateSenkei(path: Path, senkei: String) {}
         override fun updateResult(path: Path, result: String) {}
         override fun renameKifuFile(path: Path, template: String): Path? = path
         override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = importResult
