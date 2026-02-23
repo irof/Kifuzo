@@ -89,7 +89,8 @@ class KifuzoViewModel(
             is KifuzoAction.ToggleDirectory,
             is KifuzoAction.SetViewMode,
             is KifuzoAction.ToggleFileFilter,
-            is KifuzoAction.RefreshFiles -> handleFileTreeAction(action)
+            is KifuzoAction.RefreshFiles,
+            -> handleFileTreeAction(action)
 
             is KifuzoAction.SelectFile,
             is KifuzoAction.SelectNextFile,
@@ -99,7 +100,8 @@ class KifuzoViewModel(
             is KifuzoAction.ConfirmOverwrite,
             is KifuzoAction.HideOverwriteConfirm,
             is KifuzoAction.DetectAndWriteSenkei,
-            is KifuzoAction.WriteGameResult -> handleFileAction(action)
+            is KifuzoAction.WriteGameResult,
+            -> handleFileAction(action)
 
             is KifuzoAction.SaveSettings,
             is KifuzoAction.SetViewingText,
@@ -109,11 +111,13 @@ class KifuzoViewModel(
             is KifuzoAction.ClearErrorAndInfo,
             is KifuzoAction.ImportFiles,
             is KifuzoAction.UpdateSidebarWidth,
-            is KifuzoAction.ToggleSidebar -> handleUiAction(action)
+            is KifuzoAction.ToggleSidebar,
+            -> handleUiAction(action)
 
             is KifuzoAction.ChangeStep,
             is KifuzoAction.NextStep,
-            is KifuzoAction.PrevStep -> handleStepAction(action)
+            is KifuzoAction.PrevStep,
+            -> handleStepAction(action)
         }
     }
 

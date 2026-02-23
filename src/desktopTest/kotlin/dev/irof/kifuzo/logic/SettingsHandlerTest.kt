@@ -16,7 +16,7 @@ class SettingsHandlerTest {
         boardState = ShogiBoardState()
         handler = SettingsHandler(
             boardState = boardState,
-            onAutoFlip = { isFlipped = it }
+            onAutoFlip = { isFlipped = it },
         )
         isFlipped = null
     }
@@ -24,18 +24,18 @@ class SettingsHandlerTest {
     @Test
     fun 後手名が正規表現にマッチした時に反転すること() {
         boardState.updateSession(KifuSession(senteName = "Sente", goteName = "MyName"))
-        
+
         handler.updateAutoFlip("MyName")
-        
+
         assertEquals(true, isFlipped)
     }
 
     @Test
     fun 先手名が正規表現にマッチした時に反転しないこと() {
         boardState.updateSession(KifuSession(senteName = "MyName", goteName = "Gote"))
-        
+
         handler.updateAutoFlip("MyName")
-        
+
         assertEquals(false, isFlipped)
     }
 

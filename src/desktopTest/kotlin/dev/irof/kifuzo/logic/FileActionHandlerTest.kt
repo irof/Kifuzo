@@ -49,7 +49,7 @@ class FileActionHandlerTest {
             onInfo = { infoMsg = it },
             onFileRenamed = { renamedPath = it },
             onFilesChanged = { filesChangedCalled = true },
-            onAutoFlip = { autoFlipCalled = true }
+            onAutoFlip = { autoFlipCalled = true },
         )
         errorMsg = null
         infoMsg = null
@@ -70,9 +70,9 @@ class FileActionHandlerTest {
     fun パースエラー時にエラーメッセージがセットされること() {
         val path = Paths.get("error.kifu")
         repository.parseError = true
-        
+
         handler.selectFile(path)
-        
+
         assertEquals(true, errorMsg?.contains("棋譜パースエラー"))
     }
 
@@ -81,9 +81,9 @@ class FileActionHandlerTest {
         val oldPath = Paths.get("old.kifu")
         val newPath = Paths.get("new.kifu")
         repository.renameResult = newPath
-        
+
         handler.renameFile(oldPath, "{Sente}")
-        
+
         assertEquals(newPath, renamedPath)
         assertEquals(true, filesChangedCalled)
     }

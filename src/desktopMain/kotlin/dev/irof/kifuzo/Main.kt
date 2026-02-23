@@ -26,6 +26,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -111,13 +112,30 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
             .focusable()
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                val isShiftPressed = event.isShiftPressed
                 when (event.key) {
-                    Key.DirectionRight, Key.DirectionDown -> {
+                    Key.DirectionRight -> {
                         viewModel.dispatch(KifuzoAction.NextStep)
                         true
                     }
-                    Key.DirectionLeft, Key.DirectionUp -> {
+                    Key.DirectionDown -> {
+                        if (isShiftPressed) {
+                            viewModel.dispatch(KifuzoAction.SelectNextFile)
+                        } else {
+                            viewModel.dispatch(KifuzoAction.NextStep)
+                        }
+                        true
+                    }
+                    Key.DirectionLeft -> {
                         viewModel.dispatch(KifuzoAction.PrevStep)
+                        true
+                    }
+                    Key.DirectionUp -> {
+                        if (isShiftPressed) {
+                            viewModel.dispatch(KifuzoAction.SelectPrevFile)
+                        } else {
+                            viewModel.dispatch(KifuzoAction.PrevStep)
+                        }
                         true
                     }
                     else -> false

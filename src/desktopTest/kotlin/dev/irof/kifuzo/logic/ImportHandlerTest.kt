@@ -32,7 +32,7 @@ class ImportHandlerTest {
         handler = ImportHandler(
             repository = repository,
             onInfo = { infoMsg = it },
-            onImported = { importedCalled = true }
+            onImported = { importedCalled = true },
         )
         infoMsg = null
         importedCalled = false
@@ -43,9 +43,9 @@ class ImportHandlerTest {
         val sourceDir = Paths.get("source")
         val root = Paths.get("root")
         repository.importResult = 5
-        
+
         handler.importFiles(sourceDir, root)
-        
+
         assertEquals(true, infoMsg?.contains("5件"))
         assertEquals(true, importedCalled)
     }
@@ -55,9 +55,9 @@ class ImportHandlerTest {
         val sourceDir = Paths.get("source")
         val root = Paths.get("root")
         repository.importResult = 0
-        
+
         handler.importFiles(sourceDir, root)
-        
+
         assertEquals(true, infoMsg?.contains("見つかりませんでした"))
         assertEquals(false, importedCalled)
     }
