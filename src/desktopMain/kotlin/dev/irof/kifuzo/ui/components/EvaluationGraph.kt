@@ -212,6 +212,6 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHoverTooltip(
             size = Size(tooltipWidth, tooltipHeight),
             cornerRadius = CornerRadius(4.dp.toPx()),
         )
-        drawText(textLayoutResult, Offset(tooltipX + padding, tooltipY + padding))
+        drawText(textLayoutResult, color = Color.White, topLeft = Offset(tooltipX + padding, tooltipY + padding))
     }
 }

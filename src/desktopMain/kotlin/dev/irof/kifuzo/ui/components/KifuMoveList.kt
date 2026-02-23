@@ -57,7 +57,7 @@ fun KifuMoveList(
                 val diff = if (curEval != null) curEval - prevEval else null
 
                 val colorSymbol = if (i % 2 != 0) "▲" else "△"
-                val moveText = board.lastMoveText.trim().split(Regex("\s+")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
+                val moveText = board.lastMoveText.trim().split(Regex("""\s+""")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
 
                 MoveRow(i, "$colorSymbol$moveText", curEval, diff, currentStep == i, onStepChange)
             }

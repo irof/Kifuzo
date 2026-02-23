@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -116,7 +117,7 @@ private fun KifuFileName(name: String) {
 }
 
 @Composable
-private fun KifuMainContent(
+private fun ColumnScope.KifuMainContent(
     state: KifuzoUiState,
     boardState: ShogiBoardState,
     onToggleFlip: () -> Unit,
@@ -196,86 +197,6 @@ private fun KifuOperationBar(
                 onStepClick = onStepChange,
                 modifier = Modifier.height(240.dp).fillMaxWidth().padding(horizontal = 16.dp),
             )
-        }
-    }
-}
-
-@Composable
-private fun MoveRow(
-    step: Int,
-    label: String,
-    evaluation: Int?,
-    diff: Int?,
-    isSelected: Boolean,
-    onStepChange: (Int) -> Unit,
-) {
-    val backgroundColor = if (isSelected) ShogiColors.Primary.copy(alpha = 0.15f) else Color.Transparent
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(backgroundColor)
-            .clickable { onStepChange(step) }
-            .padding(vertical = 4.dp, horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = if (step == 0) "" else step.toString(),
-            modifier = Modifier.width(32.dp),
-            style = MaterialTheme.typography.caption,
-            color = Color.Gray,
-        )
-
-        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.body2,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            )
-            if (diff != null && kotlin.math.abs(diff) >= 500) {
-                val marker = if (kotlin.math.abs(diff) >= 1000) "!!" else "!"
-                val markerColor = if (diff > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
-                Box(
-                    modifier = Modifier
-                        .padding(start = 4.dp)
-                        .background(markerColor, shape = MaterialTheme.shapes.small)
-                        .padding(horizontal = 4.dp, vertical = 1.dp),
-                ) {
-                    Text(
-                        text = marker,
-                        color = Color.White,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 11.sp,
-                    )
-                }
-            }
-        }
-
-        if (evaluation != null) {
-            val evalSign = if (evaluation > 0) "+" else ""
-            Text(
-                text = "$evalSign$evaluation",
-                style = MaterialTheme.typography.caption,
-                fontWeight = FontWeight.Bold,
-                color = if (evaluation > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative,
-                modifier = Modifier.width(50.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.End,
-            )
-
-            if (diff != null && diff != 0) {
-                val diffSign = if (diff > 0) "+" else ""
-                val diffColor = if (diff > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
-                Text(
-                    text = " ($diffSign$diff)",
-                    style = MaterialTheme.typography.caption.copy(fontSize = 9.sp),
-                    fontWeight = FontWeight.Bold,
-                    color = diffColor,
-                    modifier = Modifier.width(50.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.End,
-                )
-            } else {
-                Spacer(Modifier.width(50.dp))
-            }
         }
     }
 }
