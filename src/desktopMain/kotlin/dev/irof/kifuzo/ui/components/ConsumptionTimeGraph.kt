@@ -40,15 +40,24 @@ private object TimeGraphConstants {
     const val ALPHA_BAR = 0.6f
     const val ALPHA_GRID = 0.2f
     const val ALPHA_TOOLTIP = 0.7f
+    const val ALPHA_LABEL = 0.8f
     val TOOLTIP_PADDING = 4.dp
     val TOOLTIP_OFFSET = 8.dp
     val TOOLTIP_CORNER_RADIUS = 4.dp
     const val LINE_WIDTH_THIN = 1f
     const val LINE_WIDTH_INDICATOR = 2f
     const val MIN_MAX_SECONDS = 60f // 最低でも1分は表示
-    const val GRID_INTERVAL_LONG = 600f // 10分
-    const val GRID_INTERVAL_SHORT = 60f // 1分
-    const val GRID_THRESHOLD = 600f
+
+    const val GRID_SEC_SMALL = 60f
+    const val GRID_SEC_MEDIUM = 300f
+    const val GRID_SEC_LARGE = 1200f
+    const val INTERVAL_SEC_15 = 15f
+    const val INTERVAL_SEC_60 = 60f
+    const val INTERVAL_SEC_300 = 300f
+    const val INTERVAL_SEC_600 = 600f
+
+    val LABEL_FONT_SIZE = 8.sp
+    val LABEL_OFFSET_X = 4.dp
 }
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalTextApi::class)
@@ -94,7 +103,7 @@ fun ConsumptionTimeGraph(
             val maxSeconds = max(TimeGraphConstants.MIN_MAX_SECONDS, (times.filterNotNull().maxOrNull() ?: 0).toFloat())
             val scaleY = size.height / maxSeconds
 
-            drawTimeGridLines(maxSeconds, scaleY)
+            drawTimeGridLines(maxSeconds, scaleY, textMeasurer)
             drawTimeBars(times, stepWidth, scaleY)
             drawTimeIndicator(currentStep, totalSteps, stepWidth)
 
@@ -105,17 +114,47 @@ fun ConsumptionTimeGraph(
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeGridLines(maxSeconds: Float, scaleY: Float) {
-    val gridInterval = if (maxSeconds > TimeGraphConstants.GRID_THRESHOLD) TimeGraphConstants.GRID_INTERVAL_LONG else TimeGraphConstants.GRID_INTERVAL_SHORT
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeGridLines(
+    maxSeconds: Float,
+    scaleY: Float,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+) {
+    val gridInterval = when {
+        maxSeconds <= TimeGraphConstants.GRID_SEC_SMALL -> TimeGraphConstants.INTERVAL_SEC_15
+        maxSeconds <= TimeGraphConstants.GRID_SEC_MEDIUM -> TimeGraphConstants.INTERVAL_SEC_60
+        maxSeconds <= TimeGraphConstants.GRID_SEC_LARGE -> TimeGraphConstants.INTERVAL_SEC_300
+        else -> TimeGraphConstants.INTERVAL_SEC_600
+    }
     var gridSeconds = gridInterval
-    while (gridSeconds < maxSeconds) {
+    while (gridSeconds <= maxSeconds) {
         val y = size.height - (gridSeconds * scaleY)
+        if (y < 0) break
+
         drawLine(
             color = Color.Gray.copy(alpha = TimeGraphConstants.ALPHA_GRID),
             start = Offset(0f, y),
             end = Offset(size.width, y),
             strokeWidth = TimeGraphConstants.LINE_WIDTH_THIN,
         )
+
+        val label = when {
+            gridSeconds < ShogiConstants.SECONDS_IN_MINUTE -> "${gridSeconds.toInt()}s"
+            gridSeconds % ShogiConstants.SECONDS_IN_MINUTE == 0f -> "${(gridSeconds / ShogiConstants.SECONDS_IN_MINUTE).toInt()}m"
+            else -> {
+                val m = (gridSeconds / ShogiConstants.SECONDS_IN_MINUTE).toInt()
+                val s = (gridSeconds % ShogiConstants.SECONDS_IN_MINUTE).toInt()
+                "${m}m${s}s"
+            }
+        }
+        val textLayoutResult = textMeasurer.measure(
+            text = AnnotatedString(label),
+            style = TextStyle(color = Color.Gray.copy(alpha = TimeGraphConstants.ALPHA_LABEL), fontSize = TimeGraphConstants.LABEL_FONT_SIZE),
+        )
+        drawText(
+            textLayoutResult,
+            topLeft = Offset(TimeGraphConstants.LABEL_OFFSET_X.toPx(), y - textLayoutResult.size.height),
+        )
+
         gridSeconds += gridInterval
     }
 }
