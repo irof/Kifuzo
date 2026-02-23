@@ -26,6 +26,17 @@ enum class Piece(val symbol: String, val mochigomaOrder: Int = 99) {
         RY -> HI
         else -> this
     }
+
+    fun promote(): Piece = when (this) {
+        FU -> TO
+        KY -> NY
+        KE -> NK
+        GI -> NG
+        KA -> UM
+        HI -> RY
+        else -> this
+    }
+
     fun isPromoted(): Boolean = this in listOf(TO, NY, NK, NG, UM, RY)
 
     companion object {

@@ -47,19 +47,10 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
 
 fun parseKifu(lines: List<String>, state: ShogiBoardState) {
     val header = parseHeader(lines)
-
-    val currentCells = Array(9) { y -> header.initialCells[y].toTypedArray() }
-    val senteMochi = header.senteMochi.toMutableList()
-    val goteMochi = header.goteMochi.toMutableList()
-    var firstContactStep = -1
-
-    val history = mutableListOf<BoardSnapshot>()
-    history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), "開始局面", evaluation = 0))
+    val parserState = ParserState(header)
 
     if (header.moveStartIndex != -1) {
-        var lastTo: Square? = null
         var isVariationSection = false
-
         for (i in header.moveStartIndex until lines.size) {
             val line = lines[i].trim()
             if (line.isEmpty() || line.startsWith("#") || line.startsWith("&")) continue
@@ -68,106 +59,101 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
             }
             if (isVariationSection) continue
 
-            // コメント行の処理（評価値抽出）
             if (line.startsWith("*")) {
-                if (history.isNotEmpty()) {
-                    val lastIdx = history.size - 1
-                    val currentEval = history[lastIdx].evaluation
-                    val isCurrentMate = currentEval != null && (currentEval >= 30000 || currentEval <= -30000)
-
-                    if (line.contains("#詰み=先手勝ち")) {
-                        history[lastIdx] = history[lastIdx].copy(evaluation = 31111)
-                    } else if (line.contains("#詰み=後手勝ち")) {
-                        history[lastIdx] = history[lastIdx].copy(evaluation = -31111)
-                    } else if (!isCurrentMate) {
-                        // すでに詰みが検出されている場合は、通常の評価値で上書きしない
-                        val evalMatch = Regex("""\*#評価値=([+-]?\d+)""").find(line)
-                            ?: Regex("""\* ([+-]?\d+)""").find(line)
-                        if (evalMatch != null) {
-                            val eval = evalMatch.groupValues[1].toIntOrNull()
-                            if (eval != null) {
-                                history[lastIdx] = history[lastIdx].copy(evaluation = eval)
-                            }
-                        }
-                    }
-                }
+                parserState.extractEvaluation(line)
                 continue
             }
 
-            val parsedMove = parseMove(line, lastTo) ?: continue
-
+            val parsedMove = parseMove(line, parserState.lastTo) ?: continue
             try {
-                when (parsedMove) {
-                    is KifuParsedMove.Move -> {
-                        val turnColor = if (parsedMove.moveNum % 2 != 0) PieceColor.Black else PieceColor.White
-                        val toSquare = parsedMove.to
-                        val fromSquare = parsedMove.from
-                        val captured = currentCells[toSquare.yIndex][toSquare.xIndex]
-                        if (captured != null) {
-                            if (turnColor == PieceColor.Black) senteMochi.add(captured.first.toBase()) else goteMochi.add(captured.first.toBase())
-                            if (firstContactStep == -1) firstContactStep = history.size
-                        }
-                        val current = currentCells[fromSquare.yIndex][fromSquare.xIndex] ?: throw KifuParseException("移動元($fromSquare)に駒がありません。")
-                        val piece = if (parsedMove.isPromote) {
-                            when (current.first) {
-                                Piece.FU -> Piece.TO
-                                Piece.KY -> Piece.NY
-                                Piece.KE -> Piece.NK
-                                Piece.GI -> Piece.NG
-                                Piece.KA -> Piece.UM
-                                Piece.HI -> Piece.RY
-                                else -> current.first
-                            }
-                        } else {
-                            current.first
-                        }
-                        currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
-                        currentCells[fromSquare.yIndex][fromSquare.xIndex] = null
-                        history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare))
-                        lastTo = toSquare
-                    }
-                    is KifuParsedMove.Drop -> {
-                        val turnColor = if (parsedMove.moveNum % 2 != 0) PieceColor.Black else PieceColor.White
-                        val toSquare = parsedMove.to
-                        val piece = parsedMove.piece
-                        if (turnColor == PieceColor.Black) senteMochi.remove(piece) else goteMochi.remove(piece)
-                        currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
-                        history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare))
-                        lastTo = toSquare
-                    }
-                    is KifuParsedMove.Result -> {
-                        // 投了などの終局。盤面は変えず、評価値を勝敗に合わせて設定する
-                        val turnColor = if (parsedMove.moveNum % 2 != 0) PieceColor.Black else PieceColor.White
-                        // 手番側が負け（投了など）なので、評価値は逆にする
-                        val evaluation = if (turnColor == PieceColor.Black) -31111 else 31111
-                        history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, evaluation = evaluation))
-                    }
-                }
+                parserState.applyMove(parsedMove, line)
             } catch (e: Exception) {
                 throw KifuParseException("${i + 1}行目: ${e.message}\n(内容: $line)", e)
             }
         }
     }
 
-    val initialStep = if (!header.isStandardStart) {
-        0
-    } else if (firstContactStep != -1) {
-        firstContactStep
-    } else if (history.isNotEmpty()) {
-        history.size - 1
-    } else {
-        0
-    }
+    val initialStep = parserState.calculateInitialStep(header.isStandardStart)
     state.updateSession(
         KifuSession(
-            history = history,
+            history = parserState.history,
             initialStep = initialStep,
             senteName = header.senteName,
             goteName = header.goteName,
-            firstContactStep = firstContactStep,
+            firstContactStep = parserState.firstContactStep,
             isStandardStart = header.isStandardStart,
         ),
     )
+}
+
+private class ParserState(header: KifuHeader) {
+    val currentCells = Array(9) { y -> header.initialCells[y].toTypedArray() }
+    val senteMochi = header.senteMochi.toMutableList()
+    val goteMochi = header.goteMochi.toMutableList()
+    var firstContactStep = -1
+    var lastTo: Square? = null
+    val history = mutableListOf<BoardSnapshot>().apply {
+        add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), "開始局面", evaluation = 0))
+    }
+
+    fun extractEvaluation(line: String) {
+        if (history.isEmpty()) return
+        val lastIdx = history.size - 1
+        val currentEval = history[lastIdx].evaluation
+        val isCurrentMate = currentEval != null && (kotlin.math.abs(currentEval) >= 30000)
+
+        if (line.contains("#詰み=先手勝ち")) {
+            history[lastIdx] = history[lastIdx].copy(evaluation = 31111)
+        } else if (line.contains("#詰み=後手勝ち")) {
+            history[lastIdx] = history[lastIdx].copy(evaluation = -31111)
+        } else if (!isCurrentMate) {
+            val evalMatch = Regex("""\*#評価値=([+-]?\d+)""").find(line)
+                ?: Regex("""\* ([+-]?\d+)""").find(line)
+            evalMatch?.groupValues?.get(1)?.toIntOrNull()?.let { eval ->
+                history[lastIdx] = history[lastIdx].copy(evaluation = eval)
+            }
+        }
+    }
+
+    fun applyMove(parsedMove: KifuParsedMove, line: String) {
+        val turnColor = if (parsedMove.moveNum % 2 != 0) PieceColor.Black else PieceColor.White
+        when (parsedMove) {
+            is KifuParsedMove.Move -> {
+                val toSquare = parsedMove.to
+                val fromSquare = parsedMove.from
+                val captured = currentCells[toSquare.yIndex][toSquare.xIndex]
+                if (captured != null) {
+                    if (turnColor == PieceColor.Black) senteMochi.add(captured.first.toBase()) else goteMochi.add(captured.first.toBase())
+                    if (firstContactStep == -1) firstContactStep = history.size
+                }
+                val current = currentCells[fromSquare.yIndex][fromSquare.xIndex] ?: throw KifuParseException("移動元($fromSquare)に駒がありません。")
+                val piece = if (parsedMove.isPromote) current.first.promote() else current.first
+                currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
+                currentCells[fromSquare.yIndex][fromSquare.xIndex] = null
+                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare))
+                lastTo = toSquare
+            }
+            is KifuParsedMove.Drop -> {
+                val toSquare = parsedMove.to
+                val piece = parsedMove.piece
+                if (turnColor == PieceColor.Black) senteMochi.remove(piece) else goteMochi.remove(piece)
+                currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
+                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare))
+                lastTo = toSquare
+            }
+            is KifuParsedMove.Result -> {
+                val evaluation = if (turnColor == PieceColor.Black) -31111 else 31111
+                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, evaluation = evaluation))
+            }
+        }
+    }
+
+    fun calculateInitialStep(isStandardStart: Boolean): Int = when {
+        !isStandardStart -> 0
+        firstContactStep != -1 -> firstContactStep
+        history.isNotEmpty() -> history.size - 1
+        else -> 0
+    }
 }
 
 private data class KifuHeader(
