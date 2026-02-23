@@ -120,9 +120,9 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
                     }
                     Key.DirectionDown -> {
                         if (isShiftPressed) {
-                            viewModel.dispatch(KifuzoAction.SelectNextFile)
-                        } else {
                             viewModel.dispatch(KifuzoAction.NextStep)
+                        } else {
+                            viewModel.dispatch(KifuzoAction.SelectNextFile)
                         }
                         true
                     }
@@ -132,9 +132,9 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
                     }
                     Key.DirectionUp -> {
                         if (isShiftPressed) {
-                            viewModel.dispatch(KifuzoAction.SelectPrevFile)
-                        } else {
                             viewModel.dispatch(KifuzoAction.PrevStep)
+                        } else {
+                            viewModel.dispatch(KifuzoAction.SelectPrevFile)
                         }
                         true
                     }
