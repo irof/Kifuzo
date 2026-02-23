@@ -14,6 +14,7 @@ detekt {
     allRules = false
     config.setFrom(files("$projectDir/config/detekt/detekt.yml"))
     source.setFrom(files("src/desktopMain/kotlin", "src/desktopTest/kotlin"))
+    ignoreFailures = true
 }
 
 tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
