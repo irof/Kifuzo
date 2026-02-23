@@ -239,7 +239,7 @@ private fun KifuOperationBar(
                         currentStep = currentStep,
                         isFlipped = isFlipped,
                         onStepClick = onStepChange,
-                        modifier = Modifier.height(targetHeight),
+                        modifier = Modifier.height(targetHeight).fillMaxWidth(),
                     )
                 }
                 if (hasTime) {
@@ -247,7 +247,7 @@ private fun KifuOperationBar(
                         times = consumptionTimes,
                         currentStep = currentStep,
                         onStepClick = onStepChange,
-                        modifier = Modifier.height(targetHeight),
+                        modifier = Modifier.height(targetHeight).fillMaxWidth(),
                     )
                 }
             }

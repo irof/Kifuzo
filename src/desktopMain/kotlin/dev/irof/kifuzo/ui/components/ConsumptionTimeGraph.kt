@@ -6,6 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -55,7 +57,7 @@ fun ConsumptionTimeGraph(
     times: List<Int?>,
     currentStep: Int,
     onStepClick: (Int) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.height(160.dp).fillMaxWidth(),
 ) {
     var hoverStep by remember { mutableStateOf<Int?>(null) }
     val textMeasurer = rememberTextMeasurer()
