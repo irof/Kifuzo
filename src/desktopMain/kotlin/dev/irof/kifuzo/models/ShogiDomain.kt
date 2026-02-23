@@ -76,6 +76,12 @@ object BoardLayout {
 
     fun getDanLabels(): List<String> = listOf("一", "二", "三", "四", "五", "六", "七", "八", "九")
 
+    fun toShogiNotation(file: Int, rank: Int): String {
+        val suji = getSujiLabels().reversed().getOrNull(file - 1) ?: ""
+        val dan = getDanLabels().getOrNull(rank - 1) ?: ""
+        return suji + dan
+    }
+
     fun getRangeX(isFlipped: Boolean): IntProgression = if (isFlipped) (ShogiConstants.MAX_INDEX downTo 0) else (0..ShogiConstants.MAX_INDEX)
 
     fun getRangeY(isFlipped: Boolean): IntProgression = if (isFlipped) (ShogiConstants.MAX_INDEX downTo 0) else (0..ShogiConstants.MAX_INDEX)

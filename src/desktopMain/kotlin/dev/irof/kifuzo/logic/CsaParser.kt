@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.logic
 
+import dev.irof.kifuzo.models.BoardLayout
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.ShogiBoardState
@@ -46,17 +47,20 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
                     null
                 }
 
+                val lastSession = builder.build()
+                val lastTo = lastSession.history.lastOrNull()?.lastTo
+                val destinationText = if (lastTo != null && lastTo.file == toX && lastTo.rank == toY) {
+                    "同　"
+                } else {
+                    BoardLayout.toShogiNotation(toX, toY)
+                }
+
                 if (fromX == 0) {
-                    val moveText = "${targetPiece.symbol}打"
+                    val moveText = destinationText + targetPiece.symbol + "打"
                     builder.applyDrop(targetPiece, Square(toX, toY), seconds, "$moveCount $moveText")
                 } else {
-                    // CSAでは、移動後の駒(targetPiece)が成駒である場合に、それが今回の手で成ったのか、元々成っていたのかを判断する必要がある。
-                    // ここでは簡易的に、移動前の駒が成駒でなく、移動後の駒が成駒である場合に「成」と表示する。
-                    val fromSquare = Square(fromX, fromY)
-                    // builderの内部状態を覗くのは良くないので、将来的にbuilder側で判断させるべきだが、
-                    // 現状はKifuParserと同様に外部でテキストを構築して渡す。
-                    val moveText = targetPiece.symbol + if (isPromoteMarker) "成" else ""
-                    builder.applyMove(fromSquare, Square(toX, toY), isPromoteMarker, seconds, "$moveCount $moveText")
+                    val moveText = destinationText + targetPiece.symbol + if (isPromoteMarker) "成" else ""
+                    builder.applyMove(Square(fromX, fromY), Square(toX, toY), isPromoteMarker, seconds, "$moveCount $moveText")
                 }
                 moveCount++
             }

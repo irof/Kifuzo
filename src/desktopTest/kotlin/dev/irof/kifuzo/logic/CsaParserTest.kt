@@ -24,8 +24,37 @@ class CsaParserTest {
         parseCsa(csa.lines(), state)
 
         assertEquals(Evaluation.Score(123), state.session.history[1].evaluation)
+        assertEquals("1 ７六歩", state.session.history[1].lastMoveText)
         assertEquals(Evaluation.Score(-456), state.session.history[2].evaluation)
+        assertEquals("2 ３四歩", state.session.history[2].lastMoveText)
         assertEquals(Evaluation.SenteWin, state.session.history[3].evaluation)
+        assertEquals("3 ２二角成", state.session.history[3].lastMoveText)
+    }
+
+    @Test
+    fun 同の表記を生成できること() {
+        val csa = """
+                +7776FU
+                -3334FU
+                +2222KA
+        """.trimIndent()
+        val state = ShogiBoardState()
+        parseCsa(csa.lines(), state)
+
+        // 3手目が 22 なので、2手目の 34 とは異なるため通常の座標が表示される
+        assertEquals("3 ２二角", state.session.history[3].lastMoveText)
+
+        val csaSame = """
+                +7776FU
+                -3334FU
+                +8822KA+
+                -3122GI
+        """.trimIndent()
+        val stateSame = ShogiBoardState()
+        parseCsa(csaSame.lines(), stateSame)
+
+        // 4手目(-3122GI)が3手目(+8822KA+)と同じ座標(22)に移動するので「同」になる
+        assertEquals("4 同　銀", stateSame.session.history[4].lastMoveText)
     }
 
     @Test
