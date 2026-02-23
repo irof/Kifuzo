@@ -89,7 +89,7 @@ fun EvaluationGraph(
     onStepClick: (Int) -> Unit = {},
     modifier: Modifier = Modifier.height(240.dp).fillMaxWidth(),
 ) {
-    if (evaluations.isEmpty() || evaluations.all { it is Evaluation.Unknown }) return
+    if (evaluations.isEmpty() || evaluations.none { it is Evaluation.Score }) return
 
     var hoverX by remember { mutableStateOf<Float?>(null) }
     val textMeasurer = rememberTextMeasurer()
