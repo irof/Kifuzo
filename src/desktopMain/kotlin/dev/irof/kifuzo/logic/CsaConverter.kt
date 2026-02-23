@@ -30,7 +30,9 @@ fun convertCsaToKifuLines(lines: List<String>): List<String> {
                 if (line.length >= 7) {
                     val seconds = if (i + 1 < lines.size && lines[i + 1].trim().startsWith("T")) {
                         lines[i + 1].trim().substring(1).toIntOrNull() ?: 0
-                    } else 0
+                    } else {
+                        0
+                    }
                     kifLines.add(context.processMove(line, seconds))
                 }
             }

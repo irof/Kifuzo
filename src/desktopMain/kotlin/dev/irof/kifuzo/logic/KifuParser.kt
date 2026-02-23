@@ -205,7 +205,9 @@ private class HeaderParser {
             if (parseMove(line, null) != null) {
                 moveStartIndex = index
                 true
-            } else false
+            } else {
+                false
+            }
         }
         else -> false
     }
