@@ -130,7 +130,7 @@ private class ParserState(header: KifuHeader) {
                 val piece = if (parsedMove.isPromote) current.first.promote() else current.first
                 currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
                 currentCells[fromSquare.yIndex][fromSquare.xIndex] = null
-                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare))
+                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = fromSquare, lastTo = toSquare, consumptionSeconds = parsedMove.consumptionSeconds))
                 lastTo = toSquare
             }
             is KifuParsedMove.Drop -> {
@@ -138,7 +138,7 @@ private class ParserState(header: KifuHeader) {
                 val piece = parsedMove.piece
                 if (turnColor == PieceColor.Black) senteMochi.remove(piece) else goteMochi.remove(piece)
                 currentCells[toSquare.yIndex][toSquare.xIndex] = piece to turnColor
-                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare))
+                history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, lastFrom = null, lastTo = toSquare, consumptionSeconds = parsedMove.consumptionSeconds))
                 lastTo = toSquare
             }
             is KifuParsedMove.Result -> {
@@ -277,30 +277,8 @@ private class HeaderParser {
     }
 }
 
-private sealed class KifuParsedMove {
-    abstract val moveNum: Int
-
-    data class Move(
-        override val moveNum: Int,
-        val to: Square,
-        val from: Square,
-        val isPromote: Boolean,
-    ) : KifuParsedMove()
-
-    data class Drop(
-        override val moveNum: Int,
-        val to: Square,
-        val piece: Piece,
-    ) : KifuParsedMove()
-
-    data class Result(
-        override val moveNum: Int,
-        val result: String,
-    ) : KifuParsedMove()
-}
-
-private val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*""")
-private val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*""")
+private val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]{2})\).*(?:\(\s*(\d+):(\d+)/.*\))?.*""")
+private val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*(?:\(\s*(\d+):(\d+)/.*\))?.*""")
 private val resultRegex = Regex("""^\s*(\d+)\s+(${dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.joinToString("|")}).*""")
 
 private object RegexGroups {
@@ -308,6 +286,35 @@ private object RegexGroups {
     const val TO_POS = 2
     const val PIECE_NAME = 3
     const val FROM_POS = 4
+    const val TIME_MIN = 5
+    const val TIME_SEC = 6
+}
+
+private sealed class KifuParsedMove {
+    abstract val moveNum: Int
+    abstract val consumptionSeconds: Int?
+
+    data class Move(
+        override val moveNum: Int,
+        val to: Square,
+        val from: Square,
+        val isPromote: Boolean,
+        override val consumptionSeconds: Int? = null,
+    ) : KifuParsedMove()
+
+    data class Drop(
+        override val moveNum: Int,
+        val to: Square,
+        val piece: Piece,
+        override val consumptionSeconds: Int? = null,
+    ) : KifuParsedMove()
+
+    data class Result(
+        override val moveNum: Int,
+        val result: String,
+    ) : KifuParsedMove() {
+        override val consumptionSeconds: Int? = null
+    }
 }
 
 private fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
@@ -325,6 +332,8 @@ private fun parseNormalMove(line: String, lastTo: Square?): KifuParsedMove.Move?
     val pieceName = match.groupValues[RegexGroups.PIECE_NAME].trim()
     val fromPosStr = match.groupValues[RegexGroups.FROM_POS]
 
+    val consumptionSeconds = parseTime(match, RegexGroups.TIME_MIN, RegexGroups.TIME_SEC)
+
     val isPromote = pieceName.contains("成") || pieceName in listOf("竜", "馬", "龍", "圭", "杏", "全")
     val toSquare = if (toPosStr.startsWith("同")) {
         lastTo ?: throw KifuParseException("同の移動先が不明です")
@@ -333,7 +342,7 @@ private fun parseNormalMove(line: String, lastTo: Square?): KifuParsedMove.Move?
     }
     val fromSquare = Square(fromPosStr[0] - '0', fromPosStr[1] - '0')
 
-    return KifuParsedMove.Move(moveNum, toSquare, fromSquare, isPromote)
+    return KifuParsedMove.Move(moveNum, toSquare, fromSquare, isPromote, consumptionSeconds)
 }
 
 private fun parseDropMove(line: String): KifuParsedMove.Drop? {
@@ -341,6 +350,8 @@ private fun parseDropMove(line: String): KifuParsedMove.Drop? {
     val moveNum = match.groupValues[RegexGroups.MOVE_NUM].toInt()
     val toPosStr = match.groupValues[RegexGroups.TO_POS]
     val pieceSym = match.groupValues[RegexGroups.PIECE_NAME].substring(0, 1)
+
+    val consumptionSeconds = parseTime(match, RegexGroups.TIME_MIN, RegexGroups.TIME_SEC)
 
     val toSquare = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
     val piece = Piece.entries.find {
@@ -352,7 +363,16 @@ private fun parseDropMove(line: String): KifuParsedMove.Drop? {
             (pieceSym == "馬" && it == Piece.UM)
     } ?: throw KifuParseException("不明な駒種: $pieceSym")
 
-    return KifuParsedMove.Drop(moveNum, toSquare, piece)
+    return KifuParsedMove.Drop(moveNum, toSquare, piece, consumptionSeconds)
+}
+
+private fun parseTime(match: MatchResult, minIdx: Int, secIdx: Int): Int? {
+    if (match.groupValues.size <= secIdx) return null
+    val minStr = match.groupValues.getOrNull(minIdx)
+    val secStr = match.groupValues.getOrNull(secIdx)
+    val mins = minStr?.toIntOrNull() ?: return null
+    val secs = secStr?.toIntOrNull() ?: return null
+    return mins * ShogiConstants.SECONDS_IN_MINUTE + secs
 }
 
 private fun parseResultMove(line: String): KifuParsedMove.Result? {

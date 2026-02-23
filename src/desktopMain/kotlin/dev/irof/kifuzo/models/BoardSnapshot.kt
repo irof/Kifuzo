@@ -8,6 +8,7 @@ data class BoardSnapshot(
     val lastFrom: Square? = null,
     val lastTo: Square? = null,
     val evaluation: Int? = null,
+    val consumptionSeconds: Int? = null,
 ) {
     companion object {
         /**

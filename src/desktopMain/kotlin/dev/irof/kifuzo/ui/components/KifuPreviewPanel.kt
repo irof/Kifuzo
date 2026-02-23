@@ -199,6 +199,7 @@ private fun KifuOperationBar(
     onStepChange: (Int) -> Unit,
 ) {
     val evaluations = history.map { it.evaluation }
+    val consumptionTimes = history.map { it.consumptionSeconds }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -222,15 +223,30 @@ private fun KifuOperationBar(
             modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
         )
 
-        if (evaluations.any { it != null }) {
+        if (evaluations.any { it != null } || consumptionTimes.any { it != null }) {
             Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
-            EvaluationGraph(
-                evaluations = evaluations,
-                currentStep = currentStep,
-                isFlipped = isFlipped,
-                onStepClick = onStepChange,
-                modifier = Modifier.height(ShogiDimensions.GraphHeight).fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
+                verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingSmall),
+            ) {
+                if (evaluations.any { it != null }) {
+                    EvaluationGraph(
+                        evaluations = evaluations,
+                        currentStep = currentStep,
+                        isFlipped = isFlipped,
+                        onStepClick = onStepChange,
+                        modifier = Modifier.height(ShogiDimensions.GraphHeight / 2),
+                    )
+                }
+                if (consumptionTimes.any { it != null }) {
+                    ConsumptionTimeGraph(
+                        times = consumptionTimes,
+                        currentStep = currentStep,
+                        onStepClick = onStepChange,
+                        modifier = Modifier.height(ShogiDimensions.GraphHeight / 2),
+                    )
+                }
+            }
         }
     }
 }
