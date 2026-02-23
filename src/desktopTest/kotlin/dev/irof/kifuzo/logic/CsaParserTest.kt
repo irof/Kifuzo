@@ -16,11 +16,11 @@ class CsaParserTest {
             -
             -3334FU
         """.trimIndent()
-        
+
         val state = ShogiBoardState()
         // ここで StringIndexOutOfBoundsException が発生すれば再現成功
         parseCsa(csa.lines(), state)
-        
+
         // 正しくパースされた指し手（2手）だけが反映されていること
         // 初期局面(1) + 指し手(2) = 3
         assertEquals(3, state.session.history.size)

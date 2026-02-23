@@ -47,6 +47,7 @@ fun KifuMoveList(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
+    val showEvaluation = history.any { it.evaluation != null && it.evaluation != 0 }
 
     LaunchedEffect(currentStep) {
         if (currentStep in history.indices) {
@@ -64,7 +65,7 @@ fun KifuMoveList(
             modifier = Modifier.fillMaxSize().padding(vertical = ShogiDimensions.PaddingSmall),
         ) {
             item {
-                MoveRow(0, AppStrings.START_POSITION, null, null, currentStep == 0, onStepChange)
+                MoveRow(0, AppStrings.START_POSITION, null, null, currentStep == 0, showEvaluation, onStepChange)
             }
 
             items(history.size - 1) { index ->
@@ -77,7 +78,7 @@ fun KifuMoveList(
                 val colorSymbol = if (i % 2 != 0) "▲" else "△"
                 val moveText = board.lastMoveText.trim().split(Regex("""\s+""")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
 
-                MoveRow(i, "$colorSymbol$moveText", curEval, diff, currentStep == i, onStepChange)
+                MoveRow(i, "$colorSymbol$moveText", curEval, diff, currentStep == i, showEvaluation, onStepChange)
             }
         }
     }
@@ -90,6 +91,7 @@ private fun MoveRow(
     evaluation: Int?,
     diff: Int?,
     isSelected: Boolean,
+    showEvaluation: Boolean,
     onStepChange: (Int) -> Unit,
 ) {
     val backgroundColor = if (isSelected) ShogiColors.Primary.copy(alpha = MoveListConstants.SELECTED_BACKGROUND_ALPHA) else Color.Transparent
@@ -103,8 +105,10 @@ private fun MoveRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         StepNumber(step)
-        MoveLabel(label, diff, isSelected, modifier = Modifier.weight(1f))
-        EvaluationInfo(evaluation, diff)
+        MoveLabel(label, diff, isSelected, showEvaluation, modifier = Modifier.weight(1f))
+        if (showEvaluation) {
+            EvaluationInfo(evaluation, diff)
+        }
     }
 }
 
@@ -119,14 +123,16 @@ private fun StepNumber(step: Int) {
 }
 
 @Composable
-private fun MoveLabel(label: String, diff: Int?, isSelected: Boolean, modifier: Modifier = Modifier) {
+private fun MoveLabel(label: String, diff: Int?, isSelected: Boolean, showEvaluation: Boolean, modifier: Modifier = Modifier) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = label,
             style = MaterialTheme.typography.body2,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
         )
-        SignificantMoveBadge(diff)
+        if (showEvaluation) {
+            SignificantMoveBadge(diff)
+        }
     }
 }
 
