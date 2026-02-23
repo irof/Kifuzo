@@ -122,35 +122,51 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGraphBackground
     scaler: GraphScaler,
     isFlipped: Boolean,
 ) {
+    drawBackgroundZones(scaler, isFlipped)
+    drawGridLines(scaler)
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBackgroundZones(
+    scaler: GraphScaler,
+    isFlipped: Boolean,
+) {
     val width = size.width
-    val height = size.height
-    val centerY = height / 2f
+    val centerY = size.height / 2f
     val thresholdY = scaler.getThresholdY()
 
     val posColor = if (isFlipped) ShogiColors.EvalNegative else ShogiColors.EvalPositive
     val negColor = if (isFlipped) ShogiColors.EvalPositive else ShogiColors.EvalNegative
 
-    // Background zones
+    // 0-2000 領域
     drawRect(posColor.copy(alpha = 0.15f), Offset(0f, centerY - thresholdY), Size(width, thresholdY))
     drawRect(negColor.copy(alpha = 0.15f), Offset(0f, centerY), Size(width, thresholdY))
+    // 2000以上 領域
     drawRect(posColor.copy(alpha = 0.35f), Offset(0f, 0f), Size(width, centerY - thresholdY))
-    drawRect(negColor.copy(alpha = 0.35f), Offset(0f, centerY + thresholdY), Size(width, height - (centerY + thresholdY)))
+    drawRect(negColor.copy(alpha = 0.35f), Offset(0f, centerY + thresholdY), Size(width, size.height - (centerY + thresholdY)))
+}
 
-    // Grid lines
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
+    scaler: GraphScaler,
+) {
+    val width = size.width
+    val height = size.height
+
     for (i in -10..10) {
         if (i == 0) continue
         val y = scaler.getScaledY(i * 1000)
         if (y in 0f..height) {
             val isThreshold = kotlin.math.abs(i * 1000) == 2000
+            val alpha = if (isThreshold) 0.5f else 0.2f
             drawLine(
-                color = Color.Gray.copy(alpha = if (isThreshold) 0.5f else 0.2f),
+                color = Color.Gray.copy(alpha = alpha),
                 start = Offset(0f, y),
                 end = Offset(width, y),
                 strokeWidth = if (isThreshold) 1.5f else 1f,
             )
         }
     }
-    drawLine(Color.Gray.copy(alpha = 0.5f), Offset(0f, centerY), Offset(width, centerY), 1f)
+    // Zero line
+    drawLine(Color.Gray.copy(alpha = 0.5f), Offset(0f, height / 2f), Offset(width, height / 2f), 1f)
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawEvaluationLine(
