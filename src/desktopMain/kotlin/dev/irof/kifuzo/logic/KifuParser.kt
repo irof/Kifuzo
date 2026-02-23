@@ -101,7 +101,7 @@ private class ParserState(header: KifuHeader) {
     var firstContactStep = -1
     var lastTo: Square? = null
     val history = mutableListOf<BoardSnapshot>().apply {
-        add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), "開始局面", evaluation = 0))
+        add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), "開始局面"))
     }
 
     fun extractEvaluation(line: String) {

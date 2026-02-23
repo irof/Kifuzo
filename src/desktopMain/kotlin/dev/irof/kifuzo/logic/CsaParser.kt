@@ -28,7 +28,7 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
     val senteMochi = mutableListOf<Piece>()
     val goteMochi = mutableListOf<Piece>()
 
-    history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), "開始局面", evaluation = 0))
+    history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), "開始局面"))
 
     var moveCount = 1
     for (i in lines.indices) {

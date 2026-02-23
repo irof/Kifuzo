@@ -58,9 +58,19 @@ class KifuParserTest {
     }
 
     @Test
-    fun 投了行から評価値を設定できること() {
+    fun 評価値コメントがない棋譜ではすべての局面の評価値がnullであること() {
+        val session = parse("1 ７六歩(77)\n2 ３四歩(33)")
+        assertNull(session.history[0].evaluation)
+        assertNull(session.history[1].evaluation)
+        assertNull(session.history[2].evaluation)
+    }
+
+    @Test
+    fun 終局行のみ評価値が設定されるケースを検証すること() {
         val session = parse("1 ７六歩(77)\n2 ３四歩(33)\n3 投了")
-        assertEquals(3, session.maxStep)
+        assertNull(session.history[0].evaluation)
+        assertNull(session.history[1].evaluation)
+        assertNull(session.history[2].evaluation)
         assertEquals(-31111, session.history[3].evaluation)
     }
 
