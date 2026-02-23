@@ -113,8 +113,8 @@ fun ConsumptionTimeGraph(
             )
 
             drawTimeGridLines(maxSeconds, scaler, textMeasurer)
+            drawTimeCurrentHighlight(currentStep, totalSteps, stepWidth)
             drawTimeBars(times, stepWidth, scaler)
-            drawTimeIndicator(currentStep, totalSteps, stepWidth)
 
             hoverStep?.let { step ->
                 val seconds = times.getOrNull(step)
@@ -200,12 +200,12 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeBars(
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeIndicator(currentStep: Int, totalSteps: Int, stepWidth: Float) {
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeCurrentHighlight(currentStep: Int, totalSteps: Int, stepWidth: Float) {
+    if (totalSteps == 0) return
     val currentX = currentStep.coerceIn(0, totalSteps - 1) * stepWidth
-    drawLine(
-        color = Color.Black,
-        start = Offset(currentX, 0f),
-        end = Offset(currentX, size.height),
-        strokeWidth = GraphCommonConstants.LINE_WIDTH_INDICATOR,
+    drawRect(
+        color = ShogiColors.Primary.copy(alpha = 0.2f),
+        topLeft = Offset(currentX, 0f),
+        size = Size(stepWidth, size.height),
     )
 }

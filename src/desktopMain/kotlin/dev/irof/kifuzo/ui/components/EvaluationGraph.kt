@@ -92,8 +92,8 @@ fun EvaluationGraph(
         val stepWidth = if (stepCount > 1) size.width / (stepCount - 1) else size.width
 
         drawGraphBackground(scaler, textMeasurer)
+        drawCurrentStepHighlight(currentStep, evaluations.size, stepWidth)
         drawEvaluationLine(evaluations, scaler, stepWidth)
-        drawCurrentStepLine(currentStep, evaluations.size, stepWidth)
 
         drawRect(
             color = Color.Gray,
@@ -213,12 +213,20 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawEvaluationLine(
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCurrentStepLine(
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCurrentStepHighlight(
     currentStep: Int,
     totalSteps: Int,
     stepWidth: Float,
 ) {
     if (totalSteps == 0) return
-    val currentX = currentStep.coerceIn(0, totalSteps - 1) * stepWidth
-    drawLine(ShogiColors.EvalCurrentPos, Offset(currentX, 0f), Offset(currentX, size.height), GraphCommonConstants.LINE_WIDTH_INDICATOR)
+    val x = currentStep.coerceIn(0, totalSteps - 1) * stepWidth
+    // 折れ線グラフの場合、点は x の位置にあるため、ハイライトはその前後をカバーする
+    val highlightWidth = stepWidth.coerceAtLeast(8f)
+    val startX = if (totalSteps > 1) x - (highlightWidth / 2) else 0f
+
+    drawRect(
+        color = ShogiColors.Primary.copy(alpha = 0.15f),
+        topLeft = Offset(startX, 0f),
+        size = Size(highlightWidth, size.height),
+    )
 }
