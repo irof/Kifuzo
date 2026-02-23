@@ -1,13 +1,8 @@
 package dev.irof.kifuzo.viewmodel
 
-import dev.irof.kifuzo.logic.KifuRepository
+import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.models.BoardSnapshot
-import dev.irof.kifuzo.models.FileSortOption
-import dev.irof.kifuzo.models.FileTreeNode
-import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.KifuSession
-import dev.irof.kifuzo.models.ShogiBoardState
-import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -20,23 +15,6 @@ class KifuzoViewModelTest {
     private lateinit var viewModel: KifuzoViewModel
     private val stubRepository = StubKifuRepository()
 
-    class StubKifuRepository : KifuRepository {
-        var parseAction: (ShogiBoardState) -> Unit = {}
-
-        override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> = emptyList()
-        override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = emptyMap()
-        override fun parse(path: Path, state: ShogiBoardState) {
-            parseAction(state)
-        }
-
-        override fun convertCsa(path: Path): Path = path
-        override fun updateResult(path: Path, result: String) {}
-        override fun generateProposedName(path: Path, template: String): String? = null
-        override fun renameFileTo(path: Path, newName: String): Path? = null
-        override fun renameKifuFile(path: Path, template: String): Path? = path
-        override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = 0
-    }
-
     @BeforeTest
     fun setup() {
         viewModel = KifuzoViewModel(stubRepository)
@@ -44,7 +22,7 @@ class KifuzoViewModelTest {
 
     @Test
     fun ファイルを選択すると棋譜が読み込まれセッション情報が更新されること() {
-        val path = java.nio.file.Paths.get("test.kifu")
+        val path = Paths.get("test.kifu")
         stubRepository.parseAction = { state ->
             state.updateSession(
                 KifuSession(

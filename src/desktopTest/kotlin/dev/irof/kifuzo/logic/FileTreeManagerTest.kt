@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.logic
 
+import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.KifuInfo
@@ -13,21 +14,12 @@ import kotlin.test.assertTrue
 
 class FileTreeManagerTest {
 
-    private val mockRepository = object : KifuRepository {
+    private val mockRepository = object : StubKifuRepository() {
         override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> = when (directory.toString()) {
             "/root" -> listOf(Paths.get("/root/dir1"), Paths.get("/root/file1.kifu"))
             "/root/dir1" -> listOf(Paths.get("/root/dir1/file2.kifu"))
             else -> emptyList()
         }
-
-        override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = emptyMap()
-        override fun parse(path: Path, state: ShogiBoardState) {}
-        override fun convertCsa(path: Path): Path = path
-        override fun updateResult(path: Path, result: String) {}
-        override fun generateProposedName(path: Path, template: String): String? = null
-        override fun renameFileTo(path: Path, newName: String): Path? = path
-        override fun renameKifuFile(path: Path, template: String): Path? = path
-        override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = 0
     }
 
     private val manager = FileTreeManager(mockRepository)

@@ -1,11 +1,7 @@
 package dev.irof.kifuzo.logic
 
-import dev.irof.kifuzo.models.BoardSnapshot
-import dev.irof.kifuzo.models.FileSortOption
-import dev.irof.kifuzo.models.KifuInfo
-import dev.irof.kifuzo.models.KifuSession
+import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.models.ShogiBoardState
-import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -18,28 +14,9 @@ class FileActionHandlerTest {
     private var errorMsg: String? = null
     private var errorDetail: String? = null
     private var infoMsg: String? = null
-    private var renamedPath: Path? = null
+    private var renamedPath: java.nio.file.Path? = null
     private var filesChangedCalled = false
     private var autoFlipCalled = false
-
-    class StubKifuRepository : KifuRepository {
-        var parseCalled = false
-        var parseError = false
-        var renameResult: Path? = null
-
-        override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> = emptyList()
-        override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = emptyMap()
-        override fun parse(path: Path, state: ShogiBoardState) {
-            parseCalled = true
-            if (parseError) throw KifuParseException("parse error")
-        }
-        override fun convertCsa(path: Path): Path = path
-        override fun updateResult(path: Path, result: String) {}
-        override fun generateProposedName(path: Path, template: String): String? = path.fileName.toString()
-        override fun renameFileTo(path: Path, newName: String): Path? = renameResult
-        override fun renameKifuFile(path: Path, template: String): Path? = renameResult
-        override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = 0
-    }
 
     @BeforeTest
     fun setup() {
@@ -69,14 +46,14 @@ class FileActionHandlerTest {
     fun 棋譜ファイルを選択した時にパースが実行されること() {
         val path = Paths.get("test.kifu")
         handler.selectFile(path)
-        assertEquals(true, repository.parseCalled)
+        assertEquals(path, repository.lastParsedPath)
         assertEquals(true, autoFlipCalled)
     }
 
     @Test
     fun パースエラー時にエラーメッセージがセットされること() {
         val path = Paths.get("error.kifu")
-        repository.parseError = true
+        repository.parseAction = { throw KifuParseException("parse error") }
 
         handler.selectFile(path)
 
