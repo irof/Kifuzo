@@ -68,9 +68,9 @@ fun EvaluationGraph(
                         }
 
                         if (event.type == PointerEventType.Release && change.position.x in 0f..size.width.toFloat()) {
-                            val stepCount = evaluations.size
-                            val stepWidth = if (stepCount > 1) size.width.toFloat() / (stepCount - 1) else size.width.toFloat()
-                            val stepIndex = (change.position.x / stepWidth.coerceAtLeast(1f)).toInt().coerceIn(0, stepCount - 1)
+                            val totalSteps = evaluations.size
+                            val stepWidth = size.width.toFloat() / maxOf(1, totalSteps)
+                            val stepIndex = (change.position.x / stepWidth).toInt().coerceIn(0, totalSteps - 1)
                             onStepClick(stepIndex)
                         }
                     }
@@ -88,11 +88,11 @@ fun EvaluationGraph(
             mode = ScalerMode.CENTER_ZERO,
             isFlipped = isFlipped,
         )
-        val stepCount = evaluations.size
-        val stepWidth = if (stepCount > 1) size.width / (stepCount - 1) else size.width
+        val totalSteps = evaluations.size
+        val stepWidth = size.width / maxOf(1, totalSteps)
 
         drawGraphBackground(scaler, textMeasurer)
-        drawCurrentStepHighlight(currentStep, evaluations.size, stepWidth)
+        drawCurrentStepHighlight(currentStep, totalSteps, stepWidth)
         drawEvaluationLine(evaluations, scaler, stepWidth)
 
         drawRect(
@@ -205,7 +205,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawEvaluationLine(
             lastPoint = null
             continue
         }
-        val currentPoint = Offset(i * stepWidth, scaler.getScaledY(eval.orNull()?.toFloat() ?: 0f))
+        val x = (i + 0.5f) * stepWidth
+        val currentPoint = Offset(x, scaler.getScaledY(eval.orNull()?.toFloat() ?: 0f))
         if (lastPoint != null) {
             drawLine(ShogiColors.EvalLine, lastPoint, currentPoint, 3f)
         }
@@ -219,14 +220,10 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCurrentStepHigh
     stepWidth: Float,
 ) {
     if (totalSteps == 0) return
-    val x = currentStep.coerceIn(0, totalSteps - 1) * stepWidth
-    // 折れ線グラフの場合、点は x の位置にあるため、ハイライトはその前後をカバーする
-    val highlightWidth = stepWidth.coerceAtLeast(8f)
-    val startX = if (totalSteps > 1) x - (highlightWidth / 2) else 0f
-
+    val startX = currentStep.coerceIn(0, totalSteps - 1) * stepWidth
     drawRect(
         color = ShogiColors.Primary.copy(alpha = 0.15f),
         topLeft = Offset(startX, 0f),
-        size = Size(highlightWidth, size.height),
+        size = Size(stepWidth, size.height),
     )
 }
