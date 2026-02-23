@@ -32,7 +32,7 @@ import dev.irof.kifuzo.ui.theme.ShogiColors
 private object GraphConstants {
     const val MAX_EVAL = 10000f
     const val THRESHOLD = 2000f
-    const val COMPRESSION = 0.5f
+    const val COMPRESSION = 0.2f // 0.5f から 0.2f に変更して圧縮を強める
 
     @Suppress("MayBeConstant")
     val DISPLAY_MAX = THRESHOLD + (MAX_EVAL - THRESHOLD) * COMPRESSION
@@ -42,6 +42,7 @@ private object GraphConstants {
     const val ALPHA_GRID_LIGHT = 0.2f
     const val ALPHA_GRID_DARK = 0.5f
     const val ALPHA_TOOLTIP = 0.7f
+    const val ALPHA_LABEL = 0.8f
 
     const val GRID_STEP = 1000
     const val GRID_RANGE_MIN = -10
@@ -55,6 +56,9 @@ private object GraphConstants {
     val TOOLTIP_PADDING = 4.dp
     val TOOLTIP_OFFSET = 8.dp
     val TOOLTIP_CORNER_RADIUS = 4.dp
+
+    val LABEL_FONT_SIZE = 8.sp
+    val LABEL_OFFSET_X = 4.dp
 }
 
 private class GraphScaler(private val isFlipped: Boolean, private val height: Float) {
@@ -124,7 +128,7 @@ fun EvaluationGraph(
         val stepCount = evaluations.size
         val stepWidth = if (stepCount > 1) size.width / (stepCount - 1) else size.width
 
-        drawGraphBackground(scaler, isFlipped)
+        drawGraphBackground(scaler, isFlipped, textMeasurer)
         drawEvaluationLine(evaluations, scaler, stepWidth)
         drawCurrentStepLine(currentStep, evaluations.size, stepWidth)
 
@@ -143,9 +147,10 @@ fun EvaluationGraph(
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGraphBackground(
     scaler: GraphScaler,
     isFlipped: Boolean,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
 ) {
     drawBackgroundZones(scaler, isFlipped)
-    drawGridLines(scaler)
+    drawGridLines(scaler, textMeasurer)
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBackgroundZones(
@@ -168,21 +173,33 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBackgroundZones
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
     scaler: GraphScaler,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
 ) {
     val width = size.width
     val height = size.height
 
     for (i in GraphConstants.GRID_RANGE) {
         if (i == 0) continue
-        val y = scaler.getScaledY(Evaluation.Score(i * GraphConstants.GRID_STEP))
+        val evalValue = i * GraphConstants.GRID_STEP
+        val y = scaler.getScaledY(Evaluation.Score(evalValue))
         if (y in 0f..height) {
-            val isThreshold = kotlin.math.abs(i * GraphConstants.GRID_STEP) == GraphConstants.THRESHOLD.toInt()
+            val isThreshold = kotlin.math.abs(evalValue) == GraphConstants.THRESHOLD.toInt()
             val alpha = if (isThreshold) GraphConstants.ALPHA_GRID_DARK else GraphConstants.ALPHA_GRID_LIGHT
             drawLine(
                 color = Color.Gray.copy(alpha = alpha),
                 start = Offset(0f, y),
                 end = Offset(width, y),
                 strokeWidth = if (isThreshold) GraphConstants.LINE_WIDTH_NORMAL else GraphConstants.LINE_WIDTH_THIN,
+            )
+
+            val sign = if (evalValue > 0) "+" else ""
+            val textLayoutResult = textMeasurer.measure(
+                text = AnnotatedString("$sign$evalValue"),
+                style = TextStyle(color = Color.Gray.copy(alpha = GraphConstants.ALPHA_LABEL), fontSize = GraphConstants.LABEL_FONT_SIZE),
+            )
+            drawText(
+                textLayoutResult,
+                topLeft = Offset(GraphConstants.LABEL_OFFSET_X.toPx(), y - textLayoutResult.size.height),
             )
         }
     }
