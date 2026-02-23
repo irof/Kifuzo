@@ -45,58 +45,11 @@ import kotlin.io.path.extension
 fun KifuHeaderActions(
     selectedFile: Path,
     history: List<BoardSnapshot>,
-    onConvertCsa: (Path) -> Unit,
-    onRename: (Path) -> Unit,
-    onWriteResult: (Path, String) -> Unit,
 ) {
     val ext = selectedFile.extension.lowercase()
-    val isKifuFile = ext == "kifu" || ext == "kif"
     val hasHistory = history.isNotEmpty()
 
     if (!hasHistory && ext != "csa") return
 
     Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
-    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-        if (hasHistory && isKifuFile) {
-            Button(onClick = { onRename(selectedFile) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Primary, contentColor = Color.White), modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
-                Text(AppStrings.RENAME, fontSize = ShogiDimensions.FontSizeCaption)
-            }
-            GameResultAction(selectedFile, history.lastOrNull(), onWriteResult)
-        }
-
-        if (ext == "csa") {
-            if (hasHistory) Spacer(Modifier.width(ShogiDimensions.PaddingMedium))
-            Button(onClick = { onConvertCsa(selectedFile) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Success, contentColor = Color.White), modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
-                Text(AppStrings.CONVERT_TO_KIFU, fontSize = ShogiDimensions.FontSizeCaption)
-            }
-        }
-    }
-}
-
-@Composable
-private fun GameResultAction(path: Path, lastSnapshot: BoardSnapshot?, onWriteResult: (Path, String) -> Unit) {
-    val lastMove = lastSnapshot?.lastMoveText ?: ""
-    val evaluation = lastSnapshot?.evaluation?.orZero() ?: 0
-    val isMate = kotlin.math.abs(evaluation) >= ShogiConstants.MATE_SCORE_THRESHOLD
-    val isFinished = isMate || dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.any { lastMove.contains(it) }
-
-    if (isFinished) return
-
-    Spacer(Modifier.width(ShogiDimensions.PaddingMedium))
-    var showMenu by remember { mutableStateOf(false) }
-    Box {
-        OutlinedButton(onClick = { showMenu = true }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
-            Text("終局手を追加", fontSize = ShogiDimensions.FontSizeCaption)
-        }
-        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-            dev.irof.kifuzo.models.GameResult.UI_SELECTIONS.forEach { result ->
-                DropdownMenuItem(onClick = {
-                    showMenu = false
-                    onWriteResult(path, result)
-                }) {
-                    Text(result, fontSize = ShogiDimensions.FontSizeBody)
-                }
-            }
-        }
-    }
 }

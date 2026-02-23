@@ -67,6 +67,8 @@ fun KifuSidebar(
     onToggleDir: (dev.irof.kifuzo.models.FileTreeNode) -> Unit,
     onSelectFile: (Path) -> Unit,
     onShowText: (String) -> Unit,
+    onRename: (Path) -> Unit,
+    onConvertCsa: (Path) -> Unit,
     onSetViewMode: (dev.irof.kifuzo.models.FileViewMode) -> Unit,
     onSetFileSortOption: (dev.irof.kifuzo.models.FileSortOption) -> Unit,
     onToggleFileFilter: (dev.irof.kifuzo.models.FileFilter) -> Unit,
@@ -176,6 +178,8 @@ fun KifuSidebar(
                         onToggle = onToggleDir,
                         onSelect = onSelectFile,
                         onShowText = { onShowText(readTextWithEncoding(it)) },
+                        onRename = onRename,
+                        onConvertCsa = onConvertCsa,
                     )
                 }
             }

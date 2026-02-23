@@ -74,8 +74,6 @@ fun KifuPreviewPanel(
     state: KifuzoUiState,
     boardState: ShogiBoardState,
     onToggleFlip: () -> Unit,
-    onConvertCsa: (Path) -> Unit,
-    onRename: (Path) -> Unit,
     onWriteResult: (Path, String) -> Unit,
     onStepChange: (Int) -> Unit,
     onNextStep: () -> Unit,
@@ -117,15 +115,14 @@ fun KifuPreviewPanel(
             KifuHeaderActions(
                 selectedFile = selected,
                 history = boardState.session.history,
-                onConvertCsa = onConvertCsa,
-                onRename = onRename,
-                onWriteResult = onWriteResult,
             )
         }
 
         if (boardState.session.history.isNotEmpty()) {
             Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
-            KifuMainContent(state, boardState, onToggleFlip, onStepChange)
+            KifuMainContent(state, boardState, onToggleFlip, onStepChange) { result ->
+                state.selectedFile?.let { onWriteResult(it, result) }
+            }
         }
     }
 }
@@ -154,6 +151,7 @@ private fun ColumnScope.KifuMainContent(
     boardState: ShogiBoardState,
     onToggleFlip: () -> Unit,
     onStepChange: (Int) -> Unit,
+    onWriteResult: (String) -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().weight(1f),
@@ -180,6 +178,7 @@ private fun ColumnScope.KifuMainContent(
             history = boardState.session.history,
             currentStep = boardState.currentStep,
             onStepChange = onStepChange,
+            onWriteResult = onWriteResult,
             modifier = Modifier.width(ShogiDimensions.MoveListWidth).fillMaxHeight(),
         )
     }

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.ui.theme.ShogiIcons
 import java.nio.file.Path
+import kotlin.io.path.extension
 import kotlin.io.path.name
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -35,13 +36,25 @@ fun FileTreeItem(
     onToggle: (FileTreeNode) -> Unit,
     onSelect: (Path) -> Unit,
     onShowText: (Path) -> Unit,
+    onRename: (Path) -> Unit,
+    onConvertCsa: (Path) -> Unit,
 ) {
+    val ext = node.path.extension.lowercase()
+    val isCsa = ext == "csa"
+    val isKifu = ext == "kifu" || ext == "kif" || isCsa
+
     ContextMenuArea(items = {
+        val menuItems = mutableListOf<ContextMenuItem>()
         if (!node.isDirectory) {
-            listOf(ContextMenuItem("テキストを表示") { onShowText(node.path) })
-        } else {
-            emptyList()
+            menuItems.add(ContextMenuItem("テキストを表示") { onShowText(node.path) })
+            if (isKifu) {
+                menuItems.add(ContextMenuItem("リネーム") { onRename(node.path) })
+            }
+            if (isCsa) {
+                menuItems.add(ContextMenuItem("KIFU形式に変換") { onConvertCsa(node.path) })
+            }
         }
+        menuItems
     }) {
         Row(
             modifier = Modifier
