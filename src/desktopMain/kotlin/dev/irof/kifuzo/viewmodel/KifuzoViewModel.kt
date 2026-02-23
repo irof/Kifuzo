@@ -83,26 +83,50 @@ class KifuzoViewModel(
 
     fun dispatch(action: KifuzoAction) {
         when (action) {
-            is KifuzoAction.SetRootDirectory -> setRootDirectory(action.path)
-            is KifuzoAction.ToggleDirectory -> toggleDirectory(action.node)
-            is KifuzoAction.SelectFile -> fileActionHandler.selectFile(action.path).also { updateState { it.copy(selectedFile = action.path) } }
-            is KifuzoAction.SaveSettings -> {
-                settingsHandler.saveSettings(action.regex, action.template)
-                updateState { it.copy(myNameRegex = action.regex, filenameTemplate = action.template, showSettings = false) }
+            is KifuzoAction.SetRootDirectory,
+            is KifuzoAction.ToggleDirectory,
+            is KifuzoAction.SetViewMode,
+            is KifuzoAction.ToggleFileFilter,
+            is KifuzoAction.RefreshFiles -> handleFileTreeAction(action)
+
+            is KifuzoAction.SelectFile,
+            is KifuzoAction.SelectNextFile,
+            is KifuzoAction.SelectPrevFile,
+            is KifuzoAction.RenameFile,
+            is KifuzoAction.ConvertCsa,
+            is KifuzoAction.ConfirmOverwrite,
+            is KifuzoAction.HideOverwriteConfirm,
+            is KifuzoAction.DetectAndWriteSenkei,
+            is KifuzoAction.WriteGameResult -> handleFileAction(action)
+
+            is KifuzoAction.SaveSettings,
+            is KifuzoAction.SetViewingText,
+            is KifuzoAction.ToggleFlipped,
+            is KifuzoAction.ShowSettings,
+            is KifuzoAction.ShowImportDialog,
+            is KifuzoAction.ClearErrorAndInfo,
+            is KifuzoAction.ImportFiles,
+            is KifuzoAction.UpdateSidebarWidth,
+            is KifuzoAction.ToggleSidebar -> handleUiAction(action)
+
+            is KifuzoAction.ChangeStep,
+            is KifuzoAction.NextStep,
+            is KifuzoAction.PrevStep -> handleStepAction(action)
+        }
+    }
+
+    private fun handleFileTreeAction(action: KifuzoAction) {
+        when (action) {
+            is KifuzoAction.SetRootDirectory -> {
+                currentRootDirectory = action.path
+                AppSettings.lastRootDir = action.path.toString()
+                updateState { it.copy(treeNodes = emptyList()) }
+                refreshFiles()
             }
-            is KifuzoAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
-            is KifuzoAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
-            is KifuzoAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
-            is KifuzoAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
-            is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, infoMessage = null) }
-            is KifuzoAction.ImportFiles -> importHandler.importFiles(action.sourceDir, currentRootDirectory)
-            is KifuzoAction.RenameFile -> fileActionHandler.renameFile(action.path, uiState.filenameTemplate)
-            is KifuzoAction.ConvertCsa -> convertCsa(action.path)
-            is KifuzoAction.ConfirmOverwrite -> confirmOverwrite()
-            is KifuzoAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
-            is KifuzoAction.DetectAndWriteSenkei -> fileActionHandler.detectAndWriteSenkei(action.path)
-            is KifuzoAction.WriteGameResult -> fileActionHandler.writeGameResult(action.path, action.result)
-            is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
+            is KifuzoAction.ToggleDirectory -> {
+                val newNodes = fileTreeManager.toggleNode(action.node, uiState.treeNodes)
+                updateState { it.copy(treeNodes = newNodes) }
+            }
             is KifuzoAction.SetViewMode -> {
                 updateState { it.copy(viewMode = action.mode) }
                 refreshFiles()
@@ -114,13 +138,62 @@ class KifuzoViewModel(
                 }
                 refreshFiles()
             }
-            is KifuzoAction.UpdateSidebarWidth -> updateSidebarWidth(action.delta)
             is KifuzoAction.RefreshFiles -> refreshFiles()
+            else -> {}
+        }
+    }
+
+    private fun handleFileAction(action: KifuzoAction) {
+        when (action) {
+            is KifuzoAction.SelectFile -> fileActionHandler.selectFile(action.path).also { updateState { it.copy(selectedFile = action.path) } }
             is KifuzoAction.SelectNextFile -> selectAdjacentFile(forward = true)
             is KifuzoAction.SelectPrevFile -> selectAdjacentFile(forward = false)
+            is KifuzoAction.RenameFile -> fileActionHandler.renameFile(action.path, uiState.filenameTemplate)
+            is KifuzoAction.ConvertCsa -> {
+                val targetFile = (action.path.parent ?: action.path).resolve(action.path.nameWithoutExtension + ".kifu")
+                if (java.nio.file.Files.exists(targetFile)) {
+                    updateState { it.copy(showOverwriteConfirm = action.path) }
+                } else {
+                    fileActionHandler.performCsaConversion(action.path)
+                }
+            }
+            is KifuzoAction.ConfirmOverwrite -> {
+                uiState.showOverwriteConfirm?.let {
+                    fileActionHandler.performCsaConversion(it)
+                    updateState { it.copy(showOverwriteConfirm = null) }
+                }
+            }
+            is KifuzoAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
+            is KifuzoAction.DetectAndWriteSenkei -> fileActionHandler.detectAndWriteSenkei(action.path)
+            is KifuzoAction.WriteGameResult -> fileActionHandler.writeGameResult(action.path, action.result)
+            else -> {}
+        }
+    }
+
+    private fun handleUiAction(action: KifuzoAction) {
+        when (action) {
+            is KifuzoAction.SaveSettings -> {
+                settingsHandler.saveSettings(action.regex, action.template)
+                updateState { it.copy(myNameRegex = action.regex, filenameTemplate = action.template, showSettings = false) }
+            }
+            is KifuzoAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
+            is KifuzoAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
+            is KifuzoAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
+            is KifuzoAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
+            is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, infoMessage = null) }
+            is KifuzoAction.ImportFiles -> importHandler.importFiles(action.sourceDir, currentRootDirectory)
+            is KifuzoAction.UpdateSidebarWidth -> updateSidebarWidth(action.delta)
+            is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
+            else -> {}
+        }
+    }
+
+    private fun handleStepAction(action: KifuzoAction) {
+        when (action) {
             is KifuzoAction.ChangeStep -> boardState.currentStep = action.step
             is KifuzoAction.NextStep -> boardState.currentStep++
             is KifuzoAction.PrevStep -> boardState.currentStep--
+            else -> {}
         }
     }
 
@@ -185,34 +258,6 @@ class KifuzoViewModel(
             }
             val infos = withContext(Dispatchers.IO) { repository.getKifuInfos(allKifuFiles) }
             updateState { it.copy(kifuInfos = infos, isScanning = false) }
-        }
-    }
-
-    fun setRootDirectory(path: Path) {
-        currentRootDirectory = path
-        AppSettings.lastRootDir = path.toString()
-        updateState { it.copy(treeNodes = emptyList()) } // ルート変更時は展開状態をクリア
-        refreshFiles()
-    }
-
-    private fun toggleDirectory(node: FileTreeNode) {
-        val newNodes = fileTreeManager.toggleNode(node, uiState.treeNodes)
-        updateState { it.copy(treeNodes = newNodes) }
-    }
-
-    private fun convertCsa(path: Path) {
-        val targetFile = (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
-        if (java.nio.file.Files.exists(targetFile)) {
-            updateState { it.copy(showOverwriteConfirm = path) }
-        } else {
-            fileActionHandler.performCsaConversion(path)
-        }
-    }
-
-    fun confirmOverwrite() {
-        uiState.showOverwriteConfirm?.let {
-            fileActionHandler.performCsaConversion(it)
-            updateState { it.copy(showOverwriteConfirm = null) }
         }
     }
 }
