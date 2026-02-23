@@ -37,11 +37,17 @@ class KifuRepositoryImpl : KifuRepository {
         emptyList()
     }
 
-    override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = files.filter { it.isRegularFile() && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
+    override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = files.filter {
+        it.isRegularFile() && (it.extension.lowercase() in listOf("kifu", "kif", "csa"))
+    }
         .associateWith { scanKifuInfo(it) }
 
     override fun parse(path: Path, state: ShogiBoardState) {
-        parseKifu(path, state)
+        if (path.extension.lowercase() == "csa") {
+            parseCsa(path, state)
+        } else {
+            parseKifu(path, state)
+        }
     }
 
     override fun convertCsa(path: Path): Path {

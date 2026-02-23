@@ -24,7 +24,7 @@ class FileActionHandler(
 ) {
     fun selectFile(path: Path) {
         val ext = path.extension.lowercase()
-        if (ext == "kifu" || ext == "kif") {
+        if (ext in listOf("kifu", "kif", "csa")) {
             try {
                 repository.parse(path, boardState)
                 onAutoFlip()

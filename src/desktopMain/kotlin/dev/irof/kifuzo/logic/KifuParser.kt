@@ -31,11 +31,19 @@ fun scanKifuInfo(lines: List<String>): KifuInfo {
     var startTime = ""
     for (line in lines) {
         val trimmed = line.trim()
+        // KIF format
         if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) sente = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("後手：")) gote = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("戦型：")) senkei = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("開始日時：")) startTime = trimmed.substringAfter("：").trim()
+
+        // CSA format
+        if (trimmed.startsWith("N+")) sente = trimmed.substring(2).trim()
+        if (trimmed.startsWith("N-")) gote = trimmed.substring(2).trim()
+        if (trimmed.startsWith("\$START_TIME:")) startTime = trimmed.substringAfter(":").trim()
+
         if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) break
+        if (trimmed.startsWith("+") || trimmed.startsWith("-")) break
     }
     return KifuInfo(java.nio.file.Paths.get(""), sente, gote, senkei, startTime)
 }

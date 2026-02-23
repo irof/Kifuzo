@@ -259,7 +259,7 @@ class KifuzoViewModel(
             val allKifuFiles = mutableListOf<Path>()
             withContext(Dispatchers.IO) {
                 java.nio.file.Files.walk(root, SCAN_DEPTH)
-                    .filter { it.isRegularFile() && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
+                    .filter { it.isRegularFile() && (it.extension.lowercase() in listOf("kifu", "kif", "csa")) }
                     .forEach { allKifuFiles.add(it) }
             }
             val infos = withContext(Dispatchers.IO) { repository.getKifuInfos(allKifuFiles) }

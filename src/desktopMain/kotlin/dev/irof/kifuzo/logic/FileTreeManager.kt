@@ -100,7 +100,7 @@ class FileTreeManager(
 
     private fun isKifuFile(path: Path): Boolean {
         val ext = path.extension.lowercase()
-        return ext == "kifu"
+        return ext in listOf("kifu", "kif", "csa")
     }
 
     private fun isRecentFile(path: Path, since: Instant): Boolean = try {

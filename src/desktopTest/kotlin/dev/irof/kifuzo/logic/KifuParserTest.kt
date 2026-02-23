@@ -78,7 +78,7 @@ class KifuParserTest {
         assertEquals(2, session.maxStep)
         assertEquals(Piece.FU to PieceColor.Black, session.history[1].at(7, 6))
         assertEquals(Piece.FU to PieceColor.White, session.history[2].at(3, 4))
-        
+
         // 消費時間の検証
         assertEquals(1, session.history[1].consumptionSeconds)
         assertEquals(2, session.history[2].consumptionSeconds)
