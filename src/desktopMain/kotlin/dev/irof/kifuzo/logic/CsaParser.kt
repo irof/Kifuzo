@@ -21,6 +21,7 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
     var senteName = "先手"
     var goteName = "後手"
     val history = mutableListOf<BoardSnapshot>()
+    var firstContactStep = -1
 
     // 初期盤面（平手）
     val currentCells = BoardSnapshot.getInitialCells().map { it.toMutableList() }.toMutableList()
@@ -62,6 +63,7 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
                     val captured = currentCells[toY - 1][ShogiConstants.BOARD_SIZE - toX]
                     if (captured != null) {
                         if (isSente) senteMochi.add(captured.first.toBase()) else goteMochi.add(captured.first.toBase())
+                        if (firstContactStep == -1) firstContactStep = history.size
                     }
 
                     currentCells[fromY - 1][ShogiConstants.BOARD_SIZE - fromX] = null
@@ -99,6 +101,7 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
             initialStep = history.size - 1,
             senteName = senteName,
             goteName = goteName,
+            firstContactStep = firstContactStep,
             isStandardStart = true, // 簡易化のため平手のみ対応
         ),
     )
