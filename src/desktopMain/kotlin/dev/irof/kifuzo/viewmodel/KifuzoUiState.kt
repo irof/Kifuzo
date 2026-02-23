@@ -12,6 +12,7 @@ data class KifuzoUiState(
     val isScanning: Boolean = false,
     val selectedFile: Path? = null,
     val errorMessage: String? = null,
+    val errorDetail: String? = null,
     val infoMessage: String? = null,
     val showOverwriteConfirm: Path? = null,
     val viewingText: String? = null,

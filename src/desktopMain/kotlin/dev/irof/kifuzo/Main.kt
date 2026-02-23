@@ -191,6 +191,7 @@ private fun KifuzoDialogs(viewModel: KifuzoViewModel) {
     if (state.errorMessage != null || state.infoMessage != null) {
         MessageDialog(
             errorMessage = state.errorMessage,
+            errorDetail = state.errorDetail,
             infoMessage = state.infoMessage,
             onDismiss = { viewModel.dispatch(KifuzoAction.ClearErrorAndInfo) },
         )
@@ -236,11 +237,14 @@ private fun KifuzoDialogs(viewModel: KifuzoViewModel) {
 @Composable
 private fun MessageDialog(
     errorMessage: String?,
+    errorDetail: String?,
     infoMessage: String?,
     onDismiss: () -> Unit,
 ) {
     val title = if (errorMessage != null) AppStrings.ERROR else AppStrings.NOTIFICATION
     val msg = errorMessage ?: infoMessage ?: ""
+    val copyText = if (errorDetail != null) "$msg\n\n$errorDetail" else msg
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
@@ -253,7 +257,7 @@ private fun MessageDialog(
             ) {
                 if (errorMessage != null) {
                     androidx.compose.material.OutlinedButton(
-                        onClick = { copyToClipboard(msg) },
+                        onClick = { copyToClipboard(copyText) },
                         modifier = Modifier.padding(end = 8.dp),
                     ) {
                         Text(AppStrings.COPY)

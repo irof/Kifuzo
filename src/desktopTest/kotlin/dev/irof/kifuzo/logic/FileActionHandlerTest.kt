@@ -15,6 +15,7 @@ class FileActionHandlerTest {
     private lateinit var boardState: ShogiBoardState
     private lateinit var handler: FileActionHandler
     private var errorMsg: String? = null
+    private var errorDetail: String? = null
     private var infoMsg: String? = null
     private var renamedPath: Path? = null
     private var filesChangedCalled = false
@@ -45,13 +46,17 @@ class FileActionHandlerTest {
         handler = FileActionHandler(
             repository = repository,
             boardState = boardState,
-            onError = { errorMsg = it },
+            onError = { msg, detail ->
+                errorMsg = msg
+                errorDetail = detail
+            },
             onInfo = { infoMsg = it },
             onFileRenamed = { renamedPath = it },
             onFilesChanged = { filesChangedCalled = true },
             onAutoFlip = { autoFlipCalled = true },
         )
         errorMsg = null
+        errorDetail = null
         infoMsg = null
         renamedPath = null
         filesChangedCalled = false

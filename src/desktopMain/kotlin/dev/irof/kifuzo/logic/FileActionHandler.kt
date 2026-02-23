@@ -16,7 +16,7 @@ private val logger = KotlinLogging.logger {}
 class FileActionHandler(
     private val repository: KifuRepository,
     private val boardState: ShogiBoardState,
-    private val onError: (String) -> Unit,
+    private val onError: (String, String?) -> Unit,
     private val onInfo: (String) -> Unit,
     private val onFileRenamed: (Path) -> Unit,
     private val onFilesChanged: () -> Unit,
@@ -29,10 +29,10 @@ class FileActionHandler(
                 repository.parse(path, boardState)
                 onAutoFlip()
             } catch (e: KifuParseException) {
-                onError("棋譜パースエラー: ${path.name}\n\n${e.message}")
+                onError("棋譜パースエラー: ${path.name}", e.stackTraceToString())
                 boardState.clear()
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                onError("予期せぬエラー: ${path.name}\n\n${e.message}")
+                onError("予期せぬエラー: ${path.name}", e.stackTraceToString())
                 boardState.clear()
             }
         } else {
@@ -46,7 +46,7 @@ class FileActionHandler(
             onFilesChanged()
             onFileRenamed(newPath)
         } else {
-            onError("ファイルのリネームに失敗しました。棋譜内に必要な情報が不足しているか、同名のファイルが既に存在する可能性があります。")
+            onError("ファイルのリネームに失敗しました。棋譜内に必要な情報が不足しているか、同名のファイルが既に存在する可能性があります。", null)
         }
     }
 

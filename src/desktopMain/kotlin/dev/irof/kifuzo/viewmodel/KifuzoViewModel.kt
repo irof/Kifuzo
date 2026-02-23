@@ -41,7 +41,7 @@ class KifuzoViewModel(
     private val fileActionHandler = FileActionHandler(
         repository = repository,
         boardState = boardState,
-        onError = { msg -> updateState { it.copy(errorMessage = msg) } },
+        onError = { msg, detail -> updateState { it.copy(errorMessage = msg, errorDetail = detail) } },
         onInfo = { msg -> updateState { it.copy(infoMessage = msg) } },
         onFileRenamed = { path -> updateState { it.copy(selectedFile = path) } },
         onFilesChanged = { refreshFiles() },
@@ -186,7 +186,7 @@ class KifuzoViewModel(
             is KifuzoAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
             is KifuzoAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
             is KifuzoAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
-            is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, infoMessage = null) }
+            is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, errorDetail = null, infoMessage = null) }
             is KifuzoAction.ImportFiles -> importHandler.importFiles(action.sourceDir, currentRootDirectory)
             is KifuzoAction.UpdateSidebarWidth -> updateSidebarWidth(action.delta)
             is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
