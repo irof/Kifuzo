@@ -3,7 +3,14 @@ package dev.irof.kifuzo.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.MaterialTheme
@@ -84,28 +91,41 @@ private fun MoveRow(
             .padding(vertical = 4.dp, horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = if (step == 0) "" else step.toString(),
-            modifier = Modifier.width(32.dp),
-            style = MaterialTheme.typography.caption,
-            color = Color.Gray,
-        )
-
-        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            Text(text = label, style = MaterialTheme.typography.body2, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
-            SignificantMoveBadge(diff)
-        }
-
+        StepNumber(step)
+        MoveLabel(label, diff, isSelected, modifier = Modifier.weight(1f))
         EvaluationInfo(evaluation, diff)
     }
 }
 
 @Composable
-private fun SignificantMoveBadge(diff: Int?) {
-    if (diff == null || kotlin.math.abs(diff) < 500) return
+private fun StepNumber(step: Int) {
+    Text(
+        text = if (step == 0) "" else step.toString(),
+        modifier = Modifier.width(32.dp),
+        style = MaterialTheme.typography.caption,
+        color = Color.Gray,
+    )
+}
 
-    val marker = if (kotlin.math.abs(diff) >= 1000) "!!" else "!"
-    val markerColor = if (diff > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
+@Composable
+private fun MoveLabel(label: String, diff: Int?, isSelected: Boolean, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.body2,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+        )
+        SignificantMoveBadge(diff)
+    }
+}
+
+@Composable
+private fun SignificantMoveBadge(diff: Int?) {
+    val absDiff = if (diff != null) kotlin.math.abs(diff) else 0
+    if (absDiff < 500) return
+
+    val marker = if (absDiff >= 1000) "!!" else "!"
+    val markerColor = if (diff!! > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
     Box(
         modifier = Modifier
             .padding(start = 4.dp)
@@ -119,29 +139,38 @@ private fun SignificantMoveBadge(diff: Int?) {
 @Composable
 private fun EvaluationInfo(evaluation: Int?, diff: Int?) {
     if (evaluation == null) return
+    EvaluationBadge(evaluation)
+    EvaluationDiff(diff)
+}
 
+@Composable
+private fun EvaluationBadge(evaluation: Int) {
     val evalSign = if (evaluation > 0) "+" else ""
+    val color = if (evaluation > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
     Text(
         text = "$evalSign$evaluation",
         style = MaterialTheme.typography.caption,
         fontWeight = FontWeight.Bold,
-        color = if (evaluation > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative,
+        color = color,
         modifier = Modifier.width(50.dp),
         textAlign = TextAlign.End,
     )
+}
 
-    if (diff != null && diff != 0) {
-        val diffSign = if (diff > 0) "+" else ""
-        val diffColor = if (diff > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
-        Text(
-            text = " ($diffSign$diff)",
-            style = MaterialTheme.typography.caption.copy(fontSize = 9.sp),
-            fontWeight = FontWeight.Bold,
-            color = diffColor,
-            modifier = Modifier.width(50.dp),
-            textAlign = TextAlign.End,
-        )
-    } else {
+@Composable
+private fun EvaluationDiff(diff: Int?) {
+    if (diff == null || diff == 0) {
         Spacer(Modifier.width(50.dp))
+        return
     }
+    val diffSign = if (diff > 0) "+" else ""
+    val color = if (diff > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
+    Text(
+        text = " ($diffSign$diff)",
+        style = MaterialTheme.typography.caption.copy(fontSize = 9.sp),
+        fontWeight = FontWeight.Bold,
+        color = color,
+        modifier = Modifier.width(50.dp),
+        textAlign = TextAlign.End,
+    )
 }
