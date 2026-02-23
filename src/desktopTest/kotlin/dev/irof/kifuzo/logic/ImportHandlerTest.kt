@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.logic
 
+import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.ShogiBoardState
 import java.nio.file.Path
@@ -16,7 +17,7 @@ class ImportHandlerTest {
 
     class StubKifuRepository : KifuRepository {
         var importResult = 0
-        override fun scanDirectory(directory: Path): List<Path> = emptyList()
+        override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> = emptyList()
         override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = emptyMap()
         override fun parse(path: Path, state: ShogiBoardState) {}
         override fun convertCsa(path: Path): Path = path

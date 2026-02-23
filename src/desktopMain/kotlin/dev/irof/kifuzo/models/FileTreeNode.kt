@@ -24,3 +24,8 @@ enum class FileFilter {
     KIFU_ONLY,
     RECENT,
 }
+
+enum class FileSortOption {
+    NAME,
+    LAST_MODIFIED,
+}

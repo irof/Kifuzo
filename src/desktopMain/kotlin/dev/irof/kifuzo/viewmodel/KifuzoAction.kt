@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.viewmodel
 
 import dev.irof.kifuzo.models.FileFilter
+import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.FileViewMode
 import java.nio.file.Path
@@ -24,6 +25,7 @@ sealed class KifuzoAction {
     data class WriteGameResult(val path: Path, val result: String) : KifuzoAction()
     data object ToggleSidebar : KifuzoAction()
     data class SetViewMode(val mode: FileViewMode) : KifuzoAction()
+    data class SetFileSortOption(val option: FileSortOption) : KifuzoAction()
     data class ToggleFileFilter(val filter: FileFilter) : KifuzoAction()
     data class UpdateSidebarWidth(val delta: Float) : KifuzoAction()
     data object RefreshFiles : KifuzoAction()

@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic
 
 import dev.irof.kifuzo.models.FileFilter
+import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.FileTreeNode
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.IOException
@@ -29,6 +30,7 @@ class FileTreeManager(
         root: Path,
         currentNodes: List<FileTreeNode>,
         filters: Set<FileFilter> = emptySet(),
+        sortOption: FileSortOption = FileSortOption.NAME,
     ): List<FileTreeNode> {
         val expandedPaths = currentNodes.filter { it.isExpanded }.map { it.path }.toSet()
         val newNodes = mutableListOf<FileTreeNode>()
@@ -36,7 +38,7 @@ class FileTreeManager(
         val twentyFourHoursAgo = now.minus(RECENT_FILE_HOURS, ChronoUnit.HOURS)
 
         fun traverse(dir: Path, level: Int) {
-            val contents = repository.scanDirectory(dir)
+            val contents = repository.scanDirectory(dir, sortOption)
             contents.forEach { path ->
                 val isDir = path.isDirectory()
                 val isExpanded = expandedPaths.contains(path)
@@ -70,6 +72,7 @@ class FileTreeManager(
     fun buildFlatList(
         root: Path,
         filters: Set<FileFilter> = emptySet(),
+        sortOption: FileSortOption = FileSortOption.NAME,
     ): List<FileTreeNode> {
         val newNodes = mutableListOf<FileTreeNode>()
         val now = Instant.now()
@@ -88,12 +91,15 @@ class FileTreeManager(
             }
         }
 
-        return newNodes.sortedByDescending {
-            try {
-                Files.readAttributes(it.path, BasicFileAttributes::class.java).lastModifiedTime().toInstant()
-            } catch (e: IOException) {
-                logger.error(e) { "Failed to read attributes for ${it.path}" }
-                Instant.MIN
+        return when (sortOption) {
+            FileSortOption.NAME -> newNodes.sortedBy { it.name.lowercase() }
+            FileSortOption.LAST_MODIFIED -> newNodes.sortedByDescending {
+                try {
+                    Files.readAttributes(it.path, BasicFileAttributes::class.java).lastModifiedTime().toInstant()
+                } catch (e: IOException) {
+                    logger.error(e) { "Failed to read attributes for ${it.path}" }
+                    Instant.MIN
+                }
             }
         }
     }
@@ -114,7 +120,7 @@ class FileTreeManager(
     /**
      * 指定されたノードの開閉状態を切り替え、新しいツリーリストを返します。
      */
-    fun toggleNode(node: FileTreeNode, currentNodes: List<FileTreeNode>): List<FileTreeNode> {
+    fun toggleNode(node: FileTreeNode, currentNodes: List<FileTreeNode>, sortOption: FileSortOption = FileSortOption.NAME): List<FileTreeNode> {
         if (!node.isDirectory) return currentNodes
 
         val newNodes = currentNodes.toMutableList()
@@ -131,7 +137,7 @@ class FileTreeManager(
         } else {
             // 展開: 子ノードを追加
             newNodes[index] = node.copy(isExpanded = true)
-            val children = repository.scanDirectory(node.path)
+            val children = repository.scanDirectory(node.path, sortOption)
             val childNodes = children.map { FileTreeNode(it, node.level + 1, it.isDirectory()) }
             newNodes.addAll(index + 1, childNodes)
         }

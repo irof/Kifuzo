@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.viewmodel
 
 import dev.irof.kifuzo.models.FileFilter
+import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.FileViewMode
 import dev.irof.kifuzo.models.KifuInfo
@@ -25,4 +26,5 @@ data class KifuzoUiState(
     val sidebarWidth: Float = 250f,
     val viewMode: FileViewMode = FileViewMode.FLAT,
     val fileFilters: Set<FileFilter> = setOf(FileFilter.RECENT),
+    val fileSortOption: FileSortOption = dev.irof.kifuzo.models.AppSettings.fileSortOption,
 )

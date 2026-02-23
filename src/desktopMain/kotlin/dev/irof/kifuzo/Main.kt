@@ -142,6 +142,7 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
                 onSelectFile = { viewModel.dispatch(KifuzoAction.SelectFile(it)) },
                 onShowText = { viewModel.dispatch(KifuzoAction.SetViewingText(it)) },
                 onSetViewMode = { viewModel.dispatch(KifuzoAction.SetViewMode(it)) },
+                onSetFileSortOption = { viewModel.dispatch(KifuzoAction.SetFileSortOption(it)) },
                 onToggleFileFilter = { viewModel.dispatch(KifuzoAction.ToggleFileFilter(it)) },
                 onSelectNext = { viewModel.dispatch(KifuzoAction.SelectNextFile) },
                 onSelectPrev = { viewModel.dispatch(KifuzoAction.SelectPrevFile) },

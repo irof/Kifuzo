@@ -75,6 +75,18 @@ object AppSettings {
             prefs.flush()
         }
 
+    private const val KEY_FILE_SORT_OPTION = "file_sort_option"
+    var fileSortOption: FileSortOption
+        get() = try {
+            FileSortOption.valueOf(prefs.get(KEY_FILE_SORT_OPTION, FileSortOption.NAME.name))
+        } catch (e: Exception) {
+            FileSortOption.NAME
+        }
+        set(value) {
+            prefs.put(KEY_FILE_SORT_OPTION, value.name)
+            prefs.flush()
+        }
+
     fun getAllSettings(): Map<String, String> {
         val map = mutableMapOf<String, String>()
         prefs.keys().forEach { key -> map[key] = prefs.get(key, "") }

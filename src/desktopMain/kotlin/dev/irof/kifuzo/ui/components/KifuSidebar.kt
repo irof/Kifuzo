@@ -68,6 +68,7 @@ fun KifuSidebar(
     onSelectFile: (Path) -> Unit,
     onShowText: (String) -> Unit,
     onSetViewMode: (dev.irof.kifuzo.models.FileViewMode) -> Unit,
+    onSetFileSortOption: (dev.irof.kifuzo.models.FileSortOption) -> Unit,
     onToggleFileFilter: (dev.irof.kifuzo.models.FileFilter) -> Unit,
     onSelectNext: () -> Unit,
     onSelectPrev: () -> Unit,
@@ -120,6 +121,14 @@ fun KifuSidebar(
             FilterChip(AppStrings.FILTER_KIFU, currentFilters.contains(dev.irof.kifuzo.models.FileFilter.KIFU_ONLY)) { onToggleFileFilter(dev.irof.kifuzo.models.FileFilter.KIFU_ONLY) }
             Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
             FilterChip(AppStrings.FILTER_RECENT, currentFilters.contains(dev.irof.kifuzo.models.FileFilter.RECENT)) { onToggleFileFilter(dev.irof.kifuzo.models.FileFilter.RECENT) }
+        }
+
+        // --- ソート順 ---
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = ShogiDimensions.PaddingMedium), verticalAlignment = Alignment.CenterVertically) {
+            val currentSort = state.fileSortOption
+            FilterChip(AppStrings.SORT_NAME, currentSort == dev.irof.kifuzo.models.FileSortOption.NAME) { onSetFileSortOption(dev.irof.kifuzo.models.FileSortOption.NAME) }
+            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+            FilterChip(AppStrings.SORT_DATE, currentSort == dev.irof.kifuzo.models.FileSortOption.LAST_MODIFIED) { onSetFileSortOption(dev.irof.kifuzo.models.FileSortOption.LAST_MODIFIED) }
         }
 
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {

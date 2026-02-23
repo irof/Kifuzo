@@ -1,9 +1,11 @@
 package dev.irof.kifuzo.logic
 
+import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.ShogiBoardState
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
@@ -15,7 +17,7 @@ import kotlin.io.path.nameWithoutExtension
 private val logger = KotlinLogging.logger {}
 
 interface KifuRepository {
-    fun scanDirectory(directory: Path): List<Path>
+    fun scanDirectory(directory: Path, sortOption: FileSortOption = FileSortOption.NAME): List<Path>
     fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo>
     fun parse(path: Path, state: ShogiBoardState)
     fun convertCsa(path: Path): Path
@@ -30,8 +32,21 @@ class KifuRepositoryImpl : KifuRepository {
         private const val DATE_STRING_LENGTH = 8
     }
 
-    override fun scanDirectory(directory: Path): List<Path> = try {
-        directory.listDirectoryEntries().sortedWith(compareBy({ !it.isDirectory() }, { it.name.lowercase() }))
+    override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> = try {
+        val entries = directory.listDirectoryEntries()
+        when (sortOption) {
+            FileSortOption.NAME -> entries.sortedWith(compareBy({ !it.isDirectory() }, { it.name.lowercase() }))
+            FileSortOption.LAST_MODIFIED -> entries.sortedWith(
+                compareBy<Path> { !it.isDirectory() }
+                    .thenByDescending {
+                        try {
+                            Files.getLastModifiedTime(it).toInstant()
+                        } catch (e: IOException) {
+                            java.time.Instant.MIN
+                        }
+                    },
+            )
+        }
     } catch (e: IOException) {
         logger.error(e) { "Failed to scan directory: $directory" }
         emptyList()

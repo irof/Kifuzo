@@ -39,4 +39,6 @@ object AppStrings {
     const val FLAT = "フラット"
     const val FILTER_KIFU = ".kifu"
     const val FILTER_RECENT = "最近"
+    const val SORT_NAME = "名前順"
+    const val SORT_DATE = "更新順"
 }

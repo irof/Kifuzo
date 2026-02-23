@@ -2,6 +2,7 @@ package dev.irof.kifuzo.viewmodel
 
 import dev.irof.kifuzo.logic.KifuRepository
 import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.KifuSession
@@ -22,7 +23,7 @@ class KifuzoViewModelTest {
     class StubKifuRepository : KifuRepository {
         var parseAction: (ShogiBoardState) -> Unit = {}
 
-        override fun scanDirectory(directory: Path): List<Path> = emptyList()
+        override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> = emptyList()
         override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = emptyMap()
         override fun parse(path: Path, state: ShogiBoardState) {
             parseAction(state)

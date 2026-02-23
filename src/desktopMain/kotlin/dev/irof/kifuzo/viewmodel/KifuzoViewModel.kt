@@ -88,6 +88,7 @@ class KifuzoViewModel(
             is KifuzoAction.SetRootDirectory,
             is KifuzoAction.ToggleDirectory,
             is KifuzoAction.SetViewMode,
+            is KifuzoAction.SetFileSortOption,
             is KifuzoAction.ToggleFileFilter,
             is KifuzoAction.RefreshFiles,
             -> handleFileTreeAction(action)
@@ -130,11 +131,16 @@ class KifuzoViewModel(
                 refreshFiles()
             }
             is KifuzoAction.ToggleDirectory -> {
-                val newNodes = fileTreeManager.toggleNode(action.node, uiState.treeNodes)
+                val newNodes = fileTreeManager.toggleNode(action.node, uiState.treeNodes, uiState.fileSortOption)
                 updateState { it.copy(treeNodes = newNodes) }
             }
             is KifuzoAction.SetViewMode -> {
                 updateState { it.copy(viewMode = action.mode) }
+                refreshFiles()
+            }
+            is KifuzoAction.SetFileSortOption -> {
+                AppSettings.fileSortOption = action.option
+                updateState { it.copy(fileSortOption = action.option) }
                 refreshFiles()
             }
             is KifuzoAction.ToggleFileFilter -> {
@@ -239,15 +245,16 @@ class KifuzoViewModel(
         val root = currentRootDirectory ?: return
         val mode = uiState.viewMode
         val filters = uiState.fileFilters
+        val sortOption = uiState.fileSortOption
 
         if (mode == FileViewMode.HIERARCHY) {
-            val newNodes = fileTreeManager.buildTree(root, uiState.treeNodes, filters)
+            val newNodes = fileTreeManager.buildTree(root, uiState.treeNodes, filters, sortOption)
             updateState { it.copy(treeNodes = newNodes) }
         } else {
             scope.launch {
                 updateState { it.copy(isScanning = true) }
                 val newNodes = withContext(Dispatchers.IO) {
-                    fileTreeManager.buildFlatList(root, filters)
+                    fileTreeManager.buildFlatList(root, filters, sortOption)
                 }
                 updateState { it.copy(treeNodes = newNodes, isScanning = false) }
             }
