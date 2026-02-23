@@ -32,7 +32,28 @@ private object GraphConstants {
     const val MAX_EVAL = 10000f
     const val THRESHOLD = 2000f
     const val COMPRESSION = 0.5f
+
+    @Suppress("MayBeConstant")
     val DISPLAY_MAX = THRESHOLD + (MAX_EVAL - THRESHOLD) * COMPRESSION
+
+    const val ALPHA_ZONE_LIGHT = 0.15f
+    const val ALPHA_ZONE_DARK = 0.35f
+    const val ALPHA_GRID_LIGHT = 0.2f
+    const val ALPHA_GRID_DARK = 0.5f
+    const val ALPHA_TOOLTIP = 0.7f
+
+    const val GRID_STEP = 1000
+    const val GRID_RANGE_MIN = -10
+    const val GRID_RANGE_MAX = 10
+    val GRID_RANGE = GRID_RANGE_MIN..GRID_RANGE_MAX
+    const val LINE_WIDTH_THICK = 3f
+    const val LINE_WIDTH_MEDIUM = 2f
+    const val LINE_WIDTH_NORMAL = 1.5f
+    const val LINE_WIDTH_THIN = 1f
+
+    val TOOLTIP_PADDING = 4.dp
+    val TOOLTIP_OFFSET = 8.dp
+    val TOOLTIP_CORNER_RADIUS = 4.dp
 }
 
 private class GraphScaler(private val isFlipped: Boolean, private val height: Float) {
@@ -40,7 +61,7 @@ private class GraphScaler(private val isFlipped: Boolean, private val height: Fl
 
     fun getScaledY(eval: Int?): Float {
         if (eval == null) return centerY
-        val value = eval.coerceIn(-10000, 10000).toFloat()
+        val value = eval.coerceIn(-GraphConstants.MAX_EVAL.toInt(), GraphConstants.MAX_EVAL.toInt()).toFloat()
         val absVal = kotlin.math.abs(value)
         val base = if (absVal <= GraphConstants.THRESHOLD) {
             value
@@ -137,12 +158,11 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBackgroundZones
     val posColor = if (isFlipped) ShogiColors.EvalNegative else ShogiColors.EvalPositive
     val negColor = if (isFlipped) ShogiColors.EvalPositive else ShogiColors.EvalNegative
 
-    // 0-2000 領域
-    drawRect(posColor.copy(alpha = 0.15f), Offset(0f, centerY - thresholdY), Size(width, thresholdY))
-    drawRect(negColor.copy(alpha = 0.15f), Offset(0f, centerY), Size(width, thresholdY))
-    // 2000以上 領域
-    drawRect(posColor.copy(alpha = 0.35f), Offset(0f, 0f), Size(width, centerY - thresholdY))
-    drawRect(negColor.copy(alpha = 0.35f), Offset(0f, centerY + thresholdY), Size(width, size.height - (centerY + thresholdY)))
+    // Background zones
+    drawRect(posColor.copy(alpha = GraphConstants.ALPHA_ZONE_LIGHT), Offset(0f, centerY - thresholdY), Size(width, thresholdY))
+    drawRect(negColor.copy(alpha = GraphConstants.ALPHA_ZONE_LIGHT), Offset(0f, centerY), Size(width, thresholdY))
+    drawRect(posColor.copy(alpha = GraphConstants.ALPHA_ZONE_DARK), Offset(0f, 0f), Size(width, centerY - thresholdY))
+    drawRect(negColor.copy(alpha = GraphConstants.ALPHA_ZONE_DARK), Offset(0f, centerY + thresholdY), Size(width, size.height - (centerY + thresholdY)))
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
@@ -151,22 +171,22 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
     val width = size.width
     val height = size.height
 
-    for (i in -10..10) {
+    for (i in GraphConstants.GRID_RANGE) {
         if (i == 0) continue
-        val y = scaler.getScaledY(i * 1000)
+        val y = scaler.getScaledY(i * GraphConstants.GRID_STEP)
         if (y in 0f..height) {
-            val isThreshold = kotlin.math.abs(i * 1000) == 2000
-            val alpha = if (isThreshold) 0.5f else 0.2f
+            val isThreshold = kotlin.math.abs(i * GraphConstants.GRID_STEP) == GraphConstants.THRESHOLD.toInt()
+            val alpha = if (isThreshold) GraphConstants.ALPHA_GRID_DARK else GraphConstants.ALPHA_GRID_LIGHT
             drawLine(
                 color = Color.Gray.copy(alpha = alpha),
                 start = Offset(0f, y),
                 end = Offset(width, y),
-                strokeWidth = if (isThreshold) 1.5f else 1f,
+                strokeWidth = if (isThreshold) GraphConstants.LINE_WIDTH_NORMAL else GraphConstants.LINE_WIDTH_THIN,
             )
         }
     }
     // Zero line
-    drawLine(Color.Gray.copy(alpha = 0.5f), Offset(0f, height / 2f), Offset(width, height / 2f), 1f)
+    drawLine(Color.Gray.copy(alpha = GraphConstants.ALPHA_GRID_DARK), Offset(0f, height / 2f), Offset(width, height / 2f), GraphConstants.LINE_WIDTH_THIN)
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawEvaluationLine(
@@ -180,7 +200,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawEvaluationLine(
         val eval = evaluations[i] ?: continue
         val currentPoint = Offset(i * stepWidth, scaler.getScaledY(eval))
         if (lastPoint != null) {
-            drawLine(ShogiColors.EvalLine, lastPoint, currentPoint, 3f)
+            drawLine(ShogiColors.EvalLine, lastPoint, currentPoint, GraphConstants.LINE_WIDTH_THICK)
         }
         lastPoint = currentPoint
     }
@@ -193,7 +213,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCurrentStepLine
 ) {
     if (totalSteps == 0) return
     val currentX = currentStep.coerceIn(0, totalSteps - 1) * stepWidth
-    drawLine(ShogiColors.EvalCurrentPos, Offset(currentX, 0f), Offset(currentX, size.height), 2f)
+    drawLine(ShogiColors.EvalCurrentPos, Offset(currentX, 0f), Offset(currentX, size.height), GraphConstants.LINE_WIDTH_MEDIUM)
 }
 
 @OptIn(ExperimentalTextApi::class)
@@ -205,7 +225,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHoverTooltip(
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
 ) {
     val x = stepIndex * stepWidth
-    drawLine(Color.Black.copy(alpha = 0.3f), Offset(x, 0f), Offset(x, size.height), 1f)
+    drawLine(Color.Black.copy(alpha = 0.3f), Offset(x, 0f), Offset(x, size.height), GraphConstants.LINE_WIDTH_THIN)
 
     if (eval != null) {
         val sign = if (eval > 0) "+" else ""
@@ -214,19 +234,19 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHoverTooltip(
             style = TextStyle(color = Color.White, fontSize = 10.sp),
         )
 
-        val padding = 4.dp.toPx()
+        val padding = GraphConstants.TOOLTIP_PADDING.toPx()
         val tooltipWidth = textLayoutResult.size.width + padding * 2
         val tooltipHeight = textLayoutResult.size.height + padding * 2
 
-        var tooltipX = x + 8.dp.toPx()
-        if (tooltipX + tooltipWidth > size.width) tooltipX = x - tooltipWidth - 8.dp.toPx()
+        var tooltipX = x + GraphConstants.TOOLTIP_OFFSET.toPx()
+        if (tooltipX + tooltipWidth > size.width) tooltipX = x - tooltipWidth - GraphConstants.TOOLTIP_OFFSET.toPx()
         val tooltipY = (scaler.getScaledY(eval) - tooltipHeight / 2).coerceIn(0f, size.height - tooltipHeight)
 
         drawRoundRect(
-            color = Color.Black.copy(alpha = 0.7f),
+            color = Color.Black.copy(alpha = GraphConstants.ALPHA_TOOLTIP),
             topLeft = Offset(tooltipX, tooltipY),
             size = Size(tooltipWidth, tooltipHeight),
-            cornerRadius = CornerRadius(4.dp.toPx()),
+            cornerRadius = CornerRadius(GraphConstants.TOOLTIP_CORNER_RADIUS.toPx()),
         )
         drawText(textLayoutResult, color = Color.White, topLeft = Offset(tooltipX + padding, tooltipY + padding))
     }

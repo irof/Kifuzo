@@ -12,4 +12,8 @@ object AppConfig {
     const val DEFAULT_SIDEBAR_WIDTH = 250f
     const val MIN_SIDEBAR_WIDTH = 150f
     const val MAX_SIDEBAR_WIDTH = 600f
+
+    // ウィンドウ設定
+    const val DEFAULT_WINDOW_WIDTH = 800f
+    const val DEFAULT_WINDOW_HEIGHT = 750f
 }

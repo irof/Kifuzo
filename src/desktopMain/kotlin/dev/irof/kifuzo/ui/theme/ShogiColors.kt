@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package dev.irof.kifuzo.ui.theme
 
 import androidx.compose.ui.graphics.Color
@@ -27,4 +29,6 @@ object ShogiColors {
     val EvalNegative = Color(0xFF1976D2) // 後手有利（青）
     val EvalLine = Color(0xFF0D47A1) // グラフの線（濃い青）
     val EvalCurrentPos = Color.Black // 現在の手数位置
+
+    val TooltipBackground = Color(0xFF333333)
 }

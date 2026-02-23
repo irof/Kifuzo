@@ -31,9 +31,22 @@ import dev.irof.kifuzo.models.BoardLayout
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiBoardState
+import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.models.Square
 import dev.irof.kifuzo.ui.theme.ShogiColors
+import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
+
+private object BoardViewConstants {
+    const val BOARD_WIDTH_RATIO = 0.9f
+    const val PIECE_FONT_SIZE_RATIO = 0.6f
+    const val LABEL_FONT_SIZE_RATIO = 0.3f
+    const val FLIP_BUTTON_SIZE_RATIO = 0.6f
+    const val MOCHIGOMA_FONT_SIZE_RATIO = 0.45f
+    const val MOCHIGOMA_PIECE_FONT_SIZE_RATIO = 0.5f
+    const val MOCHIGOMA_COUNT_FONT_SIZE_RATIO = 0.35f
+    const val ROTATION_UPSIDE_DOWN = 180f
+}
 
 @Composable
 fun ShogiBoardView(
@@ -45,10 +58,10 @@ fun ShogiBoardView(
     val session = state.session
     val isSenteTurn = state.currentStep % 2 == 0
 
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-        val calculatedCellSize = (maxWidth * 0.9f) / 9
-        val cellSize = min(calculatedCellSize, 60.dp)
-        val fontSize = (cellSize.value * 0.6f).sp
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingMedium)) {
+        val calculatedCellSize = (maxWidth * BoardViewConstants.BOARD_WIDTH_RATIO) / ShogiConstants.BOARD_SIZE
+        val cellSize = min(calculatedCellSize, ShogiDimensions.BoardCellMaxSize)
+        val fontSize = (cellSize.value * BoardViewConstants.PIECE_FONT_SIZE_RATIO).sp
 
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             if (isFlipped) {
@@ -57,13 +70,13 @@ fun ShogiBoardView(
                 MochigomaView(PieceColor.White.toSymbol() + session.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
             }
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(ShogiDimensions.PaddingSmall))
 
             val rangeX = BoardLayout.getRangeX(isFlipped)
             val rangeY = BoardLayout.getRangeY(isFlipped)
             val sujiLabels = BoardLayout.getSujiLabels()
             val danLabels = BoardLayout.getDanLabels()
-            val labelSize = (cellSize.value * 0.3f).sp
+            val labelSize = (cellSize.value * BoardViewConstants.LABEL_FONT_SIZE_RATIO).sp
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 // 筋の符号
@@ -76,7 +89,7 @@ fun ShogiBoardView(
                     // 盤右上の角に反転ボタンを配置
                     Box(modifier = Modifier.size(cellSize), contentAlignment = Alignment.Center) {
                         onToggleFlip?.let {
-                            IconButton(onClick = it, modifier = Modifier.size(cellSize * 0.6f)) {
+                            IconButton(onClick = it, modifier = Modifier.size(cellSize * BoardViewConstants.FLIP_BUTTON_SIZE_RATIO)) {
                                 Icon(
                                     imageVector = Icons.Default.Refresh,
                                     contentDescription = AppStrings.FLIP_BOARD,
@@ -89,7 +102,7 @@ fun ShogiBoardView(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     // 盤面
-                    Column(modifier = Modifier.background(ShogiColors.BoardBackground).border(1.5.dp, ShogiColors.BoardLine).padding(2.dp)) {
+                    Column(modifier = Modifier.background(ShogiColors.BoardBackground).border(ShogiDimensions.BoardLineThickness, ShogiColors.BoardLine).padding(ShogiDimensions.BoardPadding)) {
                         for (y in rangeY) {
                             Row {
                                 for (x in rangeX) {
@@ -103,14 +116,14 @@ fun ShogiBoardView(
                                                 isLastFrom -> ShogiColors.HighlightLastFrom
                                                 else -> Color.Transparent
                                             },
-                                        ).border(0.5.dp, ShogiColors.CellBorder),
+                                        ).border(ShogiDimensions.CellBorderThickness, ShogiColors.CellBorder),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         board.cells[y][x]?.let { (piece, color) ->
                                             val isSentePiece = color == PieceColor.Black
                                             val rotation = when {
-                                                isFlipped -> if (isSentePiece) 180f else 0f
-                                                else -> if (isSentePiece) 0f else 180f
+                                                isFlipped -> if (isSentePiece) BoardViewConstants.ROTATION_UPSIDE_DOWN else 0f
+                                                else -> if (isSentePiece) 0f else BoardViewConstants.ROTATION_UPSIDE_DOWN
                                             }
                                             Text(text = piece.symbol, fontSize = fontSize, color = if (piece.isPromoted()) ShogiColors.PiecePromoted else ShogiColors.PieceSente, modifier = Modifier.rotate(rotation))
                                         }
@@ -131,7 +144,7 @@ fun ShogiBoardView(
                 }
             }
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(ShogiDimensions.PaddingSmall))
             if (isFlipped) {
                 MochigomaView(PieceColor.White.toSymbol() + session.goteName, board.goteMochigoma, isSente = false, isTurn = !isSenteTurn, isFlipped = isFlipped, cellSize = cellSize)
             } else {
@@ -145,9 +158,9 @@ fun ShogiBoardView(
 fun MochigomaView(name: String, pieces: List<Piece>, isSente: Boolean, isTurn: Boolean, isFlipped: Boolean, cellSize: androidx.compose.ui.unit.Dp) {
     val grouped = pieces.groupBy { it }.mapValues { it.value.size }
         .toSortedMap(compareBy { it.mochigomaOrder })
-    val fontSize = (cellSize.value * 0.45f).sp
+    val fontSize = (cellSize.value * BoardViewConstants.MOCHIGOMA_FONT_SIZE_RATIO).sp
     val nameColor = if (isTurn) Color.Black else Color.Gray
-    Row(modifier = Modifier.fillMaxWidth().background(if (isTurn) ShogiColors.TurnHighlight else Color.Transparent).padding(horizontal = 8.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = if (isSente) Arrangement.Start else Arrangement.End) {
+    Row(modifier = Modifier.fillMaxWidth().background(if (isTurn) ShogiColors.TurnHighlight else Color.Transparent).padding(horizontal = ShogiDimensions.PaddingMedium, vertical = ShogiDimensions.BoardPadding), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = if (isSente) Arrangement.Start else Arrangement.End) {
         if (!isSente) {
             MochigomaList(grouped, isSente = false, isFlipped = isFlipped, cellSize = cellSize)
             Spacer(Modifier.width(12.dp))
@@ -162,14 +175,14 @@ fun MochigomaView(name: String, pieces: List<Piece>, isSente: Boolean, isTurn: B
 
 @Composable
 fun MochigomaList(grouped: Map<Piece, Int>, isSente: Boolean, isFlipped: Boolean, cellSize: androidx.compose.ui.unit.Dp) {
-    val pieceFontSize = (cellSize.value * 0.5f).sp
-    val countFontSize = (cellSize.value * 0.35f).sp
+    val pieceFontSize = (cellSize.value * BoardViewConstants.MOCHIGOMA_PIECE_FONT_SIZE_RATIO).sp
+    val countFontSize = (cellSize.value * BoardViewConstants.MOCHIGOMA_COUNT_FONT_SIZE_RATIO).sp
     Row {
         grouped.forEach { (piece, count) ->
-            Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(horizontal = 2.dp)) {
+            Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(horizontal = ShogiDimensions.BoardPadding)) {
                 val rotation = when {
-                    isFlipped -> if (isSente) 180f else 0f
-                    else -> if (isSente) 0f else 180f
+                    isFlipped -> if (isSente) BoardViewConstants.ROTATION_UPSIDE_DOWN else 0f
+                    else -> if (isSente) 0f else BoardViewConstants.ROTATION_UPSIDE_DOWN
                 }
                 Text(text = piece.symbol, fontSize = pieceFontSize, modifier = Modifier.rotate(rotation))
                 if (count > 1) Text(text = count.toString(), fontSize = countFontSize, color = Color.Gray, fontWeight = FontWeight.Bold)

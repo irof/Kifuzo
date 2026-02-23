@@ -13,6 +13,7 @@ data class BoardSnapshot(
         /**
          * 標準の平手初期配置を取得します。
          */
+        @Suppress("MagicNumber")
         fun getInitialCells(): List<List<Pair<Piece, PieceColor>?>> {
             val cells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
             cells[0][0] = Piece.KY to PieceColor.White
@@ -27,6 +28,7 @@ data class BoardSnapshot(
             cells[1][1] = Piece.HI to PieceColor.White
             cells[1][7] = Piece.KA to PieceColor.White
             for (i in 0..8) cells[2][i] = Piece.FU to PieceColor.White
+
             cells[8][0] = Piece.KY to PieceColor.Black
             cells[8][1] = Piece.KE to PieceColor.Black
             cells[8][2] = Piece.GI to PieceColor.Black
@@ -39,6 +41,7 @@ data class BoardSnapshot(
             cells[7][1] = Piece.KA to PieceColor.Black
             cells[7][7] = Piece.HI to PieceColor.Black
             for (i in 0..8) cells[6][i] = Piece.FU to PieceColor.Black
+
             return cells.map { it.toList() }
         }
     }

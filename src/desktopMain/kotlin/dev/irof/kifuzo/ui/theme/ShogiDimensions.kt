@@ -18,6 +18,17 @@ object ShogiDimensions {
     val MaxSidebarWidth = dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH.dp
 
     val FontSizeCaption = 10.sp
+    val FontSizeSmall = 11.sp
     val FontSizeBody = 12.sp
     val FontSizeTitle = 18.sp
+
+    val BoardCellMaxSize = 60.dp
+    val BoardLineThickness = 1.5.dp
+    val BoardPadding = 2.dp
+    val CellBorderThickness = 0.5.dp
+
+    val MoveListWidth = 280.dp
+    val GraphHeight = 240.dp
+
+    const val CHIP_SELECTED_ALPHA = 0.1f
 }

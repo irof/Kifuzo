@@ -33,7 +33,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.ui.theme.ShogiColors
+import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.viewmodel.KifuzoUiState
 import java.nio.file.Path
@@ -55,21 +57,21 @@ fun KifuHeaderActions(
 
     if (!hasHistory && ext != "csa") return
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
     Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         if (hasHistory && isKifuFile) {
             SenkeiAction(selectedFile, state.kifuInfos[selectedFile]?.senkei, onDetectSenkei)
-            Spacer(Modifier.width(8.dp))
-            Button(onClick = { onRename(selectedFile) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Primary, contentColor = Color.White), modifier = Modifier.height(32.dp)) {
-                Text(AppStrings.RENAME, fontSize = 10.sp)
+            Spacer(Modifier.width(ShogiDimensions.PaddingMedium))
+            Button(onClick = { onRename(selectedFile) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Primary, contentColor = Color.White), modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
+                Text(AppStrings.RENAME, fontSize = ShogiDimensions.FontSizeCaption)
             }
             GameResultAction(selectedFile, history.lastOrNull(), onWriteResult)
         }
 
         if (ext == "csa") {
-            if (hasHistory) Spacer(Modifier.width(8.dp))
-            Button(onClick = { onConvertCsa(selectedFile) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Success, contentColor = Color.White), modifier = Modifier.height(32.dp)) {
-                Text(AppStrings.CONVERT_TO_KIFU, fontSize = 10.sp)
+            if (hasHistory) Spacer(Modifier.width(ShogiDimensions.PaddingMedium))
+            Button(onClick = { onConvertCsa(selectedFile) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Success, contentColor = Color.White), modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
+                Text(AppStrings.CONVERT_TO_KIFU, fontSize = ShogiDimensions.FontSizeCaption)
             }
         }
     }
@@ -78,16 +80,16 @@ fun KifuHeaderActions(
 @Composable
 private fun SenkeiAction(path: Path, existingSenkei: String?, onDetectSenkei: (Path) -> Unit) {
     if (!existingSenkei.isNullOrEmpty()) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
-            Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.width(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(ShogiDimensions.ButtonHeight).background(Color.White, MaterialTheme.shapes.small).border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = ShogiDimensions.PaddingMedium)) {
+            Text("戦型: $existingSenkei", fontSize = ShogiDimensions.FontSizeCaption, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
             IconButton(onClick = { onDetectSenkei(path) }, modifier = Modifier.size(18.dp)) {
                 Icon(Icons.Default.Refresh, contentDescription = AppStrings.DETECT_SENKEI, tint = ShogiColors.Info)
             }
         }
     } else {
-        Button(onClick = { onDetectSenkei(path) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Info, contentColor = Color.White), modifier = Modifier.height(32.dp)) {
-            Text(AppStrings.DETECT_SENKEI, fontSize = 10.sp)
+        Button(onClick = { onDetectSenkei(path) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Info, contentColor = Color.White), modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
+            Text(AppStrings.DETECT_SENKEI, fontSize = ShogiDimensions.FontSizeCaption)
         }
     }
 }
@@ -96,16 +98,16 @@ private fun SenkeiAction(path: Path, existingSenkei: String?, onDetectSenkei: (P
 private fun GameResultAction(path: Path, lastSnapshot: BoardSnapshot?, onWriteResult: (Path, String) -> Unit) {
     val lastMove = lastSnapshot?.lastMoveText ?: ""
     val evaluation = lastSnapshot?.evaluation ?: 0
-    val isMate = kotlin.math.abs(evaluation) >= 30000
+    val isMate = kotlin.math.abs(evaluation) >= ShogiConstants.MATE_SCORE_THRESHOLD
     val isFinished = isMate || dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.any { lastMove.contains(it) }
 
     if (isFinished) return
 
-    Spacer(Modifier.width(8.dp))
+    Spacer(Modifier.width(ShogiDimensions.PaddingMedium))
     var showMenu by remember { mutableStateOf(false) }
     Box {
-        OutlinedButton(onClick = { showMenu = true }, modifier = Modifier.height(32.dp)) {
-            Text("終局手を追加", fontSize = 10.sp)
+        OutlinedButton(onClick = { showMenu = true }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
+            Text("終局手を追加", fontSize = ShogiDimensions.FontSizeCaption)
         }
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
             dev.irof.kifuzo.models.GameResult.UI_SELECTIONS.forEach { result ->
@@ -113,7 +115,7 @@ private fun GameResultAction(path: Path, lastSnapshot: BoardSnapshot?, onWriteRe
                     showMenu = false
                     onWriteResult(path, result)
                 }) {
-                    Text(result, fontSize = 12.sp)
+                    Text(result, fontSize = ShogiDimensions.FontSizeBody)
                 }
             }
         }

@@ -66,7 +66,7 @@ fun KifuSidebar(
             horizontalArrangement = Arrangement.Center,
         ) {
             // --- 表示モード切替 ---
-            Row(modifier = Modifier.border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(2.dp)) {
+            Row(modifier = Modifier.border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.small).padding(ShogiDimensions.BoardPadding)) {
                 val mode = state.viewMode
                 ViewModeButton(AppStrings.HIERARCHY, mode == dev.irof.kifuzo.models.FileViewMode.HIERARCHY) { onSetViewMode(dev.irof.kifuzo.models.FileViewMode.HIERARCHY) }
                 ViewModeButton(AppStrings.FLAT, mode == dev.irof.kifuzo.models.FileViewMode.FLAT) { onSetViewMode(dev.irof.kifuzo.models.FileViewMode.FLAT) }
@@ -76,10 +76,10 @@ fun KifuSidebar(
         Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
 
         // --- フィルタ選択 ---
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = ShogiDimensions.PaddingMedium), verticalAlignment = Alignment.CenterVertically) {
             val currentFilters = state.fileFilters
             FilterChip(AppStrings.FILTER_KIFU, currentFilters.contains(dev.irof.kifuzo.models.FileFilter.KIFU_ONLY)) { onToggleFileFilter(dev.irof.kifuzo.models.FileFilter.KIFU_ONLY) }
-            Spacer(Modifier.width(4.dp))
+            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
             FilterChip(AppStrings.FILTER_RECENT, currentFilters.contains(dev.irof.kifuzo.models.FileFilter.RECENT)) { onToggleFileFilter(dev.irof.kifuzo.models.FileFilter.RECENT) }
         }
 
@@ -97,7 +97,7 @@ fun KifuSidebar(
                 },
                 elevation = 0.dp,
                 backgroundColor = Color.White,
-                border = BorderStroke(1.dp, Color.LightGray),
+                border = BorderStroke(ShogiDimensions.CellBorderThickness, Color.LightGray),
             ) {
                 Row(modifier = Modifier.padding(ShogiDimensions.PaddingMedium), verticalAlignment = Alignment.CenterVertically) {
                     Icon(ShogiIcons.FolderSelect, contentDescription = null, tint = ShogiColors.Primary, modifier = Modifier.size(ShogiDimensions.IconSizeSmall))
@@ -107,8 +107,8 @@ fun KifuSidebar(
             }
 
             if (currentRoot != null) {
-                Spacer(Modifier.width(4.dp))
-                IconButton(onClick = onRefresh, modifier = Modifier.size(32.dp)) {
+                Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+                IconButton(onClick = onRefresh, modifier = Modifier.size(ShogiDimensions.ButtonHeight)) {
                     Icon(ShogiIcons.Refresh, contentDescription = "再読み込み", tint = ShogiColors.Primary)
                 }
             }
@@ -144,9 +144,9 @@ private fun ViewModeButton(label: String, isSelected: Boolean, onClick: () -> Un
     ) {
         Text(
             text = label,
-            fontSize = 11.sp,
+            fontSize = ShogiDimensions.FontSizeSmall,
             color = if (isSelected) Color.White else Color.Gray,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = ShogiDimensions.PaddingMedium, vertical = ShogiDimensions.PaddingSmall),
         )
     }
 }
@@ -154,16 +154,16 @@ private fun ViewModeButton(label: String, isSelected: Boolean, onClick: () -> Un
 @Composable
 private fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
-        color = if (isSelected) ShogiColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
-        border = BorderStroke(1.dp, if (isSelected) ShogiColors.Primary else Color.LightGray),
+        color = if (isSelected) ShogiColors.Primary.copy(alpha = ShogiDimensions.CHIP_SELECTED_ALPHA) else Color.Transparent,
+        border = BorderStroke(ShogiDimensions.CellBorderThickness, if (isSelected) ShogiColors.Primary else Color.LightGray),
         shape = androidx.compose.foundation.shape.CircleShape,
         modifier = Modifier.clickable { onClick() },
     ) {
         Text(
             text = label,
-            fontSize = 10.sp,
+            fontSize = ShogiDimensions.FontSizeCaption,
             color = if (isSelected) ShogiColors.Primary else Color.Gray,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = ShogiDimensions.PaddingSmall),
         )
     }
 }

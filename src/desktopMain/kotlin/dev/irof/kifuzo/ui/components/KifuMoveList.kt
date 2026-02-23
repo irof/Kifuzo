@@ -26,7 +26,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.ui.theme.ShogiColors
+import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
+
+private object MoveListConstants {
+    const val SELECTED_BACKGROUND_ALPHA = 0.15f
+    const val SIGNIFICANT_MOVE_THRESHOLD = 500
+    const val VERY_SIGNIFICANT_MOVE_THRESHOLD = 1000
+    val STEP_NUMBER_WIDTH = 32.dp
+    val EVALUATION_INFO_WIDTH = 50.dp
+    val FONT_SIZE_DIFF = 9.sp
+    val FONT_SIZE_MARKER = 11.sp
+}
 
 @Composable
 fun KifuMoveList(
@@ -46,11 +57,11 @@ fun KifuMoveList(
     Box(
         modifier = modifier
             .background(Color.White, MaterialTheme.shapes.medium)
-            .border(1.dp, Color.LightGray, MaterialTheme.shapes.medium),
+            .border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.medium),
     ) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize().padding(vertical = 4.dp),
+            modifier = Modifier.fillMaxSize().padding(vertical = ShogiDimensions.PaddingSmall),
         ) {
             item {
                 MoveRow(0, AppStrings.START_POSITION, null, null, currentStep == 0, onStepChange)
@@ -81,14 +92,14 @@ private fun MoveRow(
     isSelected: Boolean,
     onStepChange: (Int) -> Unit,
 ) {
-    val backgroundColor = if (isSelected) ShogiColors.Primary.copy(alpha = 0.15f) else Color.Transparent
+    val backgroundColor = if (isSelected) ShogiColors.Primary.copy(alpha = MoveListConstants.SELECTED_BACKGROUND_ALPHA) else Color.Transparent
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(backgroundColor)
             .clickable { onStepChange(step) }
-            .padding(vertical = 4.dp, horizontal = 12.dp),
+            .padding(vertical = ShogiDimensions.PaddingSmall, horizontal = ShogiDimensions.PaddingLarge),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         StepNumber(step)
@@ -101,7 +112,7 @@ private fun MoveRow(
 private fun StepNumber(step: Int) {
     Text(
         text = if (step == 0) "" else step.toString(),
-        modifier = Modifier.width(32.dp),
+        modifier = Modifier.width(MoveListConstants.STEP_NUMBER_WIDTH),
         style = MaterialTheme.typography.caption,
         color = Color.Gray,
     )
@@ -122,17 +133,17 @@ private fun MoveLabel(label: String, diff: Int?, isSelected: Boolean, modifier: 
 @Composable
 private fun SignificantMoveBadge(diff: Int?) {
     val absDiff = if (diff != null) kotlin.math.abs(diff) else 0
-    if (absDiff < 500) return
+    if (absDiff < MoveListConstants.SIGNIFICANT_MOVE_THRESHOLD) return
 
-    val marker = if (absDiff >= 1000) "!!" else "!"
+    val marker = if (absDiff >= MoveListConstants.VERY_SIGNIFICANT_MOVE_THRESHOLD) "!!" else "!"
     val markerColor = if (diff!! > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
     Box(
         modifier = Modifier
-            .padding(start = 4.dp)
+            .padding(start = ShogiDimensions.PaddingSmall)
             .background(markerColor, shape = MaterialTheme.shapes.small)
-            .padding(horizontal = 4.dp, vertical = 1.dp),
+            .padding(horizontal = ShogiDimensions.PaddingSmall, vertical = 1.dp),
     ) {
-        Text(text = marker, color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 11.sp)
+        Text(text = marker, color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = MoveListConstants.FONT_SIZE_MARKER)
     }
 }
 
@@ -152,7 +163,7 @@ private fun EvaluationBadge(evaluation: Int) {
         style = MaterialTheme.typography.caption,
         fontWeight = FontWeight.Bold,
         color = color,
-        modifier = Modifier.width(50.dp),
+        modifier = Modifier.width(MoveListConstants.EVALUATION_INFO_WIDTH),
         textAlign = TextAlign.End,
     )
 }
@@ -160,17 +171,17 @@ private fun EvaluationBadge(evaluation: Int) {
 @Composable
 private fun EvaluationDiff(diff: Int?) {
     if (diff == null || diff == 0) {
-        Spacer(Modifier.width(50.dp))
+        Spacer(Modifier.width(MoveListConstants.EVALUATION_INFO_WIDTH))
         return
     }
     val diffSign = if (diff > 0) "+" else ""
     val color = if (diff > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
     Text(
         text = " ($diffSign$diff)",
-        style = MaterialTheme.typography.caption.copy(fontSize = 9.sp),
+        style = MaterialTheme.typography.caption.copy(fontSize = MoveListConstants.FONT_SIZE_DIFF),
         fontWeight = FontWeight.Bold,
         color = color,
-        modifier = Modifier.width(50.dp),
+        modifier = Modifier.width(MoveListConstants.EVALUATION_INFO_WIDTH),
         textAlign = TextAlign.End,
     )
 }

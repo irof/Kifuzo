@@ -6,6 +6,7 @@ import dev.irof.kifuzo.models.KifuSession
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiBoardState
+import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.models.Square
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
@@ -87,7 +88,7 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
 }
 
 private class ParserState(header: KifuHeader) {
-    val currentCells = Array(9) { y -> header.initialCells[y].toTypedArray() }
+    val currentCells = Array(ShogiConstants.BOARD_SIZE) { y -> header.initialCells[y].toTypedArray() }
     val senteMochi = header.senteMochi.toMutableList()
     val goteMochi = header.goteMochi.toMutableList()
     var firstContactStep = -1
@@ -100,12 +101,12 @@ private class ParserState(header: KifuHeader) {
         if (history.isEmpty()) return
         val lastIdx = history.size - 1
         val currentEval = history[lastIdx].evaluation
-        val isCurrentMate = currentEval != null && (kotlin.math.abs(currentEval) >= 30000)
+        val isCurrentMate = currentEval != null && (kotlin.math.abs(currentEval) >= ShogiConstants.MATE_SCORE_THRESHOLD)
 
         if (line.contains("#詰み=先手勝ち")) {
-            history[lastIdx] = history[lastIdx].copy(evaluation = 31111)
+            history[lastIdx] = history[lastIdx].copy(evaluation = ShogiConstants.WIN_SCORE)
         } else if (line.contains("#詰み=後手勝ち")) {
-            history[lastIdx] = history[lastIdx].copy(evaluation = -31111)
+            history[lastIdx] = history[lastIdx].copy(evaluation = ShogiConstants.LOSE_SCORE)
         } else if (!isCurrentMate) {
             val evalMatch = Regex("""\*#評価値=([+-]?\d+)""").find(line)
                 ?: Regex("""\* ([+-]?\d+)""").find(line)
@@ -142,7 +143,7 @@ private class ParserState(header: KifuHeader) {
                 lastTo = toSquare
             }
             is KifuParsedMove.Result -> {
-                val evaluation = if (turnColor == PieceColor.Black) -31111 else 31111
+                val evaluation = if (turnColor == PieceColor.Black) ShogiConstants.LOSE_SCORE else ShogiConstants.WIN_SCORE
                 history.add(BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList(), line, evaluation = evaluation))
             }
         }
@@ -178,7 +179,7 @@ private fun parseHeader(lines: List<String>): KifuHeader {
 private class HeaderParser {
     private var senteName = "先手"
     private var goteName = "後手"
-    private val currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
+    private val currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<Pair<Piece, PieceColor>>(ShogiConstants.BOARD_SIZE) }
     private val senteMochi = mutableListOf<Piece>()
     private val goteMochi = mutableListOf<Piece>()
     private var isStandardStart = true
@@ -230,11 +231,11 @@ private class HeaderParser {
     }
 
     private fun parseBoardLine(line: String) {
-        if (boardY >= 9) return
+        if (boardY >= ShogiConstants.BOARD_SIZE) return
         val content = line.substringAfter("|").substringBeforeLast("|")
         val cells = splitBoardCells(content)
 
-        for (x in 0..8) {
+        for (x in 0 until ShogiConstants.BOARD_SIZE) {
             if (x >= cells.size) break
             val pStr = cells[x]
             val piece = Piece.findPieceBySymbol(pStr.replace("v", "").replace("・", "").trim())
@@ -249,7 +250,7 @@ private class HeaderParser {
     private fun splitBoardCells(content: String): List<String> = if (content.contains("|")) {
         content.split("|")
     } else {
-        (0 until 9).map { idx ->
+        (0 until ShogiConstants.BOARD_SIZE).map { idx ->
             val start = idx * 2
             if (start + 2 <= content.length) content.substring(start, start + 2) else ""
         }
@@ -259,7 +260,7 @@ private class HeaderParser {
         val finalCells = if (isStandardStart) {
             BoardSnapshot.getInitialCells()
         } else {
-            if (boardY < 9) throw KifuParseException("盤面図が不完全です（${boardY}行しか見つかりませんでした）。")
+            if (boardY < ShogiConstants.BOARD_SIZE) throw KifuParseException("盤面図が不完全です（${boardY}行しか見つかりませんでした）。")
             val pieceCount = currentCells.sumOf { row -> row.count { it != null } }
             if (pieceCount == 0) throw KifuParseException("盤面図から駒を読み取れませんでした。")
             currentCells.map { it.toList() }
@@ -303,6 +304,13 @@ private val moveRegex = Regex("""^\s*(\d+)\s+([^\s(]{2}|同\s*)([^\s(]+)\(([1-9]
 private val dropRegex = Regex("""^\s*(\d+)\s+([^\s(]{2})([^\s(]+?)打.*""")
 private val resultRegex = Regex("""^\s*(\d+)\s+(${dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.joinToString("|")}).*""")
 
+private object RegexGroups {
+    const val MOVE_NUM = 1
+    const val TO_POS = 2
+    const val PIECE_NAME = 3
+    const val FROM_POS = 4
+}
+
 private fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
     if (!Regex("""^\s*\d+\s+.*""").matches(line)) return null
 
@@ -313,10 +321,10 @@ private fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
 
 private fun parseNormalMove(line: String, lastTo: Square?): KifuParsedMove.Move? {
     val match = moveRegex.find(line) ?: return null
-    val moveNum = match.groupValues[1].toInt()
-    val toPosStr = match.groupValues[2].trim()
-    val pieceName = match.groupValues[3].trim()
-    val fromPosStr = match.groupValues[4]
+    val moveNum = match.groupValues[RegexGroups.MOVE_NUM].toInt()
+    val toPosStr = match.groupValues[RegexGroups.TO_POS].trim()
+    val pieceName = match.groupValues[RegexGroups.PIECE_NAME].trim()
+    val fromPosStr = match.groupValues[RegexGroups.FROM_POS]
 
     val isPromote = pieceName.contains("成") || pieceName in listOf("竜", "馬", "龍", "圭", "杏", "全")
     val toSquare = if (toPosStr.startsWith("同")) {
@@ -331,9 +339,9 @@ private fun parseNormalMove(line: String, lastTo: Square?): KifuParsedMove.Move?
 
 private fun parseDropMove(line: String): KifuParsedMove.Drop? {
     val match = dropRegex.find(line) ?: return null
-    val moveNum = match.groupValues[1].toInt()
-    val toPosStr = match.groupValues[2]
-    val pieceSym = match.groupValues[3].substring(0, 1)
+    val moveNum = match.groupValues[RegexGroups.MOVE_NUM].toInt()
+    val toPosStr = match.groupValues[RegexGroups.TO_POS]
+    val pieceSym = match.groupValues[RegexGroups.PIECE_NAME].substring(0, 1)
 
     val toSquare = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
     val piece = Piece.entries.find {
@@ -350,19 +358,19 @@ private fun parseDropMove(line: String): KifuParsedMove.Drop? {
 
 private fun parseResultMove(line: String): KifuParsedMove.Result? {
     val match = resultRegex.find(line) ?: return null
-    val moveNum = match.groupValues[1].toInt()
-    val result = match.groupValues[2]
+    val moveNum = match.groupValues[RegexGroups.MOVE_NUM].toInt()
+    val result = match.groupValues[RegexGroups.TO_POS]
     return KifuParsedMove.Result(moveNum, result)
 }
 
 private fun decodeX(c: Char): Int {
     val idx = "１２３４５６７８９123456789".indexOf(c)
-    return if (idx == -1) -1 else (idx % 9) + 1
+    return if (idx == -1) -1 else (idx % ShogiConstants.BOARD_SIZE) + 1
 }
 
 private fun decodeY(c: Char): Int {
     val idx = "一二三四五六七八九１２３４５６７８９1234567８９".indexOf(c)
-    return if (idx == -1) -1 else (idx % 9) + 1
+    return if (idx == -1) -1 else (idx % ShogiConstants.BOARD_SIZE) + 1
 }
 
 fun updateKifuSenkei(path: Path, senkei: String) {

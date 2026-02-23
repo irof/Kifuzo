@@ -40,9 +40,9 @@ fun KifuMenuBar(
             .fillMaxHeight()
             .width(ShogiDimensions.MenuBarWidth)
             .background(ShogiColors.MenuBarBackground)
-            .padding(vertical = 12.dp),
+            .padding(vertical = ShogiDimensions.PaddingLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge),
     ) {
         MenuIconButton(
             label = if (isSidebarVisible) AppStrings.CLOSE_SIDEBAR else AppStrings.OPEN_SIDEBAR,
@@ -80,13 +80,13 @@ private fun MenuIconButton(
     TooltipArea(
         tooltip = {
             Surface(
-                modifier = Modifier.shadow(4.dp),
-                color = Color(0xFF333333),
+                modifier = Modifier.shadow(ShogiDimensions.PaddingSmall),
+                color = ShogiColors.TooltipBackground,
                 shape = MaterialTheme.shapes.small,
             ) {
                 Text(
                     text = label,
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier.padding(ShogiDimensions.PaddingMedium),
                     color = Color.White,
                     fontSize = ShogiDimensions.FontSizeCaption,
                 )
@@ -98,7 +98,7 @@ private fun MenuIconButton(
                 imageVector = icon,
                 contentDescription = label,
                 tint = tint,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(ShogiDimensions.IconSizeMedium),
             )
         }
     }

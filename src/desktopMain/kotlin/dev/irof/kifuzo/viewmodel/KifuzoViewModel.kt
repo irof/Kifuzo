@@ -27,6 +27,10 @@ import kotlin.io.path.nameWithoutExtension
 class KifuzoViewModel(
     private val repository: KifuRepository = KifuRepositoryImpl(),
 ) {
+    companion object {
+        private const val SCAN_DEPTH = 3
+    }
+
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val fileTreeManager = FileTreeManager(repository)
 
@@ -154,7 +158,7 @@ class KifuzoViewModel(
             updateState { it.copy(isScanning = true) }
             val allKifuFiles = mutableListOf<Path>()
             withContext(Dispatchers.IO) {
-                java.nio.file.Files.walk(root, 3)
+                java.nio.file.Files.walk(root, SCAN_DEPTH)
                     .filter { it.isRegularFile() && (it.extension.lowercase() == "kifu" || it.extension.lowercase() == "kif") }
                     .forEach { allKifuFiles.add(it) }
             }

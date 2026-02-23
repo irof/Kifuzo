@@ -20,6 +20,8 @@ private val logger = KotlinLogging.logger {}
  * 指定されたフォルダから特定のテキストファイルを検出し、
  * 棋譜の内容に基づいてリネームしてカレントディレクトリへ移動します。
  */
+private const val CSA_HEADER_SCAN_RANGE = 10
+
 fun importShogiQuestFiles(sourceDir: Path, targetDir: Path): Int {
     if (!sourceDir.exists() || !targetDir.exists()) return 0
 
@@ -57,7 +59,7 @@ fun calculateImportTarget(lines: List<String>, lastModifiedMillis: Long): String
     if (lines.isEmpty()) return null
 
     // CSA判定: 先頭10行以内に N+ または N- があるか
-    val headerLines = lines.take(10)
+    val headerLines = lines.take(CSA_HEADER_SCAN_RANGE)
     val hasCsaMarker = headerLines.any { it.startsWith("N+") || it.startsWith("N-") }
     if (!hasCsaMarker) return null
 

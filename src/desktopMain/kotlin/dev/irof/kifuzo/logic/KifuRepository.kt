@@ -22,6 +22,9 @@ interface KifuRepository {
 }
 
 class KifuRepositoryImpl : KifuRepository {
+    companion object {
+        private const val DATE_STRING_LENGTH = 8
+    }
 
     override fun scanDirectory(directory: Path): List<Path> = try {
         directory.listDirectoryEntries().sortedWith(compareBy({ !it.isDirectory() }, { it.name.lowercase() }))
@@ -54,7 +57,7 @@ class KifuRepositoryImpl : KifuRepository {
         if (info.isError) return null
 
         // "2026/02/21 12:00:00" -> "20260221"
-        val yyyymmdd = info.startTime.replace("/", "").substringBefore(" ").take(8)
+        val yyyymmdd = info.startTime.replace("/", "").substringBefore(" ").take(DATE_STRING_LENGTH)
             .ifEmpty { "00000000" }
 
         val newName = template

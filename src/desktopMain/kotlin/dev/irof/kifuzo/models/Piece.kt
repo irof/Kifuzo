@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package dev.irof.kifuzo.models
 
 enum class Piece(val symbol: String, val mochigomaOrder: Int = 99) {

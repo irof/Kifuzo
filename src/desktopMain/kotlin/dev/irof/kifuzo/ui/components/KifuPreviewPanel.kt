@@ -51,6 +51,7 @@ import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.ui.ShogiBoardView
 import dev.irof.kifuzo.ui.theme.ShogiColors
+import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.viewmodel.KifuzoUiState
 import java.nio.file.Path
@@ -73,7 +74,7 @@ fun KifuPreviewPanel(
         modifier = modifier
             .fillMaxHeight()
             .background(ShogiColors.PanelBackground)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = ShogiDimensions.PaddingLarge, vertical = ShogiDimensions.PaddingMedium),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
@@ -92,7 +93,7 @@ fun KifuPreviewPanel(
         }
 
         if (boardState.session.history.isNotEmpty()) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
             KifuMainContent(state, boardState, onToggleFlip, onStepChange)
         }
     }
@@ -125,14 +126,14 @@ private fun ColumnScope.KifuMainContent(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().weight(1f),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge),
     ) {
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             ShogiBoardView(boardState, isFlipped = state.isFlipped, onToggleFlip = onToggleFlip)
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
             KifuOperationBar(
                 currentStep = boardState.currentStep,
                 maxStep = boardState.session.maxStep,
@@ -148,7 +149,7 @@ private fun ColumnScope.KifuMainContent(
             history = boardState.session.history,
             currentStep = boardState.currentStep,
             onStepChange = onStepChange,
-            modifier = Modifier.width(280.dp).fillMaxHeight(),
+            modifier = Modifier.width(ShogiDimensions.MoveListWidth).fillMaxHeight(),
         )
     }
 }
@@ -168,34 +169,34 @@ private fun KifuOperationBar(
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = { onStepChange(0) }, modifier = Modifier.height(32.dp)) { Text(AppStrings.START, fontSize = 10.sp) }
-            Spacer(Modifier.width(4.dp))
-            OutlinedButton(onClick = { onStepChange(currentStep - 1) }, modifier = Modifier.height(32.dp)) { Text("◀", fontSize = 10.sp) }
-            Spacer(Modifier.width(4.dp))
+            Button(onClick = { onStepChange(0) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.START, fontSize = ShogiDimensions.FontSizeCaption) }
+            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+            OutlinedButton(onClick = { onStepChange(currentStep - 1) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text("◀", fontSize = ShogiDimensions.FontSizeCaption) }
+            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
             if (isStandardStart && firstContactStep != -1) {
-                Button(onClick = { onStepChange(firstContactStep) }, modifier = Modifier.height(32.dp)) { Text(AppStrings.CONTACT, fontSize = 10.sp) }
-                Spacer(Modifier.width(4.dp))
+                Button(onClick = { onStepChange(firstContactStep) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.CONTACT, fontSize = ShogiDimensions.FontSizeCaption) }
+                Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
             }
-            OutlinedButton(onClick = { onStepChange(currentStep + 1) }, modifier = Modifier.height(32.dp)) { Text("▶", fontSize = 10.sp) }
-            Spacer(Modifier.width(4.dp))
-            Button(onClick = { onStepChange(maxStep) }, modifier = Modifier.height(32.dp)) { Text(AppStrings.END, fontSize = 10.sp) }
+            OutlinedButton(onClick = { onStepChange(currentStep + 1) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text("▶", fontSize = ShogiDimensions.FontSizeCaption) }
+            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+            Button(onClick = { onStepChange(maxStep) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.END, fontSize = ShogiDimensions.FontSizeCaption) }
         }
         Slider(
             value = currentStep.toFloat(),
             onValueChange = { onStepChange(it.toInt()) },
             valueRange = 0f..maxStep.toFloat(),
             steps = if (maxStep > 1) maxStep - 1 else 0,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
         )
 
         if (evaluations.any { it != null }) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
             EvaluationGraph(
                 evaluations = evaluations,
                 currentStep = currentStep,
                 isFlipped = isFlipped,
                 onStepClick = onStepChange,
-                modifier = Modifier.height(240.dp).fillMaxWidth().padding(horizontal = 16.dp),
+                modifier = Modifier.height(ShogiDimensions.GraphHeight).fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
             )
         }
     }

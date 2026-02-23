@@ -3,10 +3,18 @@ package dev.irof.kifuzo.logic
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
+import dev.irof.kifuzo.models.ShogiConstants
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.nameWithoutExtension
 import kotlin.text.Charsets
+
+private object CsaConstants {
+    const val SENTE_NAME_PREFIX = "N+"
+    const val GOTE_NAME_PREFIX = "N-"
+    const val START_TIME_PREFIX = "\$START_TIME:"
+    const val MOVE_MIN_LENGTH = 7
+}
 
 fun convertCsaToKifu(path: Path) {
     val lines = readLinesWithEncoding(path)
@@ -22,12 +30,12 @@ fun convertCsaToKifuLines(lines: List<String>): List<String> {
     for (i in lines.indices) {
         val line = lines[i].trim()
         when {
-            line.startsWith("N+") -> kifLines.add("先手：" + line.substring(2))
-            line.startsWith("N-") -> kifLines.add("後手：" + line.substring(2))
-            line.startsWith("\$START_TIME:") -> kifLines.add("開始日時：" + line.substring(12))
+            line.startsWith(CsaConstants.SENTE_NAME_PREFIX) -> kifLines.add("先手：" + line.substring(CsaConstants.SENTE_NAME_PREFIX.length))
+            line.startsWith(CsaConstants.GOTE_NAME_PREFIX) -> kifLines.add("後手：" + line.substring(CsaConstants.GOTE_NAME_PREFIX.length))
+            line.startsWith(CsaConstants.START_TIME_PREFIX) -> kifLines.add("開始日時：" + line.substring(CsaConstants.START_TIME_PREFIX.length))
             line.startsWith("%") -> processResultLine(line, context.moveCount)?.let { kifLines.add(it) }
             line.startsWith("+") || line.startsWith("-") -> {
-                if (line.length >= 7) {
+                if (line.length >= CsaConstants.MOVE_MIN_LENGTH) {
                     val seconds = if (i + 1 < lines.size && lines[i + 1].trim().startsWith("T")) {
                         lines[i + 1].trim().substring(1).toIntOrNull() ?: 0
                     } else {
@@ -73,7 +81,7 @@ private class CsaConvertContext {
             updateBoardForDrop(detail.toX, detail.toY, targetPiece, detail.isSente)
             targetPiece.symbol + "打"
         } else {
-            val movingPiece = currentCells[detail.fromY - 1][9 - detail.fromX]?.first ?: targetPiece
+            val movingPiece = currentCells[detail.fromY - 1][ShogiConstants.BOARD_SIZE - detail.fromX]?.first ?: targetPiece
             val isActuallyPromoted = (!movingPiece.isPromoted() && targetPiece.isPromoted()) || detail.isPromoteMarker
             updateBoardForMove(detail.fromX, detail.fromY, detail.toX, detail.toY, targetPiece, detail.isSente)
             if (isActuallyPromoted) movingPiece.symbol + "成" else movingPiece.symbol
@@ -110,13 +118,16 @@ private class CsaConvertContext {
         val isPromoteMarker: Boolean,
     ) {
         companion object {
+            private const val PIECE_START = 5
+            private const val PIECE_END = 7
+
             fun parse(line: String): MoveDetail = MoveDetail(
                 isSente = line.startsWith("+"),
                 fromX = line[1] - '0',
                 fromY = line[2] - '0',
                 toX = line[3] - '0',
                 toY = line[4] - '0',
-                pieceCsa = line.substring(5, 7),
+                pieceCsa = line.substring(PIECE_START, PIECE_END),
                 isPromoteMarker = line.endsWith("+"),
             )
         }
@@ -125,17 +136,17 @@ private class CsaConvertContext {
     private fun findPiece(csa: String): Piece = Piece.entries.find { it.name == csa } ?: Piece.FU
 
     private fun updateBoardForDrop(tx: Int, ty: Int, piece: Piece, isSente: Boolean) {
-        currentCells[ty - 1][9 - tx] = piece to (if (isSente) PieceColor.Black else PieceColor.White)
+        currentCells[ty - 1][ShogiConstants.BOARD_SIZE - tx] = piece to (if (isSente) PieceColor.Black else PieceColor.White)
     }
 
     private fun updateBoardForMove(fx: Int, fy: Int, tx: Int, ty: Int, piece: Piece, isSente: Boolean) {
-        currentCells[fy - 1][9 - fx] = null
-        currentCells[ty - 1][9 - tx] = piece to (if (isSente) PieceColor.Black else PieceColor.White)
+        currentCells[fy - 1][ShogiConstants.BOARD_SIZE - fx] = null
+        currentCells[ty - 1][ShogiConstants.BOARD_SIZE - tx] = piece to (if (isSente) PieceColor.Black else PieceColor.White)
     }
 
     private fun formatTime(seconds: Int, totalSeconds: Int): String {
-        val moveTime = String.format(Locale.US, "%2d:%02d", seconds / 60, seconds % 60)
-        val totalTime = String.format(Locale.US, "%02d:%02d:%02d", totalSeconds / 3600, (totalSeconds % 3600) / 60, totalSeconds % 60)
+        val moveTime = String.format(Locale.US, "%2d:%02d", seconds / ShogiConstants.SECONDS_IN_MINUTE, seconds % ShogiConstants.SECONDS_IN_MINUTE)
+        val totalTime = String.format(Locale.US, "%02d:%02d:%02d", totalSeconds / ShogiConstants.SECONDS_IN_HOUR, (totalSeconds % ShogiConstants.SECONDS_IN_HOUR) / ShogiConstants.SECONDS_IN_MINUTE, totalSeconds % ShogiConstants.SECONDS_IN_MINUTE)
         return "$moveTime/$totalTime"
     }
 }

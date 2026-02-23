@@ -14,6 +14,10 @@ import kotlin.io.path.isRegularFile
 class FileTreeManager(
     private val repository: KifuRepository,
 ) {
+    companion object {
+        private const val RECENT_FILE_HOURS = 24L
+    }
+
     /**
      * ルートディレクトリから現在の展開状態に基づいてファイルツリーを構築します。
      */
@@ -25,7 +29,7 @@ class FileTreeManager(
         val expandedPaths = currentNodes.filter { it.isExpanded }.map { it.path }.toSet()
         val newNodes = mutableListOf<FileTreeNode>()
         val now = Instant.now()
-        val twentyFourHoursAgo = now.minus(24, ChronoUnit.HOURS)
+        val twentyFourHoursAgo = now.minus(RECENT_FILE_HOURS, ChronoUnit.HOURS)
 
         fun traverse(dir: Path, level: Int) {
             val contents = repository.scanDirectory(dir)
@@ -65,7 +69,7 @@ class FileTreeManager(
     ): List<FileTreeNode> {
         val newNodes = mutableListOf<FileTreeNode>()
         val now = Instant.now()
-        val twentyFourHoursAgo = now.minus(24, ChronoUnit.HOURS)
+        val twentyFourHoursAgo = now.minus(RECENT_FILE_HOURS, ChronoUnit.HOURS)
 
         Files.walk(root).filter { it.isRegularFile() }.forEach { path ->
             val matchesFilter = filters.all { filter ->

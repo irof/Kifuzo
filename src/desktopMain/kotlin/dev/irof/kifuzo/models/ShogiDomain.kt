@@ -1,5 +1,23 @@
 package dev.irof.kifuzo.models
 
+object ShogiConstants {
+    const val BOARD_SIZE = 9
+    const val MAX_FILE = 9
+    const val MAX_RANK = 9
+    const val MAX_INDEX = 8
+
+    const val SECONDS_IN_MINUTE = 60
+    const val MINUTES_IN_HOUR = 60
+    const val SECONDS_IN_HOUR = 3600
+
+    const val MATE_SCORE_THRESHOLD = 30000
+    const val WIN_SCORE = 31111
+    const val LOSE_SCORE = -31111
+
+    const val SENTE_CAMP_RANK_START = 7
+    const val GOTE_CAMP_RANK_END = 3
+}
+
 enum class PieceColor {
     Black, // 先手 (▲)
     White, // 後手 (△)
@@ -12,7 +30,7 @@ data class Square(val file: Int, val rank: Int) {
     // file: 1-9 (筋), rank: 1-9 (段)
 
     init {
-        require(file in 1..9 && rank in 1..9) { "Invalid square: $file$rank" }
+        require(file in 1..ShogiConstants.MAX_FILE && rank in 1..ShogiConstants.MAX_RANK) { "Invalid square: $file$rank" }
     }
 
     // 配列インデックスへの変換 (x: 0-8, y: 0-8)
@@ -42,7 +60,7 @@ object BoardLayout {
 
     fun getDanLabels(): List<String> = listOf("一", "二", "三", "四", "五", "六", "七", "八", "九")
 
-    fun getRangeX(isFlipped: Boolean): IntProgression = if (isFlipped) (8 downTo 0) else (0..8)
+    fun getRangeX(isFlipped: Boolean): IntProgression = if (isFlipped) (ShogiConstants.MAX_INDEX downTo 0) else (0..ShogiConstants.MAX_INDEX)
 
-    fun getRangeY(isFlipped: Boolean): IntProgression = if (isFlipped) (8 downTo 0) else (0..8)
+    fun getRangeY(isFlipped: Boolean): IntProgression = if (isFlipped) (ShogiConstants.MAX_INDEX downTo 0) else (0..ShogiConstants.MAX_INDEX)
 }

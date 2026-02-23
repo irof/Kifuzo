@@ -30,14 +30,14 @@ object AppSettings {
         }
 
     var windowWidth: Float
-        get() = prefs.getFloat(KEY_WINDOW_WIDTH, 800f)
+        get() = prefs.getFloat(KEY_WINDOW_WIDTH, AppConfig.DEFAULT_WINDOW_WIDTH)
         set(value) {
             prefs.putFloat(KEY_WINDOW_WIDTH, value)
             prefs.flush()
         }
 
     var windowHeight: Float
-        get() = prefs.getFloat(KEY_WINDOW_HEIGHT, 750f)
+        get() = prefs.getFloat(KEY_WINDOW_HEIGHT, AppConfig.DEFAULT_WINDOW_HEIGHT)
         set(value) {
             prefs.putFloat(KEY_WINDOW_HEIGHT, value)
             prefs.flush()
@@ -45,7 +45,7 @@ object AppSettings {
 
     private const val KEY_SIDEBAR_WIDTH = "sidebar_width"
     var sidebarWidth: Float
-        get() = prefs.getFloat(KEY_SIDEBAR_WIDTH, 250f)
+        get() = prefs.getFloat(KEY_SIDEBAR_WIDTH, AppConfig.DEFAULT_SIDEBAR_WIDTH)
         set(value) {
             prefs.putFloat(KEY_SIDEBAR_WIDTH, value)
             prefs.flush()
