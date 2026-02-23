@@ -5,6 +5,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,10 +29,19 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +51,7 @@ import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.ui.theme.ShogiIcons
 import dev.irof.kifuzo.utils.AppStrings
+import dev.irof.kifuzo.viewmodel.KifuzoAction
 import dev.irof.kifuzo.viewmodel.KifuzoUiState
 import java.nio.file.Path
 import javax.swing.JFileChooser
@@ -57,9 +69,36 @@ fun KifuSidebar(
     onShowText: (String) -> Unit,
     onSetViewMode: (dev.irof.kifuzo.models.FileViewMode) -> Unit,
     onToggleFileFilter: (dev.irof.kifuzo.models.FileFilter) -> Unit,
+    onSelectNext: () -> Unit,
+    onSelectPrev: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxHeight().padding(ShogiDimensions.PaddingLarge)) {
+    val focusRequester = remember { FocusRequester() }
+
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(ShogiDimensions.PaddingLarge)
+            .focusRequester(focusRequester)
+            .focusable()
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when (event.key) {
+                    Key.DirectionDown -> {
+                        onSelectNext()
+                        true
+                    }
+                    Key.DirectionUp -> {
+                        onSelectPrev()
+                        true
+                    }
+                    else -> false
+                }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures { focusRequester.requestFocus() }
+            },
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),

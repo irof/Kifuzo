@@ -112,30 +112,13 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
             .focusable()
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                val isShiftPressed = event.isShiftPressed
                 when (event.key) {
                     Key.DirectionRight -> {
                         viewModel.dispatch(KifuzoAction.NextStep)
                         true
                     }
-                    Key.DirectionDown -> {
-                        if (isShiftPressed) {
-                            viewModel.dispatch(KifuzoAction.NextStep)
-                        } else {
-                            viewModel.dispatch(KifuzoAction.SelectNextFile)
-                        }
-                        true
-                    }
                     Key.DirectionLeft -> {
                         viewModel.dispatch(KifuzoAction.PrevStep)
-                        true
-                    }
-                    Key.DirectionUp -> {
-                        if (isShiftPressed) {
-                            viewModel.dispatch(KifuzoAction.PrevStep)
-                        } else {
-                            viewModel.dispatch(KifuzoAction.SelectPrevFile)
-                        }
                         true
                     }
                     else -> false
@@ -160,6 +143,8 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
                 onShowText = { viewModel.dispatch(KifuzoAction.SetViewingText(it)) },
                 onSetViewMode = { viewModel.dispatch(KifuzoAction.SetViewMode(it)) },
                 onToggleFileFilter = { viewModel.dispatch(KifuzoAction.ToggleFileFilter(it)) },
+                onSelectNext = { viewModel.dispatch(KifuzoAction.SelectNextFile) },
+                onSelectPrev = { viewModel.dispatch(KifuzoAction.SelectPrevFile) },
                 modifier = Modifier.width(state.sidebarWidth.dp),
             )
 
@@ -175,6 +160,8 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
             onRename = { viewModel.dispatch(KifuzoAction.RenameFile(it)) },
             onWriteResult = { path, result -> viewModel.dispatch(KifuzoAction.WriteGameResult(path, result)) },
             onStepChange = { viewModel.dispatch(KifuzoAction.ChangeStep(it)) },
+            onNextStep = { viewModel.dispatch(KifuzoAction.NextStep) },
+            onPrevStep = { viewModel.dispatch(KifuzoAction.PrevStep) },
             modifier = Modifier.weight(1.0f),
         )
     }
