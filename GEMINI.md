@@ -67,6 +67,7 @@ The project uses **Gradle** as the build tool.
 - `src/desktopMain/kotlin/dev/irof/kifuzo/`: Root package.
     - `Main.kt`: Application entry point.
     - `logic/`: Business logic (parsers, converters, IO, repository, senkei detection).
+        - Includes action handlers (`FileActionHandler`, `ImportHandler`, `SettingsHandler`) to offload logic from the ViewModel.
     - `models/`: Domain models (Piece, BoardState) and app configuration.
     - `ui/`: Compose UI components, themes, and dialogs.
     - `viewmodel/`: State management using the ViewModel pattern (UI State & Actions).
