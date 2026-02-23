@@ -66,34 +66,60 @@ private class CsaConvertContext {
     private val kanjiDigits = "一二三四五六七八九"
 
     fun processMove(line: String, seconds: Int): String {
-        val isSente = line.startsWith("+")
-        val fx = line[1] - '0'
-        val fy = line[2] - '0'
-        val tx = line[3] - '0'
-        val ty = line[4] - '0'
-        val pieceCsa = line.substring(5, 7)
-        val isPromoteMarker = line.endsWith("+")
+        val detail = MoveDetail.parse(line)
+        val targetPiece = findPiece(detail.pieceCsa)
 
-        val targetPiece = findPiece(pieceCsa)
-        val pieceKifName = if (fx == 0) {
-            updateBoardForDrop(tx, ty, targetPiece, isSente)
+        val pieceKifName = if (detail.fromX == 0) {
+            updateBoardForDrop(detail.toX, detail.toY, targetPiece, detail.isSente)
             targetPiece.symbol + "打"
         } else {
-            val movingPiece = currentCells[fy - 1][9 - fx]?.first ?: targetPiece
-            val isActuallyPromoted = (!movingPiece.isPromoted() && targetPiece.isPromoted()) || isPromoteMarker
-            updateBoardForMove(fx, fy, tx, ty, targetPiece, isSente)
+            val movingPiece = currentCells[detail.fromY - 1][9 - detail.fromX]?.first ?: targetPiece
+            val isActuallyPromoted = (!movingPiece.isPromoted() && targetPiece.isPromoted()) || detail.isPromoteMarker
+            updateBoardForMove(detail.fromX, detail.fromY, detail.toX, detail.toY, targetPiece, detail.isSente)
             if (isActuallyPromoted) movingPiece.symbol + "成" else movingPiece.symbol
         }
 
-        val toPosStr = if (tx == lastToX && ty == lastToY) "同　" else "${fullWidthDigits[tx - 1]}${kanjiDigits[ty - 1]}"
-        val fromStr = if (fx == 0) "" else "($fx$fy)"
+        val toPosStr = formatToPos(detail.toX, detail.toY)
+        val fromStr = if (detail.fromX == 0) "" else "(${detail.fromX}${detail.fromY})"
 
-        if (isSente) totalSenteSeconds += seconds else totalGoteSeconds += seconds
-        val timeStr = formatTime(seconds, if (isSente) totalSenteSeconds else totalGoteSeconds)
+        updateConsumptionTime(detail.isSente, seconds)
+        val timeStr = formatTime(seconds, if (detail.isSente) totalSenteSeconds else totalGoteSeconds)
 
-        lastToX = tx
-        lastToY = ty
+        lastToX = detail.toX
+        lastToY = detail.toY
         return String.format(Locale.US, "%4d %s%s%-7s   ( %s)", moveCount++, toPosStr, pieceKifName, fromStr, timeStr)
+    }
+
+    private fun formatToPos(tx: Int, ty: Int): String = if (tx == lastToX && ty == lastToY) {
+        "同　"
+    } else {
+        "${fullWidthDigits[tx - 1]}${kanjiDigits[ty - 1]}"
+    }
+
+    private fun updateConsumptionTime(isSente: Boolean, seconds: Int) {
+        if (isSente) totalSenteSeconds += seconds else totalGoteSeconds += seconds
+    }
+
+    private data class MoveDetail(
+        val isSente: Boolean,
+        val fromX: Int,
+        val fromY: Int,
+        val toX: Int,
+        val toY: Int,
+        val pieceCsa: String,
+        val isPromoteMarker: Boolean,
+    ) {
+        companion object {
+            fun parse(line: String): MoveDetail = MoveDetail(
+                isSente = line.startsWith("+"),
+                fromX = line[1] - '0',
+                fromY = line[2] - '0',
+                toX = line[3] - '0',
+                toY = line[4] - '0',
+                pieceCsa = line.substring(5, 7),
+                isPromoteMarker = line.endsWith("+"),
+            )
+        }
     }
 
     private fun findPiece(csa: String): Piece = Piece.entries.find { it.name == csa } ?: Piece.FU
