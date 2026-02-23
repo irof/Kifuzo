@@ -13,16 +13,20 @@ import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.FileViewMode
 import dev.irof.kifuzo.models.ShogiBoardState
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
+import java.util.regex.PatternSyntaxException
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
+
+private val logger = KotlinLogging.logger {}
 
 class KifuzoViewModel(
     private val repository: KifuRepository = KifuRepositoryImpl(),
@@ -189,7 +193,7 @@ class KifuzoViewModel(
             } catch (e: KifuParseException) {
                 updateState { it.copy(errorMessage = "棋譜パースエラー: ${path.name}\n\n${e.message}") }
                 boardState.clear()
-            } catch (e: Exception) {
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 updateState { it.copy(errorMessage = "予期せぬエラー: ${path.name}\n\n${e.message}") }
                 boardState.clear()
             }
@@ -203,7 +207,8 @@ class KifuzoViewModel(
         if (myRegexStr.isEmpty()) return
         val regex = try {
             Regex(myRegexStr)
-        } catch (e: Exception) {
+        } catch (e: PatternSyntaxException) {
+            logger.warn(e) { "Invalid regex pattern: $myRegexStr" }
             null
         } ?: return
         if (regex.containsMatchIn(boardState.session.goteName) && !regex.containsMatchIn(boardState.session.senteName)) {
@@ -266,7 +271,9 @@ class KifuzoViewModel(
             repository.parse(targetFile, tempState)
             val senkei = detectSenkei(tempState.session.history)
             if (senkei.isNotEmpty()) repository.updateSenkei(targetFile, senkei)
-        } catch (e: Exception) {}
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            logger.error(e) { "Failed to parse converted CSA file or update senkei: $targetFile" }
+        }
         refreshFiles()
     }
 

@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.io.IOException
 import java.nio.file.Path
 import java.time.Instant
 import java.time.ZoneId
@@ -39,8 +40,8 @@ fun importShogiQuestFiles(sourceDir: Path, targetDir: Path): Int {
             file.copyTo(targetFile, overwrite = true)
             file.deleteExisting()
             count++
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to import ${file.name}" }
+        } catch (e: IOException) {
+            logger.warn(e) { "IO error importing ${file.name}" }
         }
     }
     return count

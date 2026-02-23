@@ -9,6 +9,7 @@ import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.models.Square
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.text.Charsets
@@ -18,10 +19,8 @@ private val logger = KotlinLogging.logger {}
 fun scanKifuInfo(path: Path): KifuInfo = try {
     val lines = readLinesWithEncoding(path)
     scanKifuInfo(lines).copy(path = path)
-} catch (e: Exception) {
-    // スキャン時のエラーは、ファイルリスト表示を止めないようログに記録し、
-    // UI上でエラー状態であることがわかるように KifuInfo を構築して返します。
-    logger.error(e) { "Failed to scan header for ${path.name}" }
+} catch (e: IOException) {
+    logger.error(e) { "IO error scanning header for ${path.name}" }
     KifuInfo(path, isError = true)
 }
 
@@ -68,7 +67,7 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
             val parsedMove = parseMove(line, parserState.lastTo) ?: continue
             try {
                 parserState.applyMove(parsedMove, line)
-            } catch (e: Exception) {
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 throw KifuParseException("${i + 1}行目: ${e.message}\n(内容: $line)", e)
             }
         }

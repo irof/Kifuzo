@@ -2,6 +2,8 @@ package dev.irof.kifuzo.logic
 
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.ShogiBoardState
+import io.github.oshai.kotlinlogging.KotlinLogging
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
@@ -9,6 +11,8 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
+
+private val logger = KotlinLogging.logger {}
 
 interface KifuRepository {
     fun scanDirectory(directory: Path): List<Path>
@@ -28,7 +32,8 @@ class KifuRepositoryImpl : KifuRepository {
 
     override fun scanDirectory(directory: Path): List<Path> = try {
         directory.listDirectoryEntries().sortedWith(compareBy({ !it.isDirectory() }, { it.name.lowercase() }))
-    } catch (e: Exception) {
+    } catch (e: IOException) {
+        logger.error(e) { "Failed to scan directory: $directory" }
         emptyList()
     }
 
@@ -73,7 +78,8 @@ class KifuRepositoryImpl : KifuRepository {
         return try {
             java.nio.file.Files.move(path, targetPath)
             targetPath
-        } catch (e: Exception) {
+        } catch (e: IOException) {
+            logger.error(e) { "Failed to rename file from $path to $targetPath" }
             null
         }
     }

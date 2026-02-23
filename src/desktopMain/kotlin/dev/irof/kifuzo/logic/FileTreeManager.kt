@@ -2,6 +2,8 @@ package dev.irof.kifuzo.logic
 
 import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileTreeNode
+import io.github.oshai.kotlinlogging.KotlinLogging
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
@@ -10,6 +12,8 @@ import java.time.temporal.ChronoUnit
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
+
+private val logger = KotlinLogging.logger {}
 
 class FileTreeManager(
     private val repository: KifuRepository,
@@ -87,7 +91,8 @@ class FileTreeManager(
         return newNodes.sortedByDescending {
             try {
                 Files.readAttributes(it.path, BasicFileAttributes::class.java).lastModifiedTime().toInstant()
-            } catch (e: Exception) {
+            } catch (e: IOException) {
+                logger.error(e) { "Failed to read attributes for ${it.path}" }
                 Instant.MIN
             }
         }
@@ -101,7 +106,8 @@ class FileTreeManager(
     private fun isRecentFile(path: Path, since: Instant): Boolean = try {
         val attrs = Files.readAttributes(path, BasicFileAttributes::class.java)
         attrs.lastModifiedTime().toInstant().isAfter(since)
-    } catch (e: Exception) {
+    } catch (e: IOException) {
+        logger.error(e) { "Failed to check if file is recent: $path" }
         false
     }
 

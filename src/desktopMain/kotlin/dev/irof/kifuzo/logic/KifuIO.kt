@@ -12,13 +12,14 @@ private val logger = KotlinLogging.logger {}
  * 棋譜ファイルからテキストを読み込みます。
  * UTF-8 と Shift_JIS を自動判別します。
  */
+@Suppress("TooGenericExceptionCaught")
 fun readTextWithEncoding(path: Path): String {
     val bytes = path.readBytes()
     try {
         val text = bytes.toString(Charsets.UTF_8)
         if (!text.contains("\uFFFD")) return text
     } catch (e: Exception) {
-        logger.debug { "UTF-8 decoding failed for $path, trying Shift_JIS..." }
+        logger.debug(e) { "UTF-8 decoding failed for $path, trying Shift_JIS..." }
     }
     return bytes.toString(Charset.forName("Shift_JIS"))
 }

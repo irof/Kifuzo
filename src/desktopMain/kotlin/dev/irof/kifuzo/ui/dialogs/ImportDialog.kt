@@ -26,8 +26,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.irof.kifuzo.utils.AppStrings
+import io.github.oshai.kotlinlogging.KotlinLogging
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JFileChooser
+
+private val logger = KotlinLogging.logger {}
 
 @Composable
 fun ImportDialog(
@@ -80,8 +84,8 @@ fun ImportDialog(
                         try {
                             val path = java.nio.file.Paths.get(sourcePath)
                             onImport(path)
-                        } catch (e: Exception) {
-                            // 不正なパス入力への簡易的な対応
+                        } catch (e: InvalidPathException) {
+                            logger.error(e) { "Invalid path entered: $sourcePath" }
                         }
                     },
                     enabled = sourcePath.isNotEmpty(),
