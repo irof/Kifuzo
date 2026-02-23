@@ -99,10 +99,11 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
         }
     }
 
+    val initialStep = if (firstContactStep != -1) firstContactStep else (history.size - 1)
     state.updateSession(
         KifuSession(
             history = history,
-            initialStep = history.size - 1,
+            initialStep = initialStep,
             senteName = senteName,
             goteName = goteName,
             firstContactStep = firstContactStep,

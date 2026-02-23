@@ -46,6 +46,8 @@ class CsaParserTest {
 
         // 3手目(+8822KA+)で角が取られるので、firstContactStepは3になるはず
         assertEquals(3, state.session.firstContactStep)
+        // initialStep も衝突手数を優先する
+        assertEquals(3, state.session.initialStep)
     }
 
     @Test
