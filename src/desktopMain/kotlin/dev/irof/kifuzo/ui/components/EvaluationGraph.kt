@@ -192,7 +192,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
                 strokeWidth = if (isThreshold) GraphConstants.LINE_WIDTH_NORMAL else GraphConstants.LINE_WIDTH_THIN,
             )
 
-            if (kotlin.math.abs(evalValue) < GraphConstants.THRESHOLD) {
+            if (kotlin.math.abs(evalValue) <= GraphConstants.THRESHOLD) {
                 val sign = if (evalValue > 0) "+" else ""
                 val textLayoutResult = textMeasurer.measure(
                     text = AnnotatedString("$sign$evalValue"),
