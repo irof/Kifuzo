@@ -167,100 +167,112 @@ private data class KifuHeader(
 )
 
 private fun parseHeader(lines: List<String>): KifuHeader {
-    var senteName = "先手"
-    var goteName = "後手"
-    val currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
-    val senteMochi = mutableListOf<Piece>()
-    val goteMochi = mutableListOf<Piece>()
-    var isStandardStart = true
-    var moveStartIndex = -1
-
-    val pieceSymbolMap = Piece.entries.associateBy { it.symbol }
-    var boardY = 0
-
+    val parser = HeaderParser()
     for (i in lines.indices) {
-        val line = lines[i]
-        val trimmed = line.trim()
-        if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) senteName = trimmed.substringAfter("：").trim()
-        if (trimmed.startsWith("後手：")) goteName = trimmed.substringAfter("：").trim()
+        val line = lines[i].trim()
+        if (parser.processLine(line, i)) break
+    }
+    return parser.build()
+}
 
-        // 盤面行の解析
-        if (trimmed.startsWith("|") && trimmed.count { it == '|' } >= 2) {
-            isStandardStart = false
-            val content = trimmed.substringAfter("|").substringBeforeLast("|")
+private class HeaderParser {
+    private var senteName = "先手"
+    private var goteName = "後手"
+    private val currentCells = Array(9) { arrayOfNulls<Pair<Piece, PieceColor>>(9) }
+    private val senteMochi = mutableListOf<Piece>()
+    private val goteMochi = mutableListOf<Piece>()
+    private var isStandardStart = true
+    private var moveStartIndex = -1
+    private var boardY = 0
 
-            // セパレータ '|' がある場合は分割、ない場合は2文字ずつの固定幅として扱う
-            val cells = if (content.contains("|")) {
-                content.split("|")
-            } else {
-                (0 until 9).map { idx ->
-                    val start = idx * 2
-                    if (start + 2 <= content.length) {
-                        content.substring(start, start + 2)
-                    } else if (start < content.length) {
-                        content.substring(start)
-                    } else {
-                        ""
-                    }
-                }
-            }
-
-            for (x in 0..8) {
-                if (x >= cells.size || boardY >= 9) break
-                val pStr = cells[x]
-                val isGote = pStr.contains('v')
-                val pieceName = pStr.replace("v", "").replace("・", "").trim()
-
-                val piece = Piece.findPieceBySymbol(pieceName)
-                if (piece != null) {
-                    val color = if (isGote) PieceColor.White else PieceColor.Black
-                    currentCells[boardY][x] = piece to color
-                }
-            }
-            boardY++
+    fun processLine(line: String, index: Int): Boolean = when {
+        line.startsWith("先手：") || line.startsWith("対局者：") || line.startsWith("後手：") -> {
+            handlePlayerName(line)
+            false
         }
-
-        if (trimmed.startsWith("先手持駒：") || trimmed.startsWith("下手持駒：")) {
+        line.startsWith("|") && line.count { it == '|' } >= 2 -> {
             isStandardStart = false
-            senteMochi.addAll(Piece.parseMochigoma(trimmed.substringAfter("：")))
+            parseBoardLine(line)
+            false
         }
-        if (trimmed.startsWith("後手持駒：") || trimmed.startsWith("上手持駒：")) {
+        line.startsWith("先手持駒：") || line.startsWith("下手持駒：") ||
+            line.startsWith("後手持駒：") || line.startsWith("上手持駒：") -> {
             isStandardStart = false
-            goteMochi.addAll(Piece.parseMochigoma(trimmed.substringAfter("：")))
+            handleMochigomaLine(line)
+            false
         }
+        Regex("""^\s*\d+\s+.*""").matches(line) -> {
+            if (parseMove(line, null) != null) {
+                moveStartIndex = index
+                true
+            } else false
+        }
+        else -> false
+    }
 
-        // 指し手開始行の判定
-        if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) {
-            // 盤面ヘッダの「 ９ ８ ７...」などを誤検知しないよう、実際に指し手としてパースできるか確認する
-            if (parseMove(trimmed, null) != null) {
-                moveStartIndex = i
-                break
-            }
+    private fun handlePlayerName(line: String) {
+        if (line.startsWith("後手：")) {
+            goteName = line.substringAfter("：").trim()
+        } else {
+            senteName = line.substringAfter("：").trim()
         }
     }
 
-    val finalCells = if (isStandardStart) {
-        BoardSnapshot.getInitialCells()
+    private fun handleMochigomaLine(line: String) {
+        val pieces = Piece.parseMochigoma(line.substringAfter("："))
+        if (line.startsWith("先手") || line.startsWith("下手")) {
+            senteMochi.addAll(pieces)
+        } else {
+            goteMochi.addAll(pieces)
+        }
+    }
+
+    private fun parseBoardLine(line: String) {
+        if (boardY >= 9) return
+        val content = line.substringAfter("|").substringBeforeLast("|")
+        val cells = splitBoardCells(content)
+
+        for (x in 0..8) {
+            if (x >= cells.size) break
+            val pStr = cells[x]
+            val piece = Piece.findPieceBySymbol(pStr.replace("v", "").replace("・", "").trim())
+            if (piece != null) {
+                val color = if (pStr.contains('v')) PieceColor.White else PieceColor.Black
+                currentCells[boardY][x] = piece to color
+            }
+        }
+        boardY++
+    }
+
+    private fun splitBoardCells(content: String): List<String> = if (content.contains("|")) {
+        content.split("|")
     } else {
-        if (boardY < 9) {
-            throw KifuParseException("盤面図が不完全です（${boardY}行しか見つかりませんでした）。")
+        (0 until 9).map { idx ->
+            val start = idx * 2
+            if (start + 2 <= content.length) content.substring(start, start + 2) else ""
         }
-        val pieceCount = currentCells.sumOf { row -> row.count { it != null } }
-        if (pieceCount == 0) {
-            throw KifuParseException("盤面図から駒を読み取れませんでした。盤面図の形式が解析に対応していない可能性があります。")
-        }
-        currentCells.map { it.toList() }
     }
 
-    return KifuHeader(
-        senteName = senteName,
-        goteName = goteName,
-        initialCells = finalCells,
-        senteMochi = senteMochi,
-        goteMochi = goteMochi,
-        isStandardStart = isStandardStart,
-        moveStartIndex = moveStartIndex,
-    )
+    fun build(): KifuHeader {
+        val finalCells = if (isStandardStart) {
+            BoardSnapshot.getInitialCells()
+        } else {
+            if (boardY < 9) throw KifuParseException("盤面図が不完全です（${boardY}行しか見つかりませんでした）。")
+            val pieceCount = currentCells.sumOf { row -> row.count { it != null } }
+            if (pieceCount == 0) throw KifuParseException("盤面図から駒を読み取れませんでした。")
+            currentCells.map { it.toList() }
+        }
+
+        return KifuHeader(
+            senteName = senteName,
+            goteName = goteName,
+            initialCells = finalCells,
+            senteMochi = senteMochi,
+            goteMochi = goteMochi,
+            isStandardStart = isStandardStart,
+            moveStartIndex = moveStartIndex,
+        )
+    }
 }
 
 private sealed class KifuParsedMove {
