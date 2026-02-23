@@ -76,176 +76,79 @@ fun KifuPreviewPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                text = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT,
-                style = MaterialTheme.typography.subtitle1,
-                fontWeight = FontWeight.Bold,
-                softWrap = false,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            )
-        }
+        KifuFileName(state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT)
 
         state.selectedFile?.let { selected ->
-            val ext = selected.extension.lowercase()
-            val isKifuFile = ext == "kifu" || ext == "kif"
-            val hasHistory = boardState.session.history.isNotEmpty()
-
-            if (hasHistory || ext == "csa") {
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    if (hasHistory) {
-                        if (isKifuFile) {
-                            val kifuInfo = state.kifuInfos[selected]
-                            val existingSenkei = kifuInfo?.senkei
-                            if (!existingSenkei.isNullOrEmpty()) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(32.dp).background(Color.White, MaterialTheme.shapes.small).border(1.dp, Color.LightGray, MaterialTheme.shapes.small).padding(horizontal = 8.dp)) {
-                                    Text("戦型: $existingSenkei", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                    Spacer(Modifier.width(4.dp))
-                                    IconButton(onClick = { onDetectSenkei(selected) }, modifier = Modifier.size(18.dp)) {
-                                        Icon(Icons.Default.Refresh, contentDescription = AppStrings.DETECT_SENKEI, tint = ShogiColors.Info)
-                                    }
-                                }
-                            } else {
-                                Button(onClick = { onDetectSenkei(selected) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Info, contentColor = Color.White), modifier = Modifier.height(32.dp)) {
-                                    Text(AppStrings.DETECT_SENKEI, fontSize = 10.sp)
-                                }
-                            }
-
-                            Spacer(Modifier.width(8.dp))
-                            Button(onClick = { onRename(selected) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Primary, contentColor = Color.White), modifier = Modifier.height(32.dp)) {
-                                Text(AppStrings.RENAME, fontSize = 10.sp)
-                            }
-
-                            // 終局結果ボタンの追加 (終局していない場合のみ)
-                            val lastSnapshot = boardState.session.history.lastOrNull()
-                            val lastMove = lastSnapshot?.lastMoveText ?: ""
-                            val evaluation = lastSnapshot?.evaluation ?: 0
-                            val isMate = kotlin.math.abs(evaluation) >= 30000
-                            val isFinished = isMate || dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.any { lastMove.contains(it) }
-                            if (!isFinished) {
-                                Spacer(Modifier.width(8.dp))
-                                var showMenu by remember { mutableStateOf(false) }
-                                Box {
-                                    OutlinedButton(onClick = { showMenu = true }, modifier = Modifier.height(32.dp)) {
-                                        Text("終局手を追加", fontSize = 10.sp)
-                                    }
-
-                                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                                        dev.irof.kifuzo.models.GameResult.UI_SELECTIONS.forEach { result ->
-                                            DropdownMenuItem(onClick = {
-                                                showMenu = false
-                                                onWriteResult(selected, result)
-                                            }) {
-                                                Text(result, fontSize = 12.sp)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (ext == "csa") {
-                        if (hasHistory) Spacer(Modifier.width(8.dp))
-                        Button(onClick = { onConvertCsa(selected) }, colors = ButtonDefaults.buttonColors(backgroundColor = ShogiColors.Success, contentColor = Color.White), modifier = Modifier.height(32.dp)) {
-                            Text(AppStrings.CONVERT_TO_KIFU, fontSize = 10.sp)
-                        }
-                    }
-                }
-            }
+            KifuHeaderActions(
+                selectedFile = selected,
+                state = state,
+                history = boardState.session.history,
+                onDetectSenkei = onDetectSenkei,
+                onConvertCsa = onConvertCsa,
+                onRename = onRename,
+                onWriteResult = onWriteResult,
+            )
         }
 
         if (boardState.session.history.isNotEmpty()) {
             Spacer(Modifier.height(16.dp))
-
-            // 盤面領域と指し手一覧領域を横に並べる
-            Row(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                // 左側: 盤面、スライダー、評価値グラフ
-                Column(
-                    modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    ShogiBoardView(
-                        boardState,
-                        isFlipped = state.isFlipped,
-                        onToggleFlip = onToggleFlip,
-                    )
-                    Spacer(Modifier.height(16.dp))
-
-                    KifuOperationBar(
-                        currentStep = boardState.currentStep,
-                        maxStep = boardState.session.maxStep,
-                        history = boardState.session.history,
-                        isStandardStart = boardState.session.isStandardStart,
-                        firstContactStep = boardState.session.firstContactStep,
-                        isFlipped = state.isFlipped,
-                        onStepChange = onStepChange,
-                    )
-                }
-
-                // 右側: 指し手一覧
-                MoveList(
-                    history = boardState.session.history,
-                    currentStep = boardState.currentStep,
-                    onStepChange = onStepChange,
-                    modifier = Modifier.width(280.dp).fillMaxHeight(),
-                )
-            }
+            KifuMainContent(state, boardState, onToggleFlip, onStepChange)
         }
     }
 }
 
 @Composable
-private fun MoveList(
-    history: List<BoardSnapshot>,
-    currentStep: Int,
-    onStepChange: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val listState = rememberLazyListState()
-
-    LaunchedEffect(currentStep) {
-        if (currentStep in 0 until history.size) {
-            listState.animateScrollToItem(currentStep)
-        }
-    }
-
-    Box(
-        modifier = modifier
-            .background(Color.White, MaterialTheme.shapes.medium)
-            .border(1.dp, Color.LightGray, MaterialTheme.shapes.medium),
+private fun KifuFileName(name: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize().padding(vertical = 4.dp),
+        Text(
+            text = name,
+            style = MaterialTheme.typography.subtitle1,
+            fontWeight = FontWeight.Bold,
+            softWrap = false,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun KifuMainContent(
+    state: KifuzoUiState,
+    boardState: ShogiBoardState,
+    onToggleFlip: () -> Unit,
+    onStepChange: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().weight(1f),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            item {
-                MoveRow(0, AppStrings.START_POSITION, null, null, currentStep == 0, onStepChange)
-            }
-
-            items(history.size - 1) { index ->
-                val i = index + 1
-                val board = history[i]
-                val prevEval = history[i - 1].evaluation ?: 0
-                val curEval = board.evaluation
-                val diff = if (curEval != null) curEval - prevEval else null
-
-                val colorSymbol = if (i % 2 != 0) "▲" else "△"
-                // "1 ７六歩(77)" -> "７六歩"
-                val moveText = board.lastMoveText.trim().split(Regex("\\s+")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
-
-                MoveRow(i, "$colorSymbol$moveText", curEval, diff, currentStep == i, onStepChange)
-            }
+            ShogiBoardView(boardState, isFlipped = state.isFlipped, onToggleFlip = onToggleFlip)
+            Spacer(Modifier.height(16.dp))
+            KifuOperationBar(
+                currentStep = boardState.currentStep,
+                maxStep = boardState.session.maxStep,
+                history = boardState.session.history,
+                isStandardStart = boardState.session.isStandardStart,
+                firstContactStep = boardState.session.firstContactStep,
+                isFlipped = state.isFlipped,
+                onStepChange = onStepChange,
+            )
         }
+
+        KifuMoveList(
+            history = boardState.session.history,
+            currentStep = boardState.currentStep,
+            onStepChange = onStepChange,
+            modifier = Modifier.width(280.dp).fillMaxHeight(),
+        )
     }
 }
 
