@@ -5,7 +5,7 @@ plugins {
     id("org.jetbrains.compose") version "1.7.0"
     kotlin("plugin.compose") version "2.3.10"
     id("com.diffplug.spotless") version "8.2.1"
-    id("io.gitlab.arturbosch.detekt") version "1.23.8"
+    id("dev.detekt") version "2.0.0-alpha.2"
     id("org.jetbrains.kotlinx.kover") version "0.9.1"
 }
 
@@ -16,14 +16,13 @@ detekt {
     source.setFrom(files("src/desktopMain/kotlin", "src/desktopTest/kotlin"))
 }
 
-tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-    jvmTarget = "22"
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    jvmTarget = "25"
     reports {
         html.required.set(true)
-        xml.required.set(true)
-        txt.required.set(false)
+        markdown.required.set(true)
+        checkstyle.required.set(true)
         sarif.required.set(false)
-        md.required.set(true)
     }
 }
 
