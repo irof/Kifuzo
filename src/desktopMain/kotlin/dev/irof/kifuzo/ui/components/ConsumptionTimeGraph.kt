@@ -46,11 +46,18 @@ private object TimeGraphConstants {
     val TOOLTIP_CORNER_RADIUS = 4.dp
     const val LINE_WIDTH_THIN = 1f
     const val LINE_WIDTH_INDICATOR = 2f
-    const val MIN_MAX_SECONDS = 60f // 最低でも1分は表示
+    const val MIN_MAX_SECONDS = 60f // デフォルトの最低表示秒数
 
+    const val GRID_SEC_5 = 5f
+    const val GRID_SEC_10 = 10f
+    const val GRID_SEC_20 = 20f
     const val GRID_SEC_SMALL = 60f
     const val GRID_SEC_MEDIUM = 300f
     const val GRID_SEC_LARGE = 1200f
+
+    const val INTERVAL_SEC_1 = 1f
+    const val INTERVAL_SEC_2 = 2f
+    const val INTERVAL_SEC_5 = 5f
     const val INTERVAL_SEC_15 = 15f
     const val INTERVAL_SEC_60 = 60f
     const val INTERVAL_SEC_300 = 300f
@@ -118,7 +125,13 @@ fun ConsumptionTimeGraph(
             if (totalSteps == 0) return@Canvas
 
             val stepWidth = size.width / totalSteps
-            val maxSeconds = max(TimeGraphConstants.MIN_MAX_SECONDS, (times.filterNotNull().maxOrNull() ?: 0).toFloat())
+            val maxSecondsActual = (times.filterNotNull().maxOrNull() ?: 0).toFloat()
+            val maxSeconds = when {
+                maxSecondsActual < 5f -> 5f
+                maxSecondsActual < 10f -> 10f
+                maxSecondsActual < 20f -> 20f
+                else -> max(TimeGraphConstants.MIN_MAX_SECONDS, maxSecondsActual)
+            }
             val scaler = TimeScaler(maxSeconds, size.height)
 
             drawTimeGridLines(maxSeconds, scaler, textMeasurer)
@@ -138,6 +151,9 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeGridLines(
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
 ) {
     val gridInterval = when {
+        maxSeconds <= TimeGraphConstants.GRID_SEC_5 -> TimeGraphConstants.INTERVAL_SEC_1
+        maxSeconds <= TimeGraphConstants.GRID_SEC_10 -> TimeGraphConstants.INTERVAL_SEC_2
+        maxSeconds <= TimeGraphConstants.GRID_SEC_20 -> TimeGraphConstants.INTERVAL_SEC_5
         maxSeconds <= TimeGraphConstants.GRID_SEC_SMALL -> TimeGraphConstants.INTERVAL_SEC_15
         maxSeconds <= TimeGraphConstants.GRID_SEC_MEDIUM -> TimeGraphConstants.INTERVAL_SEC_60
         maxSeconds <= TimeGraphConstants.GRID_SEC_LARGE -> TimeGraphConstants.INTERVAL_SEC_300
