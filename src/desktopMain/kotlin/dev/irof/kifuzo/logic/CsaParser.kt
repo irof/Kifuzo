@@ -36,6 +36,7 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
             line.startsWith("N+") -> senteName = line.substring(2)
             line.startsWith("N-") -> goteName = line.substring(2)
             line.startsWith("+") || line.startsWith("-") -> {
+                if (line.length < 7) continue
                 val isSente = line.startsWith("+")
                 val fromX = line[1] - '0'
                 val fromY = line[2] - '0'
