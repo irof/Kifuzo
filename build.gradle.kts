@@ -5,6 +5,26 @@ plugins {
     id("org.jetbrains.compose") version "1.7.0"
     kotlin("plugin.compose") version "2.3.10"
     id("com.diffplug.spotless") version "8.2.1"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
+    id("org.jetbrains.kotlinx.kover") version "0.9.1"
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom(files("$projectDir/config/detekt/detekt.yml"))
+    source.setFrom(files("src/desktopMain/kotlin", "src/desktopTest/kotlin"))
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    jvmTarget = "22"
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        txt.required.set(false)
+        sarif.required.set(false)
+        md.required.set(true)
+    }
 }
 
 group = "dev.irof.kifuzo"
@@ -59,6 +79,6 @@ spotless {
 
 tasks.register("verify") {
     group = "verification"
-    description = "Runs Spotless check and all tests."
-    dependsOn("spotlessCheck", "desktopTest")
+    description = "Runs Spotless check, detekt, tests and coverage."
+    dependsOn("spotlessCheck", "detekt", "koverHtmlReport")
 }
