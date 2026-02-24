@@ -19,7 +19,7 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
     - Highlights sente (black) and gote (red) pieces.
     - Displays captured pieces (Mochigoma) in a standardized order (Rook, Bishop, Gold, Silver, Knight, Lance, Pawn).
 - **Analysis Tools:** 
-    - **Evaluation Graph:** Visualizes the game's evaluation values. Features non-linear scaling (compressing values > 2000) for better readability and automatic inversion when the board is flipped. Uses distinct background colors for Sente (dark gray) and Gote (red) advantage regions.
+    - **Evaluation Graph:** Visualizes the game's evaluation values. Features non-linear scaling (compressing values > 2000) for better readability and automatic inversion when the board is flipped. Uses distinct background colors for Sente (red) and Gote (blue) advantage regions.
     - **Significant Moves:** Automatically detects moves with large evaluation changes (500+ points) and marks them in the move list with "!" or "!!".
     - **Kifu Parser:** A robust parser for `.kifu` (UTF-8) files.
         - Handles full-width digits and Kanji notation (e.g., `７六歩`, `同　`).

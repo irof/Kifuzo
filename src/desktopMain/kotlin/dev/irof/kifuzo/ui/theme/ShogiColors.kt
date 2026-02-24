@@ -25,9 +25,9 @@ object ShogiColors {
     val Info = Color(0xFF2196F3)
 
     // 評価値グラフ用
-    val EvalPositive = Color(0xFF555555) // 先手有利（黒系）
-    val EvalNegative = Color(0xFFD32F2F) // 後手有利（赤系）
-    val EvalLine = Color(0xFF2196F3) // グラフの線（青系）
+    val EvalPositive = Color(0xFFD32F2F) // 先手有利（赤系）
+    val EvalNegative = Color(0xFF1976D2) // 後手有利（青系）
+    val EvalLine = Color(0xFF000000) // グラフの線（黒）
     val EvalCurrentPos = Color.Black // 現在の手数位置
 
     val TooltipBackground = Color(0xFF333333)
