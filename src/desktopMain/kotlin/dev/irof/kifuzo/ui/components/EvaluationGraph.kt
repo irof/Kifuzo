@@ -218,7 +218,6 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawEvaluationLine(
     for (i in evaluations.indices) {
         val eval = evaluations[i]
         if (eval is Evaluation.Unknown) {
-            lastPoint = null
             continue
         }
         val x = (i + 0.5f) * stepWidth

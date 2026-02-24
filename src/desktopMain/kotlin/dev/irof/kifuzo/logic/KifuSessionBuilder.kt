@@ -149,7 +149,7 @@ class KifuSessionBuilder {
         lastFrom: Square? = null,
         lastTo: Square? = null,
         consumptionSeconds: Int? = null,
-        evaluation: Evaluation = history.lastOrNull()?.evaluation ?: Evaluation.Unknown,
+        evaluation: Evaluation = Evaluation.Unknown,
     ): BoardSnapshot = BoardSnapshot(
         cells = currentCells.map { it.toList() },
         senteMochigoma = senteMochi.toList(),
