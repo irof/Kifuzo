@@ -14,6 +14,7 @@ import kotlin.test.assertEquals
  */
 open class StubKifuRepository : KifuRepository {
     var lastParsedPath: Path? = null
+    var lastMethodCalled: String? = null
     var parseAction: (ShogiBoardState) -> Unit = {}
     var renameResult: Path? = null
     var proposedName: String? = null
@@ -23,6 +24,13 @@ open class StubKifuRepository : KifuRepository {
     override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = emptyMap()
     override fun parse(path: Path, state: ShogiBoardState) {
         lastParsedPath = path
+        lastMethodCalled = "parse"
+        parseAction(state)
+    }
+
+    override fun parseManually(path: Path, state: ShogiBoardState) {
+        lastParsedPath = path
+        lastMethodCalled = "parseManually"
         parseAction(state)
     }
     override fun convertCsa(path: Path): Path = path

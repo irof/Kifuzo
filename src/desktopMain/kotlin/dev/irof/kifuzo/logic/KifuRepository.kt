@@ -13,6 +13,7 @@ interface KifuRepository {
     fun scanDirectory(directory: Path, sortOption: FileSortOption = FileSortOption.NAME): List<Path>
     fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo>
     fun parse(path: Path, state: ShogiBoardState)
+    fun parseManually(path: Path, state: ShogiBoardState)
     fun convertCsa(path: Path): Path
     fun updateResult(path: Path, result: String)
     fun generateProposedName(path: Path, template: String): String?
@@ -32,6 +33,8 @@ class KifuRepositoryImpl(
     override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = parseService.getKifuInfos(files)
 
     override fun parse(path: Path, state: ShogiBoardState) = parseService.parse(path, state)
+
+    override fun parseManually(path: Path, state: ShogiBoardState) = parseService.parseManually(path, state)
 
     override fun convertCsa(path: Path): Path = parseService.convertCsaToKifu(path)
 

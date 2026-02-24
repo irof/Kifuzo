@@ -48,6 +48,7 @@ class FileActionHandlerTest {
         val path = Paths.get("test.kifu")
         handler.selectFile(path)
         assertEquals(path, repository.lastParsedPath)
+        assertEquals("parse", repository.lastMethodCalled)
         assertEquals(true, autoFlipCalled)
     }
 
@@ -64,10 +65,11 @@ class FileActionHandlerTest {
     }
 
     @Test
-    fun forceParseが拡張子に関わらずパースを実行すること() {
+    fun forceParseが拡張子に関わらずparseManuallyを実行すること() {
         val path = Paths.get("test.txt")
         handler.forceParse(path)
         assertEquals(path, repository.lastParsedPath)
+        assertEquals("parseManually", repository.lastMethodCalled)
     }
 
     @Test

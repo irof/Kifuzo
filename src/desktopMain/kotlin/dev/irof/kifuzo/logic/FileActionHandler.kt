@@ -27,16 +27,16 @@ class FileActionHandler(
             boardState.clear()
             return
         }
-        parse(path)
+        executeParse(path) { repository.parse(it, boardState) }
     }
 
     fun forceParse(path: Path) {
-        parse(path)
+        executeParse(path) { repository.parseManually(it, boardState) }
     }
 
-    private fun parse(path: Path) {
+    private fun executeParse(path: Path, parseAction: (Path) -> Unit) {
         try {
-            repository.parse(path, boardState)
+            parseAction(path)
             onAutoFlip()
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
             boardState.clear()
