@@ -39,4 +39,7 @@ object AppStrings {
     const val FILTER_RECENT = "最近"
     const val SORT_NAME = "名前順"
     const val SORT_DATE = "更新順"
+
+    const val LABEL_EVENT = "棋戦："
+    const val LABEL_START_TIME = "開始日時："
 }

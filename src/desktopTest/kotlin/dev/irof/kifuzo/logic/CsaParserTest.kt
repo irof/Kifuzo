@@ -82,8 +82,11 @@ class CsaParserTest {
     @Test
     fun CSA形式での駒の成りが正しく処理されること() {
         val csa = """
+                ${'$'}EVENT:第1期蔵王戦
+                ${'$'}START_TIME:2026/02/24 10:00:00
+                N+Sente
+                N-Gote
                 P1-KY-KE-GI-KI-OU-KI-GI-KE-KY
-                P2 * -HI *  *  *  *  * -KA *
                 P3-FU-FU-FU-FU-FU-FU-FU-FU-FU
                 P4 *  *  *  *  *  *  *  *  *
                 P5 *  *  *  *  *  *  *  *  *
@@ -101,6 +104,8 @@ class CsaParserTest {
         // 1手目(+7776TO)で歩が「と」になるので、「成」が付くはず
         assertEquals("1 ７六歩成", state.session.history[1].lastMoveText)
         assertEquals(dev.irof.kifuzo.models.Piece.TO, state.session.history[1].cells[5][2]?.first)
+        assertEquals("第1期蔵王戦", state.session.event)
+        assertEquals("2026/02/24 10:00:00", state.session.startTime)
     }
 
     @Test

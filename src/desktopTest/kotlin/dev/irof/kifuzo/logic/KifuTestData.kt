@@ -112,6 +112,8 @@ object KifuTestData {
     """.trimIndent()
 
     val KIFU_WITH_PLAYER_INFO = """
+        棋戦：第1期蔵王戦
+        開始日時：2026/02/24 10:00:00
         先手：先手太郎
         後手：後手花子
         1 ７六歩(77)

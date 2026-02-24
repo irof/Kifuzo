@@ -21,6 +21,7 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
     - Displays captured pieces (Mochigoma) in a standardized order (Rook, Bishop, Gold, Silver, Knight, Lance, Pawn).
 - **Analysis Tools:** 
     - **Evaluation Graph:** Visualizes the game's evaluation values. Features non-linear scaling (compressing values > 2000) for better readability and automatic inversion when the board is flipped. Uses distinct background colors for Sente (red) and Gote (blue) advantage regions.
+    - **Kifu Meta Info:** Displays game metadata such as tournament/event name and start time below the evaluation graph. Supports both `.kifu` (e.g., `棋戦：`, `開始日時：`) and `.csa` (e.g., `$EVENT:`, `$START_TIME:`) formats.
     - **Significant Moves:** Automatically detects moves with large evaluation changes (500+ points) and marks them in the move list with "!" or "!!".
     - **Kifu Parser:** A robust parser for `.kifu` (UTF-8) files.
         - Handles full-width digits and Kanji notation (e.g., `７六歩`, `同　`).

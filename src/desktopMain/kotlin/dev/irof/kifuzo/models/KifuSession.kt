@@ -8,6 +8,8 @@ data class KifuSession(
     val initialStep: Int = 0,
     val senteName: String = "先手",
     val goteName: String = "後手",
+    val startTime: String = "",
+    val event: String = "",
     val firstContactStep: Int = -1,
     val isStandardStart: Boolean = true,
 ) {

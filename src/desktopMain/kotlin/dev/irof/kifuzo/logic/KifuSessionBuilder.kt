@@ -14,6 +14,8 @@ import dev.irof.kifuzo.models.Square
 class KifuSessionBuilder {
     private var senteName: String = "先手"
     private var goteName: String = "後手"
+    private var startTime: String = ""
+    private var event: String = ""
     private var isStandardStart: Boolean = true
     private var firstContactStep: Int = -1
 
@@ -32,9 +34,13 @@ class KifuSessionBuilder {
         senteMochi: List<Piece> = emptyList(),
         goteMochi: List<Piece> = emptyList(),
         isStandardStart: Boolean = true,
+        startTime: String = "",
+        event: String = "",
     ) {
         this.senteName = senteName
         this.goteName = goteName
+        this.startTime = startTime
+        this.event = event
         this.isStandardStart = isStandardStart
         this.senteMochi.clear()
         this.senteMochi.addAll(senteMochi)
@@ -52,8 +58,19 @@ class KifuSessionBuilder {
     }
 
     /**
+     * メタデータを設定します。
+     */
+    fun setMetadata(sente: String, gote: String, start: String = "", ev: String = "") {
+        this.senteName = sente
+        this.goteName = gote
+        this.startTime = start
+        this.event = ev
+    }
+
+    /**
      * 対局者名を設定します。
      */
+    @Deprecated("Use setMetadata instead", ReplaceWith("setMetadata(sente, gote)"))
     fun setPlayers(sente: String, gote: String) {
         this.senteName = sente
         this.goteName = gote
@@ -137,6 +154,8 @@ class KifuSessionBuilder {
             initialStep = initialStep,
             senteName = senteName,
             goteName = goteName,
+            startTime = startTime,
+            event = event,
             firstContactStep = firstContactStep,
             isStandardStart = isStandardStart,
         )

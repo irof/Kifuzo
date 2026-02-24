@@ -29,22 +29,25 @@ fun scanKifuInfo(lines: List<String>): KifuInfo {
     var sente = ""
     var gote = ""
     var startTime = ""
+    var event = ""
     for (line in lines) {
         val trimmed = line.trim()
         // KIF format
         if (trimmed.startsWith("先手：") || trimmed.startsWith("対局者：")) sente = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("後手：")) gote = trimmed.substringAfter("：").trim()
         if (trimmed.startsWith("開始日時：")) startTime = trimmed.substringAfter("：").trim()
+        if (trimmed.startsWith("棋戦：")) event = trimmed.substringAfter("：").trim()
 
         // CSA format
         if (trimmed.startsWith("N+")) sente = trimmed.substring(2).trim()
         if (trimmed.startsWith("N-")) gote = trimmed.substring(2).trim()
         if (trimmed.startsWith("\$START_TIME:")) startTime = trimmed.substringAfter(":").trim()
+        if (trimmed.startsWith("\$EVENT:")) event = trimmed.substringAfter(":").trim()
 
         if (Regex("""^\s*\d+\s+.*""").matches(trimmed)) break
         if (trimmed.startsWith("+") || trimmed.startsWith("-")) break
     }
-    return KifuInfo(java.nio.file.Paths.get(""), sente, gote, startTime)
+    return KifuInfo(java.nio.file.Paths.get(""), sente, gote, startTime, event)
 }
 
 fun parseKifu(path: Path, state: ShogiBoardState) {
@@ -88,6 +91,8 @@ private class ParserState(header: KifuHeader) {
         setup(
             senteName = header.senteName,
             goteName = header.goteName,
+            startTime = header.startTime,
+            event = header.event,
             initialCells = header.initialCells,
             senteMochi = header.senteMochi,
             goteMochi = header.goteMochi,
@@ -140,6 +145,8 @@ private class ParserState(header: KifuHeader) {
 private data class KifuHeader(
     val senteName: String,
     val goteName: String,
+    val startTime: String,
+    val event: String,
     val initialCells: List<List<Pair<Piece, PieceColor>?>>,
     val senteMochi: List<Piece>,
     val goteMochi: List<Piece>,
@@ -159,6 +166,8 @@ private fun parseHeader(lines: List<String>): KifuHeader {
 private class HeaderParser {
     private var senteName = "先手"
     private var goteName = "後手"
+    private var startTime = ""
+    private var event = ""
     private val currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<Pair<Piece, PieceColor>>(ShogiConstants.BOARD_SIZE) }
     private val senteMochi = mutableListOf<Piece>()
     private val goteMochi = mutableListOf<Piece>()
@@ -167,8 +176,9 @@ private class HeaderParser {
     private var boardY = 0
 
     fun processLine(line: String, index: Int): Boolean = when {
-        line.startsWith("先手：") || line.startsWith("対局者：") || line.startsWith("後手：") -> {
-            handlePlayerName(line)
+        line.startsWith("先手：") || line.startsWith("対局者：") || line.startsWith("後手：") ||
+            line.startsWith("開始日時：") || line.startsWith("棋戦：") -> {
+            handleMetadataLine(line)
             false
         }
         line.startsWith("|") && line.count { it == '|' } >= 2 -> {
@@ -193,11 +203,12 @@ private class HeaderParser {
         else -> false
     }
 
-    private fun handlePlayerName(line: String) {
-        if (line.startsWith("後手：")) {
-            goteName = line.substringAfter("：").trim()
-        } else {
-            senteName = line.substringAfter("：").trim()
+    private fun handleMetadataLine(line: String) {
+        when {
+            line.startsWith("後手：") -> goteName = line.substringAfter("：").trim()
+            line.startsWith("先手：") || line.startsWith("対局者：") -> senteName = line.substringAfter("：").trim()
+            line.startsWith("開始日時：") -> startTime = line.substringAfter("：").trim()
+            line.startsWith("棋戦：") -> event = line.substringAfter("：").trim()
         }
     }
 
@@ -249,6 +260,8 @@ private class HeaderParser {
         return KifuHeader(
             senteName = senteName,
             goteName = goteName,
+            startTime = startTime,
+            event = event,
             initialCells = finalCells,
             senteMochi = senteMochi,
             goteMochi = goteMochi,

@@ -10,5 +10,6 @@ data class KifuInfo(
     val senteName: String = "",
     val goteName: String = "",
     val startTime: String = "",
+    val event: String = "",
     val isError: Boolean = false,
 )

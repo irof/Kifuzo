@@ -19,6 +19,8 @@ fun parseCsa(path: Path, state: ShogiBoardState) {
 fun parseCsa(lines: List<String>, state: ShogiBoardState) {
     var senteName = "先手"
     var goteName = "後手"
+    var startTime = ""
+    var event = ""
     val builder = KifuSessionBuilder().apply { setup() }
 
     var moveCount = 1
@@ -27,6 +29,8 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
         when {
             line.startsWith("N+") -> senteName = line.substring(2)
             line.startsWith("N-") -> goteName = line.substring(2)
+            line.startsWith("\$START_TIME:") -> startTime = line.substringAfter(":").trim()
+            line.startsWith("\$EVENT:") -> event = line.substringAfter(":").trim()
             line.startsWith("'") -> {
                 extractCsaEvaluation(line, builder)
             }
@@ -72,7 +76,7 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
         }
     }
 
-    builder.setPlayers(sente = senteName, gote = goteName)
+    builder.setMetadata(sente = senteName, gote = goteName, start = startTime, ev = event)
     state.updateSession(builder.build())
 }
 

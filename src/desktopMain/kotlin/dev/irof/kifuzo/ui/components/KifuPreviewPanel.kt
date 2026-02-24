@@ -182,6 +182,8 @@ private fun ColumnScope.KifuMainContent(
                 history = boardState.session.history,
                 isStandardStart = boardState.session.isStandardStart,
                 firstContactStep = boardState.session.firstContactStep,
+                startTime = boardState.session.startTime,
+                event = boardState.session.event,
                 isFlipped = state.isFlipped,
                 onStepChange = onStepChange,
             )
@@ -207,6 +209,8 @@ private fun KifuOperationBar(
     history: List<BoardSnapshot>,
     isStandardStart: Boolean,
     firstContactStep: Int,
+    startTime: String,
+    event: String,
     isFlipped: Boolean,
     onStepChange: (Int) -> Unit,
 ) {
@@ -262,6 +266,49 @@ private fun KifuOperationBar(
                         modifier = Modifier.height(targetHeight).fillMaxWidth(),
                     )
                 }
+            }
+        }
+        KifuMetaInfo(startTime, event)
+    }
+}
+
+@Composable
+private fun KifuMetaInfo(startTime: String, event: String) {
+    if (startTime.isEmpty() && event.isEmpty()) return
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = ShogiDimensions.PaddingLarge)
+            .padding(top = ShogiDimensions.PaddingMedium),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        if (event.isNotEmpty()) {
+            Row {
+                Text(
+                    text = AppStrings.LABEL_EVENT,
+                    style = MaterialTheme.typography.caption,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = event,
+                    style = MaterialTheme.typography.caption,
+                )
+            }
+        }
+        if (startTime.isNotEmpty()) {
+            Row {
+                Text(
+                    text = AppStrings.LABEL_START_TIME,
+                    style = MaterialTheme.typography.caption,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = startTime,
+                    style = MaterialTheme.typography.caption,
+                )
             }
         }
     }

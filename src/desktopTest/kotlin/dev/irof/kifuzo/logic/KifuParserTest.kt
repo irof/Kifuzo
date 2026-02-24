@@ -138,6 +138,8 @@ class KifuParserTest {
         val info = scanKifuInfo(KifuTestData.KIFU_WITH_PLAYER_INFO.lines())
         assertEquals("先手太郎", info.senteName)
         assertEquals("後手花子", info.goteName)
+        assertEquals("2026/02/24 10:00:00", info.startTime)
+        assertEquals("第1期蔵王戦", info.event)
     }
 
     private fun BoardSnapshot.at(file: Int, rank: Int): Pair<Piece, PieceColor>? {
