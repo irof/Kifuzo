@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
@@ -302,65 +304,72 @@ private fun KifuOperationBar(
 
 @Composable
 private fun KifuMetaInfo(startTime: String, event: String, onEdit: () -> Unit) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = ShogiDimensions.PaddingLarge)
-            .padding(top = ShogiDimensions.PaddingMedium),
-        verticalAlignment = Alignment.Top,
+            .padding(top = ShogiDimensions.PaddingLarge)
+            .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+            .border(1.dp, Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+            .padding(ShogiDimensions.PaddingMedium),
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
         ) {
-            if (event.isEmpty() && startTime.isEmpty()) {
-                Text(
-                    text = AppStrings.NO_METADATA_HINT,
-                    style = MaterialTheme.typography.caption,
-                    color = Color.Gray.copy(alpha = 0.6f),
-                )
-            } else {
-                if (event.isNotEmpty()) {
-                    Row {
-                        Text(
-                            text = AppStrings.LABEL_EVENT,
-                            style = MaterialTheme.typography.caption,
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = event,
-                            style = MaterialTheme.typography.caption,
-                        )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                if (event.isEmpty() && startTime.isEmpty()) {
+                    Text(
+                        text = AppStrings.NO_METADATA_HINT,
+                        style = MaterialTheme.typography.caption,
+                        color = Color.Gray.copy(alpha = 0.6f),
+                    )
+                } else {
+                    if (event.isNotEmpty()) {
+                        Row {
+                            Text(
+                                text = AppStrings.LABEL_EVENT,
+                                style = MaterialTheme.typography.caption,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text = event,
+                                style = MaterialTheme.typography.caption,
+                            )
+                        }
                     }
-                }
-                if (startTime.isNotEmpty()) {
-                    Row {
-                        Text(
-                            text = AppStrings.LABEL_START_TIME,
-                            style = MaterialTheme.typography.caption,
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = startTime,
-                            style = MaterialTheme.typography.caption,
-                        )
+                    if (startTime.isNotEmpty()) {
+                        Row {
+                            Text(
+                                text = AppStrings.LABEL_START_TIME,
+                                style = MaterialTheme.typography.caption,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text = startTime,
+                                style = MaterialTheme.typography.caption,
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        IconButton(
-            onClick = onEdit,
-            modifier = Modifier.size(24.dp),
-        ) {
-            Icon(
-                Icons.Default.Edit,
-                contentDescription = AppStrings.EDIT_METADATA,
-                tint = Color.Gray,
-                modifier = Modifier.size(16.dp),
-            )
+            IconButton(
+                onClick = onEdit,
+                modifier = Modifier.size(24.dp),
+            ) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = AppStrings.EDIT_METADATA,
+                    tint = Color.Gray,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
         }
     }
 }
