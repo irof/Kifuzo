@@ -37,7 +37,6 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
                 val toX = line[3] - '0'
                 val toY = line[4] - '0'
                 val pieceCsa = line.substring(5, 7)
-                val isPromoteMarker = line.endsWith("+")
 
                 val targetPiece = Piece.entries.find { it.name == pieceCsa } ?: Piece.FU
 
@@ -59,8 +58,14 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
                     val moveText = destinationText + targetPiece.symbol + "打"
                     builder.applyDrop(targetPiece, Square(toX, toY), seconds, "$moveCount $moveText")
                 } else {
-                    val moveText = destinationText + targetPiece.symbol + if (isPromoteMarker) "成" else ""
-                    builder.applyMove(Square(fromX, fromY), Square(toX, toY), isPromoteMarker, seconds, "$moveCount $moveText")
+                    val fromSquare = Square(fromX, fromY)
+                    val currentSnapshot = builder.build().history.last()
+                    val fromPiece = currentSnapshot.cells[fromSquare.yIndex][fromSquare.xIndex]?.first
+                    val isPromote = fromPiece != null && !fromPiece.isPromoted() && targetPiece.isPromoted()
+
+                    val movePieceSymbol = if (isPromote) fromPiece.symbol else targetPiece.symbol
+                    val moveText = destinationText + movePieceSymbol + if (isPromote) "成" else ""
+                    builder.applyMove(fromSquare, Square(toX, toY), isPromote, seconds, "$moveCount $moveText")
                 }
                 moveCount++
             }

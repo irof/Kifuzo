@@ -16,7 +16,7 @@ class CsaParserTest {
                 '*#評価値=123
                 -3334FU
                 '*#評価値=-456
-                +8822KA+
+                +8822UM
                 '*#詰み=先手勝ち
         """.trimIndent()
 
@@ -47,7 +47,7 @@ class CsaParserTest {
         val csaSame = """
                 +7776FU
                 -3334FU
-                +8822KA+
+                +8822UM
                 -3122GI
         """.trimIndent()
         val stateSame = ShogiBoardState()
@@ -66,7 +66,7 @@ class CsaParserTest {
                 T1
                 -3334FU
                 T1
-                +8822KA+
+                +8822UM
                 T1
         """.trimIndent()
 
@@ -77,6 +77,30 @@ class CsaParserTest {
         assertEquals(3, state.session.firstContactStep)
         // initialStep も衝突手数を優先する
         assertEquals(3, state.session.initialStep)
+    }
+
+    @Test
+    fun CSA形式での駒の成りが正しく処理されること() {
+        val csa = """
+                P1-KY-KE-GI-KI-OU-KI-GI-KE-KY
+                P2 * -HI *  *  *  *  * -KA *
+                P3-FU-FU-FU-FU-FU-FU-FU-FU-FU
+                P4 *  *  *  *  *  *  *  *  *
+                P5 *  *  *  *  *  *  *  *  *
+                P6 *  *  *  *  *  *  *  *  *
+                P7+FU+FU+FU+FU+FU+FU+FU+FU+FU
+                P8 * +KA *  *  *  *  * +HI *
+                P9+KY+KE+GI+KI+OU+KI+GI+KE+KY
+                +
+                +7776TO
+        """.trimIndent()
+
+        val state = ShogiBoardState()
+        parseCsa(csa.lines(), state)
+
+        // 1手目(+7776TO)で歩が「と」になるので、「成」が付くはず
+        assertEquals("1 ７六歩成", state.session.history[1].lastMoveText)
+        assertEquals(dev.irof.kifuzo.models.Piece.TO, state.session.history[1].cells[5][2]?.first)
     }
 
     @Test
