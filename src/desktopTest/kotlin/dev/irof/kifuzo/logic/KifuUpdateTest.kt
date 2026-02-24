@@ -55,4 +55,61 @@ class KifuUpdateTest {
             Files.deleteIfExists(tempFile)
         }
     }
+
+    @Test
+    fun 棋戦情報を追加する際に手数行より上に挿入されること() {
+        val tempFile = Files.createTempFile("kifuzo_test", ".kifu")
+        try {
+            val content = """
+                先手：先手
+                後手：後手
+                手数----指手---------消費時間--
+                   1 ７六歩(77)
+            """.trimIndent()
+            Files.write(tempFile, content.toByteArray(Charsets.UTF_8))
+
+            updateKifuHeader(tempFile, "第1期蔵王戦", "2026/02/24")
+
+            val resultText = Files.readString(tempFile, Charsets.UTF_8)
+            // 期待値: 棋戦と開始日時が「手数」行より前に来ること
+            val expected = """
+                先手：先手
+                後手：後手
+                棋戦：第1期蔵王戦
+                開始日時：2026/02/24
+                手数----指手---------消費時間--
+                   1 ７六歩(77)
+            """.trimIndent()
+            assertEquals(expected, resultText)
+        } finally {
+            Files.deleteIfExists(tempFile)
+        }
+    }
+
+    @Test
+    fun 既存の情報を更新できること() {
+        val tempFile = Files.createTempFile("kifuzo_test", ".kifu")
+        try {
+            val content = """
+                棋戦：旧棋戦
+                開始日時：2000/01/01
+                手数----指手---------消費時間--
+                   1 ７六歩(77)
+            """.trimIndent()
+            Files.write(tempFile, content.toByteArray(Charsets.UTF_8))
+
+            updateKifuHeader(tempFile, "新棋戦", "2026/02/24")
+
+            val resultText = Files.readString(tempFile, Charsets.UTF_8)
+            val expected = """
+                棋戦：新棋戦
+                開始日時：2026/02/24
+                手数----指手---------消費時間--
+                   1 ７六歩(77)
+            """.trimIndent()
+            assertEquals(expected, resultText)
+        } finally {
+            Files.deleteIfExists(tempFile)
+        }
+    }
 }

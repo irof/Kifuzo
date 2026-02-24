@@ -399,13 +399,17 @@ private fun updateOrAddKifLine(lines: MutableList<String>, prefix: String, value
     if (index != -1) {
         lines[index] = prefix + value
     } else {
-        // 指し手が始まる前に入れる必要がある
+        // 指し手やヘッダー行が始まる前に入れる必要がある
+        val headerIndex = lines.indexOfFirst { it.startsWith("手数") && it.contains("指手") }
         val moveIndex = lines.indexOfFirst { Regex("""^\s*\d+\s+.*""").matches(it) }
-        if (moveIndex != -1) {
-            lines.add(moveIndex, prefix + value)
-        } else {
-            lines.add(0, prefix + value)
+
+        val insertIndex = when {
+            headerIndex != -1 && moveIndex != -1 -> minOf(headerIndex, moveIndex)
+            headerIndex != -1 -> headerIndex
+            moveIndex != -1 -> moveIndex
+            else -> 0
         }
+        lines.add(insertIndex, prefix + value)
     }
 }
 
