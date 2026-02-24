@@ -158,8 +158,9 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBackgroundZones
     val topY = minOf(thresholdYPos, thresholdYNeg)
     val bottomY = maxOf(thresholdYPos, thresholdYNeg)
 
-    val posColor = if (scaler.getScaledY(100f) < centerY) ShogiColors.EvalPositive else ShogiColors.EvalNegative
-    val negColor = if (scaler.getScaledY(-100f) > centerY) ShogiColors.EvalPositive else ShogiColors.EvalNegative
+    val isSenteTop = scaler.getScaledY(100f) < centerY
+    val posColor = if (isSenteTop) ShogiColors.EvalPositive else ShogiColors.EvalNegative
+    val negColor = if (isSenteTop) ShogiColors.EvalNegative else ShogiColors.EvalPositive
 
     // 接戦ゾーン (0 .. threshold)
     drawRect(posColor.copy(alpha = 0.15f), Offset(0f, minOf(centerY, topY)), Size(width, kotlin.math.abs(centerY - topY)))
