@@ -36,6 +36,7 @@ import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
+import dev.irof.kifuzo.ui.theme.ShogiIcons
 import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.viewmodel.KifuzoUiState
 import java.nio.file.Path
@@ -45,11 +46,30 @@ import kotlin.io.path.extension
 fun KifuHeaderActions(
     selectedFile: Path,
     history: List<BoardSnapshot>,
+    isMoveListVisible: Boolean,
+    onToggleMoveList: () -> Unit,
 ) {
     val ext = selectedFile.extension.lowercase()
     val hasHistory = history.isNotEmpty()
 
     if (!hasHistory && ext != "csa") return
+
+    Row(
+        modifier = Modifier.padding(horizontal = ShogiDimensions.PaddingMedium),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End,
+    ) {
+        IconButton(
+            onClick = onToggleMoveList,
+            modifier = Modifier.size(32.dp),
+        ) {
+            Icon(
+                imageVector = ShogiIcons.SidebarToggle,
+                contentDescription = if (isMoveListVisible) "手順を隠す" else "手順を表示",
+                tint = if (isMoveListVisible) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+            )
+        }
+    }
 
     Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
 }

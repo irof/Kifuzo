@@ -114,6 +114,7 @@ class KifuzoViewModel(
             is KifuzoAction.ImportFiles,
             is KifuzoAction.UpdateSidebarWidth,
             is KifuzoAction.ToggleSidebar,
+            is KifuzoAction.ToggleMoveList,
             -> handleUiAction(action)
 
             is KifuzoAction.ChangeStep,
@@ -204,6 +205,7 @@ class KifuzoViewModel(
             is KifuzoAction.ImportFiles -> importHandler.importFiles(action.sourceDir, currentRootDirectory)
             is KifuzoAction.UpdateSidebarWidth -> updateSidebarWidth(action.delta)
             is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
+            is KifuzoAction.ToggleMoveList -> updateState { it.copy(isMoveListVisible = !it.isMoveListVisible) }
             else -> {}
         }
     }

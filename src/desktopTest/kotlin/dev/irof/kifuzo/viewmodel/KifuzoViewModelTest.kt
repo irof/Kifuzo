@@ -117,4 +117,26 @@ class KifuzoViewModelTest {
         // 先手が自分なので、反転されていないはず
         assertFalse(viewModel.uiState.isFlipped)
     }
+
+    @Test
+    fun サイドバーの表示状態を切り替えられること() {
+        assertTrue(viewModel.uiState.isSidebarVisible)
+
+        viewModel.dispatch(KifuzoAction.ToggleSidebar)
+        assertFalse(viewModel.uiState.isSidebarVisible)
+
+        viewModel.dispatch(KifuzoAction.ToggleSidebar)
+        assertTrue(viewModel.uiState.isSidebarVisible)
+    }
+
+    @Test
+    fun 手順パネルの表示状態を切り替えられること() {
+        assertTrue(viewModel.uiState.isMoveListVisible)
+
+        viewModel.dispatch(KifuzoAction.ToggleMoveList)
+        assertFalse(viewModel.uiState.isMoveListVisible)
+
+        viewModel.dispatch(KifuzoAction.ToggleMoveList)
+        assertTrue(viewModel.uiState.isMoveListVisible)
+    }
 }

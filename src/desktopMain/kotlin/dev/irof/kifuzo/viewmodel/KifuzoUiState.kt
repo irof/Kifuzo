@@ -23,6 +23,7 @@ data class KifuzoUiState(
     val myNameRegex: String = "",
     val filenameTemplate: String = "{YYYYMMDD}-{Sente}-{Gote}",
     val isSidebarVisible: Boolean = true,
+    val isMoveListVisible: Boolean = true,
     val sidebarWidth: Float = 250f,
     val viewMode: FileViewMode = FileViewMode.FLAT,
     val fileFilters: Set<FileFilter> = setOf(FileFilter.RECENT),

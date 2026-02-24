@@ -159,6 +159,7 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
             state = state,
             boardState = viewModel.boardState,
             onToggleFlip = { viewModel.dispatch(KifuzoAction.ToggleFlipped) },
+            onToggleMoveList = { viewModel.dispatch(KifuzoAction.ToggleMoveList) },
             onWriteResult = { path, result -> viewModel.dispatch(KifuzoAction.WriteGameResult(path, result)) },
             onStepChange = { viewModel.dispatch(KifuzoAction.ChangeStep(it)) },
             onNextStep = { viewModel.dispatch(KifuzoAction.NextStep) },

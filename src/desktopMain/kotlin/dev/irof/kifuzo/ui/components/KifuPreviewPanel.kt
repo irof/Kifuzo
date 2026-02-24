@@ -74,6 +74,7 @@ fun KifuPreviewPanel(
     state: KifuzoUiState,
     boardState: ShogiBoardState,
     onToggleFlip: () -> Unit,
+    onToggleMoveList: () -> Unit,
     onWriteResult: (Path, String) -> Unit,
     onStepChange: (Int) -> Unit,
     onNextStep: () -> Unit,
@@ -115,6 +116,8 @@ fun KifuPreviewPanel(
             KifuHeaderActions(
                 selectedFile = selected,
                 history = boardState.session.history,
+                isMoveListVisible = state.isMoveListVisible,
+                onToggleMoveList = onToggleMoveList,
             )
         }
 
@@ -174,13 +177,15 @@ private fun ColumnScope.KifuMainContent(
             )
         }
 
-        KifuMoveList(
-            history = boardState.session.history,
-            currentStep = boardState.currentStep,
-            onStepChange = onStepChange,
-            onWriteResult = onWriteResult,
-            modifier = Modifier.width(ShogiDimensions.MoveListWidth).fillMaxHeight(),
-        )
+        if (state.isMoveListVisible) {
+            KifuMoveList(
+                history = boardState.session.history,
+                currentStep = boardState.currentStep,
+                onStepChange = onStepChange,
+                onWriteResult = onWriteResult,
+                modifier = Modifier.width(ShogiDimensions.MoveListWidth).fillMaxHeight(),
+            )
+        }
     }
 }
 

@@ -16,6 +16,7 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
 - **Board Display:** Renders a 9x9 Shogi board showing the board state of a match.
     - Supports piece rotation (opponent pieces face down).
     - Features a board flip button (refresh icon) at the top-right corner for swapping views.
+    - Features a move list panel toggle in the header for showing/hiding the "Tejun" list.
     - Highlights regular pieces in black and promoted pieces in red.
     - Displays captured pieces (Mochigoma) in a standardized order (Rook, Bishop, Gold, Silver, Knight, Lance, Pawn).
 - **Analysis Tools:** 
