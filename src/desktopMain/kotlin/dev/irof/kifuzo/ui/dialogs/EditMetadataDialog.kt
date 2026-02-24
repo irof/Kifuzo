@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
@@ -23,10 +24,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.rememberDialogState
+import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
+import java.nio.file.Files
+import java.nio.file.Path
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun EditMetadataDialog(
+    path: Path,
     initialEvent: String,
     initialStartTime: String,
     onConfirm: (String, String) -> Unit,
@@ -37,29 +44,53 @@ fun EditMetadataDialog(
 
     Dialog(
         onCloseRequest = onDismiss,
-        state = rememberDialogState(width = 400.dp, height = 300.dp),
+        state = rememberDialogState(width = 440.dp, height = 400.dp),
         title = AppStrings.EDIT_METADATA,
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                OutlinedTextField(
-                    value = event,
-                    onValueChange = { event = it },
-                    label = { Text(AppStrings.LABEL_EVENT) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
+                // 棋戦
+                Column {
+                    OutlinedTextField(
+                        value = event,
+                        onValueChange = { event = it },
+                        label = { Text(AppStrings.LABEL_EVENT) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        AssistanceButton(AppStrings.LABEL_QUEST) { event = AppStrings.LABEL_QUEST }
+                        AssistanceButton(AppStrings.LABEL_WARS) { event = AppStrings.LABEL_WARS }
+                    }
+                }
 
-                OutlinedTextField(
-                    value = startTime,
-                    onValueChange = { startTime = it },
-                    label = { Text(AppStrings.LABEL_START_TIME) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
+                Spacer(Modifier.height(8.dp))
+
+                // 開始日時
+                Column {
+                    OutlinedTextField(
+                        value = startTime,
+                        onValueChange = { startTime = it },
+                        label = { Text(AppStrings.LABEL_START_TIME) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                    AssistanceButton(AppStrings.LABEL_FILL_TIMESTAMP) {
+                        try {
+                            val lastModified = Files.getLastModifiedTime(path).toInstant()
+                            val date = lastModified.atZone(ZoneId.systemDefault())
+                                .format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"))
+                            startTime = date
+                        } catch (@Suppress("SwallowedException") e: Exception) {
+                            // Ignore error
+                        }
+                    }
+                }
 
                 Spacer(Modifier.weight(1f))
 
@@ -78,5 +109,15 @@ fun EditMetadataDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AssistanceButton(text: String, onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        modifier = Modifier.height(32.dp),
+    ) {
+        Text(text, fontSize = ShogiDimensions.FontSizeCaption)
     }
 }

@@ -249,6 +249,7 @@ private fun KifuzoDialogs(viewModel: KifuzoViewModel) {
 
     if (state.editMetadataTarget != null) {
         EditMetadataDialog(
+            path = state.editMetadataTarget,
             initialEvent = viewModel.boardState.session.event,
             initialStartTime = viewModel.boardState.session.startTime,
             onDismiss = { viewModel.dispatch(KifuzoAction.HideEditMetadataDialog) },

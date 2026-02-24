@@ -44,4 +44,8 @@ object AppStrings {
     const val LABEL_START_TIME = "開始日時："
     const val EDIT_METADATA = "棋譜情報の編集"
     const val NO_METADATA_HINT = "（棋譜情報なし）"
+
+    const val LABEL_QUEST = "将棋クエスト"
+    const val LABEL_WARS = "将棋ウォーズ"
+    const val LABEL_FILL_TIMESTAMP = "ファイルの更新日時から入力"
 }
