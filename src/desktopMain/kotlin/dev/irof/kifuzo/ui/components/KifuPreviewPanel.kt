@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -40,6 +41,8 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
@@ -47,6 +50,7 @@ import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.ui.ShogiBoardView
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
+import dev.irof.kifuzo.ui.theme.ShogiIcons
 import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.viewmodel.KifuzoUiState
 import java.nio.file.Path
@@ -96,15 +100,14 @@ fun KifuPreviewPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
-        KifuFileName(state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT)
+        KifuHeader(
+            fileName = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT,
+            hasHistory = boardState.session.history.isNotEmpty(),
+            isMoveListVisible = state.isMoveListVisible,
+            onToggleMoveList = onToggleMoveList,
+        )
 
         state.selectedFile?.let { selected ->
-            KifuHeaderActions(
-                history = boardState.session.history,
-                isMoveListVisible = state.isMoveListVisible,
-                onToggleMoveList = onToggleMoveList,
-            )
-
             if (boardState.session.history.isEmpty() && selected.extension.lowercase() == "txt") {
                 Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
                 Button(
@@ -132,20 +135,51 @@ fun KifuPreviewPanel(
 }
 
 @Composable
-private fun KifuFileName(name: String) {
+private fun KifuHeader(
+    fileName: String,
+    hasHistory: Boolean,
+    isMoveListVisible: Boolean,
+    onToggleMoveList: () -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
     ) {
+        // 左側のスペーサー（中央揃えのバランスを取るため）
+        Spacer(Modifier.size(32.dp).weight(1f))
+
+        // 中央のファイル名
         Text(
-            text = name,
+            text = fileName,
             style = MaterialTheme.typography.subtitle1,
             fontWeight = FontWeight.Bold,
             softWrap = false,
             maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(8f),
+            textAlign = TextAlign.Center,
         )
+
+        // 右側の手順切り替えボタン
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.CenterEnd,
+        ) {
+            if (hasHistory) {
+                IconButton(
+                    onClick = onToggleMoveList,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Icon(
+                        imageVector = ShogiIcons.SidebarToggle,
+                        contentDescription = if (isMoveListVisible) "手順を隠す" else "手順を表示",
+                        tint = if (isMoveListVisible) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                    )
+                }
+            } else {
+                Spacer(Modifier.size(32.dp))
+            }
+        }
     }
 }
 
