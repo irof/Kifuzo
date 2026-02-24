@@ -27,7 +27,14 @@ class FileActionHandler(
             boardState.clear()
             return
         }
+        parse(path)
+    }
 
+    fun forceParse(path: Path) {
+        parse(path)
+    }
+
+    private fun parse(path: Path) {
         try {
             repository.parse(path, boardState)
             onAutoFlip()

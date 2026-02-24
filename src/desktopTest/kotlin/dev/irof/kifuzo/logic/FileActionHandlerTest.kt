@@ -64,6 +64,13 @@ class FileActionHandlerTest {
     }
 
     @Test
+    fun forceParseが拡張子に関わらずパースを実行すること() {
+        val path = Paths.get("test.txt")
+        handler.forceParse(path)
+        assertEquals(path, repository.lastParsedPath)
+    }
+
+    @Test
     fun パースエラー時にエラーメッセージがセットされ盤面がクリアされること() {
         val path = Paths.get("error.kifu")
         repository.parseAction = { throw KifuParseException("parse error") }

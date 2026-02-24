@@ -21,6 +21,7 @@ sealed class KifuzoAction {
     data object HideRenameDialog : KifuzoAction()
     data class PerformRename(val path: Path, val newName: String) : KifuzoAction()
     data class ConvertCsa(val path: Path) : KifuzoAction()
+    data class ForceParseAsKifu(val path: Path) : KifuzoAction()
     data object ConfirmOverwrite : KifuzoAction()
     data object HideOverwriteConfirm : KifuzoAction()
     data class WriteGameResult(val path: Path, val result: String) : KifuzoAction()

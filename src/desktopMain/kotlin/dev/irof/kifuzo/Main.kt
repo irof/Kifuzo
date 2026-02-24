@@ -164,6 +164,7 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
             onStepChange = { viewModel.dispatch(KifuzoAction.ChangeStep(it)) },
             onNextStep = { viewModel.dispatch(KifuzoAction.NextStep) },
             onPrevStep = { viewModel.dispatch(KifuzoAction.PrevStep) },
+            onForceParse = { viewModel.dispatch(KifuzoAction.ForceParseAsKifu(it)) },
             modifier = Modifier.weight(1.0f),
         )
     }

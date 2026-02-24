@@ -79,6 +79,7 @@ fun KifuPreviewPanel(
     onStepChange: (Int) -> Unit,
     onNextStep: () -> Unit,
     onPrevStep: () -> Unit,
+    onForceParse: (Path) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -112,12 +113,22 @@ fun KifuPreviewPanel(
     ) {
         KifuFileName(state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT)
 
-        state.selectedFile?.let {
+        state.selectedFile?.let { selected ->
             KifuHeaderActions(
                 history = boardState.session.history,
                 isMoveListVisible = state.isMoveListVisible,
                 onToggleMoveList = onToggleMoveList,
             )
+
+            if (boardState.session.history.isEmpty() && selected.extension.lowercase() == "txt") {
+                Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
+                Button(
+                    onClick = { onForceParse(selected) },
+                    modifier = Modifier.height(ShogiDimensions.ButtonHeight),
+                ) {
+                    Text("棋譜として開く")
+                }
+            }
         }
 
         if (boardState.session.history.isNotEmpty()) {

@@ -100,6 +100,7 @@ class KifuzoViewModel(
             is KifuzoAction.HideRenameDialog,
             is KifuzoAction.PerformRename,
             is KifuzoAction.ConvertCsa,
+            is KifuzoAction.ForceParseAsKifu,
             is KifuzoAction.ConfirmOverwrite,
             is KifuzoAction.HideOverwriteConfirm,
             is KifuzoAction.WriteGameResult,
@@ -179,6 +180,7 @@ class KifuzoViewModel(
                     fileActionHandler.performCsaConversion(action.path)
                 }
             }
+            is KifuzoAction.ForceParseAsKifu -> fileActionHandler.forceParse(action.path)
             is KifuzoAction.ConfirmOverwrite -> {
                 uiState.showOverwriteConfirm?.let {
                     fileActionHandler.performCsaConversion(it)
