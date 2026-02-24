@@ -1,34 +1,23 @@
 package dev.irof.kifuzo.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -36,13 +25,9 @@ import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Slider
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -56,7 +41,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.ShogiBoardState
@@ -76,6 +60,7 @@ fun KifuPreviewPanel(
     onToggleFlip: () -> Unit,
     onToggleMoveList: () -> Unit,
     onWriteResult: (Path, String) -> Unit,
+    onShowEditMetadata: (Path) -> Unit,
     onStepChange: (Int) -> Unit,
     onNextStep: () -> Unit,
     onPrevStep: () -> Unit,
@@ -133,7 +118,13 @@ fun KifuPreviewPanel(
 
         if (boardState.session.history.isNotEmpty()) {
             Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
-            KifuMainContent(state, boardState, onToggleFlip, onStepChange) { result ->
+            KifuMainContent(
+                state,
+                boardState,
+                onToggleFlip,
+                onStepChange,
+                onShowEditMetadata = { state.selectedFile?.let { onShowEditMetadata(it) } },
+            ) { result ->
                 state.selectedFile?.let { onWriteResult(it, result) }
             }
         }
@@ -164,6 +155,7 @@ private fun ColumnScope.KifuMainContent(
     boardState: ShogiBoardState,
     onToggleFlip: () -> Unit,
     onStepChange: (Int) -> Unit,
+    onShowEditMetadata: () -> Unit,
     onWriteResult: (String) -> Unit,
 ) {
     Row(
@@ -186,6 +178,7 @@ private fun ColumnScope.KifuMainContent(
                 event = boardState.session.event,
                 isFlipped = state.isFlipped,
                 onStepChange = onStepChange,
+                onShowEditMetadata = onShowEditMetadata,
             )
         }
 
@@ -213,6 +206,7 @@ private fun KifuOperationBar(
     event: String,
     isFlipped: Boolean,
     onStepChange: (Int) -> Unit,
+    onShowEditMetadata: () -> Unit,
 ) {
     val evaluations = history.map { it.evaluation }
     val consumptionTimes = history.map { it.consumptionSeconds }
@@ -268,48 +262,65 @@ private fun KifuOperationBar(
                 }
             }
         }
-        KifuMetaInfo(startTime, event)
+        KifuMetaInfo(startTime, event, onShowEditMetadata)
     }
 }
 
 @Composable
-private fun KifuMetaInfo(startTime: String, event: String) {
+private fun KifuMetaInfo(startTime: String, event: String, onEdit: () -> Unit) {
     if (startTime.isEmpty() && event.isEmpty()) return
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = ShogiDimensions.PaddingLarge)
             .padding(top = ShogiDimensions.PaddingMedium),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        if (event.isNotEmpty()) {
-            Row {
-                Text(
-                    text = AppStrings.LABEL_EVENT,
-                    style = MaterialTheme.typography.caption,
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = event,
-                    style = MaterialTheme.typography.caption,
-                )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (event.isNotEmpty()) {
+                Row {
+                    Text(
+                        text = AppStrings.LABEL_EVENT,
+                        style = MaterialTheme.typography.caption,
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = event,
+                        style = MaterialTheme.typography.caption,
+                    )
+                }
+            }
+            if (startTime.isNotEmpty()) {
+                Row {
+                    Text(
+                        text = AppStrings.LABEL_START_TIME,
+                        style = MaterialTheme.typography.caption,
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = startTime,
+                        style = MaterialTheme.typography.caption,
+                    )
+                }
             }
         }
-        if (startTime.isNotEmpty()) {
-            Row {
-                Text(
-                    text = AppStrings.LABEL_START_TIME,
-                    style = MaterialTheme.typography.caption,
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = startTime,
-                    style = MaterialTheme.typography.caption,
-                )
-            }
+
+        IconButton(
+            onClick = onEdit,
+            modifier = Modifier.size(24.dp),
+        ) {
+            Icon(
+                Icons.Default.Edit,
+                contentDescription = AppStrings.EDIT_METADATA,
+                tint = Color.Gray,
+                modifier = Modifier.size(16.dp),
+            )
         }
     }
 }

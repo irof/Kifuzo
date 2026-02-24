@@ -30,4 +30,5 @@ data class KifuzoUiState(
     val fileSortOption: FileSortOption = dev.irof.kifuzo.models.AppSettings.fileSortOption,
     val renameTarget: Path? = null,
     val proposedRenameName: String? = null,
+    val editMetadataTarget: Path? = null,
 )

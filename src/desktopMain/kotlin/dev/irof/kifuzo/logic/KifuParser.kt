@@ -374,6 +374,61 @@ private fun decodeY(c: Char): Int {
     return if (idx == -1) -1 else (idx % ShogiConstants.BOARD_SIZE) + 1
 }
 
+fun updateKifuHeader(path: Path, event: String, startTime: String) {
+    val lines = readLinesWithEncoding(path).toMutableList()
+    val extension = path.name.substringAfterLast(".").lowercase()
+
+    if (extension == "kifu" || extension == "kif") {
+        updateKifHeader(lines, event, startTime)
+    } else if (extension == "csa") {
+        updateCsaHeader(lines, event, startTime)
+    } else {
+        return
+    }
+
+    java.nio.file.Files.write(path, lines.joinToString("\n").toByteArray(Charsets.UTF_8))
+}
+
+private fun updateKifHeader(lines: MutableList<String>, event: String, startTime: String) {
+    updateOrAddKifLine(lines, "棋戦：", event)
+    updateOrAddKifLine(lines, "開始日時：", startTime)
+}
+
+private fun updateOrAddKifLine(lines: MutableList<String>, prefix: String, value: String) {
+    val index = lines.indexOfFirst { it.startsWith(prefix) }
+    if (index != -1) {
+        lines[index] = prefix + value
+    } else {
+        // 指し手が始まる前に入れる必要がある
+        val moveIndex = lines.indexOfFirst { Regex("""^\s*\d+\s+.*""").matches(it) }
+        if (moveIndex != -1) {
+            lines.add(moveIndex, prefix + value)
+        } else {
+            lines.add(0, prefix + value)
+        }
+    }
+}
+
+private fun updateCsaHeader(lines: MutableList<String>, event: String, startTime: String) {
+    updateOrAddCsaLine(lines, "\$EVENT:", event)
+    updateOrAddCsaLine(lines, "\$START_TIME:", startTime)
+}
+
+private fun updateOrAddCsaLine(lines: MutableList<String>, prefix: String, value: String) {
+    val index = lines.indexOfFirst { it.startsWith(prefix) }
+    if (index != -1) {
+        lines[index] = prefix + value
+    } else {
+        // 指し手や盤面図が始まる前に入れる
+        val insertIndex = lines.indexOfFirst { it.startsWith("+") || it.startsWith("-") || it.startsWith("P") }
+        if (insertIndex != -1) {
+            lines.add(insertIndex, prefix + value)
+        } else {
+            lines.add(0, prefix + value)
+        }
+    }
+}
+
 fun updateKifuResult(path: Path, result: String) {
     if (result.isEmpty()) return
     val lines = readLinesWithEncoding(path).toMutableList()

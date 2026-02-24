@@ -17,6 +17,7 @@ interface KifuFileService {
     fun renameFile(path: Path, newName: String): Path?
     fun generateProposedName(path: Path, template: String): String?
     fun updateResult(path: Path, result: String)
+    fun updateHeader(path: Path, event: String, startTime: String)
 }
 
 class KifuFileServiceImpl : KifuFileService {
@@ -74,5 +75,9 @@ class KifuFileServiceImpl : KifuFileService {
 
     override fun updateResult(path: Path, result: String) {
         updateKifuResult(path, result)
+    }
+
+    override fun updateHeader(path: Path, event: String, startTime: String) {
+        updateKifuHeader(path, event, startTime)
     }
 }

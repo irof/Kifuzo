@@ -42,4 +42,5 @@ object AppStrings {
 
     const val LABEL_EVENT = "棋戦："
     const val LABEL_START_TIME = "開始日時："
+    const val EDIT_METADATA = "棋譜情報の編集"
 }

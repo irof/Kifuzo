@@ -35,6 +35,7 @@ open class StubKifuRepository : KifuRepository {
     }
     override fun convertCsa(path: Path): Path = path
     override fun updateResult(path: Path, result: String) {}
+    override fun updateHeader(path: Path, event: String, startTime: String) {}
     override fun generateProposedName(path: Path, template: String): String? = proposedName ?: path.fileName.toString()
     override fun renameFileTo(path: Path, newName: String): Path? = renameResult
     override fun renameKifuFile(path: Path, template: String): Path? = renameResult

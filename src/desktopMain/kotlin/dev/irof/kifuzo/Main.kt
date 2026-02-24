@@ -43,6 +43,7 @@ import dev.irof.kifuzo.models.AppSettings
 import dev.irof.kifuzo.ui.components.KifuMenuBar
 import dev.irof.kifuzo.ui.components.KifuPreviewPanel
 import dev.irof.kifuzo.ui.components.KifuSidebar
+import dev.irof.kifuzo.ui.dialogs.EditMetadataDialog
 import dev.irof.kifuzo.ui.dialogs.ImportDialog
 import dev.irof.kifuzo.ui.dialogs.KifuTextViewer
 import dev.irof.kifuzo.ui.dialogs.OverwriteConfirmDialog
@@ -161,6 +162,7 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
             onToggleFlip = { viewModel.dispatch(KifuzoAction.ToggleFlipped) },
             onToggleMoveList = { viewModel.dispatch(KifuzoAction.ToggleMoveList) },
             onWriteResult = { path, result -> viewModel.dispatch(KifuzoAction.WriteGameResult(path, result)) },
+            onShowEditMetadata = { viewModel.dispatch(KifuzoAction.ShowEditMetadataDialog(it)) },
             onStepChange = { viewModel.dispatch(KifuzoAction.ChangeStep(it)) },
             onNextStep = { viewModel.dispatch(KifuzoAction.NextStep) },
             onPrevStep = { viewModel.dispatch(KifuzoAction.PrevStep) },
@@ -241,6 +243,18 @@ private fun KifuzoDialogs(viewModel: KifuzoViewModel) {
             onCopy = {
                 copyToClipboard(state.viewingText)
                 viewModel.dispatch(KifuzoAction.SetViewingText(null))
+            },
+        )
+    }
+
+    if (state.editMetadataTarget != null) {
+        EditMetadataDialog(
+            initialEvent = viewModel.boardState.session.event,
+            initialStartTime = viewModel.boardState.session.startTime,
+            onDismiss = { viewModel.dispatch(KifuzoAction.HideEditMetadataDialog) },
+            onConfirm = { event, start ->
+                viewModel.dispatch(KifuzoAction.UpdateMetadata(state.editMetadataTarget, event, start))
+                viewModel.dispatch(KifuzoAction.HideEditMetadataDialog)
             },
         )
     }

@@ -104,6 +104,9 @@ class KifuzoViewModel(
             is KifuzoAction.ConfirmOverwrite,
             is KifuzoAction.HideOverwriteConfirm,
             is KifuzoAction.WriteGameResult,
+            is KifuzoAction.UpdateMetadata,
+            is KifuzoAction.ShowEditMetadataDialog,
+            is KifuzoAction.HideEditMetadataDialog,
             -> handleFileAction(action)
 
             is KifuzoAction.SaveSettings,
@@ -189,6 +192,9 @@ class KifuzoViewModel(
             }
             is KifuzoAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
             is KifuzoAction.WriteGameResult -> fileActionHandler.writeGameResult(action.path, action.result)
+            is KifuzoAction.UpdateMetadata -> fileActionHandler.updateMetadata(action.path, action.event, action.startTime)
+            is KifuzoAction.ShowEditMetadataDialog -> updateState { it.copy(editMetadataTarget = action.path) }
+            is KifuzoAction.HideEditMetadataDialog -> updateState { it.copy(editMetadataTarget = null) }
             else -> {}
         }
     }

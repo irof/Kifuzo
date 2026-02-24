@@ -75,4 +75,14 @@ class FileActionHandler(
             onError("書込エラー", e.message)
         }
     }
+
+    fun updateMetadata(path: Path, event: String, startTime: String) {
+        try {
+            repository.updateHeader(path, event, startTime)
+            onFilesChanged()
+            onInfo("棋譜情報を更新しました。")
+        } catch (e: IOException) {
+            onError("書込エラー", e.message)
+        }
+    }
 }

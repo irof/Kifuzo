@@ -16,6 +16,7 @@ interface KifuRepository {
     fun parseManually(path: Path, state: ShogiBoardState)
     fun convertCsa(path: Path): Path
     fun updateResult(path: Path, result: String)
+    fun updateHeader(path: Path, event: String, startTime: String)
     fun generateProposedName(path: Path, template: String): String?
     fun renameFileTo(path: Path, newName: String): Path?
     fun renameKifuFile(path: Path, template: String): Path?
@@ -39,6 +40,8 @@ class KifuRepositoryImpl(
     override fun convertCsa(path: Path): Path = parseService.convertCsaToKifu(path)
 
     override fun updateResult(path: Path, result: String) = fileService.updateResult(path, result)
+
+    override fun updateHeader(path: Path, event: String, startTime: String) = fileService.updateHeader(path, event, startTime)
 
     override fun generateProposedName(path: Path, template: String): String? = fileService.generateProposedName(path, template)
 
