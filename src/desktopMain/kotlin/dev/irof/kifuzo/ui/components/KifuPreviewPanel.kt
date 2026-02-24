@@ -268,8 +268,6 @@ private fun KifuOperationBar(
 
 @Composable
 private fun KifuMetaInfo(startTime: String, event: String, onEdit: () -> Unit) {
-    if (startTime.isEmpty() && event.isEmpty()) return
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -281,32 +279,40 @@ private fun KifuMetaInfo(startTime: String, event: String, onEdit: () -> Unit) {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            if (event.isNotEmpty()) {
-                Row {
-                    Text(
-                        text = AppStrings.LABEL_EVENT,
-                        style = MaterialTheme.typography.caption,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = event,
-                        style = MaterialTheme.typography.caption,
-                    )
+            if (event.isEmpty() && startTime.isEmpty()) {
+                Text(
+                    text = AppStrings.NO_METADATA_HINT,
+                    style = MaterialTheme.typography.caption,
+                    color = Color.Gray.copy(alpha = 0.6f),
+                )
+            } else {
+                if (event.isNotEmpty()) {
+                    Row {
+                        Text(
+                            text = AppStrings.LABEL_EVENT,
+                            style = MaterialTheme.typography.caption,
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = event,
+                            style = MaterialTheme.typography.caption,
+                        )
+                    }
                 }
-            }
-            if (startTime.isNotEmpty()) {
-                Row {
-                    Text(
-                        text = AppStrings.LABEL_START_TIME,
-                        style = MaterialTheme.typography.caption,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = startTime,
-                        style = MaterialTheme.typography.caption,
-                    )
+                if (startTime.isNotEmpty()) {
+                    Row {
+                        Text(
+                            text = AppStrings.LABEL_START_TIME,
+                            style = MaterialTheme.typography.caption,
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = startTime,
+                            style = MaterialTheme.typography.caption,
+                        )
+                    }
                 }
             }
         }
