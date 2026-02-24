@@ -16,7 +16,6 @@ object ShogiColors {
     val PieceGote = Color.Black
     val PiecePromoted = Color.Red
 
-    val TurnHighlight = Color.Yellow.copy(alpha = 0.3f)
     val PanelBackground = Color(0xFFEEEEEE)
     val MenuBarBackground = Color(0xFFE0E0E0)
 

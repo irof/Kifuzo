@@ -42,7 +42,6 @@ fun MochigomaView(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (isTurn) ShogiColors.TurnHighlight else Color.Transparent)
             .padding(horizontal = ShogiDimensions.PaddingMedium, vertical = ShogiDimensions.BoardPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = if (isSente) Arrangement.Start else Arrangement.End,
@@ -50,9 +49,9 @@ fun MochigomaView(
         if (!isSente) {
             MochigomaList(grouped, isSente = false, isFlipped = isFlipped, cellSize = cellSize)
             Spacer(Modifier.width(12.dp))
-            Text(text = name, fontSize = fontSize, fontWeight = if (isTurn) FontWeight.Bold else FontWeight.Normal, color = nameColor)
+            Text(text = name, fontSize = fontSize, fontWeight = FontWeight.Normal, color = nameColor)
         } else {
-            Text(text = name, fontSize = fontSize, fontWeight = if (isTurn) FontWeight.Bold else FontWeight.Normal, color = nameColor)
+            Text(text = name, fontSize = fontSize, fontWeight = FontWeight.Normal, color = nameColor)
             Spacer(Modifier.width(12.dp))
             MochigomaList(grouped, isSente = true, isFlipped = isFlipped, cellSize = cellSize)
         }
