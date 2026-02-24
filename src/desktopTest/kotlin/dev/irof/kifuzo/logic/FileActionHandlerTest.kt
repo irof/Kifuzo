@@ -3,6 +3,7 @@ package dev.irof.kifuzo.logic
 import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.models.ShogiBoardState
 import java.nio.file.Paths
+import kotlin.io.path.extension
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -48,6 +49,18 @@ class FileActionHandlerTest {
         handler.selectFile(path)
         assertEquals(path, repository.lastParsedPath)
         assertEquals(true, autoFlipCalled)
+    }
+
+    @Test
+    fun サポート外の拡張子のファイルを選択した際に盤面がクリアされること() {
+        val path = Paths.get("test.txt")
+        // 予め何かデータが入っている状態にする
+        boardState.updateSession(dev.irof.kifuzo.models.KifuSession(history = listOf(dev.irof.kifuzo.models.BoardSnapshot(dev.irof.kifuzo.models.BoardSnapshot.getInitialCells()))))
+
+        handler.selectFile(path)
+
+        assertEquals(0, boardState.session.history.size)
+        assertEquals(null, repository.lastParsedPath)
     }
 
     @Test

@@ -4,6 +4,7 @@ import dev.irof.kifuzo.models.ShogiBoardState
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 
 private val logger = KotlinLogging.logger {}
@@ -21,6 +22,12 @@ class FileActionHandler(
     private val onAutoFlip: () -> Unit,
 ) {
     fun selectFile(path: Path) {
+        val ext = path.extension.lowercase()
+        if (ext !in listOf("kifu", "kif", "csa")) {
+            boardState.clear()
+            return
+        }
+
         try {
             repository.parse(path, boardState)
             onAutoFlip()
