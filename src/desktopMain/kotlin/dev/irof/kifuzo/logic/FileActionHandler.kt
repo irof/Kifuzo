@@ -24,8 +24,10 @@ class FileActionHandler(
         try {
             repository.parse(path, boardState)
             onAutoFlip()
-        } catch (e: KifuParseException) {
-            onError("棋譜パースエラー", e.message)
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            boardState.clear()
+            val message = if (e is KifuParseException) "棋譜パースエラー" else "ファイルの読み込みに失敗しました"
+            onError(message, e.message)
         }
     }
 

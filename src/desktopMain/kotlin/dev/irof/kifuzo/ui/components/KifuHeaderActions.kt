@@ -44,15 +44,13 @@ import kotlin.io.path.extension
 
 @Composable
 fun KifuHeaderActions(
-    selectedFile: Path,
     history: List<BoardSnapshot>,
     isMoveListVisible: Boolean,
     onToggleMoveList: () -> Unit,
 ) {
-    val ext = selectedFile.extension.lowercase()
     val hasHistory = history.isNotEmpty()
 
-    if (!hasHistory && ext != "csa") return
+    if (!hasHistory) return
 
     Row(
         modifier = Modifier.padding(horizontal = ShogiDimensions.PaddingMedium),

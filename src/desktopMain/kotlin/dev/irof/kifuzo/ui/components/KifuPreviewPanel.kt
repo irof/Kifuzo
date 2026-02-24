@@ -112,9 +112,8 @@ fun KifuPreviewPanel(
     ) {
         KifuFileName(state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT)
 
-        state.selectedFile?.let { selected ->
+        state.selectedFile?.let {
             KifuHeaderActions(
-                selectedFile = selected,
                 history = boardState.session.history,
                 isMoveListVisible = state.isMoveListVisible,
                 onToggleMoveList = onToggleMoveList,

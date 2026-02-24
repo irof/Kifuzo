@@ -51,13 +51,28 @@ class FileActionHandlerTest {
     }
 
     @Test
-    fun パースエラー時にエラーメッセージがセットされること() {
+    fun パースエラー時にエラーメッセージがセットされ盤面がクリアされること() {
         val path = Paths.get("error.kifu")
         repository.parseAction = { throw KifuParseException("parse error") }
+        // 予め何かデータが入っている状態にする
+        boardState.updateSession(dev.irof.kifuzo.models.KifuSession(history = listOf(dev.irof.kifuzo.models.BoardSnapshot(dev.irof.kifuzo.models.BoardSnapshot.getInitialCells()))))
 
         handler.selectFile(path)
 
         assertEquals(true, errorMsg?.contains("棋譜パースエラー"))
+        assertEquals(0, boardState.session.history.size)
+    }
+
+    @Test
+    fun 一般的な例外発生時にもエラーメッセージがセットされ盤面がクリアされること() {
+        val path = Paths.get("io-error.kifu")
+        repository.parseAction = { throw java.io.IOException("io error") }
+        boardState.updateSession(dev.irof.kifuzo.models.KifuSession(history = listOf(dev.irof.kifuzo.models.BoardSnapshot(dev.irof.kifuzo.models.BoardSnapshot.getInitialCells()))))
+
+        handler.selectFile(path)
+
+        assertEquals(true, errorMsg?.contains("ファイルの読み込みに失敗しました"))
+        assertEquals(0, boardState.session.history.size)
     }
 
     @Test
