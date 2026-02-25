@@ -40,7 +40,7 @@ fun KomaDai(
 
     Box(
         modifier = Modifier
-            .width(cellSize * 4f)
+            .width(cellSize * 6.5f)
             .background(ShogiColors.BoardBackground)
             .border(ShogiDimensions.BoardLineThickness, ShogiColors.BoardLine)
             .padding(horizontal = 4.dp, vertical = 2.dp)
