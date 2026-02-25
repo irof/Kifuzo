@@ -113,6 +113,28 @@ class KifuParserTest {
     @Test
     fun 途中局面から開始の場合に持ち駒が反映されること() {
         val kifu = """
+            先手の持駒：角　金二
+            後手の持駒：銀
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|一
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|二
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|三
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|四
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|五
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|六
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|七
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|八
+            | ・ ・ ・ ・ 王 ・ ・ ・ ・|九
+            1 ５八玉(59)
+        """.trimIndent()
+        val session = parse(kifu)
+        val initial = session.history[0]
+        assertEquals(listOf(Piece.KA, Piece.KI, Piece.KI), initial.senteMochigoma.sortedBy { it.mochigomaOrder })
+        assertEquals(listOf(Piece.GI), initial.goteMochigoma)
+    }
+
+    @Test
+    fun 途中局面から開始の場合に持ち駒が反映されること_のなし() {
+        val kifu = """
             先手持駒：角　金二
             後手持駒：銀
             | ・ ・ ・ ・ ・ ・ ・ ・ ・|一

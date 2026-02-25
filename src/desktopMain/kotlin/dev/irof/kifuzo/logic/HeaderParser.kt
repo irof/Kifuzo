@@ -40,8 +40,7 @@ internal class HeaderParser {
             parseBoardLine(line)
             false
         }
-        line.startsWith("先手持駒：") || line.startsWith("下手持駒：") ||
-            line.startsWith("後手持駒：") || line.startsWith("上手持駒：") -> {
+        Regex("""^[上下先後]手(の)?持駒：""").containsMatchIn(line) -> {
             isStandardStart = false
             handleMochigomaLine(line)
             false

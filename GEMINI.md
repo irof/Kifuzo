@@ -28,6 +28,7 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
         - Handles full-width digits and Kanji notation (e.g., `７六歩`, `同　`).
             - Supports nested variation sections (`変化`) by branching the game state at specified steps.
             - Skips comments and game results (e.g., `投了`, `切れ負け`) when searching for next moves.
+        - **Mid-game Setup:** Supports initial captured pieces (`持駒：`) and board layout (`|...|`) for starting from arbitrary positions.
         - **CSA Support:** Correctly parses initial captured pieces (`P+`, `P-`) and mid-game board setups (`P1`-`P9`).
         
     - **Format Conversion:** Converts `.csa` files to standard `.kifu` (UTF-8) format with proper notation.
