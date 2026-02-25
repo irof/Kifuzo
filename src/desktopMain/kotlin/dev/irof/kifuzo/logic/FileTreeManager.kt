@@ -121,12 +121,10 @@ class FileTreeManager(
      * 指定されたノードの開閉状態を切り替え、新しいツリーリストを返します。
      */
     fun toggleNode(node: FileTreeNode, currentNodes: List<FileTreeNode>, sortOption: FileSortOption = FileSortOption.NAME): List<FileTreeNode> {
-        if (!node.isDirectory) return currentNodes
-
-        val newNodes = currentNodes.toMutableList()
-        val index = newNodes.indexOfFirst { it.path == node.path }
+        val index = if (node.isDirectory) currentNodes.indexOfFirst { it.path == node.path } else -1
         if (index == -1) return currentNodes
 
+        val newNodes = currentNodes.toMutableList()
         if (node.isExpanded) {
             // 閉じる: 配下のノードを削除
             newNodes[index] = node.copy(isExpanded = false)

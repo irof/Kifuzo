@@ -68,15 +68,6 @@ class KifuSessionBuilder {
     }
 
     /**
-     * 対局者名を設定します。
-     */
-    @Deprecated("Use setMetadata instead", ReplaceWith("setMetadata(sente, gote)"))
-    fun setPlayers(sente: String, gote: String) {
-        this.senteName = sente
-        this.goteName = gote
-    }
-
-    /**
      * 通常の指し手を適用します。
      */
     fun applyMove(
@@ -143,6 +134,20 @@ class KifuSessionBuilder {
      * 最新の局面の評価値を取得します。
      */
     fun getLastEvaluation(): Evaluation = history.lastOrNull()?.evaluation ?: Evaluation.Unknown
+
+    /**
+     * 盤面の特定行を更新します（初期局面の設定用）。
+     */
+    fun updateInitialBoardRow(y: Int, row: List<Pair<Piece, PieceColor>?>) {
+        this.isStandardStart = false
+        for (x in 0 until ShogiConstants.BOARD_SIZE) {
+            currentCells[y][x] = row[x]
+        }
+        // 最初のスナップショット（開始局面）を更新
+        if (history.isNotEmpty()) {
+            history[0] = createSnapshot("開始局面")
+        }
+    }
 
     /**
      * 構築された KifuSession を返します。

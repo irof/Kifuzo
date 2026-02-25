@@ -15,7 +15,9 @@ import kotlin.test.assertEquals
 open class StubKifuRepository : KifuRepository {
     var lastParsedPath: Path? = null
     var lastMethodCalled: String? = null
-    var parseAction: (ShogiBoardState) -> Unit = {}
+    var parseAction: (ShogiBoardState) -> Unit = {
+        // No action by default
+    }
     var renameResult: Path? = null
     var proposedName: String? = null
     var importResult: Int = 0
@@ -34,8 +36,12 @@ open class StubKifuRepository : KifuRepository {
         parseAction(state)
     }
     override fun convertCsa(path: Path): Path = path
-    override fun updateResult(path: Path, result: String) {}
-    override fun updateHeader(path: Path, event: String, startTime: String) {}
+    override fun updateResult(path: Path, result: String) {
+        // Stub implementation
+    }
+    override fun updateHeader(path: Path, event: String, startTime: String) {
+        // Stub implementation
+    }
     override fun generateProposedName(path: Path, template: String): String? = proposedName ?: path.fileName.toString()
     override fun renameFileTo(path: Path, newName: String): Path? = renameResult
     override fun renameKifuFile(path: Path, template: String): Path? = renameResult

@@ -35,6 +35,7 @@ class KifuFileServiceImpl : KifuFileService {
                         try {
                             Files.getLastModifiedTime(it).toInstant()
                         } catch (e: IOException) {
+                            logger.debug(e) { "Failed to get last modified time for $it" }
                             java.time.Instant.MIN
                         }
                     },
@@ -46,15 +47,17 @@ class KifuFileServiceImpl : KifuFileService {
     }
 
     override fun renameFile(path: Path, newName: String): Path? {
-        val targetPath = path.parent?.resolve(newName) ?: return null
-        if (path == targetPath) return path
-
-        return try {
-            Files.move(path, targetPath)
-            targetPath
-        } catch (e: IOException) {
-            logger.error(e) { "Failed to rename file from $path to $targetPath" }
-            null
+        val targetPath = path.parent?.resolve(newName)
+        return when {
+            targetPath == null -> null
+            path == targetPath -> path
+            else -> try {
+                Files.move(path, targetPath)
+                targetPath
+            } catch (e: IOException) {
+                logger.error(e) { "Failed to rename file from $path to $targetPath" }
+                null
+            }
         }
     }
 

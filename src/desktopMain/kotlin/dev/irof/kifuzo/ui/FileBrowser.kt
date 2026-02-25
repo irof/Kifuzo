@@ -43,6 +43,35 @@ fun FileTreeItem(
     val isCsa = ext == "csa"
     val isKifu = ext == "kifu" || ext == "kif" || isCsa
 
+    FileContextMenu(
+        node = node,
+        isCsa = isCsa,
+        isKifu = isKifu,
+        onShowText = onShowText,
+        onRename = onRename,
+        onConvertCsa = onConvertCsa,
+    ) {
+        FileTreeRow(
+            node = node,
+            isSelected = isSelected,
+            isError = isError,
+            showParentName = showParentName,
+            onToggle = onToggle,
+            onSelect = onSelect,
+        )
+    }
+}
+
+@Composable
+private fun FileContextMenu(
+    node: FileTreeNode,
+    isCsa: Boolean,
+    isKifu: Boolean,
+    onShowText: (Path) -> Unit,
+    onRename: (Path) -> Unit,
+    onConvertCsa: (Path) -> Unit,
+    content: @Composable () -> Unit,
+) {
     ContextMenuArea(items = {
         val menuItems = mutableListOf<ContextMenuItem>()
         if (!node.isDirectory) {
@@ -55,66 +84,80 @@ fun FileTreeItem(
             }
         }
         menuItems
-    }) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 1.dp)
-                .background(if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent)
-                .combinedClickable(
-                    onClick = {
-                        if (node.isDirectory) {
-                            onToggle(node)
-                        } else {
-                            onSelect(node.path)
-                        }
-                    },
-                )
-                .padding(start = if (showParentName) 8.dp else (node.level * 16).dp, top = 4.dp, bottom = 4.dp, end = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (node.isDirectory) {
-                Icon(
-                    imageVector = if (node.isExpanded) ShogiIcons.ExpandMore else ShogiIcons.ExpandLess,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = Color.Gray,
-                )
-            } else {
-                if (isError) {
-                    Icon(
-                        imageVector = ShogiIcons.Warning,
-                        contentDescription = "解析エラー",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.Red,
-                    )
-                } else {
-                    Spacer(Modifier.width(if (showParentName) 4.dp else 16.dp))
-                }
-            }
+    }, content = content)
+}
 
-            Spacer(Modifier.width(4.dp))
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun FileTreeRow(
+    node: FileTreeNode,
+    isSelected: Boolean,
+    isError: Boolean,
+    showParentName: Boolean,
+    onToggle: (FileTreeNode) -> Unit,
+    onSelect: (Path) -> Unit,
+) {
+    val backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent
+    val startPadding = if (showParentName) 8.dp else (node.level * 16).dp
 
-            val displayName = if (showParentName && !node.isDirectory) {
-                "${node.path.parent?.name ?: ""}/${node.name}"
-            } else {
-                node.name + if (node.isDirectory) "/" else ""
-            }
-
-            Text(
-                text = displayName,
-                fontSize = 13.sp,
-                color = if (node.isDirectory) {
-                    Color.Blue
-                } else if (isError) {
-                    Color.Red
-                } else {
-                    Color.Black
-                },
-                lineHeight = 16.sp,
-                softWrap = false,
-                maxLines = 1,
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 1.dp)
+            .background(backgroundColor)
+            .combinedClickable(
+                onClick = { if (node.isDirectory) onToggle(node) else onSelect(node.path) },
             )
-        }
+            .padding(start = startPadding, top = 4.dp, bottom = 4.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FileTreeIcon(node, isError, showParentName)
+        Spacer(Modifier.width(4.dp))
+        FileTreeText(node, isError, showParentName)
     }
+}
+
+@Composable
+private fun FileTreeIcon(node: FileTreeNode, isError: Boolean, showParentName: Boolean) {
+    if (node.isDirectory) {
+        Icon(
+            imageVector = if (node.isExpanded) ShogiIcons.ExpandMore else ShogiIcons.ExpandLess,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = Color.Gray,
+        )
+    } else if (isError) {
+        Icon(
+            imageVector = ShogiIcons.Warning,
+            contentDescription = "解析エラー",
+            modifier = Modifier.size(16.dp),
+            tint = Color.Red,
+        )
+    } else {
+        Spacer(Modifier.width(if (showParentName) 4.dp else 16.dp))
+    }
+}
+
+@Composable
+private fun FileTreeText(node: FileTreeNode, isError: Boolean, showParentName: Boolean) {
+    val displayName = if (showParentName && !node.isDirectory) {
+        "${node.path.parent?.name ?: ""}/${node.name}"
+    } else {
+        node.name + if (node.isDirectory) "/" else ""
+    }
+
+    val textColor = when {
+        node.isDirectory -> Color.Blue
+        isError -> Color.Red
+        else -> Color.Black
+    }
+
+    Text(
+        text = displayName,
+        fontSize = 13.sp,
+        color = textColor,
+        lineHeight = 16.sp,
+        softWrap = false,
+        maxLines = 1,
+    )
 }

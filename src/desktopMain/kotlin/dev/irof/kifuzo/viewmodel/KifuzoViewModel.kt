@@ -237,22 +237,24 @@ class KifuzoViewModel(
     }
 
     private fun selectAdjacentFile(forward: Boolean) {
-        val selected = uiState.selectedFile ?: return
         val nodes = uiState.treeNodes
-        val currentIndex = nodes.indexOfFirst { it.path == selected }
+        val currentIndex = uiState.selectedFile?.let { selected -> nodes.indexOfFirst { it.path == selected } } ?: -1
         if (currentIndex == -1) return
 
         val step = if (forward) 1 else -1
-        var nextIndex = currentIndex + step
-        while (nextIndex in nodes.indices) {
-            val node = nodes[nextIndex]
-            if (!node.isDirectory) {
+        val targetIndices = if (forward) {
+            (currentIndex + 1 until nodes.size)
+        } else {
+            (currentIndex - 1 downTo 0)
+        }
+
+        targetIndices.asSequence()
+            .map { nodes[it] }
+            .firstOrNull { !it.isDirectory }
+            ?.let { node ->
                 fileActionHandler.selectFile(node.path)
                 updateState { it.copy(selectedFile = node.path) }
-                return
             }
-            nextIndex += step
-        }
     }
 
     private fun updateState(update: (KifuzoUiState) -> KifuzoUiState) {

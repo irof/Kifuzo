@@ -1,6 +1,9 @@
 package dev.irof.kifuzo.models
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+
 object AppSettings {
+    private val logger = KotlinLogging.logger {}
     private val prefs = java.util.prefs.Preferences.userRoot().node("dev/irof/kifuzo")
     private const val KEY_MY_NAME_REGEX = "my_name_regex"
     private const val KEY_WINDOW_X = "window_x"
@@ -79,7 +82,8 @@ object AppSettings {
     var fileSortOption: FileSortOption
         get() = try {
             FileSortOption.valueOf(prefs.get(KEY_FILE_SORT_OPTION, FileSortOption.NAME.name))
-        } catch (e: Exception) {
+        } catch (e: IllegalArgumentException) {
+            logger.warn(e) { "Failed to parse file sort option, defaulting to NAME" }
             FileSortOption.NAME
         }
         set(value) {

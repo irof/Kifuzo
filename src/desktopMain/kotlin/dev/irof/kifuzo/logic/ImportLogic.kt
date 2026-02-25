@@ -57,12 +57,9 @@ private val nameCleanupRegex = Regex("""\(.*?\)""")
  * インポート対象でない場合は null を返します。
  */
 fun calculateImportTarget(lines: List<String>, lastModifiedMillis: Long): String? {
-    if (lines.isEmpty()) return null
-
-    // CSA判定: 先頭10行以内に N+ または N- があるか
     val headerLines = lines.take(CSA_HEADER_SCAN_RANGE)
     val hasCsaMarker = headerLines.any { it.startsWith("N+") || it.startsWith("N-") }
-    if (!hasCsaMarker) return null
+    if (lines.isEmpty() || !hasCsaMarker) return null
 
     var sente = "unknown"
     var gote = "unknown"

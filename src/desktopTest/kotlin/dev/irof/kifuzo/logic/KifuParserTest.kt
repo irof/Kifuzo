@@ -16,31 +16,30 @@ import kotlin.test.assertTrue
 
 class KifuParserTest {
 
-    private fun parse(kifu: String): KifuSession {
-        val state = ShogiBoardState()
-        parseKifu(kifu.trimIndent().lines(), state)
-        return state.session
-    }
-
     @Test
-    fun 盤面図が含まれる棋譜を正しくパースできること() {
+    fun 盤面図やメタデータが含まれる棋譜を正しくパースできること() {
+        // 盤面図
         val session = parse(KifuTestData.KIFU_WITH_BOARD)
         session.history[0].assertAt(4, 1, Piece.OU to PieceColor.White)
         session.history[2].assertAt(5, 2, Piece.OU to PieceColor.White)
+
+        // メタデータ
+        val info = scanKifuInfo(KifuTestData.KIFU_WITH_PLAYER_INFO.lines())
+        assertEquals("先手太郎", info.senteName)
+        assertEquals("後手花子", info.goteName)
+        assertEquals("2026/02/24 10:00:00", info.startTime)
+        assertEquals("第1期蔵王戦", info.event)
     }
 
     @Test
-    fun 評価値コメントを抽出できること() {
+    fun 評価値コメントや終局結果から評価値を抽出できること() {
         val session = parse(KifuTestData.KIFU_WITH_EVALUATION)
         assertEquals(Evaluation.Score(123), session.history[1].evaluation)
         assertEquals(Evaluation.Score(-456), session.history[2].evaluation)
         assertEquals(Evaluation.Score(2000), session.history[3].evaluation)
         assertEquals(Evaluation.Score(-500), session.history[4].evaluation)
-    }
 
-    @Test
-    fun 詰み情報を抽出できること() {
-        // 詰みコメント
+        // 詰み情報
         val sessionMate = parse(KifuTestData.KIFU_WITH_MATE)
         assertEquals(Evaluation.SenteWin, sessionMate.history[1].evaluation)
         assertEquals(Evaluation.GoteWin, sessionMate.history[3].evaluation)
@@ -49,19 +48,15 @@ class KifuParserTest {
         val sessionPriority = parse(KifuTestData.KIFU_WITH_PRIORITY_MATE)
         assertEquals(Evaluation.SenteWin, sessionPriority.history[1].evaluation)
         assertEquals(Evaluation.GoteWin, sessionPriority.history[2].evaluation)
-    }
 
-    @Test
-    fun 評価値がない場合はUnknownになること() {
-        val session = parse("1 ７六歩(77)\n2 ３四歩(33)")
-        assertEquals(Evaluation.Unknown, session.history[0].evaluation)
-        assertEquals(Evaluation.Unknown, session.history[1].evaluation)
-    }
+        // 評価値がない場合はUnknownになること
+        val sessionNoEval = parse("1 ７六歩(77)\n2 ３四歩(33)")
+        assertEquals(Evaluation.Unknown, sessionNoEval.history[0].evaluation)
+        assertEquals(Evaluation.Unknown, sessionNoEval.history[1].evaluation)
 
-    @Test
-    fun 投了などの終局行から評価値を設定できること() {
-        val session = parse("1 ７六歩(77)\n2 ３四歩(33)\n3 投了")
-        assertEquals(Evaluation.GoteWin, session.history[3].evaluation)
+        // 投了などの終局行から評価値を設定できること
+        val sessionResult = parse("1 ７六歩(77)\n2 ３四歩(33)\n3 投了")
+        assertEquals(Evaluation.GoteWin, sessionResult.history[3].evaluation)
     }
 
     @Test
@@ -132,18 +127,15 @@ class KifuParserTest {
             assertTrue(session.history[2].lastMoveText.contains(result))
         }
     }
+}
 
-    @Test
-    fun 対局者名や開始日時情報をスキャンできること() {
-        val info = scanKifuInfo(KifuTestData.KIFU_WITH_PLAYER_INFO.lines())
-        assertEquals("先手太郎", info.senteName)
-        assertEquals("後手花子", info.goteName)
-        assertEquals("2026/02/24 10:00:00", info.startTime)
-        assertEquals("第1期蔵王戦", info.event)
-    }
+private fun parse(kifu: String): KifuSession {
+    val state = ShogiBoardState()
+    parseKifu(kifu.trimIndent().lines(), state)
+    return state.session
+}
 
-    private fun BoardSnapshot.at(file: Int, rank: Int): Pair<Piece, PieceColor>? {
-        val s = Square(file, rank)
-        return cells[s.yIndex][s.xIndex]
-    }
+private fun BoardSnapshot.at(file: Int, rank: Int): Pair<Piece, PieceColor>? {
+    val s = Square(file, rank)
+    return cells[s.yIndex][s.xIndex]
 }

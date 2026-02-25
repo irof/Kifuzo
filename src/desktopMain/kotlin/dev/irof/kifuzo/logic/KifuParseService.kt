@@ -14,6 +14,10 @@ interface KifuParseService {
 }
 
 class KifuParseServiceImpl : KifuParseService {
+    companion object {
+        private const val SAMPLE_LINES_FOR_FORMAT_DETECTION = 20
+    }
+
     override fun parse(path: Path, state: ShogiBoardState) {
         if (path.extension.lowercase() == "csa") {
             parseCsa(path, state)
@@ -31,7 +35,7 @@ class KifuParseServiceImpl : KifuParseService {
         if (lines.isEmpty()) throw KifuParseException("ファイルが空です。")
 
         // 最初の数行で判定
-        val sample = lines.take(20)
+        val sample = lines.take(SAMPLE_LINES_FOR_FORMAT_DETECTION)
         val isCsa = sample.any { line ->
             line.startsWith("V") || line.startsWith("N+") || line.startsWith("N-") ||
                 line.startsWith("P") || line.startsWith("$") || line.startsWith("+") || line.startsWith("-")

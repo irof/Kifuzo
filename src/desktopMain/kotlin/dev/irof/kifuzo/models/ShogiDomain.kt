@@ -52,11 +52,11 @@ data class Square(val file: Int, val rank: Int) {
     // 配列インデックスへの変換 (x: 0-8, y: 0-8)
     // 配列は [y][x] で、x=0 が 9筋, x=8 が 1筋 となっている（ShogiBoardViewの実装に合わせる）
     // 1筋(file=1) -> x=8, 9筋(file=9) -> x=0
-    val xIndex: Int get() = 9 - file
+    val xIndex: Int get() = ShogiConstants.BOARD_SIZE - file
     val yIndex: Int get() = rank - 1
 
     companion object {
-        fun fromIndex(x: Int, y: Int): Square = Square(9 - x, y + 1)
+        fun fromIndex(x: Int, y: Int): Square = Square(ShogiConstants.BOARD_SIZE - x, y + 1)
     }
 }
 

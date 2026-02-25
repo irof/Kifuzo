@@ -22,10 +22,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZoneId
@@ -42,7 +43,7 @@ fun EditMetadataDialog(
     var event by remember { mutableStateOf(initialEvent) }
     var startTime by remember { mutableStateOf(initialStartTime) }
 
-    Dialog(
+    DialogWindow(
         onCloseRequest = onDismiss,
         state = rememberDialogState(width = 440.dp, height = 400.dp),
         title = AppStrings.EDIT_METADATA,
@@ -86,7 +87,7 @@ fun EditMetadataDialog(
                             val date = lastModified.atZone(ZoneId.systemDefault())
                                 .format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"))
                             startTime = date
-                        } catch (@Suppress("SwallowedException") e: Exception) {
+                        } catch (@Suppress("SwallowedException") e: IOException) {
                             // Ignore error
                         }
                     }
