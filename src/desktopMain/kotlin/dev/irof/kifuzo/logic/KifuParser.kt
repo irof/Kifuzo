@@ -53,7 +53,9 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
     val header = parseHeader(lines)
     val mainParser = ParserState(header)
 
-    val variations = mutableListOf<Pair<Int, ParserState>>()
+    val allParsers = mutableListOf(mainParser)
+    val relationships = mutableListOf<Triple<Triple<ParserState, Int, ParserState>, ParserState, Int>>() // Dummy to match usage? No.
+    val childrenMap = mutableMapOf<ParserState, MutableList<Pair<Int, ParserState>>>()
     var currentParser = mainParser
 
     if (header.moveStartIndex != -1) {
@@ -64,12 +66,15 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
             val variationMatch = Regex("""変化：(\d+)手""").find(line)
             if (variationMatch != null) {
                 val atStep = variationMatch.groupValues[1].toInt() - 1
-                val baseSnapshot = mainParser.getSnapshotAt(atStep)
-                if (baseSnapshot != null) {
-                    val varParser = ParserState(header, baseSnapshot, atStep)
-                    varParser.lastTo = baseSnapshot.lastTo
-                    variations.add(atStep to varParser)
-                    currentParser = varParser
+                val parent = findParentParser(allParsers, mainParser, atStep)
+                if (parent != null) {
+                    val baseSnapshot = parent.getSnapshotAt(atStep)
+                    if (baseSnapshot != null) {
+                        val child = ParserState(header, baseSnapshot, atStep).apply { lastTo = baseSnapshot.lastTo }
+                        childrenMap.getOrPut(parent) { mutableListOf() }.add(atStep to child)
+                        allParsers.add(child)
+                        currentParser = child
+                    }
                 }
                 continue
             }
@@ -82,11 +87,32 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
         }
     }
 
-    for ((atStep, varParser) in variations) {
-        mainParser.addVariation(atStep, varParser.buildHistory())
+    applyVariationsRecursive(mainParser, childrenMap)
+    state.updateSession(mainParser.buildSession())
+}
+
+private fun findParentParser(allParsers: List<ParserState>, mainParser: ParserState, atStep: Int): ParserState? {
+    // 親パーサーを探す：最新のものから順に探索
+    var parent = allParsers.reversed().find {
+        atStep >= it.startingStep && atStep < it.startingStep + it.historySize
     }
 
-    state.updateSession(mainParser.buildSession())
+    // 分岐点がパーサーの開始地点なら、それは兄弟変化の可能性が高いので、さらに親を探す
+    if (parent != null && parent != mainParser && atStep == parent.startingStep) {
+        val sibling = parent
+        parent = allParsers.reversed().find {
+            it != sibling && atStep >= it.startingStep && atStep < it.startingStep + it.historySize
+        } ?: sibling
+    }
+    return parent
+}
+
+private fun applyVariationsRecursive(parser: ParserState, childrenMap: Map<ParserState, List<Pair<Int, ParserState>>>) {
+    val children = childrenMap[parser] ?: return
+    for ((atStep, childParser) in children) {
+        applyVariationsRecursive(childParser, childrenMap)
+        parser.addVariation(atStep, childParser.buildHistory())
+    }
 }
 
 private fun handleMoveLine(line: String, lineIndex: Int, parserState: ParserState) {
@@ -116,6 +142,9 @@ private class ParserState(private val header: KifuHeader, initialSnapshot: Board
         }
     }
     var lastTo: dev.irof.kifuzo.models.Square? = null
+
+    val historySize: Int get() = builder.historySize
+    val startingStep: Int get() = builder.currentStartingStep
 
     fun extractEvaluation(line: String) {
         val currentEval = builder.getLastEvaluation().orNull()

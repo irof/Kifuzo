@@ -26,8 +26,9 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
     - **Significant Moves:** Automatically detects moves with large evaluation changes (500+ points) and marks them in the move list with "!" or "!!".
     - **Kifu Parser:** A robust parser for `.kifu` (UTF-8) files.
         - Handles full-width digits and Kanji notation (e.g., `７六歩`, `同　`).
-        - Supports variation sections (`変化`) by branching the game state at specified steps.
-        - Skips comments and game results (e.g., `投了`, `切れ負け`) when searching for next moves.
+            - Supports nested variation sections (`変化`) by branching the game state at specified steps.
+            - Skips comments and game results (e.g., `投了`, `切れ負け`) when searching for next moves.
+        
     - **Format Conversion:** Converts `.csa` files to standard `.kifu` (UTF-8) format with proper notation.
         - Supports "nari" (promotion) detection by tracking board state.
         - Supports `PI` and `P1`-`P9` board setup lines for accurate conversion of mid-game records.

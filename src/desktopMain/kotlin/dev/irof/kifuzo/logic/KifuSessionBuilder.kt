@@ -93,7 +93,10 @@ class KifuSessionBuilder {
     /**
      * 指定された手数の局面を取得します。
      */
-    fun getSnapshotAt(step: Int): BoardSnapshot? = history.getOrNull(step)
+    fun getSnapshotAt(step: Int): BoardSnapshot? = history.getOrNull(step - startingStep)
+
+    val historySize: Int get() = history.size
+    val currentStartingStep: Int get() = startingStep
 
     /**
      * 通常の指し手を適用します。
@@ -181,9 +184,10 @@ class KifuSessionBuilder {
      * 指定された手数に変化手順を追加します。
      */
     fun addVariation(atStep: Int, variationHistory: List<BoardSnapshot>) {
-        if (atStep in history.indices) {
-            val target = history[atStep]
-            history[atStep] = target.copy(variations = target.variations + listOf(variationHistory))
+        val index = atStep - startingStep
+        if (index in history.indices) {
+            val target = history[index]
+            history[index] = target.copy(variations = target.variations + listOf(variationHistory))
         }
     }
 

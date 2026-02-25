@@ -136,6 +136,53 @@ class KifuParserTest {
     }
 
     @Test
+    fun ネストされた変化手順を正しくパースできること() {
+        val kifu = """
+            1 ７六歩(77)
+            2 ３四歩(33)
+            3 ２六歩(27)
+            4 ８四歩(83)
+            変化：2手
+            2 ８四歩(83)
+            3 ２六歩(27)
+            4 ８五歩(84)
+            変化：3手
+            3 ７八金(69)
+            4 ３二金(41)
+        """.trimIndent()
+        val session = parse(kifu)
+
+        // 本譜 2手目 (34歩) からの分岐: 84歩
+        val var2 = session.history[1].variations[0]
+        assertEquals("2 ８四歩(83)", var2[1].lastMoveText)
+
+        // 変化2手目ラインの 3手目 (26歩) からの分岐: 78金
+        val var3AtHonpu = session.history[2].variations
+        assertTrue(var3AtHonpu.isEmpty(), "本譜3手目からの分岐はないはず")
+
+        val var3AtVar2 = var2[1].variations
+        assertEquals(1, var3AtVar2.size, "変化2手目ラインの3手目からの分岐があるはず")
+        assertEquals("3 ７八金(69)", var3AtVar2[0][1].lastMoveText)
+    }
+
+    @Test
+    fun 同一箇所からの複数の変化手順を正しくパースできること() {
+        val kifu = """
+            1 ７六歩(77)
+            2 ３四歩(33)
+            変化：2手
+            2 ８四歩(83)
+            変化：2手
+            2 ４四歩(43)
+        """.trimIndent()
+        val session = parse(kifu)
+        val variations = session.history[1].variations
+        assertEquals(2, variations.size)
+        assertEquals("2 ８四歩(83)", variations[0][1].lastMoveText)
+        assertEquals("2 ４四歩(43)", variations[1][1].lastMoveText)
+    }
+
+    @Test
     fun 複雑な変化手順を正しくパースできること() {
         val session = parse(KifuTestData.KIFU_COMPLEX_VARIATION)
 
