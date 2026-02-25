@@ -2,7 +2,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("multiplatform") version "2.3.10"
-    id("org.jetbrains.compose") version "1.7.0"
+    id("org.jetbrains.compose") version "1.10.1"
     kotlin("plugin.compose") version "2.3.10"
     id("com.diffplug.spotless") version "8.2.1"
     id("dev.detekt") version "2.0.0-alpha.2"
@@ -37,6 +37,7 @@ kotlin {
         val desktopMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
+                implementation(compose.materialIconsExtended)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.2")
                 implementation("io.github.oshai:kotlin-logging-jvm:8.0.01")
