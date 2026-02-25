@@ -62,6 +62,20 @@ private fun convertSingleCsaLine(line: String, index: Int, lines: List<String>, 
         context.setupRow(line)
         null
     }
+    line.startsWith("P+") || line.startsWith("P-") -> {
+        val color = if (line[1] == '+') "先手" else "後手"
+        val pieces = mutableListOf<String>()
+        var i = 2
+        while (i + 4 <= line.length) {
+            val pieceCsa = line.substring(i + 2, i + 4)
+            if (pieceCsa != "AL") {
+                val piece = Piece.entries.find { it.name == pieceCsa }
+                if (piece != null) pieces.add(piece.symbol)
+            }
+            i += 4
+        }
+        if (pieces.isEmpty()) "${color}持駒：なし" else "${color}持駒：" + pieces.joinToString("　")
+    }
     line.startsWith("%") -> processResultLine(line, context.moveCount)
     line.startsWith("+") || line.startsWith("-") -> {
         if (line.length >= CsaConstants.MOVE_MIN_LENGTH) {

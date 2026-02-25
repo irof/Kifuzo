@@ -45,6 +45,7 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
             line.startsWith("\$START_TIME:") -> ctx.startTime = line.substringAfter(":").trim()
             line.startsWith("\$EVENT:") -> ctx.event = line.substringAfter(":").trim()
             line.startsWith("P") && line.length >= 2 && line[1].isDigit() -> handleCsaBoardLine(line, ctx.builder)
+            line.startsWith("P+") || line.startsWith("P-") -> handleCsaMochigomaLine(line, ctx.builder)
             line.startsWith("'") -> extractCsaEvaluation(line, ctx.builder)
             line.startsWith("+") || line.startsWith("-") -> {
                 if (line.length >= CSA_MOVE_LINE_MIN_LENGTH) {
@@ -80,6 +81,22 @@ private fun handleCsaBoardLine(line: String, builder: KifuSessionBuilder) {
         cells.add(piece)
     }
     builder.updateInitialBoardRow(rowIdx, cells)
+}
+
+private fun handleCsaMochigomaLine(line: String, builder: KifuSessionBuilder) {
+    if (line.length < 2) return
+    val color = if (line[1] == '+') PieceColor.Black else PieceColor.White
+
+    // P+00HI00KA などの形式をパース
+    var i = 2
+    while (i + 4 <= line.length) {
+        val pieceStr = line.substring(i + 2, i + 4)
+        if (pieceStr != "AL") { // AL（残り全部）は一旦スキップ
+            val piece = findPieceForCsa(pieceStr)
+            builder.addInitialMochigoma(color, piece)
+        }
+        i += 4
+    }
 }
 
 private fun findPieceForCsa(name: String): Piece = Piece.entries.find { it.name == name } ?: Piece.FU

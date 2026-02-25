@@ -111,6 +111,28 @@ class KifuParserTest {
     }
 
     @Test
+    fun 途中局面から開始の場合に持ち駒が反映されること() {
+        val kifu = """
+            先手持駒：角　金二
+            後手持駒：銀
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|一
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|二
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|三
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|四
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|五
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|六
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|七
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|八
+            | ・ ・ ・ ・ 王 ・ ・ ・ ・|九
+            1 ５八玉(59)
+        """.trimIndent()
+        val session = parse(kifu)
+        val initial = session.history[0]
+        assertEquals(listOf(Piece.KA, Piece.KI, Piece.KI), initial.senteMochigoma.sortedBy { it.mochigomaOrder })
+        assertEquals(listOf(Piece.GI), initial.goteMochigoma)
+    }
+
+    @Test
     fun 同や打を含む特殊な表記をパースできること() {
         val session = parse(KifuTestData.KIFU_WITH_SPECIAL_NOTATION)
         assertEquals(Piece.FU, session.history[3].at(3, 4)?.first)
@@ -133,6 +155,27 @@ class KifuParserTest {
         assertEquals(3, variation.size)
         assertEquals("2 ８四歩(83)", variation[1].lastMoveText)
         assertEquals("3 ２六歩(27)", variation[2].lastMoveText)
+    }
+
+    @Test
+    fun 変化手順の開始局面でも持ち駒が引き継がれること() {
+        val kifu = """
+            1 ７六歩(77)
+            2 ３四歩(33)
+            3 ２二角成(88)
+            4 同　銀(31)
+            変化：4手
+            4 同　玉(41)
+        """.trimIndent()
+        val session = parse(kifu)
+
+        // 本譜 3手目終了時 (22角成) の持ち駒: 角
+        val snapshot3 = session.history[3]
+        assertEquals(listOf(Piece.KA), snapshot3.senteMochigoma)
+
+        // 変化 4手目開始時（3手目終了時と同じ局面）
+        val variation = snapshot3.variations[0]
+        assertEquals(listOf(Piece.KA), variation[0].senteMochigoma, "変化の開始局面(0手目相当)に持ち駒があるべき")
     }
 
     @Test

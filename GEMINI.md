@@ -28,10 +28,11 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
         - Handles full-width digits and Kanji notation (e.g., `７六歩`, `同　`).
             - Supports nested variation sections (`変化`) by branching the game state at specified steps.
             - Skips comments and game results (e.g., `投了`, `切れ負け`) when searching for next moves.
+        - **CSA Support:** Correctly parses initial captured pieces (`P+`, `P-`) and mid-game board setups (`P1`-`P9`).
         
     - **Format Conversion:** Converts `.csa` files to standard `.kifu` (UTF-8) format with proper notation.
         - Supports "nari" (promotion) detection by tracking board state.
-        - Supports `PI` and `P1`-`P9` board setup lines for accurate conversion of mid-game records.
+        - Supports `PI`, `P+`, `P-`, and `P1`-`P9` board setup lines for accurate conversion of mid-game records.
     
 - **Import Utility:** Imports Shogi Quest game records from a user-specified directory to the **current root directory**.
     - Detects `.txt` files containing CSA formatted records.

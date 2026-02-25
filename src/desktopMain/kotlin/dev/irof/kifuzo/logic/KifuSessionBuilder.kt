@@ -181,6 +181,18 @@ class KifuSessionBuilder {
     }
 
     /**
+     * 初期持駒を追加します（初期局面の設定用）。
+     */
+    fun addInitialMochigoma(color: PieceColor, piece: Piece) {
+        this.isStandardStart = false
+        if (color == PieceColor.Black) senteMochi.add(piece) else goteMochi.add(piece)
+        // 最初のスナップショット（開始局面）を更新
+        if (history.isNotEmpty()) {
+            history[0] = createSnapshot("開始局面")
+        }
+    }
+
+    /**
      * 指定された手数に変化手順を追加します。
      */
     fun addVariation(atStep: Int, variationHistory: List<BoardSnapshot>) {

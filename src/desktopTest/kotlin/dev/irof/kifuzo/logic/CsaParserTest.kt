@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic
 
 import dev.irof.kifuzo.models.Evaluation
+import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.ShogiBoardState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -103,7 +104,7 @@ class CsaParserTest {
 
         // 1手目(+7776TO)で歩が「と」になるので、「成」が付くはず
         assertEquals("1 ７六歩成", state.session.history[1].lastMoveText)
-        assertEquals(dev.irof.kifuzo.models.Piece.TO, state.session.history[1].cells[5][2]?.first)
+        assertEquals(Piece.TO, state.session.history[1].cells[5][2]?.first)
         assertEquals("第1期蔵王戦", state.session.event)
         assertEquals("2026/02/24 10:00:00", state.session.startTime)
     }
@@ -125,5 +126,22 @@ class CsaParserTest {
         // 正しくパースされた指し手（2手）だけが反映されていること
         // 初期局面(1) + 指し手(2) = 3
         assertEquals(3, state.session.history.size)
+    }
+
+    @Test
+    fun CSA形式の初期持駒が正しく処理されること() {
+        val csa = """
+            N+Sente
+            N-Gote
+            P+00HI00KA
+            P-00KI00GI
+            +7776FU
+        """.trimIndent()
+        val state = ShogiBoardState()
+        parseCsa(csa.lines(), state)
+
+        val initialSnapshot = state.session.history[0]
+        assertEquals(listOf(Piece.HI, Piece.KA), initialSnapshot.senteMochigoma)
+        assertEquals(listOf(Piece.KI, Piece.GI), initialSnapshot.goteMochigoma)
     }
 }

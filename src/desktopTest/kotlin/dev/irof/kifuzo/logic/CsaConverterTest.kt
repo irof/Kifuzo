@@ -53,6 +53,20 @@ class CsaConverterTest {
     }
 
     @Test
+    fun CSAの初期持駒をKIFに変換できること() {
+        val csaLines = """
+            P+00HI00KA
+            P-00KI00GI
+            +7776FU
+        """.trimIndent().lines()
+        val kifLines = convertCsaToKifuLines(csaLines)
+        // 先手持駒：飛　角
+        assertTrue(kifLines.any { it == "先手持駒：飛　角" }, "先手持駒が変換されていること")
+        // 後手持駒：金　銀
+        assertTrue(kifLines.any { it == "後手持駒：金　銀" }, "後手持駒が変換されていること")
+    }
+
+    @Test
     fun 成り駒への成りを正しく処理できること() {
         val csaLines = """
             +7776FU
