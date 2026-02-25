@@ -3,11 +3,9 @@ package dev.irof.kifuzo.ui.board
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,35 +39,34 @@ fun KomaDai(
 
     Box(
         modifier = Modifier
-            .width(cellSize * 2.2f)
-            .height(cellSize * 3.8f)
             .background(ShogiColors.BoardBackground)
             .border(ShogiDimensions.BoardLineThickness, ShogiColors.BoardLine)
-            .padding(4.dp),
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+            .heightIn(min = cellSize * 0.8f),
+        contentAlignment = Alignment.Center,
     ) {
-        Column {
-            // 2列で表示する
-            grouped.entries.toList().chunked(2).forEach { rowPieces ->
-                Row {
-                    rowPieces.forEach { (piece, count) ->
-                        Row(
-                            verticalAlignment = Alignment.Bottom,
-                            modifier = Modifier.padding(horizontal = 2.dp, vertical = 2.dp),
-                        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (grouped.isEmpty()) {
+                Text(text = " ", fontSize = pieceFontSize)
+            } else {
+                grouped.forEach { (piece, count) ->
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                    ) {
+                        Text(
+                            text = piece.symbol,
+                            fontSize = pieceFontSize,
+                            modifier = Modifier.rotate(rotation),
+                        )
+                        if (count > 1) {
                             Text(
-                                text = piece.symbol,
-                                fontSize = pieceFontSize,
-                                modifier = Modifier.rotate(rotation),
+                                text = count.toString(),
+                                fontSize = countFontSize,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(start = 1.dp),
                             )
-                            if (count > 1) {
-                                Text(
-                                    text = count.toString(),
-                                    fontSize = countFontSize,
-                                    color = Color.Gray,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(start = 1.dp),
-                                )
-                            }
                         }
                     }
                 }
@@ -92,6 +89,6 @@ fun PlayerNameLabel(
         fontSize = fontSize,
         fontWeight = if (isTurn) FontWeight.Bold else FontWeight.Normal,
         color = nameColor,
-        modifier = Modifier.padding(ShogiDimensions.PaddingSmall),
+        modifier = Modifier.padding(horizontal = ShogiDimensions.PaddingMedium),
     )
 }

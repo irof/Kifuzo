@@ -41,37 +41,36 @@ fun ShogiBoardView(
     androidx.compose.foundation.layout.BoxWithConstraints(
         modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingMedium),
     ) {
-        // 盤面(9) + 駒台(2.2*2) + 段符号(0.5) = 13.9. 余裕をもって15で割る
-        val cellSize = min(maxWidth / 15f, ShogiDimensions.BoardCellMaxSize)
+        // 盤面(9) + 段符号(0.5) + 少し余裕 = 11. 11で割る
+        val cellSize = min(maxWidth / 11f, ShogiDimensions.BoardCellMaxSize)
         val fontSize = (cellSize.value * BoardViewConstants.PIECE_FONT_SIZE_RATIO).sp
         val labelSize = (cellSize.value * BoardViewConstants.LABEL_FONT_SIZE_RATIO).sp
 
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val rangeX = BoardLayout.getRangeX(isFlipped)
             val rangeY = BoardLayout.getRangeY(isFlipped)
 
-            // 左列: 後手駒台(Top) / 先手名(Bottom) ※反転時は入れ替え
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.height(cellSize * 11f),
+            // 上段: 後手(上手)名と駒台（左に駒台） ※反転時は入れ替え
+            Row(
+                modifier = Modifier.widthInBoard(cellSize),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (isFlipped) {
                     KomaDai(board.senteMochigoma, isSente = true, isFlipped = isFlipped, cellSize = cellSize)
-                    Spacer(Modifier.weight(1f))
-                    PlayerNameLabel(PieceColor.White.toSymbol() + session.goteName, isTurn = !isSenteTurn, cellSize = cellSize)
+                    PlayerNameLabel(PieceColor.Black.toSymbol() + session.senteName, isTurn = isSenteTurn, cellSize = cellSize)
                 } else {
                     KomaDai(board.goteMochigoma, isSente = false, isFlipped = isFlipped, cellSize = cellSize)
-                    Spacer(Modifier.weight(1f))
-                    PlayerNameLabel(PieceColor.Black.toSymbol() + session.senteName, isTurn = isSenteTurn, cellSize = cellSize)
+                    PlayerNameLabel(PieceColor.White.toSymbol() + session.goteName, isTurn = !isSenteTurn, cellSize = cellSize)
                 }
             }
 
-            // 中列: 盤面本体
+            Spacer(Modifier.height(ShogiDimensions.PaddingSmall))
+
+            // 盤面本体
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 SujiLabels(rangeX, cellSize, labelSize, onToggleFlip)
 
@@ -79,27 +78,26 @@ fun ShogiBoardView(
                     BoardGrid(board, rangeX, rangeY, cellSize, fontSize, isFlipped)
                     DanLabels(rangeY, cellSize, labelSize)
                 }
-
-                // 下側にも筋のラベルを置くとバランスが良い
-                SujiLabels(rangeX, cellSize, labelSize, null)
             }
 
-            // 右列: 後手名(Top) / 先手駒台(Bottom) ※反転時は入れ替え
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.height(cellSize * 11f),
+            Spacer(Modifier.height(ShogiDimensions.PaddingSmall))
+
+            // 下段: 先手(下手)名と駒台（右に駒台） ※反転時は入れ替え
+            Row(
+                modifier = Modifier.widthInBoard(cellSize),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (isFlipped) {
-                    PlayerNameLabel(PieceColor.Black.toSymbol() + session.senteName, isTurn = isSenteTurn, cellSize = cellSize)
-                    Spacer(Modifier.weight(1f))
+                    PlayerNameLabel(PieceColor.White.toSymbol() + session.goteName, isTurn = !isSenteTurn, cellSize = cellSize)
                     KomaDai(board.goteMochigoma, isSente = false, isFlipped = isFlipped, cellSize = cellSize)
                 } else {
-                    PlayerNameLabel(PieceColor.White.toSymbol() + session.goteName, isTurn = !isSenteTurn, cellSize = cellSize)
-                    Spacer(Modifier.weight(1f))
+                    PlayerNameLabel(PieceColor.Black.toSymbol() + session.senteName, isTurn = isSenteTurn, cellSize = cellSize)
                     KomaDai(board.senteMochigoma, isSente = true, isFlipped = isFlipped, cellSize = cellSize)
                 }
             }
         }
     }
 }
+
+private fun Modifier.widthInBoard(cellSize: androidx.compose.ui.unit.Dp): Modifier = this.padding(horizontal = cellSize * 0.5f).fillMaxWidth(0.9f)
