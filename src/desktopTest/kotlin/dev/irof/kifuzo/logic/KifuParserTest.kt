@@ -136,6 +136,29 @@ class KifuParserTest {
     }
 
     @Test
+    fun 複雑な変化手順を正しくパースできること() {
+        val session = parse(KifuTestData.KIFU_COMPLEX_VARIATION)
+
+        // 変化：5手目（4手目の局面から分岐）の検証
+        // 本譜 4手目は ４二銀(31) なので、その局面での 66 の駒(角)を動かす
+        val var5 = session.history[4].variations[0]
+        assertEquals("5 ７七角(66)", var5[1].lastMoveText)
+        assertEquals(Piece.KA to PieceColor.Black, var5[1].cells[6][2]) // 7筋7段目
+
+        // 6手目の移動
+        assertEquals("6 ４四歩(43)", var5[2].lastMoveText)
+        assertEquals(Piece.FU to PieceColor.White, var5[2].cells[3][5]) // 4筋4段目
+    }
+
+    @Test
+    fun 同で始まる変化手順を正しくパースできること() {
+        val session = parse(KifuTestData.KIFU_VARIATION_WITH_DOU)
+        val variation = session.history[3].variations[0]
+        assertEquals("4 同　銀(31)", variation[1].lastMoveText)
+        assertEquals(Piece.GI to PieceColor.White, variation[1].cells[1][7]) // 2筋2段目
+    }
+
+    @Test
     fun 様々な終局結果をパースできること() {
         val results = listOf("投了", "持将棋", "千日手", "切れ負け", "反則負け")
         results.forEach { result ->

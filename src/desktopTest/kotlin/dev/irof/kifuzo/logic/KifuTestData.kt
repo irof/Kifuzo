@@ -118,4 +118,23 @@ object KifuTestData {
         後手：後手花子
         1 ７六歩(77)
     """.trimIndent()
+
+    val KIFU_COMPLEX_VARIATION = """
+        1 ７六歩(77)
+        2 ３四歩(33)
+        3 ６六角(88)
+        4 ４二銀(31)
+        5 ６五角(66)
+        変化：5手
+        5 ７七角(66)
+        6 ４四歩(43)
+    """.trimIndent()
+
+    val KIFU_VARIATION_WITH_DOU = """
+        1 ７六歩(77)
+        2 ３四歩(33)
+        3 ２二角成(88)
+        変化：4手
+        4 同　銀(31)
+    """.trimIndent()
 }
