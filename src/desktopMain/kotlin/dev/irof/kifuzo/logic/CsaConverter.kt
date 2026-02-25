@@ -12,7 +12,11 @@ import kotlin.text.Charsets
 private object CsaConstants {
     const val SENTE_NAME_PREFIX = "N+"
     const val GOTE_NAME_PREFIX = "N-"
+    const val EVENT_PREFIX = "\$EVENT:"
+    const val SITE_PREFIX = "\$SITE:"
     const val START_TIME_PREFIX = "\$START_TIME:"
+    const val OPENING_PREFIX = "\$OPENING:"
+    const val TIME_LIMIT_PREFIX = "\$TIME_LIMIT:"
     const val MOVE_MIN_LENGTH = 7
 }
 
@@ -32,7 +36,11 @@ fun convertCsaToKifuLines(lines: List<String>): List<String> {
         when {
             line.startsWith(CsaConstants.SENTE_NAME_PREFIX) -> kifLines.add("先手：" + line.substring(CsaConstants.SENTE_NAME_PREFIX.length))
             line.startsWith(CsaConstants.GOTE_NAME_PREFIX) -> kifLines.add("後手：" + line.substring(CsaConstants.GOTE_NAME_PREFIX.length))
+            line.startsWith(CsaConstants.EVENT_PREFIX) -> kifLines.add("棋戦：" + line.substring(CsaConstants.EVENT_PREFIX.length))
+            line.startsWith(CsaConstants.SITE_PREFIX) -> kifLines.add("場所：" + line.substring(CsaConstants.SITE_PREFIX.length))
             line.startsWith(CsaConstants.START_TIME_PREFIX) -> kifLines.add("開始日時：" + line.substring(CsaConstants.START_TIME_PREFIX.length))
+            line.startsWith(CsaConstants.OPENING_PREFIX) -> kifLines.add("戦型：" + line.substring(CsaConstants.OPENING_PREFIX.length))
+            line.startsWith(CsaConstants.TIME_LIMIT_PREFIX) -> kifLines.add("持ち時間：" + line.substring(CsaConstants.TIME_LIMIT_PREFIX.length))
             line == "PI" -> context.setupInitialPosition()
             line.startsWith("P") && line.length >= 2 && line[1].isDigit() -> context.setupRow(line)
             line.startsWith("%") -> processResultLine(line, context.moveCount)?.let { kifLines.add(it) }

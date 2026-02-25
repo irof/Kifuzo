@@ -11,7 +11,11 @@ class CsaConverterTest {
             V2.2
             N+SenteUser
             N-GoteUser
+            ${'$'}EVENT:Tournament
+            ${'$'}SITE:Online
             ${'$'}START_TIME:2026/02/21 12:00:00
+            ${'$'}OPENING:Yagura
+            ${'$'}TIME_LIMIT:00:30+00
             +7776FU
             T3
             -3334FU
@@ -28,7 +32,11 @@ class CsaConverterTest {
         // ヘッダー確認
         assertTrue(kifLines.any { it.startsWith("先手：SenteUser") })
         assertTrue(kifLines.any { it.startsWith("後手：GoteUser") })
+        assertTrue(kifLines.any { it.startsWith("棋戦：Tournament") })
+        assertTrue(kifLines.any { it.startsWith("場所：Online") })
         assertTrue(kifLines.any { it.startsWith("開始日時：2026/02/21 12:00:00") })
+        assertTrue(kifLines.any { it.startsWith("戦型：Yagura") })
+        assertTrue(kifLines.any { it.startsWith("持ち時間：00:30+00") })
 
         // 指し手確認
         // 1手目: 7776FU -> 7六歩(77)
