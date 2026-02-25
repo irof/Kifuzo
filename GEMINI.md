@@ -18,7 +18,7 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
     - Features a board flip button (refresh icon) at the top-right corner for swapping views.
     - Features a move list panel toggle in the header for showing/hiding the "Tejun" list.
     - Highlights regular pieces in black and promoted pieces in red.
-    - Displays captured pieces (Mochigoma) in a standardized order (Rook, Bishop, Gold, Silver, Knight, Lance, Pawn).
+    - **Koma-dai (Piece Stands):** Displays captured pieces on dedicated stands located at the top-left (Gote) and bottom-right (Sente) of the board, styled to match the board's aesthetic. Player names are positioned opposite to their respective piece stands.
     - **Move List Variations:** Supports viewing alternate move sequences ("Henka") from .kifu files. Branching points are marked with an icon in the move list, allowing users to switch between the main line and variations. Features a "Reset to Main" button to easily return to the primary game record.
 - **Analysis Tools:** 
     - **Evaluation Graph:** Visualizes the game's evaluation values. Features non-linear scaling (compressing values > 2000) for better readability and automatic inversion when the board is flipped. Uses distinct background colors for Sente (red) and Gote (blue) advantage regions.

@@ -1,18 +1,15 @@
 package dev.irof.kifuzo.ui.board
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -26,59 +23,75 @@ import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 
 @Composable
-fun MochigomaView(
-    name: String,
+fun KomaDai(
     pieces: List<Piece>,
     isSente: Boolean,
-    isTurn: Boolean,
     isFlipped: Boolean,
     cellSize: Dp,
 ) {
     val grouped = pieces.groupBy { it }.mapValues { it.value.size }
         .toSortedMap(compareBy { it.mochigomaOrder })
-    val fontSize = (cellSize.value * 0.45f).sp
-    val nameColor = if (isTurn) Color.Black else Color.Gray
+    val pieceFontSize = (cellSize.value * 0.55f).sp
+    val countFontSize = (cellSize.value * 0.35f).sp
 
-    Row(
+    val rotation = when {
+        isFlipped -> if (isSente) 180f else 0f
+        else -> if (isSente) 0f else 180f
+    }
+
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = ShogiDimensions.PaddingMedium, vertical = ShogiDimensions.BoardPadding),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = if (isSente) Arrangement.Start else Arrangement.End,
+            .width(cellSize * 2.2f)
+            .height(cellSize * 3.8f)
+            .background(ShogiColors.BoardBackground)
+            .border(ShogiDimensions.BoardLineThickness, ShogiColors.BoardLine)
+            .padding(4.dp),
     ) {
-        if (!isSente) {
-            MochigomaList(grouped, isSente = false, isFlipped = isFlipped, cellSize = cellSize)
-            Spacer(Modifier.width(12.dp))
-            Text(text = name, fontSize = fontSize, fontWeight = FontWeight.Normal, color = nameColor)
-        } else {
-            Text(text = name, fontSize = fontSize, fontWeight = FontWeight.Normal, color = nameColor)
-            Spacer(Modifier.width(12.dp))
-            MochigomaList(grouped, isSente = true, isFlipped = isFlipped, cellSize = cellSize)
+        Column {
+            // 2列で表示する
+            grouped.entries.toList().chunked(2).forEach { rowPieces ->
+                Row {
+                    rowPieces.forEach { (piece, count) ->
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            modifier = Modifier.padding(horizontal = 2.dp, vertical = 2.dp),
+                        ) {
+                            Text(
+                                text = piece.symbol,
+                                fontSize = pieceFontSize,
+                                modifier = Modifier.rotate(rotation),
+                            )
+                            if (count > 1) {
+                                Text(
+                                    text = count.toString(),
+                                    fontSize = countFontSize,
+                                    color = Color.Gray,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(start = 1.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun MochigomaList(
-    grouped: Map<Piece, Int>,
-    isSente: Boolean,
-    isFlipped: Boolean,
+fun PlayerNameLabel(
+    name: String,
+    isTurn: Boolean,
     cellSize: Dp,
 ) {
-    val pieceFontSize = (cellSize.value * 0.5f).sp
-    val countFontSize = (cellSize.value * 0.35f).sp
-    Row {
-        grouped.forEach { (piece, count) ->
-            Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(horizontal = ShogiDimensions.BoardPadding)) {
-                val rotation = when {
-                    isFlipped -> if (isSente) 180f else 0f
-                    else -> if (isSente) 0f else 180f
-                }
-                Text(text = piece.symbol, fontSize = pieceFontSize, modifier = Modifier.rotate(rotation))
-                if (count > 1) {
-                    Text(text = count.toString(), fontSize = countFontSize, color = Color.Gray, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    }
+    val fontSize = (cellSize.value * 0.45f).sp
+    val nameColor = if (isTurn) Color.Black else Color.Gray
+
+    Text(
+        text = name,
+        fontSize = fontSize,
+        fontWeight = if (isTurn) FontWeight.Bold else FontWeight.Normal,
+        color = nameColor,
+        modifier = Modifier.padding(ShogiDimensions.PaddingSmall),
+    )
 }
