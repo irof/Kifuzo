@@ -144,4 +144,30 @@ class CsaParserTest {
         assertEquals(listOf(Piece.HI, Piece.KA), initialSnapshot.senteMochigoma)
         assertEquals(listOf(Piece.KI, Piece.GI), initialSnapshot.goteMochigoma)
     }
+
+    @Test
+    fun 途中局面開始のCSAでは初期手数が0になること() {
+        val csa = """
+            P+00HI
+            P1-KY-KE-GI-KI-OU-KI-GI-KE-KY
+            P2 *  *  *  *  *  *  * -KA *
+            P3-FU-FU-FU-FU-FU-FU-FU-FU-FU
+            P4 *  *  *  *  *  *  *  *  *
+            P5 *  *  *  *  *  *  *  *  *
+            P6 *  *  *  *  *  *  *  *  *
+            P7+FU+FU+FU+FU+FU+FU+FU+FU+FU
+            P8 * +KA *  *  *  *  * +HI *
+            P9+KY+KE+GI+KI+OU+KI+GI+KE+KY
+            +7776FU
+            -3334FU
+            +8822UM
+        """.trimIndent()
+        val state = ShogiBoardState()
+        parseCsa(csa.lines(), state)
+
+        // 3手目 (+8822UM) で 22の飛車 を取るので衝突が発生する
+        assertEquals(3, state.session.firstContactStep)
+        // 途中局面開始なので、初期手数は 0 であるべき
+        assertEquals(0, state.session.initialStep, "途中局面開始（isStandardStart=false）の場合は開始局面(0)を優先すべき")
+    }
 }

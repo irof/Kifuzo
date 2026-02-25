@@ -207,7 +207,11 @@ class KifuSessionBuilder {
      * 構築された KifuSession を返します。
      */
     fun build(): KifuSession {
-        val initialStep = if (firstContactStep != -1) firstContactStep else (history.size - 1)
+        val initialStep = when {
+            !isStandardStart -> 0
+            firstContactStep != -1 -> firstContactStep
+            else -> history.size - 1
+        }
         return KifuSession(
             history = history.toList(),
             initialStep = initialStep,
