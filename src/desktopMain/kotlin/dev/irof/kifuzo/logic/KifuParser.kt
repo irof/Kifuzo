@@ -66,7 +66,8 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
                 val atStep = variationMatch.groupValues[1].toInt() - 1
                 val baseSnapshot = mainParser.getSnapshotAt(atStep)
                 if (baseSnapshot != null) {
-                    val varParser = ParserState(header, baseSnapshot)
+                    val varParser = ParserState(header, baseSnapshot, atStep)
+                    varParser.lastTo = baseSnapshot.lastTo
                     variations.add(atStep to varParser)
                     currentParser = varParser
                 }
@@ -97,10 +98,10 @@ private fun handleMoveLine(line: String, lineIndex: Int, parserState: ParserStat
     }
 }
 
-private class ParserState(private val header: KifuHeader, initialSnapshot: BoardSnapshot? = null) {
+private class ParserState(private val header: KifuHeader, initialSnapshot: BoardSnapshot? = null, startingStep: Int = 0) {
     private val builder = KifuSessionBuilder().apply {
         if (initialSnapshot != null) {
-            setupFromSnapshot(initialSnapshot)
+            setupFromSnapshot(initialSnapshot, startingStep)
         } else {
             setup(
                 senteName = header.senteName,

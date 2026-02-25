@@ -112,6 +112,6 @@ private fun decodeX(c: Char): Int {
 }
 
 private fun decodeY(c: Char): Int {
-    val idx = "一二三四五六七八九１２３４５６７８９1234567８９".indexOf(c)
+    val idx = "一二三四五六七八九１２３４５６７８９123456789".indexOf(c)
     return if (idx == -1) -1 else (idx % ShogiConstants.BOARD_SIZE) + 1
 }

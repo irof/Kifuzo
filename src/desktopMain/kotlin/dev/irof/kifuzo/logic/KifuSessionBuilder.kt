@@ -18,6 +18,7 @@ class KifuSessionBuilder {
     private var event: String = ""
     private var isStandardStart: Boolean = true
     private var firstContactStep: Int = -1
+    private var startingStep: Int = 0
 
     private val currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<Pair<Piece, PieceColor>>(ShogiConstants.BOARD_SIZE) }
     private val senteMochi = mutableListOf<Piece>()
@@ -42,6 +43,7 @@ class KifuSessionBuilder {
         this.startTime = startTime
         this.event = event
         this.isStandardStart = isStandardStart
+        this.startingStep = 0
         this.senteMochi.clear()
         this.senteMochi.addAll(senteMochi)
         this.goteMochi.clear()
@@ -60,7 +62,8 @@ class KifuSessionBuilder {
     /**
      * 特定の局面から開始するように設定します（変化手順用）。
      */
-    fun setupFromSnapshot(snapshot: BoardSnapshot) {
+    fun setupFromSnapshot(snapshot: BoardSnapshot, step: Int) {
+        this.startingStep = step
         this.senteMochi.clear()
         this.senteMochi.addAll(snapshot.senteMochigoma)
         this.goteMochi.clear()
@@ -201,7 +204,7 @@ class KifuSessionBuilder {
         )
     }
 
-    private fun getTurnColor(): PieceColor = if (history.size % 2 != 0) PieceColor.Black else PieceColor.White
+    private fun getTurnColor(): PieceColor = if ((startingStep + history.size) % 2 != 0) PieceColor.Black else PieceColor.White
 
     private fun createSnapshot(
         moveText: String,
