@@ -33,6 +33,8 @@ fun convertCsaToKifuLines(lines: List<String>): List<String> {
             line.startsWith(CsaConstants.SENTE_NAME_PREFIX) -> kifLines.add("先手：" + line.substring(CsaConstants.SENTE_NAME_PREFIX.length))
             line.startsWith(CsaConstants.GOTE_NAME_PREFIX) -> kifLines.add("後手：" + line.substring(CsaConstants.GOTE_NAME_PREFIX.length))
             line.startsWith(CsaConstants.START_TIME_PREFIX) -> kifLines.add("開始日時：" + line.substring(CsaConstants.START_TIME_PREFIX.length))
+            line == "PI" -> context.setupInitialPosition()
+            line.startsWith("P") && line.length >= 2 && line[1].isDigit() -> context.setupRow(line)
             line.startsWith("%") -> processResultLine(line, context.moveCount)?.let { kifLines.add(it) }
             line.startsWith("+") || line.startsWith("-") -> {
                 if (line.length >= CsaConstants.MOVE_MIN_LENGTH) {
@@ -73,6 +75,30 @@ private class CsaConvertContext {
     private val fullWidthDigits = "１２３４５６７８９"
     private val kanjiDigits = "一二三四五六七八九"
 
+    fun setupInitialPosition() {
+        BoardSnapshot.getInitialCells().forEachIndexed { y, row ->
+            row.forEachIndexed { x, cell ->
+                currentCells[y][x] = cell
+            }
+        }
+    }
+
+    fun setupRow(line: String) {
+        val rowIdx = line[1] - '1'
+        if (rowIdx !in 0..8) return
+        for (i in 0..8) {
+            val start = 2 + i * 3
+            if (start + 3 > line.length) break
+            val pieceStr = line.substring(start, start + 3)
+            currentCells[rowIdx][i] = when {
+                pieceStr == " * " -> null
+                pieceStr.startsWith("+") -> findPiece(pieceStr.substring(1)) to PieceColor.Black
+                pieceStr.startsWith("-") -> findPiece(pieceStr.substring(1)) to PieceColor.White
+                else -> null
+            }
+        }
+    }
+
     fun processMove(line: String, seconds: Int): String {
         val detail = MoveDetail.parse(line)
         val targetPiece = findPiece(detail.pieceCsa)
@@ -81,9 +107,10 @@ private class CsaConvertContext {
             updateBoardForDrop(detail.toX, detail.toY, targetPiece, detail.isSente)
             targetPiece.symbol + "打"
         } else {
-            val movingPiece = currentCells[detail.fromY - 1][ShogiConstants.BOARD_SIZE - detail.fromX]?.first ?: targetPiece
+            val movingPiece = currentCells[detail.fromY - 1][ShogiConstants.BOARD_SIZE - detail.fromX]?.first ?: targetPiece.toBase()
             val isActuallyPromoted = (!movingPiece.isPromoted() && targetPiece.isPromoted()) || detail.isPromoteMarker
-            updateBoardForMove(detail.fromX, detail.fromY, detail.toX, detail.toY, targetPiece, detail.isSente)
+            val pieceOnBoard = if (detail.isPromoteMarker) targetPiece.promote() else targetPiece
+            updateBoardForMove(detail.fromX, detail.fromY, detail.toX, detail.toY, pieceOnBoard, detail.isSente)
             if (isActuallyPromoted) movingPiece.symbol + "成" else movingPiece.symbol
         }
 

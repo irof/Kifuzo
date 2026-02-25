@@ -109,6 +109,56 @@ class CsaConverterTest {
     }
 
     @Test
+    fun 成りマーカーを伴う移動で盤面が正しく更新されること() {
+        val csaLines = """
+            +7776FU
+            -3334FU
+            +8822KA+
+            -3132GI
+            +2211UM
+        """.trimIndent().lines()
+        // 3手目 +8822KA+ で角が成る
+        // 5手目 +2211UM で22にある駒(3手目で成った角=馬)が移動する
+        val kifLines = convertCsaToKifuLines(csaLines)
+
+        assertTrue(kifLines.any { it.contains("3 ２二角成(88)") }, "3手目が「角成」であること")
+        // 5手目が「１一馬(22)」であること（「１一角成」ではない）
+        assertTrue(kifLines.any { it.contains("5 １一馬(22)") }, "5手目が「馬」であること(既に成っているため)")
+    }
+
+    @Test
+    fun 盤面状態が不明な場合でも成りを正しく推測できること() {
+        // 初期配置にはないはずの場所での移動
+        val csaLines = """
+            +5554TO
+        """.trimIndent().lines()
+        val kifLines = convertCsaToKifuLines(csaLines)
+        // 55にとがいることは初期配置からは分からないが、TO(と)に移動したので「歩成」と推測する
+        assertTrue(kifLines.any { it.contains("1 ５四歩成(55)") })
+    }
+
+    @Test
+    fun 盤面設定行がある場合に正しく成りを判定できること() {
+        val csaLines = """
+            P1-KY-KE-GI-KI-OU-KI-GI-KE-KY
+            P2 * -HI *  *  *  *  * -KA *
+            P3-FU-FU-FU-FU-FU-FU-FU-FU-FU
+            P4 *  *  *  *  *  *  *  *  *
+            P5 *  *  *  *  *  *  *  *  *
+            P6 *  *  *  *  *  *  *  *  *
+            P7+FU+FU+FU+FU+FU+FU+FU+FU+FU
+            P8 * +KA *  *  *  *  * +HI *
+            P9+KY+KE+GI+KI+OU+KI+GI+KE+KY
+            +7776FU
+            -3334FU
+            +8822KA+
+        """.trimIndent().lines()
+        val kifLines = convertCsaToKifuLines(csaLines)
+        // 12手目(CSAでの3手目) +8822KA+ が「２二角成」となること
+        assertTrue(kifLines.any { it.contains("3 ２二角成(88)") })
+    }
+
+    @Test
     fun 駒打ちを正しく処理できること() {
         val csaLines = """
             +0045KA
