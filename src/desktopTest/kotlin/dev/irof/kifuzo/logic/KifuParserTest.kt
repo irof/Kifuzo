@@ -119,6 +119,23 @@ class KifuParserTest {
     }
 
     @Test
+    fun 変化手順を正しくパースできること() {
+        val session = parse(KifuTestData.KIFU_WITH_VARIATION)
+        // 本譜の確認
+        assertEquals(2, session.maxStep)
+        assertEquals("2 ３四歩(33)", session.history[2].lastMoveText)
+
+        // 変化の確認（1手目 = ７六歩 の局面からの分岐）
+        val variations = session.history[1].variations
+        assertEquals(1, variations.size)
+        val variation = variations[0]
+        // 手順リストは [分岐元局面, 変化1手目, 変化2手目, ...] となる
+        assertEquals(3, variation.size)
+        assertEquals("2 ８四歩(83)", variation[1].lastMoveText)
+        assertEquals("3 ２六歩(27)", variation[2].lastMoveText)
+    }
+
+    @Test
     fun 様々な終局結果をパースできること() {
         val results = listOf("投了", "持将棋", "千日手", "切れ負け", "反則負け")
         results.forEach { result ->

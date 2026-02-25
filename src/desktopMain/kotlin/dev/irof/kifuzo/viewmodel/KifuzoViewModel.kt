@@ -124,6 +124,8 @@ class KifuzoViewModel(
             is KifuzoAction.ChangeStep,
             is KifuzoAction.NextStep,
             is KifuzoAction.PrevStep,
+            is KifuzoAction.SelectVariation,
+            is KifuzoAction.ResetToMainHistory,
             -> handleStepAction(action)
         }
     }
@@ -223,6 +225,8 @@ class KifuzoViewModel(
             is KifuzoAction.ChangeStep -> boardState.currentStep = action.step
             is KifuzoAction.NextStep -> boardState.currentStep++
             is KifuzoAction.PrevStep -> boardState.currentStep--
+            is KifuzoAction.SelectVariation -> boardState.switchHistory(action.history)
+            is KifuzoAction.ResetToMainHistory -> boardState.resetToMainHistory()
             else -> {}
         }
     }

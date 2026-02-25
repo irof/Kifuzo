@@ -9,6 +9,7 @@ data class BoardSnapshot(
     val lastTo: Square? = null,
     val evaluation: Evaluation = Evaluation.Unknown,
     val consumptionSeconds: Int? = null,
+    val variations: List<List<BoardSnapshot>> = emptyList(),
 ) {
     companion object {
         /**

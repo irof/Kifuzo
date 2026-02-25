@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -44,6 +43,7 @@ import dev.irof.kifuzo.models.GameResult
 import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
+import dev.irof.kifuzo.ui.theme.ShogiIcons
 import dev.irof.kifuzo.utils.AppStrings
 
 private object MoveListConstants {
@@ -60,8 +60,11 @@ private object MoveListConstants {
 fun KifuMoveList(
     history: List<BoardSnapshot>,
     currentStep: Int,
+    isMainHistory: Boolean,
     onStepChange: (Int) -> Unit,
     onWriteResult: (String) -> Unit,
+    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+    onResetMain: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -92,8 +95,24 @@ fun KifuMoveList(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(vertical = ShogiDimensions.PaddingSmall),
         ) {
+            if (!isMainHistory) {
+                item {
+                    ResetToMainButton(onResetMain)
+                }
+            }
+
             item {
-                MoveRow(0, AppStrings.START_POSITION, history[0].evaluation, null, currentStep == 0, showEvaluation, onStepChange)
+                MoveRow(
+                    step = 0,
+                    label = AppStrings.START_POSITION,
+                    evaluation = history[0].evaluation,
+                    diff = null,
+                    isSelected = currentStep == 0,
+                    showEvaluation = showEvaluation,
+                    variations = history[0].variations,
+                    onStepChange = onStepChange,
+                    onSelectVariation = onSelectVariation,
+                )
             }
 
             items(history.size - 1) { index ->
@@ -106,14 +125,41 @@ fun KifuMoveList(
                 val colorSymbol = if (i % 2 != 0) "▲" else "△"
                 val moveText = board.lastMoveText.trim().split(Regex("""\s+""")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
 
-                MoveRow(i, "$colorSymbol$moveText", currentEvaluation, diff, currentStep == i, showEvaluation, onStepChange)
+                MoveRow(
+                    step = i,
+                    label = "$colorSymbol$moveText",
+                    evaluation = currentEvaluation,
+                    diff = diff,
+                    isSelected = currentStep == i,
+                    showEvaluation = showEvaluation,
+                    variations = board.variations,
+                    onStepChange = onStepChange,
+                    onSelectVariation = onSelectVariation,
+                )
             }
 
-            if (!isFinished) {
+            if (!isFinished && isMainHistory) {
                 item {
                     AddResultRow(onWriteResult)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ResetToMainButton(onResetMain: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = ShogiDimensions.PaddingLarge, vertical = ShogiDimensions.PaddingSmall),
+    ) {
+        OutlinedButton(
+            onClick = onResetMain,
+            modifier = Modifier.fillMaxWidth().height(ShogiDimensions.ButtonHeight),
+            contentPadding = PaddingValues(0.dp),
+        ) {
+            Text("本譜に戻る", fontSize = 11.sp)
         }
     }
 }
@@ -161,7 +207,9 @@ private fun MoveRow(
     diff: Int?,
     isSelected: Boolean,
     showEvaluation: Boolean,
+    variations: List<List<BoardSnapshot>>,
     onStepChange: (Int) -> Unit,
+    onSelectVariation: (List<BoardSnapshot>) -> Unit,
 ) {
     val backgroundColor = if (isSelected) ShogiColors.Primary.copy(alpha = MoveListConstants.SELECTED_BACKGROUND_ALPHA) else Color.Transparent
 
@@ -174,7 +222,7 @@ private fun MoveRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         StepNumber(step)
-        MoveLabel(label, diff, isSelected, showEvaluation, modifier = Modifier.weight(1f))
+        MoveLabel(label, diff, isSelected, showEvaluation, variations, onSelectVariation, modifier = Modifier.weight(1f))
         if (showEvaluation) {
             EvaluationInfo(evaluation, diff)
         }
@@ -192,7 +240,15 @@ private fun StepNumber(step: Int) {
 }
 
 @Composable
-private fun MoveLabel(label: String, diff: Int?, isSelected: Boolean, showEvaluation: Boolean, modifier: Modifier = Modifier) {
+private fun MoveLabel(
+    label: String,
+    diff: Int?,
+    isSelected: Boolean,
+    showEvaluation: Boolean,
+    variations: List<List<BoardSnapshot>>,
+    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = label,
@@ -201,6 +257,41 @@ private fun MoveLabel(label: String, diff: Int?, isSelected: Boolean, showEvalua
         )
         if (showEvaluation) {
             SignificantMoveBadge(diff)
+        }
+        if (variations.isNotEmpty()) {
+            VariationBadge(variations, onSelectVariation)
+        }
+    }
+}
+
+@Composable
+private fun VariationBadge(
+    variations: List<List<BoardSnapshot>>,
+    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.padding(start = 4.dp)) {
+        IconButton(
+            onClick = { expanded = true },
+            modifier = Modifier.size(16.dp),
+        ) {
+            Icon(
+                imageVector = ShogiIcons.SidebarToggle,
+                contentDescription = "変化手順を表示",
+                tint = Color.Blue,
+            )
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            variations.forEachIndexed { index, variation ->
+                DropdownMenuItem(onClick = {
+                    expanded = false
+                    onSelectVariation(variation)
+                }) {
+                    val nextMove = variation.getOrNull(1)?.lastMoveText?.trim()?.split(Regex("""\s+"""))?.getOrNull(1) ?: "不明"
+                    Text("変化 ${index + 1}: $nextMove...", fontSize = 11.sp)
+                }
+            }
         }
     }
 }

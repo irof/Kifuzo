@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.logic
 
+import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.KifuSession
@@ -50,27 +51,41 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
 
 fun parseKifu(lines: List<String>, state: ShogiBoardState) {
     val header = parseHeader(lines)
-    val parserState = ParserState(header)
+    val mainParser = ParserState(header)
+
+    val variations = mutableListOf<Pair<Int, ParserState>>()
+    var currentParser = mainParser
 
     if (header.moveStartIndex != -1) {
-        var isVariationSection = false
         for (i in header.moveStartIndex until lines.size) {
             val line = lines[i].trim()
             if (line.isEmpty() || line.startsWith("#") || line.startsWith("&")) continue
-            if (line.startsWith("変化：") || line.startsWith("変化:")) {
-                isVariationSection = true
+
+            val variationMatch = Regex("""変化：(\d+)手""").find(line)
+            if (variationMatch != null) {
+                val atStep = variationMatch.groupValues[1].toInt() - 1
+                val baseSnapshot = mainParser.getSnapshotAt(atStep)
+                if (baseSnapshot != null) {
+                    val varParser = ParserState(header, baseSnapshot)
+                    variations.add(atStep to varParser)
+                    currentParser = varParser
+                }
+                continue
             }
-            if (isVariationSection) continue
 
             if (line.startsWith("*")) {
-                parserState.extractEvaluation(line)
+                currentParser.extractEvaluation(line)
             } else {
-                handleMoveLine(line, i, parserState)
+                handleMoveLine(line, i, currentParser)
             }
         }
     }
 
-    state.updateSession(parserState.buildSession())
+    for ((atStep, varParser) in variations) {
+        mainParser.addVariation(atStep, varParser.buildHistory())
+    }
+
+    state.updateSession(mainParser.buildSession())
 }
 
 private fun handleMoveLine(line: String, lineIndex: Int, parserState: ParserState) {
@@ -82,18 +97,22 @@ private fun handleMoveLine(line: String, lineIndex: Int, parserState: ParserStat
     }
 }
 
-private class ParserState(header: KifuHeader) {
+private class ParserState(private val header: KifuHeader, initialSnapshot: BoardSnapshot? = null) {
     private val builder = KifuSessionBuilder().apply {
-        setup(
-            senteName = header.senteName,
-            goteName = header.goteName,
-            startTime = header.startTime,
-            event = header.event,
-            initialCells = header.initialCells,
-            senteMochi = header.senteMochi,
-            goteMochi = header.goteMochi,
-            isStandardStart = header.isStandardStart,
-        )
+        if (initialSnapshot != null) {
+            setupFromSnapshot(initialSnapshot)
+        } else {
+            setup(
+                senteName = header.senteName,
+                goteName = header.goteName,
+                startTime = header.startTime,
+                event = header.event,
+                initialCells = header.initialCells,
+                senteMochi = header.senteMochi,
+                goteMochi = header.goteMochi,
+                isStandardStart = header.isStandardStart,
+            )
+        }
     }
     var lastTo: dev.irof.kifuzo.models.Square? = null
 
@@ -138,6 +157,12 @@ private class ParserState(header: KifuHeader) {
             }
         }
     }
+
+    fun getSnapshotAt(step: Int): BoardSnapshot? = builder.getSnapshotAt(step)
+
+    fun addVariation(atStep: Int, history: List<BoardSnapshot>) = builder.addVariation(atStep, history)
+
+    fun buildHistory(): List<BoardSnapshot> = builder.build().history
 
     fun buildSession(): KifuSession = builder.build()
 }

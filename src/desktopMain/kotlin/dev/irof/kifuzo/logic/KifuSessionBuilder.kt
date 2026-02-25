@@ -58,6 +58,26 @@ class KifuSessionBuilder {
     }
 
     /**
+     * 特定の局面から開始するように設定します（変化手順用）。
+     */
+    fun setupFromSnapshot(snapshot: BoardSnapshot) {
+        this.senteMochi.clear()
+        this.senteMochi.addAll(snapshot.senteMochigoma)
+        this.goteMochi.clear()
+        this.goteMochi.addAll(snapshot.goteMochigoma)
+
+        for (y in 0 until ShogiConstants.BOARD_SIZE) {
+            for (x in 0 until ShogiConstants.BOARD_SIZE) {
+                currentCells[y][x] = snapshot.cells[y][x]
+            }
+        }
+
+        history.clear()
+        // 分岐元局面を開始局面として追加。ただし、変化リストは空にしておく（無限再帰防止）。
+        history.add(snapshot.copy(variations = emptyList(), lastMoveText = "分岐元"))
+    }
+
+    /**
      * メタデータを設定します。
      */
     fun setMetadata(sente: String, gote: String, start: String = "", ev: String = "") {
@@ -66,6 +86,11 @@ class KifuSessionBuilder {
         this.startTime = start
         this.event = ev
     }
+
+    /**
+     * 指定された手数の局面を取得します。
+     */
+    fun getSnapshotAt(step: Int): BoardSnapshot? = history.getOrNull(step)
 
     /**
      * 通常の指し手を適用します。
@@ -146,6 +171,16 @@ class KifuSessionBuilder {
         // 最初のスナップショット（開始局面）を更新
         if (history.isNotEmpty()) {
             history[0] = createSnapshot("開始局面")
+        }
+    }
+
+    /**
+     * 指定された手数に変化手順を追加します。
+     */
+    fun addVariation(atStep: Int, variationHistory: List<BoardSnapshot>) {
+        if (atStep in history.indices) {
+            val target = history[atStep]
+            history[atStep] = target.copy(variations = target.variations + listOf(variationHistory))
         }
     }
 

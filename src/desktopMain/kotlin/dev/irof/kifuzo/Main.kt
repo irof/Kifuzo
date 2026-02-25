@@ -145,6 +145,8 @@ private fun RowScope.KifuzoMainLayout(viewModel: KifuzoViewModel) {
         onNextStep = { viewModel.dispatch(KifuzoAction.NextStep) },
         onPrevStep = { viewModel.dispatch(KifuzoAction.PrevStep) },
         onForceParse = { viewModel.dispatch(KifuzoAction.ForceParseAsKifu(it)) },
+        onSelectVariation = { viewModel.dispatch(KifuzoAction.SelectVariation(it)) },
+        onResetToMainHistory = { viewModel.dispatch(KifuzoAction.ResetToMainHistory) },
         modifier = Modifier.weight(1.0f),
     )
 }

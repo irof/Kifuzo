@@ -19,13 +19,15 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
     - Features a move list panel toggle in the header for showing/hiding the "Tejun" list.
     - Highlights regular pieces in black and promoted pieces in red.
     - Displays captured pieces (Mochigoma) in a standardized order (Rook, Bishop, Gold, Silver, Knight, Lance, Pawn).
+    - **Move List Variations:** Supports viewing alternate move sequences ("Henka") from .kifu files. Branching points are marked with an icon in the move list, allowing users to switch between the main line and variations. Features a "Reset to Main" button to easily return to the primary game record.
 - **Analysis Tools:** 
     - **Evaluation Graph:** Visualizes the game's evaluation values. Features non-linear scaling (compressing values > 2000) for better readability and automatic inversion when the board is flipped. Uses distinct background colors for Sente (red) and Gote (blue) advantage regions.
     - **Kifu Meta Info:** Displays game metadata such as tournament/event name and start time below the evaluation graph. Supports both `.kifu` (e.g., `棋戦：`, `開始日時：`) and `.csa` (e.g., `$EVENT:`, `$START_TIME:`) formats.
     - **Significant Moves:** Automatically detects moves with large evaluation changes (500+ points) and marks them in the move list with "!" or "!!".
     - **Kifu Parser:** A robust parser for `.kifu` (UTF-8) files.
         - Handles full-width digits and Kanji notation (e.g., `７六歩`, `同　`).
-        - Skips comments, branch/variation sections (`変化`), and game results (e.g., `投了`, `切れ負け`).
+        - Supports variation sections (`変化`) by branching the game state at specified steps.
+        - Skips comments and game results (e.g., `投了`, `切れ負け`) when searching for next moves.
     - **Format Conversion:** Converts `.csa` files to standard `.kifu` (UTF-8) format with proper notation.
         - Supports "nari" (promotion) detection by tracking board state.
         - Supports `PI` and `P1`-`P9` board setup lines for accurate conversion of mid-game records.

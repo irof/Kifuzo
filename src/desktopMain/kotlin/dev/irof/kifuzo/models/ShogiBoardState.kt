@@ -5,28 +5,48 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 class ShogiBoardState {
-    // 対局データ全体を一括管理
+    // 対局データ全体
     var session by mutableStateOf(KifuSession())
         private set
 
-    // 現在の手数（常に session の範囲内に収まることを保証）
+    // 現在表示中の履歴（本譜または変化手順）
+    var currentHistory by mutableStateOf(emptyList<BoardSnapshot>())
+        private set
+
+    // 現在の手数
     private var _currentStep by mutableStateOf(0)
     var currentStep: Int
         get() = _currentStep
         set(value) {
-            _currentStep = session.coerceStep(value)
+            _currentStep = value.coerceIn(0, maxOf(0, currentHistory.size - 1))
         }
 
     val currentBoard: BoardSnapshot?
-        get() = session.history.getOrNull(currentStep)
+        get() = currentHistory.getOrNull(currentStep)
 
     /**
      * 新しい対局データをセットします。
-     * 手数やプレイヤー名なども含めてアトミックに更新されます。
      */
     fun updateSession(newSession: KifuSession) {
         session = newSession
+        currentHistory = newSession.history
         currentStep = newSession.initialStep
+    }
+
+    /**
+     * 手順を切り替えます（変化手順の選択など）。
+     */
+    fun switchHistory(newHistory: List<BoardSnapshot>) {
+        currentHistory = newHistory
+        currentStep = 0
+    }
+
+    /**
+     * 本譜に戻ります。
+     */
+    fun resetToMainHistory() {
+        currentHistory = session.history
+        currentStep = session.coerceStep(currentStep)
     }
 
     /**

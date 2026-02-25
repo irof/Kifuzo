@@ -71,6 +71,8 @@ fun KifuPreviewPanel(
     onNextStep: () -> Unit,
     onPrevStep: () -> Unit,
     onForceParse: (Path) -> Unit,
+    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+    onResetToMainHistory: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -102,8 +104,9 @@ fun KifuPreviewPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
+        val isMainHistory = boardState.currentHistory === boardState.session.history
         KifuHeader(
-            fileName = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT,
+            fileName = (state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT) + if (!isMainHistory) " [変化]" else "",
             hasHistory = boardState.session.history.isNotEmpty(),
             isMoveListVisible = state.isMoveListVisible,
             onToggleMoveList = onToggleMoveList,
@@ -124,14 +127,15 @@ fun KifuPreviewPanel(
         if (boardState.session.history.isNotEmpty()) {
             Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
             KifuMainContent(
-                state,
-                boardState,
-                onToggleFlip,
-                onStepChange,
+                state = state,
+                boardState = boardState,
+                onToggleFlip = onToggleFlip,
+                onStepChange = onStepChange,
                 onShowEditMetadata = { state.selectedFile?.let { onShowEditMetadata(it) } },
-            ) { result ->
-                state.selectedFile?.let { onWriteResult(it, result) }
-            }
+                onSelectVariation = onSelectVariation,
+                onResetToMainHistory = onResetToMainHistory,
+                onWriteResult = { result -> state.selectedFile?.let { onWriteResult(it, result) } },
+            )
         }
     }
 }
@@ -192,6 +196,8 @@ private fun ColumnScope.KifuMainContent(
     onToggleFlip: () -> Unit,
     onStepChange: (Int) -> Unit,
     onShowEditMetadata: () -> Unit,
+    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+    onResetToMainHistory: () -> Unit,
     onWriteResult: (String) -> Unit,
 ) {
     Row(
@@ -206,8 +212,8 @@ private fun ColumnScope.KifuMainContent(
             Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
             KifuOperationBar(
                 currentStep = boardState.currentStep,
-                maxStep = boardState.session.maxStep,
-                history = boardState.session.history,
+                maxStep = boardState.currentHistory.size - 1,
+                history = boardState.currentHistory,
                 isStandardStart = boardState.session.isStandardStart,
                 firstContactStep = boardState.session.firstContactStep,
                 startTime = boardState.session.startTime,
@@ -220,10 +226,13 @@ private fun ColumnScope.KifuMainContent(
 
         if (state.isMoveListVisible) {
             KifuMoveList(
-                history = boardState.session.history,
+                history = boardState.currentHistory,
                 currentStep = boardState.currentStep,
+                isMainHistory = boardState.currentHistory === boardState.session.history,
                 onStepChange = onStepChange,
                 onWriteResult = onWriteResult,
+                onSelectVariation = onSelectVariation,
+                onResetMain = onResetToMainHistory,
                 modifier = Modifier.width(ShogiDimensions.MoveListWidth).fillMaxHeight(),
             )
         }
