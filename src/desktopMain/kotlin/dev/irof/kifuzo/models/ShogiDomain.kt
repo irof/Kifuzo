@@ -65,7 +65,55 @@ data class Move(
     val evaluation: Evaluation = Evaluation.Unknown,
     val consumptionSeconds: Int? = null,
     val variations: List<List<Move>> = emptyList(),
-)
+) {
+    companion object {
+        /**
+         * 通常の移動による指し手を生成します。
+         */
+        fun createMove(
+            step: Int,
+            from: Square,
+            to: Square,
+            isPromote: Boolean,
+            moveText: String,
+            prevSnapshot: BoardSnapshot,
+            consumptionSeconds: Int? = null,
+        ): Move {
+            val turnColor = if (step % 2 != 0) PieceColor.Black else PieceColor.White
+            val result = prevSnapshot.applyMove(from, to, isPromote, turnColor)
+            return Move(step, moveText, result, consumptionSeconds = consumptionSeconds)
+        }
+
+        /**
+         * 駒打ちによる指し手を生成します。
+         */
+        fun createDrop(
+            step: Int,
+            piece: Piece,
+            to: Square,
+            moveText: String,
+            prevSnapshot: BoardSnapshot,
+            consumptionSeconds: Int? = null,
+        ): Move {
+            val turnColor = if (step % 2 != 0) PieceColor.Black else PieceColor.White
+            val result = prevSnapshot.applyDrop(piece, to, turnColor)
+            return Move(step, moveText, result, consumptionSeconds = consumptionSeconds)
+        }
+
+        /**
+         * 終局結果（投了など）による指し手を生成します。
+         */
+        fun createResult(
+            step: Int,
+            resultText: String,
+            prevSnapshot: BoardSnapshot,
+        ): Move {
+            val turnColor = if (step % 2 != 0) PieceColor.Black else PieceColor.White
+            val evaluation = if (turnColor == PieceColor.Black) Evaluation.GoteWin else Evaluation.SenteWin
+            return Move(step, resultText, prevSnapshot.copy(), evaluation = evaluation)
+        }
+    }
+}
 
 data class Square(val file: Int, val rank: Int) {
     // file: 1-9 (筋), rank: 1-9 (段)

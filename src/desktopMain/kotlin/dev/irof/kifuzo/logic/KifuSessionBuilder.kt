@@ -89,41 +89,20 @@ class KifuSessionBuilder {
         resultText: String? = null,
     ) {
         val currentSnapshot = moves.lastOrNull()?.resultSnapshot ?: initialSnapshot
-        val turnColor = getTurnColor()
+        val currentStep = startingStep + moves.size + 1
 
-        if (resultText != null) {
-            val evaluation = if (turnColor == PieceColor.Black) Evaluation.GoteWin else Evaluation.SenteWin
-            moves.add(
-                Move(
-                    step = startingStep + moves.size + 1,
-                    moveText = resultText,
-                    resultSnapshot = currentSnapshot.copy(),
-                    evaluation = evaluation,
-                ),
-            )
-            return
-        }
-
-        val targetTo = to ?: throw IllegalArgumentException("toが必要です")
-        val nextSnapshot = if (from == null) {
-            val dropPiece = piece ?: throw IllegalArgumentException("駒打ちには駒の指定が必要です。")
-            currentSnapshot.applyDrop(dropPiece, targetTo, turnColor)
+        val move = if (resultText != null) {
+            Move.createResult(currentStep, resultText, currentSnapshot)
         } else {
-            val next = currentSnapshot.applyMove(from, targetTo, isPromote, turnColor)
-            if (firstContactStep == -1 && currentSnapshot.at(targetTo) != null) {
-                firstContactStep = startingStep + moves.size + 1
+            val targetTo = to ?: throw IllegalArgumentException("toが必要です")
+            if (from == null) {
+                Move.createDrop(currentStep, piece ?: throw IllegalArgumentException("pieceが必要です"), targetTo, moveText, currentSnapshot, consumptionSeconds)
+            } else {
+                if (firstContactStep == -1 && currentSnapshot.at(targetTo) != null) firstContactStep = currentStep
+                Move.createMove(currentStep, from, targetTo, isPromote, moveText, currentSnapshot, consumptionSeconds)
             }
-            next
         }
-
-        moves.add(
-            Move(
-                step = startingStep + moves.size + 1,
-                moveText = moveText,
-                resultSnapshot = nextSnapshot,
-                consumptionSeconds = consumptionSeconds,
-            ),
-        )
+        moves.add(move)
     }
 
     /**
@@ -146,18 +125,10 @@ class KifuSessionBuilder {
             cells = newCells.map { it.toList() }
         }
         if (mochigomaColor != null && mochigomaPiece != null) {
-            if (mochigomaColor == PieceColor.Black) {
-                senteMochi = senteMochi + listOf(mochigomaPiece)
-            } else {
-                goteMochi = goteMochi + listOf(mochigomaPiece)
-            }
+            if (mochigomaColor == PieceColor.Black) senteMochi = senteMochi + listOf(mochigomaPiece) else goteMochi = goteMochi + listOf(mochigomaPiece)
         }
 
-        initialSnapshot = initialSnapshot.copy(
-            cells = cells,
-            senteMochigoma = senteMochi,
-            goteMochigoma = goteMochi,
-        )
+        initialSnapshot = initialSnapshot.copy(cells = cells, senteMochigoma = senteMochi, goteMochigoma = goteMochi)
     }
 
     /**
@@ -176,23 +147,17 @@ class KifuSessionBuilder {
      */
     fun build(): KifuSession {
         val finalIsStandardStart = isStandardStart || initialSnapshot.isStandardInitial()
-        val initialStep = when {
-            !finalIsStandardStart -> 0
-            firstContactStep != -1 -> firstContactStep
-            else -> moves.size
+        val initialStep = if (!finalIsStandardStart) {
+            0
+        } else if (firstContactStep != -1) {
+            firstContactStep
+        } else {
+            moves.size
         }
         return KifuSession(
-            initialSnapshot = initialSnapshot,
-            moves = moves.toList(),
-            initialStep = initialStep,
-            senteName = senteName,
-            goteName = goteName,
-            startTime = startTime,
-            event = event,
-            firstContactStep = firstContactStep,
-            isStandardStart = finalIsStandardStart,
+            initialSnapshot = initialSnapshot, moves = moves.toList(), initialStep = initialStep,
+            senteName = senteName, goteName = goteName, startTime = startTime, event = event,
+            firstContactStep = firstContactStep, isStandardStart = finalIsStandardStart,
         )
     }
-
-    private fun getTurnColor(): PieceColor = if ((startingStep + moves.size + 1) % 2 != 0) PieceColor.Black else PieceColor.White
 }
