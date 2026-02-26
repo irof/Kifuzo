@@ -170,8 +170,11 @@ class KifuSessionBuilder {
      * 構築された KifuSession を返します。
      */
     fun build(): KifuSession {
+        // P1-P9 などで設定されていても、最終的に平手初期配置と一致すれば標準開始扱いにする
+        val finalIsStandardStart = isStandardStart || (history.isNotEmpty() && history[0].isStandardInitial())
+
         val initialStep = when {
-            !isStandardStart -> 0
+            !finalIsStandardStart -> 0
             firstContactStep != -1 -> firstContactStep
             else -> history.size - 1
         }
@@ -183,7 +186,7 @@ class KifuSessionBuilder {
             startTime = startTime,
             event = event,
             firstContactStep = firstContactStep,
-            isStandardStart = isStandardStart,
+            isStandardStart = finalIsStandardStart,
         )
     }
 

@@ -11,6 +11,11 @@ data class BoardSnapshot(
     val consumptionSeconds: Int? = null,
     val variations: List<List<BoardSnapshot>> = emptyList(),
 ) {
+    /**
+     * このスナップショットが標準の平手初期配置であるか判定します。
+     */
+    fun isStandardInitial(): Boolean = senteMochigoma.isEmpty() && goteMochigoma.isEmpty() && cells == getInitialCells()
+
     companion object {
         /**
          * 標準の平手初期配置を取得します。

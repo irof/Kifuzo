@@ -49,21 +49,7 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
 
     for (i in lines.indices) {
         val line = lines[i].trim()
-        when {
-            line.startsWith("N+") -> ctx.senteName = line.substring(2)
-            line.startsWith("N-") -> ctx.goteName = line.substring(2)
-            line.startsWith("\$START_TIME:") -> ctx.startTime = line.substringAfter(":").trim()
-            line.startsWith("\$EVENT:") -> ctx.event = line.substringAfter(":").trim()
-            line.startsWith("P") && line.length >= 2 && line[1].isDigit() -> handleCsaBoardLine(line, ctx.builder)
-            line.startsWith("P+") || line.startsWith("P-") -> handleCsaMochigomaLine(line, ctx.builder)
-            line.startsWith("'") -> extractCsaEvaluation(line, ctx.builder)
-            line.startsWith("+") || line.startsWith("-") -> {
-                if (line.length >= CSA_MOVE_LINE_MIN_LENGTH) {
-                    handleCsaMoveLine(line, i, lines, ctx)
-                    ctx.moveCount++
-                }
-            }
-        }
+        handleCsaLine(line, i, lines, ctx)
     }
 
     ctx.builder.senteName = ctx.senteName
@@ -71,6 +57,25 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
     ctx.builder.startTime = ctx.startTime
     ctx.builder.event = ctx.event
     state.updateSession(ctx.builder.build())
+}
+
+private fun handleCsaLine(line: String, index: Int, lines: List<String>, ctx: CsaParseContext) {
+    when {
+        line.startsWith("N+") -> ctx.senteName = line.substring(2)
+        line.startsWith("N-") -> ctx.goteName = line.substring(2)
+        line.startsWith("\$START_TIME:") -> ctx.startTime = line.substringAfter(":").trim()
+        line.startsWith("\$EVENT:") -> ctx.event = line.substringAfter(":").trim()
+        line == "PI" -> ctx.builder.setup()
+        line.startsWith("P") && line.length >= 2 && line[1].isDigit() -> handleCsaBoardLine(line, ctx.builder)
+        line.startsWith("P+") || line.startsWith("P-") -> handleCsaMochigomaLine(line, ctx.builder)
+        line.startsWith("'") -> extractCsaEvaluation(line, ctx.builder)
+        line.startsWith("+") || line.startsWith("-") -> {
+            if (line.length >= CSA_MOVE_LINE_MIN_LENGTH) {
+                handleCsaMoveLine(line, index, lines, ctx)
+                ctx.moveCount++
+            }
+        }
+    }
 }
 
 private fun handleCsaBoardLine(line: String, builder: KifuSessionBuilder) {
