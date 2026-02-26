@@ -32,6 +32,15 @@ import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.ui.theme.ShogiIcons
 
+private object MoveRowConstants {
+    const val SELECTED_ALPHA = 0.15f
+    const val SIGNIFICANT_THRESHOLD = 500
+    const val VERY_SIGNIFICANT_THRESHOLD = 1000
+    val STEP_NUMBER_WIDTH = 32.dp
+    val ICON_SIZE = 16.dp
+    val INFO_WIDTH = 50.dp
+}
+
 @Composable
 fun MoveRow(
     step: Int,
@@ -44,8 +53,7 @@ fun MoveRow(
     onStepChange: (Int) -> Unit,
     onSelectVariation: (List<BoardSnapshot>) -> Unit,
 ) {
-    val alpha = 0.15f
-    val backgroundColor = if (isSelected) ShogiColors.Primary.copy(alpha = alpha) else Color.Transparent
+    val backgroundColor = if (isSelected) ShogiColors.Primary.copy(alpha = MoveRowConstants.SELECTED_ALPHA) else Color.Transparent
 
     Row(
         modifier = Modifier
@@ -57,7 +65,7 @@ fun MoveRow(
     ) {
         Text(
             text = if (step == 0) "" else step.toString(),
-            modifier = Modifier.width(32.dp),
+            modifier = Modifier.width(MoveRowConstants.STEP_NUMBER_WIDTH),
             style = MaterialTheme.typography.caption,
             color = Color.Gray,
         )
@@ -100,10 +108,10 @@ private fun VariationBadge(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.padding(start = 4.dp)) {
+    Box(modifier = Modifier.padding(start = ShogiDimensions.PaddingSmall)) {
         IconButton(
             onClick = { expanded = true },
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(MoveRowConstants.ICON_SIZE),
         ) {
             Icon(imageVector = ShogiIcons.SidebarToggle, contentDescription = "変化手順を表示", tint = Color.Blue)
         }
@@ -114,7 +122,7 @@ private fun VariationBadge(
                     onSelectVariation(variation)
                 }) {
                     val nextMove = variation.getOrNull(1)?.lastMoveText?.trim()?.split(Regex("""\s+"""))?.getOrNull(1) ?: "不明"
-                    Text("変化 ${index + 1}: $nextMove...", fontSize = 11.sp)
+                    Text("変化 ${index + 1}: $nextMove...", fontSize = ShogiDimensions.FontSizeSmall)
                 }
             }
         }
@@ -123,12 +131,10 @@ private fun VariationBadge(
 
 @Composable
 private fun SignificantMoveBadge(diff: Int?) {
-    val sigThreshold = 500
-    val verySigThreshold = 1000
     val absDiff = if (diff != null) kotlin.math.abs(diff) else 0
-    if (absDiff < sigThreshold) return
+    if (absDiff < MoveRowConstants.SIGNIFICANT_THRESHOLD) return
 
-    val marker = if (absDiff >= verySigThreshold) "!!" else "!"
+    val marker = if (absDiff >= MoveRowConstants.VERY_SIGNIFICANT_THRESHOLD) "!!" else "!"
     val markerColor = if (diff!! > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative
     Box(
         modifier = Modifier
@@ -136,13 +142,12 @@ private fun SignificantMoveBadge(diff: Int?) {
             .background(markerColor, shape = MaterialTheme.shapes.small)
             .padding(horizontal = ShogiDimensions.PaddingSmall, vertical = 1.dp),
     ) {
-        Text(text = marker, color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 11.sp)
+        Text(text = marker, color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = ShogiDimensions.FontSizeSmall)
     }
 }
 
 @Composable
 private fun EvaluationInfo(evaluation: Evaluation, diff: Int?) {
-    val infoWidth = 50.dp
     when (evaluation) {
         is Evaluation.Score -> {
             EvaluationBadge(evaluation.value)
@@ -154,7 +159,7 @@ private fun EvaluationInfo(evaluation: Evaluation, diff: Int?) {
                 style = MaterialTheme.typography.caption,
                 fontWeight = FontWeight.Bold,
                 color = if (evaluation is Evaluation.SenteWin) ShogiColors.EvalPositive else ShogiColors.EvalNegative,
-                modifier = Modifier.width(infoWidth * 2),
+                modifier = Modifier.width(MoveRowConstants.INFO_WIDTH * 2),
                 textAlign = TextAlign.End,
             )
         }
@@ -164,30 +169,28 @@ private fun EvaluationInfo(evaluation: Evaluation, diff: Int?) {
 
 @Composable
 private fun EvaluationBadge(evaluation: Int) {
-    val infoWidth = 50.dp
     Text(
         text = "${if (evaluation > 0) "+" else ""}$evaluation",
         style = MaterialTheme.typography.caption,
         fontWeight = FontWeight.Bold,
         color = if (evaluation > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative,
-        modifier = Modifier.width(infoWidth),
+        modifier = Modifier.width(MoveRowConstants.INFO_WIDTH),
         textAlign = TextAlign.End,
     )
 }
 
 @Composable
 private fun EvaluationDiff(diff: Int?) {
-    val infoWidth = 50.dp
     if (diff == null || diff == 0) {
-        Spacer(Modifier.width(infoWidth))
+        Spacer(Modifier.width(MoveRowConstants.INFO_WIDTH))
         return
     }
     Text(
         text = " (${if (diff > 0) "+" else ""}$diff)",
-        style = MaterialTheme.typography.caption.copy(fontSize = 9.sp),
+        style = MaterialTheme.typography.caption.copy(fontSize = ShogiDimensions.FontSizeCaption),
         fontWeight = FontWeight.Bold,
         color = if (diff > 0) ShogiColors.EvalPositive else ShogiColors.EvalNegative,
-        modifier = Modifier.width(infoWidth),
+        modifier = Modifier.width(MoveRowConstants.INFO_WIDTH),
         textAlign = TextAlign.End,
     )
 }

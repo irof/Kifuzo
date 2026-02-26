@@ -1,5 +1,7 @@
 package dev.irof.kifuzo.models
 
+import dev.irof.kifuzo.utils.AppStrings
+
 object ShogiConstants {
     const val BOARD_SIZE = 9
     const val MAX_FILE = 9
@@ -81,6 +83,13 @@ object GameResult {
         val isMate = kotlin.math.abs(score) >= ShogiConstants.MATE_SCORE_THRESHOLD
         return isMate || ALL_KEYWORDS.any { lastMoveText.contains(it) }
     }
+}
+
+fun BoardSnapshot.toMoveLabel(step: Int): String {
+    if (step == 0) return AppStrings.START_POSITION
+    val colorSymbol = if (step % 2 != 0) "▲" else "△"
+    val movePart = lastMoveText.trim().split(Regex("""\s+""")).getOrNull(1)?.substringBefore("(") ?: lastMoveText
+    return "$colorSymbol$movePart"
 }
 
 object BoardLayout {

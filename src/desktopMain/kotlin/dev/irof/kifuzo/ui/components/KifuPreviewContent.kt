@@ -146,5 +146,4 @@ private fun MetaRow(label: String, value: String) {
     }
 }
 
-private fun isAllMetadataEmpty(sente: String, gote: String, startTime: String, event: String): Boolean =
-    sente.isEmpty() && gote.isEmpty() && startTime.isEmpty() && event.isEmpty()
+private fun isAllMetadataEmpty(sente: String, gote: String, startTime: String, event: String): Boolean = sente.isEmpty() && gote.isEmpty() && startTime.isEmpty() && event.isEmpty()

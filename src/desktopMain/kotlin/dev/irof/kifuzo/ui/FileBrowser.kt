@@ -87,6 +87,11 @@ private fun FileContextMenu(
     }, content = content)
 }
 
+private object FileTreeConstants {
+    const val INDENT_SIZE = 16
+    const val SELECTED_ALPHA = 0.1f
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FileTreeRow(
@@ -97,8 +102,8 @@ private fun FileTreeRow(
     onToggle: (FileTreeNode) -> Unit,
     onSelect: (Path) -> Unit,
 ) {
-    val backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent
-    val startPadding = if (showParentName) 8.dp else (node.level * 16).dp
+    val backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = FileTreeConstants.SELECTED_ALPHA) else Color.Transparent
+    val startPadding = if (showParentName) 8.dp else (node.level * FileTreeConstants.INDENT_SIZE).dp
 
     Row(
         modifier = Modifier

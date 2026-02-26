@@ -36,7 +36,8 @@ private object GraphConstants {
     const val POINT_RADIUS_OUTER = 4f
     const val POINT_RADIUS_INNER = 2f
     const val STEP_CENTER_OFFSET = 0.5f
-    const val SENTE_TOP_THRESHOLD = 100f
+    const val SENTE_TOP_VAL = 100f
+    const val BORDER_WIDTH = 1f
 }
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalTextApi::class)
@@ -58,12 +59,10 @@ fun EvaluationGraph(
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent()
-                        val change = event.changes.first()
-                        val isHover = change.pressed || event.type == PointerEventType.Move
-                        hoverX = if (isHover) change.position.x else null
-                        if (event.type == PointerEventType.Release && change.position.x in 0f..size.width.toFloat()) {
-                            val stepWidth = size.width.toFloat() / maxOf(1, evaluations.size)
-                            onStepClick((change.position.x / stepWidth).toInt().coerceIn(0, evaluations.size - 1))
+                        val pos = event.changes.first().position.x
+                        hoverX = if (event.type != PointerEventType.Release) pos else null
+                        if (event.type == PointerEventType.Release) {
+                            onStepClick(getStepIndex(pos, size.width.toFloat(), evaluations.size))
                         }
                     }
                 }
@@ -75,10 +74,12 @@ fun EvaluationGraph(
         drawGraphBackground(scaler, textMeasurer)
         drawCurrentStepHighlight(currentStep, evaluations.size, stepWidth)
         drawEvaluationLine(evaluations, scaler, stepWidth)
-        drawRect(color = Color.Gray, style = Stroke(width = 1.dp.toPx()))
+        drawRect(color = Color.Gray, style = Stroke(width = GraphConstants.BORDER_WIDTH.dp.toPx()))
         drawHoverIndicator(hoverX, evaluations, stepWidth, scaler, textMeasurer)
     }
 }
+
+private fun getStepIndex(x: Float, width: Float, total: Int): Int = (x / (width / maxOf(1, total))).toInt().coerceIn(0, total - 1)
 
 @OptIn(ExperimentalTextApi::class)
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHoverIndicator(
@@ -89,19 +90,21 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHoverIndicator(
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
 ) {
     val hx = hoverX ?: return
-    val stepIndex = (hx / stepWidth).toInt().coerceIn(0, evaluations.size - 1)
+    val stepIndex = getStepIndex(hx, size.width, evaluations.size)
     val eval = evaluations[stepIndex]
-    val label = when (eval) {
-        is Evaluation.Score -> "${stepIndex}手目: ${if (eval.value > 0) "+" else ""}${eval.value}"
-        is Evaluation.SenteWin -> "${stepIndex}手目: 先手勝ち"
-        is Evaluation.GoteWin -> "${stepIndex}手目: 後手勝ち"
-        else -> null
-    } ?: return
+    val label = getEvaluationLabelText(stepIndex, eval) ?: return
     val pointX = (stepIndex + GraphConstants.STEP_CENTER_OFFSET) * stepWidth
     val pointY = scaler.getScaledY(eval.orNull()?.toFloat() ?: 0f)
     drawCircle(color = ShogiColors.EvalLine, radius = GraphConstants.POINT_RADIUS_OUTER.dp.toPx(), center = Offset(pointX, pointY))
     drawCircle(color = Color.White, radius = GraphConstants.POINT_RADIUS_INNER.dp.toPx(), center = Offset(pointX, pointY))
     drawGraphTooltip(x = stepIndex * stepWidth, y = pointY, label = label, textMeasurer = textMeasurer)
+}
+
+private fun getEvaluationLabelText(stepIndex: Int, eval: Evaluation): String? = when (eval) {
+    is Evaluation.Score -> "${stepIndex}手目: ${if (eval.value > 0) "+" else ""}${eval.value}"
+    is Evaluation.SenteWin -> "${stepIndex}手目: 先手勝ち"
+    is Evaluation.GoteWin -> "${stepIndex}手目: 後手勝ち"
+    else -> null
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGraphBackground(
@@ -111,16 +114,14 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGraphBackground
     val centerY = size.height / 2f
     val tYPos = scaler.getScaledY(GraphConstants.THRESHOLD)
     val tYNeg = scaler.getScaledY(-GraphConstants.THRESHOLD)
-    val topY = minOf(tYPos, tYNeg)
-    val botY = maxOf(tYPos, tYNeg)
-    val isSenteTop = scaler.getScaledY(GraphConstants.SENTE_TOP_THRESHOLD) < centerY
+    val isSenteTop = scaler.getScaledY(GraphConstants.SENTE_TOP_VAL) < centerY
     val posColor = if (isSenteTop) ShogiColors.EvalPositive else ShogiColors.EvalNegative
     val negColor = if (isSenteTop) ShogiColors.EvalNegative else ShogiColors.EvalPositive
 
-    drawRect(posColor.copy(alpha = GraphConstants.ALPHA_ZONE_LOW), Offset(0f, minOf(centerY, topY)), Size(size.width, kotlin.math.abs(centerY - topY)))
-    drawRect(negColor.copy(alpha = GraphConstants.ALPHA_ZONE_LOW), Offset(0f, centerY), Size(size.width, kotlin.math.abs(centerY - botY)))
-    drawRect(posColor.copy(alpha = GraphConstants.ALPHA_ZONE_HIGH), Offset(0f, 0f), Size(size.width, topY))
-    drawRect(negColor.copy(alpha = GraphConstants.ALPHA_ZONE_HIGH), Offset(0f, botY), Size(size.width, size.height - botY))
+    drawRect(posColor.copy(alpha = GraphConstants.ALPHA_ZONE_LOW), Offset(0f, minOf(centerY, minOf(tYPos, tYNeg))), Size(size.width, kotlin.math.abs(centerY - minOf(tYPos, tYNeg))))
+    drawRect(negColor.copy(alpha = GraphConstants.ALPHA_ZONE_LOW), Offset(0f, centerY), Size(size.width, kotlin.math.abs(centerY - maxOf(tYPos, tYNeg))))
+    drawRect(posColor.copy(alpha = GraphConstants.ALPHA_ZONE_HIGH), Offset(0f, 0f), Size(size.width, minOf(tYPos, tYNeg)))
+    drawRect(negColor.copy(alpha = GraphConstants.ALPHA_ZONE_HIGH), Offset(0f, maxOf(tYPos, tYNeg)), Size(size.width, size.height - maxOf(tYPos, tYNeg)))
     drawEvaluationGrid(scaler, textMeasurer, GraphConstants.GRID_RANGE, GraphConstants.GRID_STEP, GraphConstants.THRESHOLD.toInt())
 }
 

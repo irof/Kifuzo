@@ -81,8 +81,14 @@ fun KifuPreviewPanel(
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (event.key) {
-                    Key.DirectionDown -> { onNextStep(); true }
-                    Key.DirectionUp -> { onPrevStep(); true }
+                    Key.DirectionDown -> {
+                        onNextStep()
+                        true
+                    }
+                    Key.DirectionUp -> {
+                        onPrevStep()
+                        true
+                    }
                     else -> false
                 }
             }

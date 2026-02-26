@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.GameResult
+import dev.irof.kifuzo.models.toMoveLabel
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 
@@ -59,34 +60,20 @@ fun KifuMoveList(
         if (currentStep in history.indices) listState.animateScrollToItem(currentStep)
     }
 
-    Box(
-        modifier = modifier
-            .background(Color.White, MaterialTheme.shapes.medium)
-            .border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.medium),
-    ) {
+    Box(modifier = modifier.background(Color.White, MaterialTheme.shapes.medium).border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.medium)) {
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(vertical = ShogiDimensions.PaddingSmall)) {
             if (!isMainHistory) item { ResetToMainButton(onResetMain) }
-
-            item {
-                MoveRow(0, AppStrings.START_POSITION, history[0].evaluation, null, currentStep == 0, showEvaluation, history[0].variations, onStepChange, onSelectVariation)
-            }
-
-            items(history.size - 1) { index ->
-                val step = index + 1
+            items(history.size) { step ->
                 val board = history[step]
-                val prevEval = history[step - 1].evaluation.orZero()
-                val currentEvaluation = board.evaluation
-                val diff = if (currentEvaluation is Evaluation.Score) currentEvaluation.value - prevEval else null
-                val moveText = board.lastMoveText.trim().split(Regex("""\\s+""")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
-                val label = "${if (step % 2 != 0) "▲" else "△"}$moveText"
-
-                MoveRow(step, label, currentEvaluation, diff, currentStep == step, showEvaluation, board.variations, onStepChange, onSelectVariation)
+                val diff = if (step > 0) calculateEvaluationDiff(board.evaluation, history[step - 1].evaluation) else null
+                MoveRow(step, board.toMoveLabel(step), board.evaluation, diff, currentStep == step, showEvaluation, board.variations, onStepChange, onSelectVariation)
             }
-
             if (!isFinished && isMainHistory) item { AddResultRow(onWriteResult) }
         }
     }
 }
+
+private fun calculateEvaluationDiff(current: Evaluation, previous: Evaluation): Int? = if (current is Evaluation.Score) current.value - previous.orZero() else null
 
 @Composable
 private fun ResetToMainButton(onResetMain: () -> Unit) {
@@ -110,7 +97,10 @@ private fun AddResultRow(onWriteResult: (String) -> Unit) {
             }
             DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                 GameResult.UI_SELECTIONS.forEach { result ->
-                    DropdownMenuItem(onClick = { showMenu = false; onWriteResult(result) }) {
+                    DropdownMenuItem(onClick = {
+                        showMenu = false
+                        onWriteResult(result)
+                    }) {
                         Text(result, fontSize = ShogiDimensions.FontSizeBody)
                     }
                 }

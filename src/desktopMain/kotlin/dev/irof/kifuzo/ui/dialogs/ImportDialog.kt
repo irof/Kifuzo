@@ -68,20 +68,22 @@ private fun ImportSourceField(path: String, onPathChange: (String) -> Unit) {
         )
         Spacer(Modifier.width(8.dp))
         IconButton(onClick = {
-            val chooser = JFileChooser().apply {
-                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                if (path.isNotEmpty()) {
-                    val f = java.io.File(path)
-                    if (f.exists()) {
-                        currentDirectory = if (f.isDirectory) f else f.parentFile
-                    }
-                }
-            }
+            val chooser = createDirectoryChooser(path)
             if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                 onPathChange(chooser.selectedFile.absolutePath)
             }
         }) {
             Icon(Icons.AutoMirrored.Filled.List, contentDescription = "フォルダを選択")
+        }
+    }
+}
+
+private fun createDirectoryChooser(initialPath: String): JFileChooser = JFileChooser().apply {
+    fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+    if (initialPath.isNotEmpty()) {
+        val f = java.io.File(initialPath)
+        if (f.exists()) {
+            currentDirectory = if (f.isDirectory) f else f.parentFile
         }
     }
 }
