@@ -45,7 +45,7 @@ fun convertCsaToKifuLines(lines: List<String>): List<String> {
         val line = lines[i].trim()
         val converted = convertSingleCsaLine(line, i, lines, context)
         if (converted != null) {
-            kifLines.add(converted)
+            kifLines.addAll(converted.split("\n"))
         }
     }
     return kifLines
@@ -112,16 +112,18 @@ private fun processMoveLine(line: String, index: Int, lines: List<String>, conte
 }
 
 private fun processResultLine(line: String, moveCount: Int): String? {
-    val ending = when (line) {
-        "%TORYO" -> "投了"
-        "%CHUDAN" -> "中断"
-        "%TIME_UP" -> "タイムアップ"
-        "%SENNICHITE" -> "千日手"
-        "%KACHI" -> "入玉勝ち"
-        "%HIKIWAKE" -> "持将棋"
-        else -> null
+    val (kifMove, summary) = when (line) {
+        "%TORYO" -> "投了" to "投了"
+        "%CHUDAN" -> "中断" to "中断"
+        "%TIME_UP" -> "切れ負け" to "タイムアップ"
+        "%SENNICHITE" -> "千日手" to "千日手"
+        "%KACHI" -> "入玉勝ち" to "入玉勝ち"
+        "%HIKIWAKE" -> "持将棋" to "持将棋"
+        else -> return null
     }
-    return ending?.let { "まで${moveCount - 1}手で$it" }
+    val numberedMove = String.format(java.util.Locale.US, "%4d %s", moveCount, kifMove)
+    val summaryLine = "まで${moveCount - 1}手で$summary"
+    return "$numberedMove\n$summaryLine"
 }
 
 private class CsaConvertContext {

@@ -181,13 +181,26 @@ class CsaConverterTest {
     }
 
     @Test
-    fun 駒打ちを正しく処理できること() {
+    fun 終局コードを正しく変換できること() {
         val csaLines = """
-            +0045KA
-            T5
+            +7776FU
+            %TIME_UP
         """.trimIndent().lines()
         val kifLines = convertCsaToKifuLines(csaLines)
-        // 0045KA -> 4五角打
-        assertTrue(kifLines.any { it.contains("1 ４五角打") })
+        // 2手目に「切れ負け」があること
+        assertTrue(kifLines.any { it.contains("2 切れ負け") }, "2手目が「切れ負け」であること")
+        // summary行があること
+        assertTrue(kifLines.any { it.contains("まで1手でタイムアップ") }, "タイムアップの要約行があること")
+
+        val csaLines2 = """
+            +7776FU
+            -3334FU
+            %TORYO
+        """.trimIndent().lines()
+        val kifLines2 = convertCsaToKifuLines(csaLines2)
+        // 3手目に「投了」があること
+        assertTrue(kifLines2.any { it.contains("3 投了") }, "3手目が「投了」であること")
+        // summary行があること
+        assertTrue(kifLines2.any { it.contains("まで2手で投了") }, "投了の要約行があること")
     }
 }
