@@ -63,17 +63,19 @@ fun KifuTextViewer(
                         .background(Color.White)
                         .border(1.dp, Color.LightGray),
                 ) {
-                    Text(
-                        text = text,
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace,
-                        softWrap = false,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
-                            .verticalScroll(scrollSVer)
-                            .horizontalScroll(scrollSHor),
-                    )
+                    androidx.compose.foundation.text.selection.SelectionContainer {
+                        Text(
+                            text = text,
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            softWrap = false,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp)
+                                .verticalScroll(scrollSVer)
+                                .horizontalScroll(scrollSHor),
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(16.dp))
