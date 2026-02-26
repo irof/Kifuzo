@@ -15,6 +15,77 @@ data class BoardSnapshot(
      */
     fun isStandardInitial(): Boolean = senteMochigoma.isEmpty() && goteMochigoma.isEmpty() && cells == getInitialCells()
 
+    /**
+     * 指定された座標の駒を取得します。
+     */
+    fun at(square: Square): BoardPiece? = cells[square.yIndex][square.xIndex]
+
+    /**
+     * 指定された座標の駒を取得します（file, rank 指定）。
+     */
+    fun at(file: Int, rank: Int): BoardPiece? = at(Square(file, rank))
+
+    /**
+     * 通常の指し手を適用し、新しい局面を返します。
+     */
+    fun applyMove(
+        from: Square,
+        to: Square,
+        isPromote: Boolean,
+        turnColor: PieceColor,
+        fallbackPiece: Piece? = null,
+    ): BoardSnapshot {
+        val current = at(from)
+        val captured = at(to)
+
+        val newSenteMochi = senteMochigoma.toMutableList()
+        val newGoteMochi = goteMochigoma.toMutableList()
+
+        if (captured != null) {
+            val mochiPiece = captured.piece.toBase()
+            if (turnColor == PieceColor.Black) newSenteMochi.add(mochiPiece) else newGoteMochi.add(mochiPiece)
+        }
+
+        val basePiece = current?.piece ?: fallbackPiece ?: Piece.FU
+        val movingPiece = if (isPromote) basePiece.promote() else basePiece
+        val newCells = cells.map { it.toMutableList() }.toMutableList()
+        newCells[from.yIndex][from.xIndex] = null
+        newCells[to.yIndex][to.xIndex] = BoardPiece(movingPiece, turnColor)
+
+        return copy(
+            cells = newCells.map { it.toList() },
+            senteMochigoma = newSenteMochi.toList(),
+            goteMochigoma = newGoteMochi.toList(),
+            lastFrom = from,
+            lastTo = to,
+        )
+    }
+
+    /**
+     * 駒打ちを適用し、新しい局面を返します。
+     */
+    fun applyDrop(
+        piece: Piece,
+        to: Square,
+        turnColor: PieceColor,
+    ): BoardSnapshot {
+        val newSenteMochi = senteMochigoma.toMutableList()
+        val newGoteMochi = goteMochigoma.toMutableList()
+
+        if (turnColor == PieceColor.Black) newSenteMochi.remove(piece) else newGoteMochi.remove(piece)
+
+        val newCells = cells.map { it.toMutableList() }.toMutableList()
+        newCells[to.yIndex][to.xIndex] = BoardPiece(piece, turnColor)
+
+        return copy(
+            cells = newCells.map { it.toList() },
+            senteMochigoma = newSenteMochi.toList(),
+            goteMochigoma = newGoteMochi.toList(),
+            lastFrom = null,
+            lastTo = to,
+        )
+    }
+
     companion object {
         /**
          * 標準の平手初期配置を取得します。

@@ -5,6 +5,7 @@ import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiConstants
+import dev.irof.kifuzo.models.Square
 import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension
 import kotlin.text.Charsets
@@ -133,7 +134,7 @@ private class CsaConvertContext {
     private var lastToY = -1
     private var totalSenteSeconds = 0
     private var totalGoteSeconds = 0
-    private val currentCells = BoardSnapshot.getInitialCells().map { it.toMutableList() }.toMutableList()
+    private var currentSnapshot = BoardSnapshot(BoardSnapshot.getInitialCells())
 
     private val fullWidthDigits = "１２３４５６７８９"
     private val kanjiDigits = "一二三四五六七八九"
@@ -146,41 +147,44 @@ private class CsaConvertContext {
     }
 
     fun setupInitialPosition() {
-        BoardSnapshot.getInitialCells().forEachIndexed { y, row ->
-            row.forEachIndexed { x, cell ->
-                currentCells[y][x] = cell
-            }
-        }
+        currentSnapshot = BoardSnapshot(BoardSnapshot.getInitialCells())
     }
 
     fun setupRow(line: String) {
         val rowIdx = line[CSA_ROW_INDEX_POS] - '1'
         if (rowIdx !in 0..ShogiConstants.MAX_INDEX) return
+
+        val newCells = currentSnapshot.cells.map { it.toMutableList() }.toMutableList()
+        val row = newCells[rowIdx]
+
         for (i in 0..ShogiConstants.MAX_INDEX) {
             val start = CSA_ROW_START_OFFSET + i * CSA_PIECE_WIDTH
             if (start + CSA_PIECE_WIDTH > line.length) break
             val pieceStr = line.substring(start, start + CSA_PIECE_WIDTH)
-            currentCells[rowIdx][i] = when {
+            row[i] = when {
                 pieceStr == CSA_EMPTY_PIECE -> null
                 pieceStr.startsWith("+") -> BoardPiece(findPiece(pieceStr.substring(1)), PieceColor.Black)
                 pieceStr.startsWith("-") -> BoardPiece(findPiece(pieceStr.substring(1)), PieceColor.White)
                 else -> null
             }
         }
+        currentSnapshot = currentSnapshot.copy(cells = newCells.map { it.toList() })
     }
 
     fun processMove(line: String, seconds: Int): String {
         val detail = MoveDetail.parse(line)
         val targetPiece = findPiece(detail.pieceCsa)
+        val toSquare = Square(detail.toX, detail.toY)
+        val turnColor = if (detail.isSente) PieceColor.Black else PieceColor.White
 
         val pieceKifName = if (detail.fromX == 0) {
-            updateBoardForDrop(detail.toX, detail.toY, targetPiece, detail.isSente)
+            currentSnapshot = currentSnapshot.applyDrop(targetPiece, toSquare, turnColor)
             targetPiece.symbol + "打"
         } else {
-            val movingPiece = currentCells[detail.fromY - 1][ShogiConstants.BOARD_SIZE - detail.fromX]?.piece ?: targetPiece.toBase()
+            val fromSquare = Square(detail.fromX, detail.fromY)
+            val movingPiece = currentSnapshot.at(fromSquare)?.piece ?: targetPiece.toBase()
             val isActuallyPromoted = (!movingPiece.isPromoted() && targetPiece.isPromoted()) || detail.isPromoteMarker
-            val pieceOnBoard = if (detail.isPromoteMarker) targetPiece.promote() else targetPiece
-            updateBoardForMove(detail.fromX, detail.fromY, detail.toX, detail.toY, pieceOnBoard, detail.isSente)
+            currentSnapshot = currentSnapshot.applyMove(fromSquare, toSquare, isActuallyPromoted, turnColor, fallbackPiece = targetPiece)
             if (isActuallyPromoted) movingPiece.symbol + "成" else movingPiece.symbol
         }
 
@@ -194,15 +198,6 @@ private class CsaConvertContext {
         lastToX = detail.toX
         lastToY = detail.toY
         return moveText
-    }
-
-    private fun updateBoardForDrop(toX: Int, toY: Int, piece: Piece, isSente: Boolean) {
-        currentCells[toY - 1][ShogiConstants.BOARD_SIZE - toX] = BoardPiece(piece, if (isSente) PieceColor.Black else PieceColor.White)
-    }
-
-    private fun updateBoardForMove(fromX: Int, fromY: Int, toX: Int, toY: Int, piece: Piece, isSente: Boolean) {
-        currentCells[fromY - 1][ShogiConstants.BOARD_SIZE - fromX] = null
-        currentCells[toY - 1][ShogiConstants.BOARD_SIZE - toX] = BoardPiece(piece, if (isSente) PieceColor.Black else PieceColor.White)
     }
 
     private fun updateConsumptionTime(isSente: Boolean, seconds: Int) {
