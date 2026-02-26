@@ -93,7 +93,7 @@ The project uses **Gradle** as the build tool.
     - **Commit Trailer:** Every commit must include the trailer `Generated-by: Gemini`.
     - **Code Comments/Documentation:** Must be written in **Japanese**.
 - **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation. **Before committing, you MUST run `./gradlew verify` and ensure it passes. Additionally, if a change affects the content of `GEMINI.md` (e.g., new features, structural changes, or updated conventions), you MUST update `GEMINI.md` accordingly in the same task.**
-- **Refactoring:** When refactoring, always measure the impact using tools like `detekt` (Complexity) and `wc -l` (LOC). Include the "before" and "after" metrics in the commit message to show the quantitative improvement. Ensure that `./gradlew verify` passes after any refactoring.
+- **Refactoring:** When refactoring, always measure the impact using tools like `detekt` (Complexity). Include the "before" and "after" metrics in the commit message to show the quantitative improvement. Ensure that `./gradlew verify` passes after any refactoring.
 - **Bug Fixing:** You MUST empirically reproduce the reported failure with a new test case or reproduction script before applying a fix. Fulfill the user's request thoroughly, including adding tests when fixing bugs to prevent regressions.
 - **UI Framework:** Jetpack Compose (Desktop).
 - **State Management:** Uses a **ViewModel** pattern with `UiState` and `Action` objects for predictable state transitions.
