@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
@@ -89,12 +90,18 @@ fun KifuGraphs(
 }
 
 @Composable
-fun KifuMetaInfo(senteName: String, goteName: String, startTime: String, event: String, onEdit: () -> Unit) {
+fun KifuMetaInfo(
+    fileName: String,
+    senteName: String,
+    goteName: String,
+    startTime: String,
+    event: String,
+    onEdit: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = ShogiDimensions.PaddingLarge)
-            .padding(top = ShogiDimensions.PaddingLarge)
             .background(Color.White.copy(alpha = METADATA_BG_ALPHA), RoundedCornerShape(ShogiDimensions.CornerMedium))
             .border(1.dp, Color.Gray.copy(alpha = METADATA_BORDER_ALPHA), RoundedCornerShape(ShogiDimensions.CornerMedium))
             .padding(ShogiDimensions.PaddingMedium),
@@ -103,7 +110,7 @@ fun KifuMetaInfo(senteName: String, goteName: String, startTime: String, event: 
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
         ) {
-            KifuMetaText(senteName, goteName, startTime, event, modifier = Modifier.weight(1f))
+            KifuMetaText(fileName, senteName, goteName, startTime, event, modifier = Modifier.weight(1f))
 
             IconButton(onClick = onEdit, modifier = Modifier.size(ShogiDimensions.IconSizeSmall)) {
                 Icon(
@@ -118,18 +125,27 @@ fun KifuMetaInfo(senteName: String, goteName: String, startTime: String, event: 
 }
 
 @Composable
-private fun KifuMetaText(sente: String, gote: String, startTime: String, event: String, modifier: Modifier = Modifier) {
+private fun KifuMetaText(
+    fileName: String,
+    sente: String,
+    gote: String,
+    startTime: String,
+    event: String,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingSmall),
     ) {
-        if (isAllMetadataEmpty(sente, gote, startTime, event)) {
-            Text(
-                text = AppStrings.NO_METADATA_HINT,
-                style = MaterialTheme.typography.caption,
-                color = Color.Gray.copy(alpha = ICON_ALPHA_INACTIVE),
-            )
-        } else {
+        Text(
+            text = fileName,
+            style = MaterialTheme.typography.subtitle1,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        if (!isAllMetadataEmpty(sente, gote, startTime, event)) {
             if (sente.isNotEmpty()) MetaRow(AppStrings.LABEL_SENTE, sente)
             if (gote.isNotEmpty()) MetaRow(AppStrings.LABEL_GOTE, gote)
             if (event.isNotEmpty()) MetaRow(AppStrings.LABEL_EVENT, event)
