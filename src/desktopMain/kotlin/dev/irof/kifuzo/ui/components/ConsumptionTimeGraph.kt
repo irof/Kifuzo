@@ -4,17 +4,24 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -73,73 +80,75 @@ fun ConsumptionTimeGraph(
     var hoverStep by remember { mutableStateOf<Int?>(null) }
     val textMeasurer = rememberTextMeasurer()
 
-    Box(
-        modifier = modifier
-            .background(Color.White, MaterialTheme.shapes.small)
-            .border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.small)
-            .padding(ShogiDimensions.PaddingSmall),
-    ) {
-        Canvas(
+    val senteTimes = times.filterIndexed { i, t -> i % 2 != 0 && t != null }.mapNotNull { it }
+    val goteTimes = times.filterIndexed { i, t -> i > 0 && i % 2 == 0 && t != null }.mapNotNull { it }
+
+    Column(modifier = modifier) {
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(times) {
-                    detectTapGestures { offset ->
-                        val stepWidth = size.width / max(1, times.size)
-                        val step = (offset.x / stepWidth).toInt().coerceIn(0, times.size - 1)
-                        onStepClick(step)
-                    }
-                }
-                .onPointerEvent(PointerEventType.Move) { event ->
-                    val offset = event.changes.first().position
-                    val stepWidth = size.width / max(1, times.size)
-                    hoverStep = (offset.x / stepWidth).toInt().coerceIn(0, times.size - 1)
-                }
-                .onPointerEvent(PointerEventType.Exit) {
-                    hoverStep = null
-                },
+                .weight(1f)
+                .background(Color.White, MaterialTheme.shapes.small)
+                .border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.small)
+                .padding(ShogiDimensions.PaddingSmall),
         ) {
-            val totalSteps = times.size
-            if (totalSteps == 0) return@Canvas
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(times) {
+                        detectTapGestures { offset ->
+                            val stepWidth = size.width / max(1, times.size)
+                            val step = (offset.x / stepWidth).toInt().coerceIn(0, times.size - 1)
+                            onStepClick(step)
+                        }
+                    }
+                    .onPointerEvent(PointerEventType.Move) { event ->
+                        val offset = event.changes.first().position
+                        val stepWidth = size.width / max(1, times.size)
+                        hoverStep = (offset.x / stepWidth).toInt().coerceIn(0, times.size - 1)
+                    }
+                    .onPointerEvent(PointerEventType.Exit) {
+                        hoverStep = null
+                    },
+            ) {
+                val totalSteps = times.size
+                if (totalSteps == 0) return@Canvas
 
-            val stepWidth = size.width / totalSteps
-            val maxSeconds = calculateMaxSeconds(times)
-            val scaler = NonLinearScaler(
-                maxActualValue = maxSeconds,
-                height = size.height,
-                threshold = TimeGraphConstants.SCALE_THRESHOLD,
-                compression = TimeGraphConstants.SCALE_COMPRESSION,
-                mode = ScalerMode.BOTTOM_ZERO,
-            )
+                val stepWidth = size.width / totalSteps
+                val maxSeconds = calculateMaxSeconds(times)
+                val scaler = NonLinearScaler(
+                    maxActualValue = maxSeconds,
+                    height = size.height,
+                    threshold = TimeGraphConstants.SCALE_THRESHOLD,
+                    compression = TimeGraphConstants.SCALE_COMPRESSION,
+                    mode = ScalerMode.BOTTOM_ZERO,
+                )
 
-            drawTimeGridLines(maxSeconds, scaler, textMeasurer)
-            drawTimeCurrentHighlight(currentStep, totalSteps, stepWidth)
-            drawTimeBars(times, stepWidth, scaler)
-            drawTimeAverageLines(times, scaler, textMeasurer)
-            drawTimeHoverIndicator(hoverStep, times, stepWidth, scaler, textMeasurer)
+                drawTimeGridLines(maxSeconds, scaler, textMeasurer)
+                drawTimeCurrentHighlight(currentStep, totalSteps, stepWidth)
+                drawTimeBars(times, stepWidth, scaler)
+                drawTimeAverageLines(senteTimes, goteTimes, scaler)
+                drawTimeHoverIndicator(hoverStep, times, stepWidth, scaler, textMeasurer)
+            }
         }
+
+        AverageLabelsRow(
+            senteAvg = senteTimes.takeIf { it.isNotEmpty() }?.average()?.toInt(),
+            goteAvg = goteTimes.takeIf { it.isNotEmpty() }?.average()?.toInt(),
+        )
     }
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeAverageLines(
-    times: List<Int?>,
+    senteTimes: List<Int>,
+    goteTimes: List<Int>,
     scaler: NonLinearScaler,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
 ) {
-    val senteTimes = times.filterIndexed { i, t -> i % 2 != 0 && t != null }.mapNotNull { it }
-    val goteTimes = times.filterIndexed { i, t -> i > 0 && i % 2 == 0 && t != null }.mapNotNull { it }
-
     if (senteTimes.isNotEmpty()) {
         drawSingleAverageLine(senteTimes.average().toFloat(), ShogiColors.EvalPositive, scaler)
     }
     if (goteTimes.isNotEmpty()) {
         drawSingleAverageLine(goteTimes.average().toFloat(), ShogiColors.EvalNegative, scaler)
     }
-
-    drawAverageLabels(
-        senteAvg = senteTimes.takeIf { it.isNotEmpty() }?.average()?.toFloat(),
-        goteAvg = goteTimes.takeIf { it.isNotEmpty() }?.average()?.toFloat(),
-        textMeasurer = textMeasurer,
-    )
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSingleAverageLine(
@@ -163,49 +172,37 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSingleAverageLi
     )
 }
 
-@OptIn(ExperimentalTextApi::class)
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawAverageLabels(
-    senteAvg: Float?,
-    goteAvg: Float?,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
-) {
-    val padding = ShogiDimensions.PaddingSmall.toPx()
-    var currentX = size.width - padding
-
-    // 後手のラベル（右側）
-    goteAvg?.let {
-        val label = "△ avg: ${it.toInt()}s"
-        val textLayoutResult = textMeasurer.measure(
-            text = AnnotatedString(label),
-            style = TextStyle(
-                color = ShogiColors.EvalNegative.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA),
-                fontSize = GraphCommonConstants.LABEL_FONT_SIZE,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-            ),
-        )
-        currentX -= textLayoutResult.size.width
-        drawText(
-            textLayoutResult,
-            topLeft = Offset(currentX, size.height - textLayoutResult.size.height - padding),
-        )
-        currentX -= padding * 2 // ラベル間のスペース
+@Composable
+private fun AverageLabelsRow(senteAvg: Int?, goteAvg: Int?) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        senteAvg?.let {
+            AverageLabel("▲", it, ShogiColors.EvalPositive)
+            Spacer(Modifier.width(ShogiDimensions.PaddingLarge))
+        }
+        goteAvg?.let {
+            AverageLabel("△", it, ShogiColors.EvalNegative)
+        }
     }
+}
 
-    // 先手のラベル（後手の左側）
-    senteAvg?.let {
-        val label = "▲ avg: ${it.toInt()}s"
-        val textLayoutResult = textMeasurer.measure(
-            text = AnnotatedString(label),
-            style = TextStyle(
-                color = ShogiColors.EvalPositive.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA),
-                fontSize = GraphCommonConstants.LABEL_FONT_SIZE,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-            ),
+@Composable
+private fun AverageLabel(prefix: String, value: Int, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = "$prefix avg:",
+            style = MaterialTheme.typography.caption,
+            color = Color.Gray,
         )
-        currentX -= textLayoutResult.size.width
-        drawText(
-            textLayoutResult,
-            topLeft = Offset(currentX, size.height - textLayoutResult.size.height - padding),
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = "${value}s",
+            style = MaterialTheme.typography.caption,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            color = color.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA),
         )
     }
 }
