@@ -8,6 +8,7 @@ import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
+import dev.irof.kifuzo.ui.theme.ShogiColors
 
 @OptIn(ExperimentalTextApi::class)
 fun DrawScope.drawEvaluationGrid(

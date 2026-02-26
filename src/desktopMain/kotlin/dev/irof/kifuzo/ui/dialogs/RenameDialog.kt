@@ -78,7 +78,7 @@ fun RenameDialog(
         },
         buttons = {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.PaddingMedium),
+                modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.Spacing.Medium),
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {

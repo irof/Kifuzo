@@ -50,7 +50,7 @@ fun KifuSidebar(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .padding(ShogiDimensions.PaddingLarge)
+            .padding(ShogiDimensions.Spacing.Large)
             .focusRequester(focusRequester)
             .focusable()
             .onPreviewKeyEvent { event ->
@@ -77,7 +77,7 @@ fun KifuSidebar(
             onSetViewMode = onSetViewMode,
         )
 
-        Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
 
         // --- フィルタ・ソート選択 ---
         FileFiltersAndSorting(
@@ -94,7 +94,7 @@ fun KifuSidebar(
             onRefresh = onRefresh,
         )
 
-        Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
 
         // --- ファイルツリーリスト ---
         FileTreeList(

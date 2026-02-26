@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -33,7 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.GameResult
 import dev.irof.kifuzo.models.Move
@@ -54,14 +53,15 @@ fun KifuMoveList(
 ) {
     val listState = rememberLazyListState()
     val showEval = moves.any { it.evaluation.isSignificant() }
-    val isFinished = moves.lastOrNull()?.let { GameResult.isFinished(it.moveText, it.evaluation) } ?: false
+    val lastMove = moves.lastOrNull()
+    val isFinished = lastMove != null && GameResult.isFinished(lastMove.moveText, lastMove.evaluation)
 
     LaunchedEffect(currentStep) {
         if (currentStep in 0..moves.size) listState.animateScrollToItem(currentStep)
     }
 
-    Box(modifier = modifier.background(Color.White, MaterialTheme.shapes.medium).border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.medium)) {
-        LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(vertical = ShogiDimensions.PaddingSmall)) {
+    Box(modifier = modifier.background(Color.White, MaterialTheme.shapes.medium).border(ShogiDimensions.Board.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.medium)) {
+        LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(vertical = ShogiDimensions.Spacing.Small)) {
             if (!isMainHistory) item { ResetToMainButton(onResetMain) }
 
             item { StartPositionItem(currentStep == 0, showEval, onStepChange, onSelectVariation) }
@@ -86,9 +86,9 @@ private fun calculateDiff(current: Evaluation, previous: Evaluation): Int? = if 
 
 @Composable
 private fun ResetToMainButton(onResetMain: () -> Unit) {
-    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge, vertical = ShogiDimensions.PaddingSmall)) {
-        OutlinedButton(onClick = onResetMain, modifier = Modifier.fillMaxWidth().height(ShogiDimensions.ButtonHeight), contentPadding = PaddingValues(0.dp)) {
-            Text("本譜に戻る", fontSize = 11.sp)
+    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.Spacing.Large, vertical = ShogiDimensions.Spacing.Small)) {
+        OutlinedButton(onClick = onResetMain, modifier = Modifier.fillMaxWidth().height(ShogiDimensions.Component.ButtonHeight), contentPadding = PaddingValues(0.dp)) {
+            Text("本譜に戻る", fontSize = ShogiDimensions.Text.Small)
         }
     }
 }
@@ -96,13 +96,13 @@ private fun ResetToMainButton(onResetMain: () -> Unit) {
 @Composable
 private fun AddResultRow(onWriteResult: (String) -> Unit) {
     var showMenu by remember { mutableStateOf(false) }
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = ShogiDimensions.PaddingSmall, horizontal = ShogiDimensions.PaddingLarge), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = ShogiDimensions.Spacing.Small, horizontal = ShogiDimensions.Spacing.Large), verticalAlignment = Alignment.CenterVertically) {
         Spacer(Modifier.width(32.dp))
         Box {
-            OutlinedButton(onClick = { showMenu = true }, modifier = Modifier.height(ShogiDimensions.ButtonHeight), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(ShogiDimensions.IconSizeSmall))
-                Spacer(Modifier.width(ShogiDimensions.PaddingExtraSmall))
-                Text("終局手を追加", fontSize = 11.sp)
+            OutlinedButton(onClick = { showMenu = true }, modifier = Modifier.height(ShogiDimensions.Component.ButtonHeight), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(ShogiDimensions.Icon.Small))
+                Spacer(Modifier.width(ShogiDimensions.Spacing.ExtraSmall))
+                Text("終局手を追加", fontSize = ShogiDimensions.Text.Small)
             }
             DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                 GameResult.UI_SELECTIONS.forEach { result ->
@@ -110,7 +110,7 @@ private fun AddResultRow(onWriteResult: (String) -> Unit) {
                         showMenu = false
                         onWriteResult(result)
                     }) {
-                        Text(result, fontSize = ShogiDimensions.FontSizeBody)
+                        Text(result, fontSize = ShogiDimensions.Text.Body)
                     }
                 }
             }

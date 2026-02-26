@@ -47,19 +47,19 @@ fun RootDirectorySelector(
             },
             elevation = 0.dp,
             backgroundColor = Color.White,
-            border = BorderStroke(ShogiDimensions.CellBorderThickness, Color.LightGray),
+            border = BorderStroke(ShogiDimensions.Board.CellBorderThickness, Color.LightGray),
         ) {
-            Row(modifier = Modifier.padding(ShogiDimensions.PaddingMedium), verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.padding(ShogiDimensions.Spacing.Medium), verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = ShogiIcons.FolderSelect,
                     contentDescription = null,
-                    tint = ShogiColors.Primary,
-                    modifier = Modifier.size(ShogiDimensions.IconSizeSmall),
+                    tint = ShogiColors.Panel.Primary,
+                    modifier = Modifier.size(ShogiDimensions.Icon.Small),
                 )
-                Spacer(Modifier.width(ShogiDimensions.PaddingMedium))
+                Spacer(Modifier.width(ShogiDimensions.Spacing.Medium))
                 Text(
                     text = currentRoot?.toString() ?: AppStrings.SELECT_KIFU_ROOT,
-                    fontSize = ShogiDimensions.FontSizeCaption,
+                    fontSize = ShogiDimensions.Text.Caption,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
@@ -69,12 +69,12 @@ fun RootDirectorySelector(
         }
 
         if (currentRoot != null) {
-            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
-            IconButton(onClick = onRefresh, modifier = Modifier.size(ShogiDimensions.ButtonHeight)) {
+            Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
+            IconButton(onClick = onRefresh, modifier = Modifier.size(ShogiDimensions.Component.ButtonHeight)) {
                 Icon(
                     imageVector = ShogiIcons.Refresh,
                     contentDescription = "再読み込み",
-                    tint = ShogiColors.Primary,
+                    tint = ShogiColors.Panel.Primary,
                 )
             }
         }

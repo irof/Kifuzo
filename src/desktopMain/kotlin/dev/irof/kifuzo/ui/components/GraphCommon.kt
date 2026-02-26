@@ -13,6 +13,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.irof.kifuzo.ui.theme.ShogiColors
+import dev.irof.kifuzo.ui.theme.ShogiDimensions
 
 object GraphCommonConstants {
     const val ALPHA_GRID_LIGHT = 0.2f
@@ -39,7 +41,6 @@ enum class ScalerMode {
 
 /**
  * 非線形スケールを計算するクラス。
- * 閾値を超えた値を指定された比率で圧縮します。
  */
 class NonLinearScaler(
     private val maxActualValue: Float,
@@ -89,7 +90,7 @@ fun DrawScope.drawGraphTooltip(
 ) {
     val textLayoutResult: TextLayoutResult = textMeasurer.measure(
         text = AnnotatedString(label),
-        style = TextStyle(color = Color.White, fontSize = 10.sp),
+        style = TextStyle(color = ShogiColors.Tooltip.Content, fontSize = ShogiDimensions.Text.Caption),
     )
 
     val padding = GraphCommonConstants.TOOLTIP_PADDING.toPx()
@@ -100,19 +101,17 @@ fun DrawScope.drawGraphTooltip(
     if (tooltipX + tooltipWidth > size.width) {
         tooltipX = x - tooltipWidth - GraphCommonConstants.TOOLTIP_OFFSET.toPx()
     }
-    // y はツールチップの中央高さではなく、指し手位置の上に表示したい場合があるが、
-    // ここでは汎用的に y を基準に配置する。
     val tooltipY = (y - tooltipHeight).coerceIn(0f, size.height - tooltipHeight)
 
     drawRoundRect(
-        color = Color.Black.copy(alpha = GraphCommonConstants.ALPHA_TOOLTIP),
+        color = ShogiColors.Tooltip.Background.copy(alpha = GraphCommonConstants.ALPHA_TOOLTIP),
         topLeft = Offset(tooltipX, tooltipY),
         size = Size(tooltipWidth, tooltipHeight),
         cornerRadius = CornerRadius(GraphCommonConstants.TOOLTIP_CORNER_RADIUS.toPx()),
     )
     drawText(
         textLayoutResult,
-        color = Color.White,
+        color = ShogiColors.Tooltip.Content,
         topLeft = Offset(tooltipX + padding, tooltipY + padding),
     )
 }

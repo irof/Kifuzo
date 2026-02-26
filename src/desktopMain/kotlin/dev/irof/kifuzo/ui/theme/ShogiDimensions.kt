@@ -3,37 +3,50 @@ package dev.irof.kifuzo.ui.theme
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/**
+ * デザインシステムに基づいた寸法定義。
+ */
 object ShogiDimensions {
-    val PaddingExtraSmall = 2.dp
-    val PaddingSmall = 4.dp
-    val PaddingMedium = 8.dp
-    val PaddingLarge = 16.dp
+    object Spacing {
+        val ExtraSmall = 2.dp
+        val Small = 4.dp
+        val Medium = 8.dp
+        val Large = 16.dp
+    }
 
-    val CornerMedium = 8.dp
+    object Corner {
+        val Medium = 8.dp
+    }
 
-    val IconSizeExtraSmall = 12.dp
-    val IconSizeSmall = 16.dp
-    val IconSizeMedium = 24.dp
+    object Icon {
+        val ExtraSmall = 12.dp
+        val Small = 16.dp
+        val Medium = 24.dp
+    }
 
-    val ButtonHeight = 32.dp
-    val MenuBarWidth = 48.dp
-    val DefaultSidebarWidth = dev.irof.kifuzo.models.AppConfig.DEFAULT_SIDEBAR_WIDTH.dp
-    val MinSidebarWidth = dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH.dp
-    val MaxSidebarWidth = dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH.dp
+    object Text {
+        val Caption = 10.sp
+        val Small = 11.sp
+        val Body = 12.sp
+        val Title = 18.sp
+    }
 
-    val FontSizeCaption = 10.sp
-    val FontSizeSmall = 11.sp
-    val FontSizeBody = 12.sp
-    val FontSizeTitle = 18.sp
+    object Board {
+        val CellMaxSize = 60.dp
+        val LineThickness = 1.5.dp
+        val Padding = 2.dp
+        val CellBorderThickness = 0.5.dp
+    }
 
-    val BoardCellMaxSize = 60.dp
-    val BoardLineThickness = 1.5.dp
-    val BoardPadding = 2.dp
-    val CellBorderThickness = 0.5.dp
+    object Component {
+        val ButtonHeight = 32.dp
+        val MenuBarWidth = 48.dp
+        val SidebarDefaultWidth = 280.dp
+        val MoveListWidth = 280.dp
+    }
 
-    val MoveListWidth = 280.dp
-    val GraphHeight = 240.dp
-    val DualGraphHeight = 160.dp
-
-    const val CHIP_SELECTED_ALPHA = 0.1f
+    object Chart {
+        val DefaultHeight = 240.dp
+        val DualHeight = 160.dp
+    }
 }

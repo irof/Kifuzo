@@ -36,9 +36,9 @@ fun BoardGrid(
 ) {
     Column(
         modifier = Modifier
-            .background(ShogiColors.BoardBackground)
-            .border(ShogiDimensions.BoardLineThickness, ShogiColors.BoardLine)
-            .padding(ShogiDimensions.BoardPadding),
+            .background(ShogiColors.Board.Background)
+            .border(ShogiDimensions.Board.LineThickness, ShogiColors.Board.Line)
+            .padding(ShogiDimensions.Board.Padding),
     ) {
         for (y in rangeY) {
             Row {
@@ -74,7 +74,7 @@ private fun BoardCell(
         modifier = Modifier
             .size(cellSize)
             .background(getCellBackgroundColor(isLastFrom, isLastTo))
-            .border(ShogiDimensions.CellBorderThickness, ShogiColors.CellBorder),
+            .border(ShogiDimensions.Board.CellBorderThickness, ShogiColors.Board.CellBorder),
         contentAlignment = Alignment.Center,
     ) {
         board.cells[y][x]?.let { bp ->
@@ -84,8 +84,8 @@ private fun BoardCell(
 }
 
 private fun getCellBackgroundColor(isLastFrom: Boolean, isLastTo: Boolean): Color = when {
-    isLastTo -> ShogiColors.HighlightLastTo
-    isLastFrom -> ShogiColors.HighlightLastFrom
+    isLastTo -> ShogiColors.Board.HighlightLastTo
+    isLastFrom -> ShogiColors.Board.HighlightLastFrom
     else -> Color.Transparent
 }
 
@@ -103,7 +103,7 @@ private fun PieceView(
     Text(
         text = bp.piece.symbol,
         fontSize = fontSize,
-        color = if (bp.piece.isPromoted()) ShogiColors.PiecePromoted else ShogiColors.PieceSente,
+        color = if (bp.piece.isPromoted()) ShogiColors.Piece.Promoted else ShogiColors.Piece.Sente,
         modifier = Modifier.rotate(rotation),
     )
 }

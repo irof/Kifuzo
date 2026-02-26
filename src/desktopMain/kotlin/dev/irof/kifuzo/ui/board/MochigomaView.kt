@@ -50,8 +50,8 @@ fun KomaDai(
     Box(
         modifier = Modifier
             .width(cellSize * KOMADAI_WIDTH_SCALE)
-            .background(ShogiColors.BoardBackground)
-            .border(ShogiDimensions.BoardLineThickness, ShogiColors.BoardLine)
+            .background(ShogiColors.Board.Background)
+            .border(ShogiDimensions.Board.LineThickness, ShogiColors.Board.Line)
             .padding(horizontal = 4.dp, vertical = 2.dp)
             .heightIn(min = cellSize * KOMADAI_MIN_HEIGHT_SCALE),
         contentAlignment = if (isSente) Alignment.CenterEnd else Alignment.CenterStart,
@@ -110,6 +110,6 @@ fun PlayerNameLabel(
         fontSize = fontSize,
         fontWeight = if (isTurn) FontWeight.Bold else FontWeight.Normal,
         color = nameColor,
-        modifier = Modifier.padding(horizontal = ShogiDimensions.PaddingMedium),
+        modifier = Modifier.padding(horizontal = ShogiDimensions.Spacing.Medium),
     )
 }

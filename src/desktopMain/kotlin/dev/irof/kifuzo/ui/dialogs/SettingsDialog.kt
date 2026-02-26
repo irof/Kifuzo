@@ -34,8 +34,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.AppSettings
+import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 
 @Composable
@@ -55,11 +55,11 @@ fun SettingsDialog(
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 NameRegexSection(tempRegex, onValueChange = { tempRegex = it })
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
                 FilenameTemplateSection(tempTemplate, onValueChange = { tempTemplate = it })
                 Spacer(Modifier.height(24.dp))
                 Divider()
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
                 RawSettingsSection()
             }
         },
@@ -73,14 +73,14 @@ fun SettingsDialog(
 private fun NameRegexSection(value: String, onValueChange: (String) -> Unit) {
     Column {
         Text(AppStrings.MY_NAME_REGEX_LABEL, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
         TextField(
             value = value,
             onValueChange = onValueChange,
             placeholder = { Text("例: (irof|名無し)") },
             modifier = Modifier.fillMaxWidth(),
         )
-        Text(AppStrings.AUTO_FLIP_HINT, fontSize = 10.sp, color = Color.Gray)
+        Text(AppStrings.AUTO_FLIP_HINT, fontSize = ShogiDimensions.Text.Caption, color = Color.Gray)
     }
 }
 
@@ -88,14 +88,14 @@ private fun NameRegexSection(value: String, onValueChange: (String) -> Unit) {
 private fun FilenameTemplateSection(value: String, onValueChange: (String) -> Unit) {
     Column {
         Text(AppStrings.FILENAME_TEMPLATE_LABEL, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
         TextField(
             value = value,
             onValueChange = onValueChange,
             placeholder = { Text("例: {YYYYMMDD}-{Sente}-{Gote}") },
             modifier = Modifier.fillMaxWidth(),
         )
-        Text(AppStrings.FILENAME_TEMPLATE_HINT, fontSize = 10.sp, color = Color.Gray)
+        Text(AppStrings.FILENAME_TEMPLATE_HINT, fontSize = ShogiDimensions.Text.Caption, color = Color.Gray)
     }
 }
 
@@ -104,14 +104,14 @@ private fun RawSettingsSection() {
     var rawSettings by remember { mutableStateOf(AppSettings.getAllSettings()) }
     Column {
         Text(AppStrings.RAW_PREFS_LABEL, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
         rawSettings.forEach { (key, value) ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = ShogiDimensions.Spacing.Small),
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(key, fontSize = 10.sp, color = Color.Gray)
+                    Text(key, fontSize = ShogiDimensions.Text.Caption, color = Color.Gray)
                     var editingValue by remember(key) { mutableStateOf(value) }
                     BasicTextField(
                         value = editingValue,
@@ -119,15 +119,15 @@ private fun RawSettingsSection() {
                             editingValue = it
                             AppSettings.putSetting(key, it)
                         },
-                        textStyle = TextStyle(fontSize = 12.sp),
-                        modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(4.dp),
+                        textStyle = TextStyle(fontSize = ShogiDimensions.Text.Body),
+                        modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(ShogiDimensions.Spacing.Small),
                     )
                 }
                 IconButton(onClick = {
                     AppSettings.removeSetting(key)
                     rawSettings = AppSettings.getAllSettings()
                 }) {
-                    Icon(Icons.Default.Delete, contentDescription = AppStrings.DELETE, tint = Color.Red, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Delete, contentDescription = AppStrings.DELETE, tint = Color.Red, modifier = Modifier.size(ShogiDimensions.Icon.Small))
                 }
             }
         }
@@ -136,9 +136,9 @@ private fun RawSettingsSection() {
 
 @Composable
 private fun SettingsFooter(regex: String, template: String, onDismiss: () -> Unit, onSave: (String, String) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
+    Row(modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.Spacing.Medium), horizontalArrangement = Arrangement.End) {
         TextButton(onClick = onDismiss) { Text(AppStrings.CLOSE) }
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(ShogiDimensions.Spacing.Medium))
         Button(onClick = { onSave(regex, template) }) { Text(AppStrings.SAVE_SETTINGS) }
     }
 }

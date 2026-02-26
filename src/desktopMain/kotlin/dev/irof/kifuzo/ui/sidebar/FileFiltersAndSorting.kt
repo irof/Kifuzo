@@ -32,7 +32,7 @@ fun FileFiltersAndSorting(
     Column {
         // フィルタ選択
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = ShogiDimensions.PaddingMedium),
+            modifier = Modifier.fillMaxWidth().padding(bottom = ShogiDimensions.Spacing.Medium),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             FilterChip(
@@ -40,7 +40,7 @@ fun FileFiltersAndSorting(
                 isSelected = currentFilters.contains(FileFilter.KIFU_ONLY),
                 onClick = { onToggleFilter(FileFilter.KIFU_ONLY) },
             )
-            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+            Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
             FilterChip(
                 label = AppStrings.FILTER_RECENT,
                 isSelected = currentFilters.contains(FileFilter.RECENT),
@@ -50,7 +50,7 @@ fun FileFiltersAndSorting(
 
         // ソート順
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = ShogiDimensions.PaddingMedium),
+            modifier = Modifier.fillMaxWidth().padding(bottom = ShogiDimensions.Spacing.Medium),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             FilterChip(
@@ -58,7 +58,7 @@ fun FileFiltersAndSorting(
                 isSelected = currentSort == FileSortOption.NAME,
                 onClick = { onSetSort(FileSortOption.NAME) },
             )
-            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+            Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
             FilterChip(
                 label = AppStrings.SORT_DATE,
                 isSelected = currentSort == FileSortOption.LAST_MODIFIED,
@@ -71,16 +71,16 @@ fun FileFiltersAndSorting(
 @Composable
 private fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
-        color = if (isSelected) ShogiColors.Primary.copy(alpha = ShogiDimensions.CHIP_SELECTED_ALPHA) else Color.Transparent,
-        border = BorderStroke(ShogiDimensions.CellBorderThickness, if (isSelected) ShogiColors.Primary else Color.LightGray),
+        color = if (isSelected) ShogiColors.Panel.Primary.copy(alpha = ShogiColors.Panel.SELECTED_BACKGROUND_ALPHA) else Color.Transparent,
+        border = BorderStroke(ShogiDimensions.Board.CellBorderThickness, if (isSelected) ShogiColors.Panel.Primary else Color.LightGray),
         shape = CircleShape,
         modifier = Modifier.clickable { onClick() },
     ) {
         Text(
             text = label,
-            fontSize = ShogiDimensions.FontSizeCaption,
-            color = if (isSelected) ShogiColors.Primary else Color.Gray,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = ShogiDimensions.PaddingSmall),
+            fontSize = ShogiDimensions.Text.Caption,
+            color = if (isSelected) ShogiColors.Panel.Primary else Color.Gray,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = ShogiDimensions.Spacing.Small),
         )
     }
 }

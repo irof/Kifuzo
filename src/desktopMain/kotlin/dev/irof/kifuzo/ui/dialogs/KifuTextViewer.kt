@@ -28,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 
 @Composable
@@ -50,9 +50,9 @@ fun KifuTextViewer(
                 .clickable(enabled = false) { },
             elevation = 8.dp,
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(ShogiDimensions.Spacing.Large)) {
                 Text(AppStrings.KIFU_TEXT, style = MaterialTheme.typography.h6)
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
 
                 val scrollSVer = rememberScrollState()
                 val scrollSHor = rememberScrollState()
@@ -61,27 +61,27 @@ fun KifuTextViewer(
                         .weight(1f)
                         .fillMaxWidth()
                         .background(Color.White)
-                        .border(1.dp, Color.LightGray),
+                        .border(ShogiDimensions.Board.CellBorderThickness, Color.LightGray),
                 ) {
                     androidx.compose.foundation.text.selection.SelectionContainer {
                         Text(
                             text = text,
-                            fontSize = 12.sp,
+                            fontSize = ShogiDimensions.Text.Body,
                             fontFamily = FontFamily.Monospace,
                             softWrap = false,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(8.dp)
+                                .padding(ShogiDimensions.Spacing.Medium)
                                 .verticalScroll(scrollSVer)
                                 .horizontalScroll(scrollSHor),
                         )
                     }
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     Button(onClick = onCopy) { Text(AppStrings.COPY_AND_CLOSE) }
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(ShogiDimensions.Spacing.Medium))
                     TextButton(onClick = onDismiss) { Text(AppStrings.CLOSE) }
                 }
             }

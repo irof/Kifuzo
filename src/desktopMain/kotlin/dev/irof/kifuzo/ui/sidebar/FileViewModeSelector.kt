@@ -30,8 +30,8 @@ fun FileViewModeSelector(
     ) {
         Row(
             modifier = Modifier
-                .border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.small)
-                .padding(ShogiDimensions.BoardPadding),
+                .border(ShogiDimensions.Board.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.small)
+                .padding(ShogiDimensions.Board.Padding),
         ) {
             ViewModeButton(
                 label = AppStrings.HIERARCHY,
@@ -50,15 +50,15 @@ fun FileViewModeSelector(
 @Composable
 private fun ViewModeButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
-        color = if (isSelected) ShogiColors.Primary else Color.Transparent,
+        color = if (isSelected) ShogiColors.Panel.Primary else Color.Transparent,
         shape = MaterialTheme.shapes.small,
         modifier = Modifier.clickable { onClick() },
     ) {
         Text(
             text = label,
-            fontSize = ShogiDimensions.FontSizeSmall,
+            fontSize = ShogiDimensions.Text.Small,
             color = if (isSelected) Color.White else Color.Gray,
-            modifier = Modifier.padding(horizontal = ShogiDimensions.PaddingMedium, vertical = ShogiDimensions.PaddingSmall),
+            modifier = Modifier.padding(horizontal = ShogiDimensions.Spacing.Medium, vertical = ShogiDimensions.Spacing.Small),
         )
     }
 }

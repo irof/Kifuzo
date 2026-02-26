@@ -50,11 +50,11 @@ fun EditMetadataDialog(
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(ShogiDimensions.Spacing.Large),
+                verticalArrangement = Arrangement.spacedBy(ShogiDimensions.Spacing.Medium),
             ) {
                 EventSection(event, onEventChange = { event = it })
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
                 StartTimeSection(path, startTime, onTimeChange = { startTime = it })
                 Spacer(Modifier.weight(1f))
                 MetadataFooter(event, startTime, onConfirm, onDismiss)
@@ -73,7 +73,7 @@ private fun EventSection(event: String, onEventChange: (String) -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(ShogiDimensions.Spacing.Medium)) {
             AssistanceButton(AppStrings.LABEL_QUEST) { onEventChange(AppStrings.LABEL_QUEST) }
             AssistanceButton(AppStrings.LABEL_WARS) { onEventChange(AppStrings.LABEL_WARS) }
         }
@@ -111,7 +111,7 @@ private fun MetadataFooter(event: String, startTime: String, onConfirm: (String,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         TextButton(onClick = onDismiss) { Text(AppStrings.CANCEL) }
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(ShogiDimensions.Spacing.Medium))
         Button(onClick = { onConfirm(event, startTime) }) { Text(AppStrings.OK) }
     }
 }
@@ -120,8 +120,8 @@ private fun MetadataFooter(event: String, startTime: String, onConfirm: (String,
 private fun AssistanceButton(text: String, onClick: () -> Unit) {
     TextButton(
         onClick = onClick,
-        modifier = Modifier.height(32.dp),
+        modifier = Modifier.height(ShogiDimensions.Component.ButtonHeight),
     ) {
-        Text(text, fontSize = ShogiDimensions.FontSizeCaption)
+        Text(text, fontSize = ShogiDimensions.Text.Caption)
     }
 }

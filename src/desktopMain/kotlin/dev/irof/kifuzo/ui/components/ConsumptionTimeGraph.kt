@@ -66,7 +66,6 @@ private object TimeGraphConstants {
 
     const val AVG_LINE_DASH_ON = 10f
     const val AVG_LINE_DASH_OFF = 10f
-    const val AVG_LINE_ALPHA = 0.8f
     const val PRECISION_THRESHOLD = 10.0
 }
 
@@ -76,7 +75,7 @@ fun ConsumptionTimeGraph(
     times: List<Int?>,
     currentStep: Int,
     onStepClick: (Int) -> Unit,
-    modifier: Modifier = Modifier.height(160.dp).fillMaxWidth(),
+    modifier: Modifier = Modifier.height(ShogiDimensions.Chart.DefaultHeight).fillMaxWidth(),
 ) {
     var hoverStep by remember { mutableStateOf<Int?>(null) }
     val textMeasurer = rememberTextMeasurer()
@@ -89,8 +88,8 @@ fun ConsumptionTimeGraph(
             modifier = Modifier
                 .weight(1f)
                 .background(Color.White, MaterialTheme.shapes.small)
-                .border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.small)
-                .padding(ShogiDimensions.PaddingSmall),
+                .border(ShogiDimensions.Board.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.small)
+                .padding(ShogiDimensions.Spacing.Small),
         ) {
             Canvas(
                 modifier = Modifier
@@ -145,10 +144,10 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeAverageLine
     scaler: NonLinearScaler,
 ) {
     if (senteTimes.isNotEmpty()) {
-        drawSingleAverageLine(senteTimes.average().toFloat(), ShogiColors.EvalPositive, scaler)
+        drawSingleAverageLine(senteTimes.average().toFloat(), ShogiColors.Chart.SenteAdvantage, scaler)
     }
     if (goteTimes.isNotEmpty()) {
-        drawSingleAverageLine(goteTimes.average().toFloat(), ShogiColors.EvalNegative, scaler)
+        drawSingleAverageLine(goteTimes.average().toFloat(), ShogiColors.Chart.GoteAdvantage, scaler)
     }
 }
 
@@ -160,7 +159,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSingleAverageLi
     val y = scaler.getScaledY(average)
     if (y < 0 || y > size.height) return
 
-    val color = baseColor.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA)
+    val color = baseColor.copy(alpha = ShogiColors.Chart.AVERAGE_LINE_ALPHA)
     drawLine(
         color = color,
         start = Offset(0f, y),
@@ -181,11 +180,11 @@ private fun AverageLabelsRow(senteAvg: Double?, goteAvg: Double?) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         senteAvg?.let {
-            AverageLabel("▲", it, ShogiColors.EvalPositive)
-            Spacer(Modifier.width(ShogiDimensions.PaddingLarge))
+            AverageLabel("▲", it, ShogiColors.Chart.SenteAdvantage)
+            Spacer(Modifier.width(ShogiDimensions.Spacing.Large))
         }
         goteAvg?.let {
-            AverageLabel("△", it, ShogiColors.EvalNegative)
+            AverageLabel("△", it, ShogiColors.Chart.GoteAdvantage)
         }
     }
 }
@@ -209,7 +208,7 @@ private fun AverageLabel(prefix: String, value: Double, color: Color) {
             text = formattedValue,
             style = MaterialTheme.typography.caption,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-            color = color.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA),
+            color = color.copy(alpha = ShogiColors.Chart.AVERAGE_LINE_ALPHA),
         )
     }
 }
@@ -301,7 +300,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeBars(
         val y = scaler.getScaledY(seconds)
         val barHeight = size.height - y
         val isSente = i % 2 != 0
-        val color = if (isSente) ShogiColors.EvalPositive else ShogiColors.EvalNegative
+        val color = if (isSente) ShogiColors.Chart.SenteAdvantage else ShogiColors.Chart.GoteAdvantage
 
         drawRect(
             color = color.copy(alpha = TimeGraphConstants.ALPHA_BAR),
@@ -315,7 +314,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeCurrentHigh
     if (totalSteps == 0) return
     val currentX = currentStep.coerceIn(0, totalSteps - 1) * stepWidth
     drawRect(
-        color = ShogiColors.Primary.copy(alpha = 0.2f),
+        color = ShogiColors.Panel.Primary.copy(alpha = 0.2f),
         topLeft = Offset(currentX, 0f),
         size = Size(stepWidth, size.height),
     )

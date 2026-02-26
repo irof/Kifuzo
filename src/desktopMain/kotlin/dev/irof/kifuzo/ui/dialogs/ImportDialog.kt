@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.InvalidPathException
@@ -47,7 +48,7 @@ fun ImportDialog(
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text("インポート元フォルダ:")
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
                 ImportSourceField(sourcePath, onPathChange = { sourcePath = it })
             }
         },
@@ -66,7 +67,7 @@ private fun ImportSourceField(path: String, onPathChange: (String) -> Unit) {
             modifier = Modifier.weight(1f),
             singleLine = true,
         )
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(ShogiDimensions.Spacing.Medium))
         IconButton(onClick = {
             val chooser = createDirectoryChooser(path)
             if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -90,9 +91,9 @@ private fun createDirectoryChooser(initialPath: String): JFileChooser = JFileCho
 
 @Composable
 private fun ImportFooter(sourcePath: String, onDismiss: () -> Unit, onImport: (Path) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
+    Row(modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.Spacing.Medium), horizontalArrangement = Arrangement.End) {
         TextButton(onClick = onDismiss) { Text(AppStrings.CANCEL) }
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(ShogiDimensions.Spacing.Medium))
         Button(
             onClick = {
                 try {

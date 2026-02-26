@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.Move
+import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 
@@ -47,17 +48,17 @@ fun KifuStepButtons(
     onStepChange: (Int) -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Button(onClick = { onStepChange(0) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.START, fontSize = ShogiDimensions.FontSizeCaption) }
-        Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
-        OutlinedButton(onClick = { onStepChange(currentStep - 1) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text("◀", fontSize = ShogiDimensions.FontSizeCaption) }
-        Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+        Button(onClick = { onStepChange(0) }, modifier = Modifier.height(ShogiDimensions.Component.ButtonHeight)) { Text(AppStrings.START, fontSize = ShogiDimensions.Text.Caption) }
+        Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
+        OutlinedButton(onClick = { onStepChange(currentStep - 1) }, modifier = Modifier.height(ShogiDimensions.Component.ButtonHeight)) { Text("◀", fontSize = ShogiDimensions.Text.Caption) }
+        Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
         if (isStandardStart && firstContactStep != -1) {
-            Button(onClick = { onStepChange(firstContactStep) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.CONTACT, fontSize = ShogiDimensions.FontSizeCaption) }
-            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+            Button(onClick = { onStepChange(firstContactStep) }, modifier = Modifier.height(ShogiDimensions.Component.ButtonHeight)) { Text(AppStrings.CONTACT, fontSize = ShogiDimensions.Text.Caption) }
+            Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
         }
-        OutlinedButton(onClick = { onStepChange(currentStep + 1) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text("▶", fontSize = ShogiDimensions.FontSizeCaption) }
-        Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
-        Button(onClick = { onStepChange(maxStep) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.END, fontSize = ShogiDimensions.FontSizeCaption) }
+        OutlinedButton(onClick = { onStepChange(currentStep + 1) }, modifier = Modifier.height(ShogiDimensions.Component.ButtonHeight)) { Text("▶", fontSize = ShogiDimensions.Text.Caption) }
+        Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
+        Button(onClick = { onStepChange(maxStep) }, modifier = Modifier.height(ShogiDimensions.Component.ButtonHeight)) { Text(AppStrings.END, fontSize = ShogiDimensions.Text.Caption) }
     }
 }
 
@@ -75,12 +76,12 @@ fun KifuGraphs(
     val hasTime = allConsumptionTimes.any { it != null && it > 0 }
 
     if (hasEval || hasTime) {
-        Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
         Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
-            verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.Spacing.Large),
+            verticalArrangement = Arrangement.spacedBy(ShogiDimensions.Spacing.Large),
         ) {
-            val targetHeight = if (hasEval && hasTime) ShogiDimensions.DualGraphHeight else ShogiDimensions.GraphHeight
+            val targetHeight = if (hasEval && hasTime) ShogiDimensions.Chart.DualHeight else ShogiDimensions.Chart.DefaultHeight
             if (hasEval) {
                 EvaluationGraph(allEvaluations, currentStep, isFlipped, onStepChange, Modifier.height(targetHeight).fillMaxWidth())
             }
@@ -103,10 +104,10 @@ fun KifuMetaInfo(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = ShogiDimensions.PaddingLarge)
-            .background(Color.White.copy(alpha = METADATA_BG_ALPHA), RoundedCornerShape(ShogiDimensions.CornerMedium))
-            .border(1.dp, Color.Gray.copy(alpha = METADATA_BORDER_ALPHA), RoundedCornerShape(ShogiDimensions.CornerMedium))
-            .padding(ShogiDimensions.PaddingMedium),
+            .padding(horizontal = ShogiDimensions.Spacing.Large)
+            .background(Color.White.copy(alpha = METADATA_BG_ALPHA), RoundedCornerShape(ShogiDimensions.Corner.Medium))
+            .border(1.dp, Color.Gray.copy(alpha = METADATA_BORDER_ALPHA), RoundedCornerShape(ShogiDimensions.Corner.Medium))
+            .padding(ShogiDimensions.Spacing.Medium),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -114,12 +115,12 @@ fun KifuMetaInfo(
         ) {
             KifuMetaText(fileName, senteName, goteName, startTime, event, modifier = Modifier.weight(1f))
 
-            IconButton(onClick = onEdit, modifier = Modifier.size(ShogiDimensions.IconSizeSmall)) {
+            IconButton(onClick = onEdit, modifier = Modifier.size(ShogiDimensions.Icon.Small)) {
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = AppStrings.EDIT_METADATA,
                     tint = Color.Gray,
-                    modifier = Modifier.size(ShogiDimensions.IconSizeSmall),
+                    modifier = Modifier.size(ShogiDimensions.Icon.Small),
                 )
             }
         }
@@ -137,7 +138,7 @@ private fun KifuMetaText(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingSmall),
+        verticalArrangement = Arrangement.spacedBy(ShogiDimensions.Spacing.Small),
     ) {
         Text(
             text = fileName,

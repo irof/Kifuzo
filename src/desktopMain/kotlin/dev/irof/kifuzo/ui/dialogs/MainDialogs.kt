@@ -138,7 +138,7 @@ private fun MessageDialog(
         text = { Text(msg) },
         buttons = {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.PaddingMedium),
+                modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.Spacing.Medium),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {

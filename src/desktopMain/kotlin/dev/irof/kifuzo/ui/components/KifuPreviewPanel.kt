@@ -77,8 +77,8 @@ fun KifuPreviewPanel(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .background(ShogiColors.PanelBackground)
-            .padding(horizontal = ShogiDimensions.PaddingLarge, vertical = ShogiDimensions.PaddingMedium)
+            .background(ShogiColors.Panel.Background)
+            .padding(horizontal = ShogiDimensions.Spacing.Large, vertical = ShogiDimensions.Spacing.Medium)
             .focusRequester(focusRequester)
             .focusable()
             .onPreviewKeyEvent { event ->
@@ -120,7 +120,7 @@ fun KifuPreviewPanel(
         KifuOpenButton(state.selectedFile, boardState.session.moves.isEmpty(), actions::onForceParse)
 
         if (boardState.session.moves.isNotEmpty() || !boardState.session.initialSnapshot.isStandardInitial()) {
-            Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
+            Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
             KifuMainContent(state, boardState, actions)
         }
     }
@@ -132,7 +132,11 @@ private fun KifuHeader(
     isMoveListVisible: Boolean,
     onToggleMoveList: () -> Unit,
 ) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End,
+    ) {
         if (hasHistory) {
             MoveListToggleButton(isMoveListVisible, onToggleMoveList)
         }
@@ -141,7 +145,7 @@ private fun KifuHeader(
 
 @Composable
 private fun MoveListToggleButton(isVisible: Boolean, onClick: () -> Unit) {
-    IconButton(onClick = onClick, modifier = Modifier.size(ShogiDimensions.IconSizeMedium)) {
+    IconButton(onClick = onClick, modifier = Modifier.size(ShogiDimensions.Icon.Medium)) {
         Icon(
             imageVector = ShogiIcons.SidebarToggle,
             contentDescription = if (isVisible) "手順を隠す" else "手順を表示",
@@ -154,8 +158,8 @@ private fun MoveListToggleButton(isVisible: Boolean, onClick: () -> Unit) {
 private fun KifuOpenButton(selectedFile: Path?, isHistoryEmpty: Boolean, onForceParse: (Path) -> Unit) {
     selectedFile?.let { selected ->
         if (isHistoryEmpty && selected.extension.lowercase() == "txt") {
-            Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
-            Button(onClick = { onForceParse(selected) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
+            Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
+            Button(onClick = { onForceParse(selected) }, modifier = Modifier.height(ShogiDimensions.Component.ButtonHeight)) {
                 Text("棋譜として開く")
             }
         }
@@ -168,10 +172,16 @@ private fun ColumnScope.KifuMainContent(
     boardState: ShogiBoardState,
     actions: KifuPreviewActions,
 ) {
-    Row(modifier = Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge)) {
-        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
+    Row(
+        modifier = Modifier.fillMaxWidth().weight(1f),
+        horizontalArrangement = Arrangement.spacedBy(ShogiDimensions.Spacing.Large),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             ShogiBoardView(boardState, isFlipped = state.isFlipped, onToggleFlip = actions::onToggleFlip)
-            Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
+            Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
             KifuOperationBar(boardState, state.isFlipped, actions::onStepChange)
         }
 
@@ -184,7 +194,7 @@ private fun ColumnScope.KifuMainContent(
                 onWriteResult = { result -> state.selectedFile?.let { actions.onWriteResult(it, result) } },
                 onSelectVariation = actions::onSelectVariation,
                 onResetMain = actions::onResetToMainHistory,
-                modifier = Modifier.width(ShogiDimensions.MoveListWidth).fillMaxHeight(),
+                modifier = Modifier.width(ShogiDimensions.Component.MoveListWidth).fillMaxHeight(),
             )
         }
     }
@@ -204,7 +214,7 @@ private fun KifuOperationBar(
             onValueChange = { onStepChange(it.toInt()) },
             valueRange = 0f..maxStep.toFloat(),
             steps = if (maxStep > 1) maxStep - 1 else 0,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.Spacing.Large),
         )
         KifuGraphs(boardState.currentMoves, boardState.currentStep, isFlipped, onStepChange)
     }

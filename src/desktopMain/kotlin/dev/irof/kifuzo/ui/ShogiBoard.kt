@@ -40,11 +40,11 @@ fun ShogiBoardView(
     val isSenteTurn = state.currentStep % 2 == 0
 
     androidx.compose.foundation.layout.BoxWithConstraints(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingMedium),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.Spacing.Medium),
         contentAlignment = Alignment.Center,
     ) {
         // 盤面(9) + 段符号(1) = 10. 10で割る (+ 余裕を持たせて11)
-        val cellSize = min(maxWidth / BoardViewConstants.CELL_COUNT_FOR_WIDTH, ShogiDimensions.BoardCellMaxSize)
+        val cellSize = min(maxWidth / BoardViewConstants.CELL_COUNT_FOR_WIDTH, ShogiDimensions.Board.CellMaxSize)
         val fontSize = (cellSize.value * BoardViewConstants.PIECE_FONT_SIZE_RATIO).sp
         val labelSize = (cellSize.value * BoardViewConstants.LABEL_FONT_SIZE_RATIO).sp
         val boardWidth = cellSize * BoardViewConstants.BOARD_WIDTH_CELLS
@@ -71,7 +71,7 @@ fun ShogiBoardView(
                 }
             }
 
-            Spacer(Modifier.height(ShogiDimensions.PaddingSmall))
+            Spacer(Modifier.height(ShogiDimensions.Spacing.Small))
 
             // 盤面本体
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -83,7 +83,7 @@ fun ShogiBoardView(
                 }
             }
 
-            Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
+            Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
 
             // 下段: 先手(下手)の駒台 ※反転時は後手
             Row(
