@@ -1,10 +1,6 @@
 package dev.irof.kifuzo.logic
 
-import dev.irof.kifuzo.models.BoardLayout
-import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.Evaluation
-import dev.irof.kifuzo.models.Piece
-import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.models.Square
@@ -17,16 +13,6 @@ private const val TO_X_POS = 3
 private const val TO_Y_POS = 4
 private const val PIECE_START_POS = 5
 private const val PIECE_END_POS = 7
-
-private const val CSA_ROW_INDEX_POS = 1
-private const val CSA_ROW_START_OFFSET = 2
-private const val CSA_PIECE_WIDTH = 3
-
-private const val MOCHIGOMA_COLOR_POS = 1
-private const val MOCHIGOMA_START_INDEX = 2
-private const val MOCHIGOMA_ENTRY_LENGTH = 4
-private const val MOCHIGOMA_NAME_OFFSET = 2
-private const val MOCHIGOMA_NAME_LENGTH = 2
 
 /**
  * CSA形式の棋譜を解析して ShogiBoardState を更新するクラス。
@@ -52,6 +38,9 @@ private class CsaParseContext(header: KifuHeader) {
     }
 }
 
+/**
+ * CSA形式の行リストを解析します。
+ */
 fun parseCsa(lines: List<String>, state: ShogiBoardState) {
     val header = parseHeader(lines)
     val ctx = CsaParseContext(header)
@@ -71,67 +60,13 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
     state.updateSession(ctx.builder.build())
 }
 
-private fun parseHeader(lines: List<String>): KifuHeader {
-    val parser = HeaderParser()
-    for (i in lines.indices) {
-        val line = lines[i].trim()
-        // CSAの指し手行が見つかったらヘッダー終了
-        if (line.startsWith("+") || line.startsWith("-")) break
-        parser.processLine(line, i)
-    }
-    return parser.build()
-}
-
-private fun handleCsaBoardLine(line: String, builder: KifuSessionBuilder) {
-    val rowIdx = line[CSA_ROW_INDEX_POS] - '1'
-    if (rowIdx !in 0 until ShogiConstants.BOARD_SIZE) return
-
-    val cells = mutableListOf<BoardPiece?>()
-    for (i in 0 until ShogiConstants.BOARD_SIZE) {
-        val start = CSA_ROW_START_OFFSET + i * CSA_PIECE_WIDTH
-        if (start + CSA_PIECE_WIDTH > line.length) {
-            cells.add(null)
-            continue
-        }
-        val pieceStr = line.substring(start, start + CSA_PIECE_WIDTH)
-        val piece: BoardPiece? = when {
-            pieceStr == " * " -> null
-            pieceStr.startsWith("+") -> BoardPiece(findPieceForCsa(pieceStr.substring(1)), PieceColor.Black)
-            pieceStr.startsWith("-") -> BoardPiece(findPieceForCsa(pieceStr.substring(1)), PieceColor.White)
-            else -> null
-        }
-        cells.add(piece)
-    }
-    builder.updateInitialState(y = rowIdx, row = cells)
-}
-
-private fun handleCsaMochigomaLine(line: String, builder: KifuSessionBuilder) {
-    if (line.length < MOCHIGOMA_START_INDEX) return
-    val color = if (line[MOCHIGOMA_COLOR_POS] == '+') PieceColor.Black else PieceColor.White
-
-    // P+00HI00KA などの形式をパース
-    var i = MOCHIGOMA_START_INDEX
-    while (i + MOCHIGOMA_ENTRY_LENGTH <= line.length) {
-        val pieceStr = line.substring(i + MOCHIGOMA_NAME_OFFSET, i + MOCHIGOMA_NAME_OFFSET + MOCHIGOMA_NAME_LENGTH)
-        if (pieceStr != "AL") { // AL（残り全部）は一旦スキップ
-            val piece = findPieceForCsa(pieceStr)
-            builder.updateInitialState(mochigomaColor = color, mochigomaPiece = piece)
-        }
-        i += MOCHIGOMA_ENTRY_LENGTH
-    }
-}
-
-private fun findPieceForCsa(name: String): Piece = Piece.entries.find { it.name == name } ?: Piece.FU
-
 private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx: CsaParseContext) {
-    if (line.length < CSA_MOVE_LINE_MIN_LENGTH) return
-
     val fromX = line[FROM_X_POS] - '0'
     val fromY = line[FROM_Y_POS] - '0'
     val toX = line[TO_X_POS] - '0'
     val toY = line[TO_Y_POS] - '0'
     val pieceCsa = line.substring(PIECE_START_POS, PIECE_END_POS)
-    val targetPiece = Piece.entries.find { it.name == pieceCsa } ?: Piece.FU
+    val targetPiece = dev.irof.kifuzo.models.Piece.entries.find { it.name == pieceCsa } ?: dev.irof.kifuzo.models.Piece.FU
 
     val seconds = if (index + 1 < lines.size && lines[index + 1].trim().startsWith("T")) {
         lines[index + 1].trim().substring(1).toIntOrNull()
@@ -139,17 +74,11 @@ private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx
         null
     }
 
-    val lastTo = ctx.builder.build().moves.lastOrNull()?.resultSnapshot?.lastTo
-    val destinationText = if (lastTo != null && lastTo.file == toX && lastTo.rank == toY) {
-        "同　"
-    } else {
-        BoardLayout.toShogiNotation(toX, toY)
-    }
+    val destinationText = getCsaDestinationText(ctx, toX, toY)
 
     if (fromX == 0) {
-        val moveText = destinationText + targetPiece.symbol + "打"
         try {
-            ctx.builder.applyAction(to = Square(toX, toY), piece = targetPiece, consumptionSeconds = seconds, moveText = "${ctx.moveCount} $moveText")
+            ctx.builder.applyAction(to = Square(toX, toY), piece = targetPiece, consumptionSeconds = seconds, moveText = "${ctx.moveCount} $destinationText${targetPiece.symbol}打")
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
             throw KifuParseException("${index + 1}行目: ${e.message}", lineNumber = index + 1, lineContent = line, cause = e)
         }
@@ -158,13 +87,18 @@ private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx
     }
 }
 
+private fun getCsaDestinationText(ctx: CsaParseContext, toX: Int, toY: Int): String {
+    val lastTo = ctx.builder.build().moves.lastOrNull()?.resultSnapshot?.lastTo
+    return if (lastTo != null && lastTo.file == toX && lastTo.rank == toY) "同　" else dev.irof.kifuzo.models.BoardLayout.toShogiNotation(toX, toY)
+}
+
 private fun applyCsaNormalMove(
     line: String,
     fromX: Int,
     fromY: Int,
     toX: Int,
     toY: Int,
-    targetPiece: Piece,
+    targetPiece: dev.irof.kifuzo.models.Piece,
     destinationText: String,
     seconds: Int?,
     index: Int,
@@ -176,9 +110,9 @@ private fun applyCsaNormalMove(
     val isPromote = fromPiece != null && !fromPiece.isPromoted() && targetPiece.isPromoted()
 
     val movePieceSymbol = if (isPromote) fromPiece?.symbol ?: "" else targetPiece.symbol
-    val moveText = destinationText + movePieceSymbol + if (isPromote) "成" else ""
+    val moveText = "${ctx.moveCount} $destinationText$movePieceSymbol${if (isPromote) "成" else ""}"
     try {
-        ctx.builder.applyAction(from = fromSquare, to = Square(toX, toY), isPromote = isPromote, consumptionSeconds = seconds, moveText = "${ctx.moveCount} $moveText")
+        ctx.builder.applyAction(from = fromSquare, to = Square(toX, toY), isPromote = isPromote, consumptionSeconds = seconds, moveText = moveText)
     } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
         throw KifuParseException("${index + 1}行目: ${e.message}", lineNumber = index + 1, lineContent = line, cause = e)
     }
@@ -186,13 +120,11 @@ private fun applyCsaNormalMove(
 
 private fun extractCsaEvaluation(line: String, builder: KifuSessionBuilder) {
     val currentEval = builder.lastEvaluation.orNull()
-    val isCurrentMate = currentEval != null && (kotlin.math.abs(currentEval) >= ShogiConstants.MATE_SCORE_THRESHOLD)
-
     if (line.contains("#詰み=先手勝ち")) {
         builder.lastEvaluation = Evaluation.SenteWin
     } else if (line.contains("#詰み=後手勝ち")) {
         builder.lastEvaluation = Evaluation.GoteWin
-    } else if (!isCurrentMate) {
+    } else if (currentEval == null || kotlin.math.abs(currentEval) < ShogiConstants.MATE_SCORE_THRESHOLD) {
         val evalMatch = Regex("""'\*#評価値=([+-]?\d+)""").find(line)
         evalMatch?.groupValues?.get(1)?.toIntOrNull()?.let { eval ->
             val evaluation = when {

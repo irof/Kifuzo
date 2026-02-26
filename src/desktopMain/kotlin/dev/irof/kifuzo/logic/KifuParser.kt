@@ -14,6 +14,9 @@ import kotlin.io.path.name
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * 棋譜ファイルの簡易情報をスキャンします。
+ */
 fun scanKifuInfo(path: Path): KifuInfo = try {
     val lines = readLinesWithEncoding(path)
     scanKifuInfo(lines).copy(path = path)
@@ -22,6 +25,9 @@ fun scanKifuInfo(path: Path): KifuInfo = try {
     KifuInfo(path, isError = true)
 }
 
+/**
+ * 行リストから棋譜の簡易情報をスキャンします。
+ */
 fun scanKifuInfo(lines: List<String>): KifuInfo {
     val header = parseHeader(lines)
     return KifuInfo(
@@ -33,11 +39,17 @@ fun scanKifuInfo(lines: List<String>): KifuInfo {
     )
 }
 
+/**
+ * KIF形式の棋譜ファイルを解析します。
+ */
 fun parseKifu(path: Path, state: ShogiBoardState) {
     val lines = readLinesWithEncoding(path)
     parseKifu(lines, state)
 }
 
+/**
+ * KIF形式の行リストを解析します。
+ */
 fun parseKifu(lines: List<String>, state: ShogiBoardState) {
     val header = parseHeader(lines)
     val mainParser = ParserState(header)
@@ -87,17 +99,10 @@ private fun handleVariation(
 }
 
 private fun findParentParser(allParsers: List<ParserState>, mainParser: ParserState, atStep: Int): ParserState? {
-    // 親パーサーを探す：最新のものから順に探索
-    var parent = allParsers.reversed().find {
-        atStep >= it.startingStep && atStep < it.startingStep + it.historySize
-    }
-
-    // 分岐点がパーサーの開始地点なら、それは兄弟変化の可能性が高いので、さらに親を探す
+    var parent = allParsers.reversed().find { atStep >= it.startingStep && atStep < it.startingStep + it.historySize }
     if (parent != null && parent != mainParser && atStep == parent.startingStep) {
         val sibling = parent
-        parent = allParsers.reversed().find {
-            it != sibling && atStep >= it.startingStep && atStep < it.startingStep + it.historySize
-        } ?: sibling
+        parent = allParsers.reversed().find { it != sibling && atStep >= it.startingStep && atStep < it.startingStep + it.historySize } ?: sibling
     }
     return parent
 }
@@ -115,51 +120,35 @@ private fun handleMoveLine(line: String, lineIndex: Int, parserState: ParserStat
     try {
         parserState.applyMove(parsedMove, line)
     } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-        throw KifuParseException(
-            message = "${lineIndex + 1}行目: ${e.message}",
-            lineNumber = lineIndex + 1,
-            lineContent = line,
-            cause = e,
-        )
+        throw KifuParseException(message = "${lineIndex + 1}行目: ${e.message}", lineNumber = lineIndex + 1, lineContent = line, cause = e)
     }
 }
 
 private class ParserState(private val header: KifuHeader, initialSnapshot: BoardSnapshot? = null, startingStep: Int = 0) {
     private val builder = KifuSessionBuilder().apply {
         setup(
-            senteName = header.senteName,
-            goteName = header.goteName,
-            startTime = header.startTime,
-            event = header.event,
-            initialCells = header.initialCells,
-            senteMochi = header.senteMochi,
-            goteMochi = header.goteMochi,
-            isStandardStart = header.isStandardStart,
-            startingStep = startingStep,
-            snapshot = initialSnapshot,
+            senteName = header.senteName, goteName = header.goteName, startTime = header.startTime, event = header.event,
+            initialCells = header.initialCells, senteMochi = header.senteMochi, goteMochi = header.goteMochi,
+            isStandardStart = header.isStandardStart, startingStep = startingStep, snapshot = initialSnapshot,
         )
     }
     var lastTo: dev.irof.kifuzo.models.Square? = null
-
     val historySize: Int get() = builder.historySize
     val startingStep: Int get() = builder.currentStartingStep
 
     fun extractEvaluation(line: String) {
         val currentEval = builder.lastEvaluation.orNull()
-        val isCurrentMate = currentEval != null && (kotlin.math.abs(currentEval) >= ShogiConstants.MATE_SCORE_THRESHOLD)
-
         if (line.contains("#詰み=先手勝ち")) {
             builder.lastEvaluation = Evaluation.SenteWin
         } else if (line.contains("#詰み=後手勝ち")) {
             builder.lastEvaluation = Evaluation.GoteWin
-        } else if (!isCurrentMate) {
+        } else if (currentEval == null || kotlin.math.abs(currentEval) < ShogiConstants.MATE_SCORE_THRESHOLD) {
             applyEvaluationScore(line)
         }
     }
 
     private fun applyEvaluationScore(line: String) {
-        val evalMatch = Regex("""\*#評価値=([+-]?\d+)""").find(line)
-            ?: Regex("""\* ([+-]?\d+)""").find(line)
+        val evalMatch = Regex("""\*#評価値=([+-]?\d+)""").find(line) ?: Regex("""\* ([+-]?\d+)""").find(line)
         evalMatch?.groupValues?.get(1)?.toIntOrNull()?.let { eval ->
             val evaluation = when {
                 eval >= ShogiConstants.MATE_SCORE_THRESHOLD -> Evaluation.SenteWin
@@ -180,22 +169,17 @@ private class ParserState(private val header: KifuHeader, initialSnapshot: Board
                 builder.applyAction(to = parsedMove.to, piece = parsedMove.piece, consumptionSeconds = parsedMove.consumptionSeconds, moveText = line)
                 lastTo = parsedMove.to
             }
-            is KifuParsedMove.Result -> {
-                builder.applyAction(consumptionSeconds = null, moveText = "", resultText = line)
-            }
+            is KifuParsedMove.Result -> builder.applyAction(consumptionSeconds = null, moveText = "", resultText = line)
         }
     }
 
     fun getSnapshotAt(step: Int): BoardSnapshot? = builder.getSnapshotAt(step)
-
     fun addVariation(atStep: Int, moves: List<Move>) = builder.addVariation(atStep, moves)
-
     fun buildMoves(): List<Move> = builder.build().moves
-
     fun buildSession(): KifuSession = builder.build()
 }
 
-private fun parseHeader(lines: List<String>): KifuHeader {
+internal fun parseHeader(lines: List<String>): KifuHeader {
     val parser = HeaderParser()
     for (i in lines.indices) {
         val line = lines[i].trim()
@@ -204,6 +188,9 @@ private fun parseHeader(lines: List<String>): KifuHeader {
     return parser.build()
 }
 
+/**
+ * 棋譜解析中に発生する例外。
+ */
 class KifuParseException(
     message: String,
     val lineNumber: Int? = null,
