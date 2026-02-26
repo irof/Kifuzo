@@ -32,6 +32,12 @@ sealed interface Evaluation {
     }
 
     fun orZero(): Int = orNull() ?: 0
+
+    fun isSignificant(): Boolean = when (this) {
+        is SenteWin, is GoteWin -> true
+        is Score -> value != 0
+        is Unknown -> false
+    }
 }
 
 enum class PieceColor {
@@ -69,6 +75,12 @@ object GameResult {
 
     /** 指定されたテキストが終局行（指し手ではない）であるか判定します */
     fun isResultLine(line: String): Boolean = ALL_KEYWORDS.any { line.contains(it) } && !line.contains("▲") && !line.contains("△")
+
+    fun isFinished(lastMoveText: String, evaluation: Evaluation): Boolean {
+        val score = evaluation.orZero()
+        val isMate = kotlin.math.abs(score) >= ShogiConstants.MATE_SCORE_THRESHOLD
+        return isMate || ALL_KEYWORDS.any { lastMoveText.contains(it) }
+    }
 }
 
 object BoardLayout {

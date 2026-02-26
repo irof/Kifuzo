@@ -25,6 +25,8 @@ import dev.irof.kifuzo.ui.theme.ShogiDimensions
 private object BoardViewConstants {
     const val LABEL_FONT_SIZE_RATIO = 0.3f
     const val PIECE_FONT_SIZE_RATIO = 0.6f
+    const val CELL_COUNT_FOR_WIDTH = 11f
+    const val BOARD_WIDTH_CELLS = 10
 }
 
 @Composable
@@ -42,10 +44,10 @@ fun ShogiBoardView(
         contentAlignment = Alignment.Center,
     ) {
         // 盤面(9) + 段符号(1) = 10. 10で割る (+ 余裕を持たせて11)
-        val cellSize = min(maxWidth / 11f, ShogiDimensions.BoardCellMaxSize)
+        val cellSize = min(maxWidth / BoardViewConstants.CELL_COUNT_FOR_WIDTH, ShogiDimensions.BoardCellMaxSize)
         val fontSize = (cellSize.value * BoardViewConstants.PIECE_FONT_SIZE_RATIO).sp
         val labelSize = (cellSize.value * BoardViewConstants.LABEL_FONT_SIZE_RATIO).sp
-        val boardWidth = cellSize * 10
+        val boardWidth = cellSize * BoardViewConstants.BOARD_WIDTH_CELLS
 
         Column(
             modifier = Modifier.width(boardWidth),

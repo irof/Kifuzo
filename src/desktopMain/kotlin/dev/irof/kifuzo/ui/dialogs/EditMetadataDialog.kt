@@ -53,63 +53,66 @@ fun EditMetadataDialog(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                // 棋戦
-                Column {
-                    OutlinedTextField(
-                        value = event,
-                        onValueChange = { event = it },
-                        label = { Text(AppStrings.LABEL_EVENT) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        AssistanceButton(AppStrings.LABEL_QUEST) { event = AppStrings.LABEL_QUEST }
-                        AssistanceButton(AppStrings.LABEL_WARS) { event = AppStrings.LABEL_WARS }
-                    }
-                }
-
+                EventSection(event, onEventChange = { event = it })
                 Spacer(Modifier.height(8.dp))
-
-                // 開始日時
-                Column {
-                    OutlinedTextField(
-                        value = startTime,
-                        onValueChange = { startTime = it },
-                        label = { Text(AppStrings.LABEL_START_TIME) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                    )
-                    AssistanceButton(AppStrings.LABEL_FILL_TIMESTAMP) {
-                        try {
-                            val lastModified = Files.getLastModifiedTime(path).toInstant()
-                            val date = lastModified.atZone(ZoneId.systemDefault())
-                                .format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"))
-                            startTime = date
-                        } catch (@Suppress("SwallowedException") e: IOException) {
-                            // Ignore error
-                        }
-                    }
-                }
-
+                StartTimeSection(path, startTime, onTimeChange = { startTime = it })
                 Spacer(Modifier.weight(1f))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text(AppStrings.CANCEL)
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Button(onClick = { onConfirm(event, startTime) }) {
-                        Text(AppStrings.OK)
-                    }
-                }
+                MetadataFooter(event, startTime, onConfirm, onDismiss)
             }
         }
+    }
+}
+
+@Composable
+private fun EventSection(event: String, onEventChange: (String) -> Unit) {
+    Column {
+        OutlinedTextField(
+            value = event,
+            onValueChange = onEventChange,
+            label = { Text(AppStrings.LABEL_EVENT) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AssistanceButton(AppStrings.LABEL_QUEST) { onEventChange(AppStrings.LABEL_QUEST) }
+            AssistanceButton(AppStrings.LABEL_WARS) { onEventChange(AppStrings.LABEL_WARS) }
+        }
+    }
+}
+
+@Composable
+private fun StartTimeSection(path: Path, startTime: String, onTimeChange: (String) -> Unit) {
+    Column {
+        OutlinedTextField(
+            value = startTime,
+            onValueChange = onTimeChange,
+            label = { Text(AppStrings.LABEL_START_TIME) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+        )
+        AssistanceButton(AppStrings.LABEL_FILL_TIMESTAMP) {
+            try {
+                val lastModified = Files.getLastModifiedTime(path).toInstant()
+                val date = lastModified.atZone(ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"))
+                onTimeChange(date)
+            } catch (@Suppress("SwallowedException") e: IOException) {
+                // Ignore error
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetadataFooter(event: String, startTime: String, onConfirm: (String, String) -> Unit, onDismiss: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TextButton(onClick = onDismiss) { Text(AppStrings.CANCEL) }
+        Spacer(Modifier.width(8.dp))
+        Button(onClick = { onConfirm(event, startTime) }) { Text(AppStrings.OK) }
     }
 }
 

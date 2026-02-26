@@ -18,6 +18,11 @@ import androidx.compose.ui.unit.TextUnit
 import dev.irof.kifuzo.models.BoardLayout
 import dev.irof.kifuzo.utils.AppStrings
 
+private object LabelConstants {
+    const val FLIP_BUTTON_SIZE_RATIO = 0.6f
+    const val FLIP_BUTTON_ALPHA = 0.7f
+}
+
 @Composable
 fun SujiLabels(
     rangeX: IntProgression,
@@ -35,11 +40,11 @@ fun SujiLabels(
         // 盤右上の角に反転ボタンを配置
         Box(modifier = Modifier.size(cellSize), contentAlignment = Alignment.Center) {
             onToggleFlip?.let {
-                IconButton(onClick = it, modifier = Modifier.size(cellSize * 0.6f)) {
+                IconButton(onClick = it, modifier = Modifier.size(cellSize * LabelConstants.FLIP_BUTTON_SIZE_RATIO)) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
                         contentDescription = AppStrings.FLIP_BOARD,
-                        tint = Color.Gray.copy(alpha = 0.7f),
+                        tint = Color.Gray.copy(alpha = LabelConstants.FLIP_BUTTON_ALPHA),
                     )
                 }
             }

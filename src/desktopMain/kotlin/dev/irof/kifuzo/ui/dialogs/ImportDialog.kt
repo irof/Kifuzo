@@ -48,51 +48,60 @@ fun ImportDialog(
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text("インポート元フォルダ:")
                 Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextField(
-                        value = sourcePath,
-                        onValueChange = { sourcePath = it },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    IconButton(onClick = {
-                        val chooser = JFileChooser().apply {
-                            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                            if (sourcePath.isNotEmpty()) {
-                                val f = java.io.File(sourcePath)
-                                if (f.exists()) {
-                                    currentDirectory = if (f.isDirectory) f else f.parentFile
-                                }
-                            }
-                        }
-                        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                            sourcePath = chooser.selectedFile.absolutePath
-                        }
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = "フォルダを選択")
-                    }
-                }
+                ImportSourceField(sourcePath, onPathChange = { sourcePath = it })
             }
         },
         buttons = {
-            Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onDismiss) { Text(AppStrings.CANCEL) }
-                Spacer(Modifier.width(8.dp))
-                Button(
-                    onClick = {
-                        try {
-                            val path = java.nio.file.Paths.get(sourcePath)
-                            onImport(path)
-                        } catch (e: InvalidPathException) {
-                            logger.error(e) { "Invalid path entered: $sourcePath" }
-                        }
-                    },
-                    enabled = sourcePath.isNotEmpty(),
-                ) {
-                    Text("インポート実行")
-                }
-            }
+            ImportFooter(sourcePath, onDismiss, onImport)
         },
     )
+}
+
+@Composable
+private fun ImportSourceField(path: String, onPathChange: (String) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        TextField(
+            value = path,
+            onValueChange = onPathChange,
+            modifier = Modifier.weight(1f),
+            singleLine = true,
+        )
+        Spacer(Modifier.width(8.dp))
+        IconButton(onClick = {
+            val chooser = JFileChooser().apply {
+                fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                if (path.isNotEmpty()) {
+                    val f = java.io.File(path)
+                    if (f.exists()) {
+                        currentDirectory = if (f.isDirectory) f else f.parentFile
+                    }
+                }
+            }
+            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                onPathChange(chooser.selectedFile.absolutePath)
+            }
+        }) {
+            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "フォルダを選択")
+        }
+    }
+}
+
+@Composable
+private fun ImportFooter(sourcePath: String, onDismiss: () -> Unit, onImport: (Path) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
+        TextButton(onClick = onDismiss) { Text(AppStrings.CANCEL) }
+        Spacer(Modifier.width(8.dp))
+        Button(
+            onClick = {
+                try {
+                    onImport(java.nio.file.Paths.get(sourcePath))
+                } catch (e: InvalidPathException) {
+                    logger.error(e) { "Invalid path entered: $sourcePath" }
+                }
+            },
+            enabled = sourcePath.isNotEmpty(),
+        ) {
+            Text("インポート実行")
+        }
+    }
 }

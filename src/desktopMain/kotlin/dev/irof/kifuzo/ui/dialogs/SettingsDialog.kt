@@ -47,7 +47,6 @@ fun SettingsDialog(
 ) {
     var tempRegex by remember { mutableStateOf(initialRegex) }
     var tempTemplate by remember { mutableStateOf(initialTemplate) }
-    var rawSettings by remember { mutableStateOf(AppSettings.getAllSettings()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -55,69 +54,91 @@ fun SettingsDialog(
         modifier = Modifier.width(500.dp),
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                Text(AppStrings.MY_NAME_REGEX_LABEL, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-                TextField(
-                    value = tempRegex,
-                    onValueChange = { tempRegex = it },
-                    placeholder = { Text("例: (irof|名無し)") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Text(AppStrings.AUTO_FLIP_HINT, fontSize = 10.sp, color = Color.Gray)
-
+                NameRegexSection(tempRegex, onValueChange = { tempRegex = it })
                 Spacer(Modifier.height(16.dp))
-
-                Text(AppStrings.FILENAME_TEMPLATE_LABEL, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-                TextField(
-                    value = tempTemplate,
-                    onValueChange = { tempTemplate = it },
-                    placeholder = { Text("例: {YYYYMMDD}-{Sente}-{Gote}") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Text(AppStrings.FILENAME_TEMPLATE_HINT, fontSize = 10.sp, color = Color.Gray)
-
+                FilenameTemplateSection(tempTemplate, onValueChange = { tempTemplate = it })
                 Spacer(Modifier.height(24.dp))
                 Divider()
                 Spacer(Modifier.height(16.dp))
-
-                Text(AppStrings.RAW_PREFS_LABEL, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-
-                rawSettings.forEach { (key, value) ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(key, fontSize = 10.sp, color = Color.Gray)
-                            var editingValue by remember(key) { mutableStateOf(value) }
-                            BasicTextField(
-                                value = editingValue,
-                                onValueChange = {
-                                    editingValue = it
-                                    AppSettings.putSetting(key, it)
-                                },
-                                textStyle = TextStyle(fontSize = 12.sp),
-                                modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(4.dp),
-                            )
-                        }
-                        IconButton(onClick = {
-                            AppSettings.removeSetting(key)
-                            rawSettings = AppSettings.getAllSettings()
-                        }) {
-                            Icon(Icons.Default.Delete, contentDescription = AppStrings.DELETE, tint = Color.Red, modifier = Modifier.size(18.dp))
-                        }
-                    }
-                }
+                RawSettingsSection()
             }
         },
         buttons = {
-            Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onDismiss) { Text(AppStrings.CLOSE) }
-                Spacer(Modifier.width(8.dp))
-                Button(onClick = { onSave(tempRegex, tempTemplate) }) { Text(AppStrings.SAVE_SETTINGS) }
-            }
+            SettingsFooter(tempRegex, tempTemplate, onDismiss, onSave)
         },
     )
+}
+
+@Composable
+private fun NameRegexSection(value: String, onValueChange: (String) -> Unit) {
+    Column {
+        Text(AppStrings.MY_NAME_REGEX_LABEL, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text("例: (irof|名無し)") },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(AppStrings.AUTO_FLIP_HINT, fontSize = 10.sp, color = Color.Gray)
+    }
+}
+
+@Composable
+private fun FilenameTemplateSection(value: String, onValueChange: (String) -> Unit) {
+    Column {
+        Text(AppStrings.FILENAME_TEMPLATE_LABEL, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text("例: {YYYYMMDD}-{Sente}-{Gote}") },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(AppStrings.FILENAME_TEMPLATE_HINT, fontSize = 10.sp, color = Color.Gray)
+    }
+}
+
+@Composable
+private fun RawSettingsSection() {
+    var rawSettings by remember { mutableStateOf(AppSettings.getAllSettings()) }
+    Column {
+        Text(AppStrings.RAW_PREFS_LABEL, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        rawSettings.forEach { (key, value) ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(key, fontSize = 10.sp, color = Color.Gray)
+                    var editingValue by remember(key) { mutableStateOf(value) }
+                    BasicTextField(
+                        value = editingValue,
+                        onValueChange = {
+                            editingValue = it
+                            AppSettings.putSetting(key, it)
+                        },
+                        textStyle = TextStyle(fontSize = 12.sp),
+                        modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(4.dp),
+                    )
+                }
+                IconButton(onClick = {
+                    AppSettings.removeSetting(key)
+                    rawSettings = AppSettings.getAllSettings()
+                }) {
+                    Icon(Icons.Default.Delete, contentDescription = AppStrings.DELETE, tint = Color.Red, modifier = Modifier.size(18.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsFooter(regex: String, template: String, onDismiss: () -> Unit, onSave: (String, String) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.End) {
+        TextButton(onClick = onDismiss) { Text(AppStrings.CLOSE) }
+        Spacer(Modifier.width(8.dp))
+        Button(onClick = { onSave(regex, template) }) { Text(AppStrings.SAVE_SETTINGS) }
+    }
 }
