@@ -36,47 +36,50 @@ fun parseCsa(path: Path, state: ShogiBoardState) {
     parseCsa(lines, state)
 }
 
-private class CsaParseContext {
-    var senteName = "先手"
-    var goteName = "後手"
-    var startTime = ""
-    var event = ""
+private class CsaParseContext(header: KifuHeader) {
     var moveCount = 1
-    val builder = KifuSessionBuilder().apply { setup() }
+    val builder = KifuSessionBuilder().apply {
+        setup(
+            senteName = header.senteName,
+            goteName = header.goteName,
+            startTime = header.startTime,
+            event = header.event,
+            initialCells = header.initialCells,
+            senteMochi = header.senteMochi,
+            goteMochi = header.goteMochi,
+            isStandardStart = header.isStandardStart,
+        )
+    }
 }
 
 fun parseCsa(lines: List<String>, state: ShogiBoardState) {
-    val ctx = CsaParseContext()
+    val header = parseHeader(lines)
+    val ctx = CsaParseContext(header)
 
     for (i in lines.indices) {
         val line = lines[i].trim()
-        handleCsaLine(line, i, lines, ctx)
+        if (line.startsWith("+") || line.startsWith("-")) {
+            if (line.length >= CSA_MOVE_LINE_MIN_LENGTH) {
+                handleCsaMoveLine(line, i, lines, ctx)
+                ctx.moveCount++
+            }
+        } else if (line.startsWith("'")) {
+            extractCsaEvaluation(line, ctx.builder)
+        }
     }
 
-    ctx.builder.senteName = ctx.senteName
-    ctx.builder.goteName = ctx.goteName
-    ctx.builder.startTime = ctx.startTime
-    ctx.builder.event = ctx.event
     state.updateSession(ctx.builder.build())
 }
 
-private fun handleCsaLine(line: String, index: Int, lines: List<String>, ctx: CsaParseContext) {
-    when {
-        line.startsWith("N+") -> ctx.senteName = line.substring(2)
-        line.startsWith("N-") -> ctx.goteName = line.substring(2)
-        line.startsWith("\$START_TIME:") -> ctx.startTime = line.substringAfter(":").trim()
-        line.startsWith("\$EVENT:") -> ctx.event = line.substringAfter(":").trim()
-        line == "PI" -> ctx.builder.setup()
-        line.startsWith("P") && line.length >= 2 && line[1].isDigit() -> handleCsaBoardLine(line, ctx.builder)
-        line.startsWith("P+") || line.startsWith("P-") -> handleCsaMochigomaLine(line, ctx.builder)
-        line.startsWith("'") -> extractCsaEvaluation(line, ctx.builder)
-        line.startsWith("+") || line.startsWith("-") -> {
-            if (line.length >= CSA_MOVE_LINE_MIN_LENGTH) {
-                handleCsaMoveLine(line, index, lines, ctx)
-                ctx.moveCount++
-            }
-        }
+private fun parseHeader(lines: List<String>): KifuHeader {
+    val parser = HeaderParser()
+    for (i in lines.indices) {
+        val line = lines[i].trim()
+        // CSAの指し手行が見つかったらヘッダー終了
+        if (line.startsWith("+") || line.startsWith("-")) break
+        parser.processLine(line, i)
     }
+    return parser.build()
 }
 
 private fun handleCsaBoardLine(line: String, builder: KifuSessionBuilder) {
@@ -136,8 +139,7 @@ private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx
         null
     }
 
-    val lastSession = ctx.builder.build()
-    val lastTo = lastSession.history.lastOrNull()?.lastTo
+    val lastTo = ctx.builder.build().moves.lastOrNull()?.resultSnapshot?.lastTo
     val destinationText = if (lastTo != null && lastTo.file == toX && lastTo.rank == toY) {
         "同　"
     } else {
@@ -163,11 +165,11 @@ private fun applyCsaNormalMove(
     ctx: CsaParseContext,
 ) {
     val fromSquare = Square(fromX, fromY)
-    val currentSnapshot = ctx.builder.build().history.last()
+    val currentSnapshot = ctx.builder.build().getSnapshotAt(ctx.moveCount - 1) ?: ctx.builder.build().initialSnapshot
     val fromPiece = currentSnapshot.cells[fromSquare.yIndex][fromSquare.xIndex]?.piece
     val isPromote = fromPiece != null && !fromPiece.isPromoted() && targetPiece.isPromoted()
 
-    val movePieceSymbol = if (isPromote) fromPiece.symbol else targetPiece.symbol
+    val movePieceSymbol = if (isPromote) fromPiece?.symbol ?: "" else targetPiece.symbol
     val moveText = destinationText + movePieceSymbol + if (isPromote) "成" else ""
     ctx.builder.applyAction(from = fromSquare, to = Square(toX, toY), isPromote = isPromote, consumptionSeconds = seconds, moveText = "${ctx.moveCount} $moveText")
 }

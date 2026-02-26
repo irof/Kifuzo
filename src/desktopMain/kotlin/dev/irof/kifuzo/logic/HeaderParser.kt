@@ -18,36 +18,40 @@ internal data class KifuHeader(
     val moveStartIndex: Int,
 )
 
+/**
+ * 棋譜のヘッダー部分を解析するクラス。
+ */
 internal class HeaderParser {
-    private var senteName = "先手"
-    private var goteName = "後手"
-    private var startTime = ""
-    private var event = ""
-    private val currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<BoardPiece>(ShogiConstants.BOARD_SIZE) }
-    private val senteMochi = mutableListOf<Piece>()
-    private val goteMochi = mutableListOf<Piece>()
-    private var isStandardStart = true
-    private var moveStartIndex = -1
-    private var boardY = 0
+    var senteName = "先手"
+    var goteName = "後手"
+    var startTime = ""
+    var event = ""
+    var currentCells = BoardSnapshot.getInitialCells().map { it.toMutableList() }.toMutableList()
+    var senteMochi = mutableListOf<Piece>()
+    var goteMochi = mutableListOf<Piece>()
+    var isStandardStart = true
+    var moveStartIndex = -1
+    var boardY = 0
 
     fun processLine(line: String, index: Int): Boolean = when {
-        line.startsWith("先手：") || line.startsWith("対局者：") || line.startsWith("後手：") ||
-            line.startsWith("開始日時：") || line.startsWith("棋戦：") -> {
-            handleMetadataLine(line)
+        isMetadata(line) -> {
+            handleMetadataLine(this, line)
             false
         }
-        line.startsWith("|") && line.count { it == '|' } >= 2 -> {
-            isStandardStart = false
-            parseBoardLine(line)
+        line == "PI" -> {
+            resetToStandard()
             false
         }
-        Regex("""^[上下先後]手(の)?持駒：""").containsMatchIn(line) -> {
-            isStandardStart = false
-            handleMochigomaLine(line)
+        isBoardLine(line) -> {
+            handleBoardLine(this, line)
             false
         }
-        Regex("""^\s*\d+\s+.*""").matches(line) -> {
-            if (parseMove(line, null) != null) {
+        isMochigomaLine(line) -> {
+            handleMochigomaLine(this, line)
+            false
+        }
+        isMoveLine(line) -> {
+            if (parseMove(line, null) != null || line.startsWith("+") || line.startsWith("-")) {
                 moveStartIndex = index
                 true
             } else {
@@ -57,70 +61,28 @@ internal class HeaderParser {
         else -> false
     }
 
-    private fun handleMetadataLine(line: String) {
-        when {
-            line.startsWith("後手：") -> goteName = line.substringAfter("：").trim()
-            line.startsWith("先手：") || line.startsWith("対局者：") -> senteName = line.substringAfter("：").trim()
-            line.startsWith("開始日時：") -> startTime = line.substringAfter("：").trim()
-            line.startsWith("棋戦：") -> event = line.substringAfter("：").trim()
+    private fun resetToStandard() {
+        isStandardStart = true
+        currentCells = BoardSnapshot.getInitialCells().map { it.toMutableList() }.toMutableList()
+        senteMochi.clear()
+        goteMochi.clear()
+    }
+
+    fun prepareNonStandardBoard() {
+        if (isStandardStart) {
+            isStandardStart = false
+            currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<BoardPiece>(ShogiConstants.BOARD_SIZE).toMutableList() }.toMutableList()
         }
     }
 
-    private fun handleMochigomaLine(line: String) {
-        val pieces = Piece.parseMochigoma(line.substringAfter("："))
-        if (line.startsWith("先手") || line.startsWith("下手")) {
-            senteMochi.addAll(pieces)
-        } else {
-            goteMochi.addAll(pieces)
-        }
-    }
+    private fun isMetadata(l: String) = l.startsWith("先手：") || l.startsWith("対局者：") || l.startsWith("後手：") || l.startsWith("開始日時：") || l.startsWith("棋戦：") || l.startsWith("場所：") || l.startsWith("N+") || l.startsWith("N-") || l.startsWith("\$START_TIME:") || l.startsWith("\$EVENT:")
+    private fun isBoardLine(l: String) = (l.startsWith("|") && l.count { it == '|' } >= 2) || (l.startsWith("P") && l.length >= 2 && l[1].isDigit())
+    private fun isMochigomaLine(l: String) = l.startsWith("P+") || l.startsWith("P-") || Regex("""^[上下先後]手(の)?持駒：""").containsMatchIn(l)
+    private fun isMoveLine(l: String) = Regex("""^\s*\d+\s+.*""").matches(l) || l.startsWith("+") || l.startsWith("-")
 
-    private fun parseBoardLine(line: String) {
-        if (boardY >= ShogiConstants.BOARD_SIZE) return
-        val content = line.substringAfter("|").substringBeforeLast("|")
-        val cells = splitBoardCells(content)
-
-        for (x in 0 until ShogiConstants.BOARD_SIZE) {
-            if (x >= cells.size) break
-            val pStr = cells[x]
-            val piece = Piece.findPieceBySymbol(pStr.replace("v", "").replace("・", "").trim())
-            if (piece != null) {
-                val color = if (pStr.contains('v')) PieceColor.White else PieceColor.Black
-                currentCells[boardY][x] = BoardPiece(piece, color)
-            }
-        }
-        boardY++
-    }
-
-    private fun splitBoardCells(content: String): List<String> = if (content.contains("|")) {
-        content.split("|")
-    } else {
-        (0 until ShogiConstants.BOARD_SIZE).map { idx ->
-            val start = idx * 2
-            if (start + 2 <= content.length) content.substring(start, start + 2) else ""
-        }
-    }
-
-    fun build(): KifuHeader {
-        val finalCells = if (isStandardStart) {
-            BoardSnapshot.getInitialCells()
-        } else {
-            if (boardY < ShogiConstants.BOARD_SIZE) throw KifuParseException("盤面図が不完全です（${boardY}行しか見つかりませんでした）。")
-            val pieceCount = currentCells.sumOf { row -> row.count { it != null } }
-            if (pieceCount == 0) throw KifuParseException("盤面図から駒を読み取れませんでした。")
-            currentCells.map { it.toList() }
-        }
-
-        return KifuHeader(
-            senteName = senteName,
-            goteName = goteName,
-            startTime = startTime,
-            event = event,
-            initialCells = finalCells,
-            senteMochi = senteMochi,
-            goteMochi = goteMochi,
-            isStandardStart = isStandardStart,
-            moveStartIndex = moveStartIndex,
-        )
-    }
+    fun build(): KifuHeader = KifuHeader(
+        senteName = senteName, goteName = goteName, startTime = startTime, event = event,
+        initialCells = currentCells.map { it.toList() }, senteMochi = senteMochi.toList(), goteMochi = goteMochi.toList(),
+        isStandardStart = isStandardStart, moveStartIndex = moveStartIndex,
+    )
 }

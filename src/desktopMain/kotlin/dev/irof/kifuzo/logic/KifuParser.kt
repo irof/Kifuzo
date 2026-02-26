@@ -23,29 +23,14 @@ fun scanKifuInfo(path: Path): KifuInfo = try {
 }
 
 fun scanKifuInfo(lines: List<String>): KifuInfo {
-    var info = KifuInfo(java.nio.file.Paths.get(""), "", "", "", "")
-    for (line in lines) {
-        val trimmed = line.trim()
-        if (isMoveLine(trimmed)) break
-        info = updateKifuInfoFromLine(info, trimmed)
-    }
-    return info
-}
-
-private fun isMoveLine(line: String): Boolean = Regex("""^\s*\d+\s+.*""").matches(line) || line.startsWith("+") || line.startsWith("-")
-
-private fun updateKifuInfoFromLine(info: KifuInfo, line: String): KifuInfo = when {
-    line.startsWith("先手：") || line.startsWith("対局者：") -> info.copy(senteName = line.substringAfter("：").trim())
-    line.startsWith("後手：") -> info.copy(goteName = line.substringAfter("：").trim())
-    line.startsWith("開始日時：") -> info.copy(startTime = line.substringAfter("：").trim())
-    line.startsWith("棋戦：") -> info.copy(event = line.substringAfter("：").trim())
-
-    line.startsWith("N+") -> info.copy(senteName = line.substring(2).trim())
-    line.startsWith("N-") -> info.copy(goteName = line.substring(2).trim())
-    line.startsWith("\$START_TIME:") -> info.copy(startTime = line.substringAfter(":").trim())
-    line.startsWith("\$EVENT:") -> info.copy(event = line.substringAfter(":").trim())
-
-    else -> info
+    val header = parseHeader(lines)
+    return KifuInfo(
+        path = java.nio.file.Paths.get(""),
+        senteName = header.senteName,
+        goteName = header.goteName,
+        startTime = header.startTime,
+        event = header.event,
+    )
 }
 
 fun parseKifu(path: Path, state: ShogiBoardState) {
