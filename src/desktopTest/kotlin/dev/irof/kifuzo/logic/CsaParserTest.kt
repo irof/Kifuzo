@@ -104,7 +104,7 @@ class CsaParserTest {
 
         // 1手目(+7776TO)で歩が「と」になるので、「成」が付くはず
         assertEquals("1 ７六歩成", state.session.history[1].lastMoveText)
-        assertEquals(Piece.TO, state.session.history[1].cells[5][2]?.first)
+        assertEquals(Piece.TO, state.session.history[1].cells[5][2]?.piece)
         assertEquals("第1期蔵王戦", state.session.event)
         assertEquals("2026/02/24 10:00:00", state.session.startTime)
     }

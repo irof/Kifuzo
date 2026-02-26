@@ -50,6 +50,11 @@ enum class PieceColor {
     fun toSymbol(): String = if (this == Black) "▲" else "△"
 }
 
+/**
+ * 盤面上の駒（種類と色）を表します。
+ */
+data class BoardPiece(val piece: Piece, val color: PieceColor)
+
 data class Square(val file: Int, val rank: Int) {
     // file: 1-9 (筋), rank: 1-9 (段)
 

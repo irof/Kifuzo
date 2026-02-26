@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.logic
 
+import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
@@ -161,8 +162,8 @@ private class CsaConvertContext {
             val pieceStr = line.substring(start, start + CSA_PIECE_WIDTH)
             currentCells[rowIdx][i] = when {
                 pieceStr == CSA_EMPTY_PIECE -> null
-                pieceStr.startsWith("+") -> findPiece(pieceStr.substring(1)) to PieceColor.Black
-                pieceStr.startsWith("-") -> findPiece(pieceStr.substring(1)) to PieceColor.White
+                pieceStr.startsWith("+") -> BoardPiece(findPiece(pieceStr.substring(1)), PieceColor.Black)
+                pieceStr.startsWith("-") -> BoardPiece(findPiece(pieceStr.substring(1)), PieceColor.White)
                 else -> null
             }
         }
@@ -176,7 +177,7 @@ private class CsaConvertContext {
             updateBoardForDrop(detail.toX, detail.toY, targetPiece, detail.isSente)
             targetPiece.symbol + "打"
         } else {
-            val movingPiece = currentCells[detail.fromY - 1][ShogiConstants.BOARD_SIZE - detail.fromX]?.first ?: targetPiece.toBase()
+            val movingPiece = currentCells[detail.fromY - 1][ShogiConstants.BOARD_SIZE - detail.fromX]?.piece ?: targetPiece.toBase()
             val isActuallyPromoted = (!movingPiece.isPromoted() && targetPiece.isPromoted()) || detail.isPromoteMarker
             val pieceOnBoard = if (detail.isPromoteMarker) targetPiece.promote() else targetPiece
             updateBoardForMove(detail.fromX, detail.fromY, detail.toX, detail.toY, pieceOnBoard, detail.isSente)
@@ -196,12 +197,12 @@ private class CsaConvertContext {
     }
 
     private fun updateBoardForDrop(toX: Int, toY: Int, piece: Piece, isSente: Boolean) {
-        currentCells[toY - 1][ShogiConstants.BOARD_SIZE - toX] = piece to (if (isSente) PieceColor.Black else PieceColor.White)
+        currentCells[toY - 1][ShogiConstants.BOARD_SIZE - toX] = BoardPiece(piece, if (isSente) PieceColor.Black else PieceColor.White)
     }
 
     private fun updateBoardForMove(fromX: Int, fromY: Int, toX: Int, toY: Int, piece: Piece, isSente: Boolean) {
         currentCells[fromY - 1][ShogiConstants.BOARD_SIZE - fromX] = null
-        currentCells[toY - 1][ShogiConstants.BOARD_SIZE - toX] = piece to (if (isSente) PieceColor.Black else PieceColor.White)
+        currentCells[toY - 1][ShogiConstants.BOARD_SIZE - toX] = BoardPiece(piece, if (isSente) PieceColor.Black else PieceColor.White)
     }
 
     private fun updateConsumptionTime(isSente: Boolean, seconds: Int) {

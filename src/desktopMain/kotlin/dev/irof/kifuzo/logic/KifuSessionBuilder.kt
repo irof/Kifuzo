@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.logic
 
+import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuSession
@@ -20,7 +21,7 @@ class KifuSessionBuilder {
     private var firstContactStep: Int = -1
     private var startingStep: Int = 0
 
-    private val currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<Pair<Piece, PieceColor>>(ShogiConstants.BOARD_SIZE) }
+    private val currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<BoardPiece>(ShogiConstants.BOARD_SIZE) }
     private val senteMochi = mutableListOf<Piece>()
     private val goteMochi = mutableListOf<Piece>()
     private val history = mutableListOf<BoardSnapshot>()
@@ -43,7 +44,7 @@ class KifuSessionBuilder {
         goteName: String = "後手",
         startTime: String = "",
         event: String = "",
-        initialCells: List<List<Pair<Piece, PieceColor>?>> = BoardSnapshot.getInitialCells(),
+        initialCells: List<List<BoardPiece?>> = BoardSnapshot.getInitialCells(),
         senteMochi: List<Piece> = emptyList(),
         goteMochi: List<Piece> = emptyList(),
         isStandardStart: Boolean = true,
@@ -114,7 +115,7 @@ class KifuSessionBuilder {
         val dropPiece = piece ?: throw IllegalArgumentException("駒打ちには駒の指定が必要です。")
         val turnColor = getTurnColor()
         if (turnColor == PieceColor.Black) senteMochi.remove(dropPiece) else goteMochi.remove(dropPiece)
-        currentCells[to.yIndex][to.xIndex] = dropPiece to turnColor
+        currentCells[to.yIndex][to.xIndex] = BoardPiece(dropPiece, turnColor)
         history.add(createSnapshot(moveText, null, to, consumptionSeconds))
     }
 
@@ -123,11 +124,11 @@ class KifuSessionBuilder {
         val current = currentCells[from.yIndex][from.xIndex] ?: throw KifuParseException("移動元($from)に駒がありません。")
         val captured = currentCells[to.yIndex][to.xIndex]
         if (captured != null) {
-            if (turnColor == PieceColor.Black) senteMochi.add(captured.first.toBase()) else goteMochi.add(captured.first.toBase())
+            if (turnColor == PieceColor.Black) senteMochi.add(captured.piece.toBase()) else goteMochi.add(captured.piece.toBase())
             if (firstContactStep == -1) firstContactStep = history.size
         }
-        val movingPiece = if (isPromote) current.first.promote() else current.first
-        currentCells[to.yIndex][to.xIndex] = movingPiece to turnColor
+        val movingPiece = if (isPromote) current.piece.promote() else current.piece
+        currentCells[to.yIndex][to.xIndex] = BoardPiece(movingPiece, turnColor)
         currentCells[from.yIndex][from.xIndex] = null
         history.add(createSnapshot(moveText, from, to, consumptionSeconds))
     }
@@ -137,7 +138,7 @@ class KifuSessionBuilder {
      */
     fun updateInitialState(
         y: Int? = null,
-        row: List<Pair<Piece, PieceColor>?>? = null,
+        row: List<BoardPiece?>? = null,
         mochigomaColor: PieceColor? = null,
         mochigomaPiece: Piece? = null,
     ) {

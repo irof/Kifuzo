@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic
 
 import dev.irof.kifuzo.models.BoardLayout
+import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
@@ -82,7 +83,7 @@ private fun handleCsaBoardLine(line: String, builder: KifuSessionBuilder) {
     val rowIdx = line[CSA_ROW_INDEX_POS] - '1'
     if (rowIdx !in 0 until ShogiConstants.BOARD_SIZE) return
 
-    val cells = mutableListOf<Pair<Piece, PieceColor>?>()
+    val cells = mutableListOf<BoardPiece?>()
     for (i in 0 until ShogiConstants.BOARD_SIZE) {
         val start = CSA_ROW_START_OFFSET + i * CSA_PIECE_WIDTH
         if (start + CSA_PIECE_WIDTH > line.length) {
@@ -90,10 +91,10 @@ private fun handleCsaBoardLine(line: String, builder: KifuSessionBuilder) {
             continue
         }
         val pieceStr = line.substring(start, start + CSA_PIECE_WIDTH)
-        val piece: Pair<Piece, PieceColor>? = when {
+        val piece: BoardPiece? = when {
             pieceStr == " * " -> null
-            pieceStr.startsWith("+") -> findPieceForCsa(pieceStr.substring(1)) to PieceColor.Black
-            pieceStr.startsWith("-") -> findPieceForCsa(pieceStr.substring(1)) to PieceColor.White
+            pieceStr.startsWith("+") -> BoardPiece(findPieceForCsa(pieceStr.substring(1)), PieceColor.Black)
+            pieceStr.startsWith("-") -> BoardPiece(findPieceForCsa(pieceStr.substring(1)), PieceColor.White)
             else -> null
         }
         cells.add(piece)
@@ -163,7 +164,7 @@ private fun applyCsaNormalMove(
 ) {
     val fromSquare = Square(fromX, fromY)
     val currentSnapshot = ctx.builder.build().history.last()
-    val fromPiece = currentSnapshot.cells[fromSquare.yIndex][fromSquare.xIndex]?.first
+    val fromPiece = currentSnapshot.cells[fromSquare.yIndex][fromSquare.xIndex]?.piece
     val isPromote = fromPiece != null && !fromPiece.isPromoted() && targetPiece.isPromoted()
 
     val movePieceSymbol = if (isPromote) fromPiece.symbol else targetPiece.symbol

@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.logic
 
+import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
@@ -10,7 +11,7 @@ internal data class KifuHeader(
     val goteName: String,
     val startTime: String,
     val event: String,
-    val initialCells: List<List<Pair<Piece, PieceColor>?>>,
+    val initialCells: List<List<BoardPiece?>>,
     val senteMochi: List<Piece>,
     val goteMochi: List<Piece>,
     val isStandardStart: Boolean,
@@ -22,7 +23,7 @@ internal class HeaderParser {
     private var goteName = "後手"
     private var startTime = ""
     private var event = ""
-    private val currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<Pair<Piece, PieceColor>>(ShogiConstants.BOARD_SIZE) }
+    private val currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<BoardPiece>(ShogiConstants.BOARD_SIZE) }
     private val senteMochi = mutableListOf<Piece>()
     private val goteMochi = mutableListOf<Piece>()
     private var isStandardStart = true
@@ -85,7 +86,7 @@ internal class HeaderParser {
             val piece = Piece.findPieceBySymbol(pStr.replace("v", "").replace("・", "").trim())
             if (piece != null) {
                 val color = if (pStr.contains('v')) PieceColor.White else PieceColor.Black
-                currentCells[boardY][x] = piece to color
+                currentCells[boardY][x] = BoardPiece(piece, color)
             }
         }
         boardY++

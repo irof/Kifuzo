@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.Square
@@ -76,8 +77,8 @@ private fun BoardCell(
             .border(ShogiDimensions.CellBorderThickness, ShogiColors.CellBorder),
         contentAlignment = Alignment.Center,
     ) {
-        board.cells[y][x]?.let { (piece, color) ->
-            PieceView(piece, color, isFlipped, fontSize)
+        board.cells[y][x]?.let { bp ->
+            PieceView(bp, isFlipped, fontSize)
         }
     }
 }
@@ -90,20 +91,19 @@ private fun getCellBackgroundColor(isLastFrom: Boolean, isLastTo: Boolean): Colo
 
 @Composable
 private fun PieceView(
-    piece: dev.irof.kifuzo.models.Piece,
-    color: PieceColor,
+    bp: BoardPiece,
     isFlipped: Boolean,
     fontSize: TextUnit,
 ) {
-    val isSentePiece = color == PieceColor.Black
+    val isSentePiece = bp.color == PieceColor.Black
     val rotation = when {
         isFlipped -> if (isSentePiece) ROTATION_UPSIDE_DOWN else ROTATION_UPRIGHT
         else -> if (isSentePiece) ROTATION_UPRIGHT else ROTATION_UPSIDE_DOWN
     }
     Text(
-        text = piece.symbol,
+        text = bp.piece.symbol,
         fontSize = fontSize,
-        color = if (piece.isPromoted()) ShogiColors.PiecePromoted else ShogiColors.PieceSente,
+        color = if (bp.piece.isPromoted()) ShogiColors.PiecePromoted else ShogiColors.PieceSente,
         modifier = Modifier.rotate(rotation),
     )
 }

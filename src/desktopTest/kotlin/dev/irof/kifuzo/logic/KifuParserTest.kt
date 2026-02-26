@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic
 
 import dev.irof.kifuzo.assertAt
+import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuSession
@@ -20,8 +21,8 @@ class KifuParserTest {
     fun 盤面図やメタデータが含まれる棋譜を正しくパースできること() {
         // 盤面図
         val session = parse(KifuTestData.KIFU_WITH_BOARD)
-        session.history[0].assertAt(4, 1, Piece.OU to PieceColor.White)
-        session.history[2].assertAt(5, 2, Piece.OU to PieceColor.White)
+        session.history[0].assertAt(4, 1, BoardPiece(Piece.OU, PieceColor.White))
+        session.history[2].assertAt(5, 2, BoardPiece(Piece.OU, PieceColor.White))
 
         // メタデータ
         val info = scanKifuInfo(KifuTestData.KIFU_WITH_PLAYER_INFO.lines())
@@ -63,8 +64,8 @@ class KifuParserTest {
     fun 標準的な平手棋譜をパースできること() {
         val session = parse(KifuTestData.BASIC_KIFU)
         assertEquals(2, session.maxStep)
-        session.history[1].assertAt(7, 6, Piece.FU to PieceColor.Black)
-        session.history[2].assertAt(3, 4, Piece.FU to PieceColor.White)
+        session.history[1].assertAt(7, 6, BoardPiece(Piece.FU, PieceColor.Black))
+        session.history[2].assertAt(3, 4, BoardPiece(Piece.FU, PieceColor.White))
 
         // 消費時間の検証
         assertEquals(1, session.history[1].consumptionSeconds)
@@ -75,13 +76,13 @@ class KifuParserTest {
     fun 駒の移動と持ち駒を正しく処理できること() {
         val session = parse(KifuTestData.KIFU_WITH_CAPTURE_AND_DROP)
         // 駒取り
-        session.history[3].assertAt(2, 2, Piece.UM to PieceColor.Black)
+        session.history[3].assertAt(2, 2, BoardPiece(Piece.UM, PieceColor.Black))
         assertEquals(listOf(Piece.KA), session.history[3].senteMochigoma)
         // 相手による駒取り
-        session.history[4].assertAt(2, 2, Piece.GI to PieceColor.White)
+        session.history[4].assertAt(2, 2, BoardPiece(Piece.GI, PieceColor.White))
         assertEquals(listOf(Piece.KA), session.history[4].goteMochigoma)
         // 駒打ち
-        session.history[5].assertAt(4, 5, Piece.KA to PieceColor.Black)
+        session.history[5].assertAt(4, 5, BoardPiece(Piece.KA, PieceColor.Black))
     }
 
     @Test
@@ -101,7 +102,7 @@ class KifuParserTest {
     fun 成りや初期持駒を含む複雑な棋譜をパースできること() {
         // 成り
         val sessionComplex = parse(KifuTestData.KIFU_WITH_COMPLEX_MOVES)
-        assertEquals(Piece.UM, sessionComplex.history[3].at(2, 2)?.first)
+        assertEquals(Piece.UM, sessionComplex.history[3].at(2, 2)?.piece)
         assertEquals(listOf(Piece.KA, Piece.KE), sessionComplex.history[5].senteMochigoma)
 
         // 初期持駒
@@ -157,9 +158,9 @@ class KifuParserTest {
     @Test
     fun 同や打を含む特殊な表記をパースできること() {
         val session = parse(KifuTestData.KIFU_WITH_SPECIAL_NOTATION)
-        assertEquals(Piece.FU, session.history[3].at(3, 4)?.first)
-        assertEquals(Piece.KA, session.history[4].at(5, 5)?.first)
-        assertEquals(Piece.GI, session.history[6].at(8, 8)?.first)
+        assertEquals(Piece.FU, session.history[3].at(3, 4)?.piece)
+        assertEquals(Piece.KA, session.history[4].at(5, 5)?.piece)
+        assertEquals(Piece.GI, session.history[6].at(8, 8)?.piece)
     }
 
     @Test
@@ -255,11 +256,11 @@ class KifuParserTest {
         // 本譜 4手目は ４二銀(31) なので、その局面での 66 の駒(角)を動かす
         val var5 = session.history[4].variations[0]
         assertEquals("5 ７七角(66)", var5[1].lastMoveText)
-        assertEquals(Piece.KA to PieceColor.Black, var5[1].cells[6][2]) // 7筋7段目
+        assertEquals(BoardPiece(Piece.KA, PieceColor.Black), var5[1].cells[6][2]) // 7筋7段目
 
         // 6手目の移動
         assertEquals("6 ４四歩(43)", var5[2].lastMoveText)
-        assertEquals(Piece.FU to PieceColor.White, var5[2].cells[3][5]) // 4筋4段目
+        assertEquals(BoardPiece(Piece.FU, PieceColor.White), var5[2].cells[3][5]) // 4筋4段目
     }
 
     @Test
@@ -267,7 +268,7 @@ class KifuParserTest {
         val session = parse(KifuTestData.KIFU_VARIATION_WITH_DOU)
         val variation = session.history[3].variations[0]
         assertEquals("4 同　銀(31)", variation[1].lastMoveText)
-        assertEquals(Piece.GI to PieceColor.White, variation[1].cells[1][7]) // 2筋2段目
+        assertEquals(BoardPiece(Piece.GI, PieceColor.White), variation[1].cells[1][7]) // 2筋2段目
     }
 
     @Test
@@ -287,7 +288,7 @@ private fun parse(kifu: String): KifuSession {
     return state.session
 }
 
-private fun BoardSnapshot.at(file: Int, rank: Int): Pair<Piece, PieceColor>? {
+private fun BoardSnapshot.at(file: Int, rank: Int): BoardPiece? {
     val s = Square(file, rank)
     return cells[s.yIndex][s.xIndex]
 }

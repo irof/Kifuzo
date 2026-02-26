@@ -51,7 +51,7 @@ open class StubKifuRepository : KifuRepository {
 /**
  * 盤面の特定の座標にある駒を検証します。
  */
-fun BoardSnapshot.assertAt(file: Int, rank: Int, expected: Any?) {
+fun BoardSnapshot.assertAt(file: Int, rank: Int, expected: dev.irof.kifuzo.models.BoardPiece?) {
     val square = Square(file, rank)
     val actual = cells[square.yIndex][square.xIndex]
     assertEquals(expected, actual, "At $file$rank: expected $expected but was $actual")
