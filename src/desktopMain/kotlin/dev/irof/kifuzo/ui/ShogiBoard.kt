@@ -81,7 +81,7 @@ fun ShogiBoardView(
                 }
             }
 
-            Spacer(Modifier.height(ShogiDimensions.PaddingSmall))
+            Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
 
             // 下段: 先手(下手)の駒台 ※反転時は後手
             Row(
