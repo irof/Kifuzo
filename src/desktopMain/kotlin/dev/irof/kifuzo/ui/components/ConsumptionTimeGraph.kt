@@ -114,25 +114,40 @@ fun ConsumptionTimeGraph(
             drawTimeGridLines(maxSeconds, scaler, textMeasurer)
             drawTimeCurrentHighlight(currentStep, totalSteps, stepWidth)
             drawTimeBars(times, stepWidth, scaler)
-            drawTimeAverageLine(times, scaler, textMeasurer)
+            drawTimeAverageLines(times, scaler, textMeasurer)
             drawTimeHoverIndicator(hoverStep, times, stepWidth, scaler, textMeasurer)
         }
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeAverageLine(
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeAverageLines(
     times: List<Int?>,
     scaler: NonLinearScaler,
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
 ) {
-    val validTimes = times.filterNotNull()
-    if (validTimes.isEmpty()) return
+    val senteTimes = times.filterIndexed { i, t -> i % 2 != 0 && t != null }.mapNotNull { it }
+    val goteTimes = times.filterIndexed { i, t -> i > 0 && i % 2 == 0 && t != null }.mapNotNull { it }
 
-    val average = validTimes.average().toFloat()
+    if (senteTimes.isNotEmpty()) {
+        drawSingleAverageLine(senteTimes.average().toFloat(), "▲", ShogiColors.EvalPositive, scaler, textMeasurer, isTopLabel = true)
+    }
+    if (goteTimes.isNotEmpty()) {
+        drawSingleAverageLine(goteTimes.average().toFloat(), "△", ShogiColors.EvalNegative, scaler, textMeasurer, isTopLabel = false)
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSingleAverageLine(
+    average: Float,
+    labelPrefix: String,
+    baseColor: Color,
+    scaler: NonLinearScaler,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    isTopLabel: Boolean,
+) {
     val y = scaler.getScaledY(average)
     if (y < 0 || y > size.height) return
 
-    val color = Color.Gray.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA)
+    val color = baseColor.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA)
     drawLine(
         color = color,
         start = Offset(0f, y),
@@ -144,16 +159,17 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeAverageLine
         ),
     )
 
-    val label = "avg: ${average.toInt()}s"
+    val label = "$labelPrefix avg: ${average.toInt()}s"
     val textLayoutResult = textMeasurer.measure(
         text = AnnotatedString(label),
-        style = TextStyle(color = color, fontSize = GraphCommonConstants.LABEL_FONT_SIZE),
+        style = TextStyle(color = color, fontSize = GraphCommonConstants.LABEL_FONT_SIZE, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
     )
+    val labelY = if (isTopLabel) y - textLayoutResult.size.height else y
     drawText(
         textLayoutResult,
         topLeft = Offset(
             size.width - textLayoutResult.size.width - ShogiDimensions.PaddingSmall.toPx(),
-            y - textLayoutResult.size.height,
+            labelY,
         ),
     )
 }
