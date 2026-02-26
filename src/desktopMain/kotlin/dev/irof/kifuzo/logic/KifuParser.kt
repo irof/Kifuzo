@@ -25,23 +25,26 @@ fun scanKifuInfo(lines: List<String>): KifuInfo {
     var info = KifuInfo(java.nio.file.Paths.get(""), "", "", "", "")
     for (line in lines) {
         val trimmed = line.trim()
-        info = when {
-            trimmed.startsWith("先手：") || trimmed.startsWith("対局者：") -> info.copy(senteName = trimmed.substringAfter("：").trim())
-            trimmed.startsWith("後手：") -> info.copy(goteName = trimmed.substringAfter("：").trim())
-            trimmed.startsWith("開始日時：") -> info.copy(startTime = trimmed.substringAfter("：").trim())
-            trimmed.startsWith("棋戦：") -> info.copy(event = trimmed.substringAfter("：").trim())
-
-            trimmed.startsWith("N+") -> info.copy(senteName = trimmed.substring(2).trim())
-            trimmed.startsWith("N-") -> info.copy(goteName = trimmed.substring(2).trim())
-            trimmed.startsWith("\$START_TIME:") -> info.copy(startTime = trimmed.substringAfter(":").trim())
-            trimmed.startsWith("\$EVENT:") -> info.copy(event = trimmed.substringAfter(":").trim())
-
-            Regex("""^\s*\d+\s+.*""").matches(trimmed) -> break
-            trimmed.startsWith("+") || trimmed.startsWith("-") -> break
-            else -> info
-        }
+        if (isMoveLine(trimmed)) break
+        info = updateKifuInfoFromLine(info, trimmed)
     }
     return info
+}
+
+private fun isMoveLine(line: String): Boolean = Regex("""^\s*\d+\s+.*""").matches(line) || line.startsWith("+") || line.startsWith("-")
+
+private fun updateKifuInfoFromLine(info: KifuInfo, line: String): KifuInfo = when {
+    line.startsWith("先手：") || line.startsWith("対局者：") -> info.copy(senteName = line.substringAfter("：").trim())
+    line.startsWith("後手：") -> info.copy(goteName = line.substringAfter("：").trim())
+    line.startsWith("開始日時：") -> info.copy(startTime = line.substringAfter("：").trim())
+    line.startsWith("棋戦：") -> info.copy(event = line.substringAfter("：").trim())
+
+    line.startsWith("N+") -> info.copy(senteName = line.substring(2).trim())
+    line.startsWith("N-") -> info.copy(goteName = line.substring(2).trim())
+    line.startsWith("\$START_TIME:") -> info.copy(startTime = line.substringAfter(":").trim())
+    line.startsWith("\$EVENT:") -> info.copy(event = line.substringAfter(":").trim())
+
+    else -> info
 }
 
 fun parseKifu(path: Path, state: ShogiBoardState) {
@@ -53,33 +56,22 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
     val header = parseHeader(lines)
     val mainParser = ParserState(header)
 
+    if (header.moveStartIndex == -1) {
+        state.updateSession(mainParser.buildSession())
+        return
+    }
+
     val allParsers = mutableListOf(mainParser)
-    val relationships = mutableListOf<Triple<Triple<ParserState, Int, ParserState>, ParserState, Int>>() // Dummy to match usage? No.
     val childrenMap = mutableMapOf<ParserState, MutableList<Pair<Int, ParserState>>>()
     var currentParser = mainParser
 
-    if (header.moveStartIndex != -1) {
-        for (i in header.moveStartIndex until lines.size) {
-            val line = lines[i].trim()
-            if (line.isEmpty() || line.startsWith("#") || line.startsWith("&")) continue
-
+    for (i in header.moveStartIndex until lines.size) {
+        val line = lines[i].trim()
+        if (line.isNotEmpty() && !line.startsWith("#") && !line.startsWith("&")) {
             val variationMatch = Regex("""変化：(\d+)手""").find(line)
             if (variationMatch != null) {
-                val atStep = variationMatch.groupValues[1].toInt() - 1
-                val parent = findParentParser(allParsers, mainParser, atStep)
-                if (parent != null) {
-                    val baseSnapshot = parent.getSnapshotAt(atStep)
-                    if (baseSnapshot != null) {
-                        val child = ParserState(header, baseSnapshot, atStep).apply { lastTo = baseSnapshot.lastTo }
-                        childrenMap.getOrPut(parent) { mutableListOf() }.add(atStep to child)
-                        allParsers.add(child)
-                        currentParser = child
-                    }
-                }
-                continue
-            }
-
-            if (line.startsWith("*")) {
+                currentParser = handleVariation(variationMatch, allParsers, mainParser, header, childrenMap) ?: currentParser
+            } else if (line.startsWith("*")) {
                 currentParser.extractEvaluation(line)
             } else {
                 handleMoveLine(line, i, currentParser)
@@ -89,6 +81,23 @@ fun parseKifu(lines: List<String>, state: ShogiBoardState) {
 
     applyVariationsRecursive(mainParser, childrenMap)
     state.updateSession(mainParser.buildSession())
+}
+
+private fun handleVariation(
+    match: MatchResult,
+    allParsers: MutableList<ParserState>,
+    mainParser: ParserState,
+    header: KifuHeader,
+    childrenMap: MutableMap<ParserState, MutableList<Pair<Int, ParserState>>>,
+): ParserState? {
+    val atStep = match.groupValues[1].toInt() - 1
+    val parent = findParentParser(allParsers, mainParser, atStep) ?: return null
+    return parent.getSnapshotAt(atStep)?.let { baseSnapshot ->
+        val child = ParserState(header, baseSnapshot, atStep).apply { lastTo = baseSnapshot.lastTo }
+        childrenMap.getOrPut(parent) { mutableListOf() }.add(atStep to child)
+        allParsers.add(child)
+        child
+    }
 }
 
 private fun findParentParser(allParsers: List<ParserState>, mainParser: ParserState, atStep: Int): ParserState? {
@@ -126,20 +135,18 @@ private fun handleMoveLine(line: String, lineIndex: Int, parserState: ParserStat
 
 private class ParserState(private val header: KifuHeader, initialSnapshot: BoardSnapshot? = null, startingStep: Int = 0) {
     private val builder = KifuSessionBuilder().apply {
-        if (initialSnapshot != null) {
-            setupFromSnapshot(initialSnapshot, startingStep)
-        } else {
-            setup(
-                senteName = header.senteName,
-                goteName = header.goteName,
-                startTime = header.startTime,
-                event = header.event,
-                initialCells = header.initialCells,
-                senteMochi = header.senteMochi,
-                goteMochi = header.goteMochi,
-                isStandardStart = header.isStandardStart,
-            )
-        }
+        setup(
+            senteName = header.senteName,
+            goteName = header.goteName,
+            startTime = header.startTime,
+            event = header.event,
+            initialCells = header.initialCells,
+            senteMochi = header.senteMochi,
+            goteMochi = header.goteMochi,
+            isStandardStart = header.isStandardStart,
+            startingStep = startingStep,
+            snapshot = initialSnapshot,
+        )
     }
     var lastTo: dev.irof.kifuzo.models.Square? = null
 
@@ -147,13 +154,13 @@ private class ParserState(private val header: KifuHeader, initialSnapshot: Board
     val startingStep: Int get() = builder.currentStartingStep
 
     fun extractEvaluation(line: String) {
-        val currentEval = builder.getLastEvaluation().orNull()
+        val currentEval = builder.lastEvaluation.orNull()
         val isCurrentMate = currentEval != null && (kotlin.math.abs(currentEval) >= ShogiConstants.MATE_SCORE_THRESHOLD)
 
         if (line.contains("#詰み=先手勝ち")) {
-            builder.updateLastEvaluation(Evaluation.SenteWin)
+            builder.lastEvaluation = Evaluation.SenteWin
         } else if (line.contains("#詰み=後手勝ち")) {
-            builder.updateLastEvaluation(Evaluation.GoteWin)
+            builder.lastEvaluation = Evaluation.GoteWin
         } else if (!isCurrentMate) {
             applyEvaluationScore(line)
         }
@@ -168,22 +175,22 @@ private class ParserState(private val header: KifuHeader, initialSnapshot: Board
                 eval <= -ShogiConstants.MATE_SCORE_THRESHOLD -> Evaluation.GoteWin
                 else -> Evaluation.Score(eval)
             }
-            builder.updateLastEvaluation(evaluation)
+            builder.lastEvaluation = evaluation
         }
     }
 
     fun applyMove(parsedMove: KifuParsedMove, line: String) {
         when (parsedMove) {
             is KifuParsedMove.Move -> {
-                builder.applyMove(parsedMove.from, parsedMove.to, parsedMove.isPromote, parsedMove.consumptionSeconds, line)
+                builder.applyAction(from = parsedMove.from, to = parsedMove.to, isPromote = parsedMove.isPromote, consumptionSeconds = parsedMove.consumptionSeconds, moveText = line)
                 lastTo = parsedMove.to
             }
             is KifuParsedMove.Drop -> {
-                builder.applyDrop(parsedMove.piece, parsedMove.to, parsedMove.consumptionSeconds, line)
+                builder.applyAction(to = parsedMove.to, piece = parsedMove.piece, consumptionSeconds = parsedMove.consumptionSeconds, moveText = line)
                 lastTo = parsedMove.to
             }
             is KifuParsedMove.Result -> {
-                builder.applyResult(line)
+                builder.applyAction(consumptionSeconds = null, moveText = "", resultText = line)
             }
         }
     }

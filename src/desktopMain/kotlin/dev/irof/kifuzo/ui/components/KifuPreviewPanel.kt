@@ -59,6 +59,11 @@ import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.name
 
+private const val FILENAME_WEIGHT = 8f
+private const val ICON_ALPHA_INACTIVE = 0.6f
+private const val METADATA_BG_ALPHA = 0.5f
+private const val METADATA_BORDER_ALPHA = 0.2f
+
 @Composable
 fun KifuPreviewPanel(
     state: KifuzoUiState,
@@ -151,10 +156,8 @@ private fun KifuHeader(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 左側のスペーサー（中央揃えのバランスを取るため）
-        Spacer(Modifier.size(32.dp).weight(1f))
+        Spacer(Modifier.size(ShogiDimensions.IconSizeMedium).weight(1f))
 
-        // 中央のファイル名
         Text(
             text = fileName,
             style = MaterialTheme.typography.subtitle1,
@@ -162,11 +165,10 @@ private fun KifuHeader(
             softWrap = false,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(8f),
+            modifier = Modifier.weight(FILENAME_WEIGHT),
             textAlign = TextAlign.Center,
         )
 
-        // 右側の手順切り替えボタン
         Box(
             modifier = Modifier.weight(1f),
             contentAlignment = Alignment.CenterEnd,
@@ -174,16 +176,16 @@ private fun KifuHeader(
             if (hasHistory) {
                 IconButton(
                     onClick = onToggleMoveList,
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(ShogiDimensions.IconSizeMedium),
                 ) {
                     Icon(
                         imageVector = ShogiIcons.SidebarToggle,
                         contentDescription = if (isMoveListVisible) "手順を隠す" else "手順を表示",
-                        tint = if (isMoveListVisible) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                        tint = if (isMoveListVisible) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = ICON_ALPHA_INACTIVE),
                     )
                 }
             } else {
-                Spacer(Modifier.size(32.dp))
+                Spacer(Modifier.size(ShogiDimensions.IconSizeMedium))
             }
         }
     }
@@ -239,7 +241,6 @@ private fun ColumnScope.KifuMainContent(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun KifuOperationBar(
     currentStep: Int,
@@ -253,23 +254,9 @@ private fun KifuOperationBar(
     onStepChange: (Int) -> Unit,
     onShowEditMetadata: () -> Unit,
 ) {
-    val evaluations = history.map { it.evaluation }
-    val consumptionTimes = history.map { it.consumptionSeconds }
-
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = { onStepChange(0) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.START, fontSize = ShogiDimensions.FontSizeCaption) }
-            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
-            OutlinedButton(onClick = { onStepChange(currentStep - 1) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text("◀", fontSize = ShogiDimensions.FontSizeCaption) }
-            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
-            if (isStandardStart && firstContactStep != -1) {
-                Button(onClick = { onStepChange(firstContactStep) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.CONTACT, fontSize = ShogiDimensions.FontSizeCaption) }
-                Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
-            }
-            OutlinedButton(onClick = { onStepChange(currentStep + 1) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text("▶", fontSize = ShogiDimensions.FontSizeCaption) }
-            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
-            Button(onClick = { onStepChange(maxStep) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.END, fontSize = ShogiDimensions.FontSizeCaption) }
-        }
+        KifuStepButtons(currentStep, maxStep, isStandardStart, firstContactStep, onStepChange)
+
         Slider(
             value = currentStep.toFloat(),
             onValueChange = { onStepChange(it.toInt()) },
@@ -278,36 +265,60 @@ private fun KifuOperationBar(
             modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
         )
 
-        if (evaluations.any { it is Evaluation.Score } || consumptionTimes.any { it != null }) {
-            Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
-                verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge),
-            ) {
-                val hasEval = evaluations.any { it is Evaluation.Score }
-                val hasTime = consumptionTimes.any { it != null }
-                val targetHeight = if (hasEval && hasTime) ShogiDimensions.DualGraphHeight else ShogiDimensions.GraphHeight
+        KifuGraphs(history, currentStep, isFlipped, onStepChange)
+        KifuMetaInfo(startTime, event, onShowEditMetadata)
+    }
+}
 
-                if (hasEval) {
-                    EvaluationGraph(
-                        evaluations = evaluations,
-                        currentStep = currentStep,
-                        isFlipped = isFlipped,
-                        onStepClick = onStepChange,
-                        modifier = Modifier.height(targetHeight).fillMaxWidth(),
-                    )
-                }
-                if (hasTime) {
-                    ConsumptionTimeGraph(
-                        times = consumptionTimes,
-                        currentStep = currentStep,
-                        onStepClick = onStepChange,
-                        modifier = Modifier.height(targetHeight).fillMaxWidth(),
-                    )
-                }
+@Composable
+private fun KifuStepButtons(
+    currentStep: Int,
+    maxStep: Int,
+    isStandardStart: Boolean,
+    firstContactStep: Int,
+    onStepChange: (Int) -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Button(onClick = { onStepChange(0) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.START, fontSize = ShogiDimensions.FontSizeCaption) }
+        Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+        OutlinedButton(onClick = { onStepChange(currentStep - 1) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text("◀", fontSize = ShogiDimensions.FontSizeCaption) }
+        Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+        if (isStandardStart && firstContactStep != -1) {
+            Button(onClick = { onStepChange(firstContactStep) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.CONTACT, fontSize = ShogiDimensions.FontSizeCaption) }
+            Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+        }
+        OutlinedButton(onClick = { onStepChange(currentStep + 1) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text("▶", fontSize = ShogiDimensions.FontSizeCaption) }
+        Spacer(Modifier.width(ShogiDimensions.PaddingSmall))
+        Button(onClick = { onStepChange(maxStep) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) { Text(AppStrings.END, fontSize = ShogiDimensions.FontSizeCaption) }
+    }
+}
+
+@Composable
+private fun KifuGraphs(
+    history: List<BoardSnapshot>,
+    currentStep: Int,
+    isFlipped: Boolean,
+    onStepChange: (Int) -> Unit,
+) {
+    val evaluations = history.map { it.evaluation }
+    val consumptionTimes = history.map { it.consumptionSeconds }
+    val hasEval = evaluations.any { it is Evaluation.Score }
+    val hasTime = consumptionTimes.any { it != null }
+
+    if (hasEval || hasTime) {
+        Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
+            verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge),
+        ) {
+            val targetHeight = if (hasEval && hasTime) ShogiDimensions.DualGraphHeight else ShogiDimensions.GraphHeight
+            if (hasEval) {
+                EvaluationGraph(evaluations, currentStep, isFlipped, onStepChange, Modifier.height(targetHeight).fillMaxWidth())
+            }
+            if (hasTime) {
+                ConsumptionTimeGraph(consumptionTimes, currentStep, onStepChange, Modifier.height(targetHeight).fillMaxWidth())
             }
         }
-        KifuMetaInfo(startTime, event, onShowEditMetadata)
     }
 }
 
@@ -318,67 +329,51 @@ private fun KifuMetaInfo(startTime: String, event: String, onEdit: () -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = ShogiDimensions.PaddingLarge)
             .padding(top = ShogiDimensions.PaddingLarge)
-            .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-            .border(1.dp, Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+            .background(Color.White.copy(alpha = METADATA_BG_ALPHA), RoundedCornerShape(ShogiDimensions.CornerMedium))
+            .border(1.dp, Color.Gray.copy(alpha = METADATA_BORDER_ALPHA), RoundedCornerShape(ShogiDimensions.CornerMedium))
             .padding(ShogiDimensions.PaddingMedium),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                if (event.isEmpty() && startTime.isEmpty()) {
-                    Text(
-                        text = AppStrings.NO_METADATA_HINT,
-                        style = MaterialTheme.typography.caption,
-                        color = Color.Gray.copy(alpha = 0.6f),
-                    )
-                } else {
-                    if (event.isNotEmpty()) {
-                        Row {
-                            Text(
-                                text = AppStrings.LABEL_EVENT,
-                                style = MaterialTheme.typography.caption,
-                                color = Color.Gray,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                text = event,
-                                style = MaterialTheme.typography.caption,
-                            )
-                        }
-                    }
-                    if (startTime.isNotEmpty()) {
-                        Row {
-                            Text(
-                                text = AppStrings.LABEL_START_TIME,
-                                style = MaterialTheme.typography.caption,
-                                color = Color.Gray,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                text = startTime,
-                                style = MaterialTheme.typography.caption,
-                            )
-                        }
-                    }
-                }
-            }
+            KifuMetaText(startTime, event, modifier = Modifier.weight(1f))
 
-            IconButton(
-                onClick = onEdit,
-                modifier = Modifier.size(24.dp),
-            ) {
+            IconButton(onClick = onEdit, modifier = Modifier.size(ShogiDimensions.IconSizeSmall)) {
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = AppStrings.EDIT_METADATA,
                     tint = Color.Gray,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(ShogiDimensions.IconSizeSmall),
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun KifuMetaText(startTime: String, event: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingSmall),
+    ) {
+        if (event.isEmpty() && startTime.isEmpty()) {
+            Text(
+                text = AppStrings.NO_METADATA_HINT,
+                style = MaterialTheme.typography.caption,
+                color = Color.Gray.copy(alpha = ICON_ALPHA_INACTIVE),
+            )
+        } else {
+            if (event.isNotEmpty()) MetaRow(AppStrings.LABEL_EVENT, event)
+            if (startTime.isNotEmpty()) MetaRow(AppStrings.LABEL_START_TIME, startTime)
+        }
+    }
+}
+
+@Composable
+private fun MetaRow(label: String, value: String) {
+    Row {
+        Text(text = label, style = MaterialTheme.typography.caption, color = Color.Gray, fontWeight = FontWeight.Bold)
+        Text(text = value, style = MaterialTheme.typography.caption)
     }
 }

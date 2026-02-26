@@ -21,6 +21,9 @@ import dev.irof.kifuzo.models.Square
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 
+private const val ROTATION_UPRIGHT = 0f
+private const val ROTATION_UPSIDE_DOWN = 180f
+
 @Composable
 fun BoardGrid(
     board: BoardSnapshot,
@@ -69,28 +72,38 @@ private fun BoardCell(
     Box(
         modifier = Modifier
             .size(cellSize)
-            .background(
-                when {
-                    isLastTo -> ShogiColors.HighlightLastTo
-                    isLastFrom -> ShogiColors.HighlightLastFrom
-                    else -> Color.Transparent
-                },
-            )
+            .background(getCellBackgroundColor(isLastFrom, isLastTo))
             .border(ShogiDimensions.CellBorderThickness, ShogiColors.CellBorder),
         contentAlignment = Alignment.Center,
     ) {
         board.cells[y][x]?.let { (piece, color) ->
-            val isSentePiece = color == PieceColor.Black
-            val rotation = when {
-                isFlipped -> if (isSentePiece) 180f else 0f
-                else -> if (isSentePiece) 0f else 180f
-            }
-            Text(
-                text = piece.symbol,
-                fontSize = fontSize,
-                color = if (piece.isPromoted()) ShogiColors.PiecePromoted else ShogiColors.PieceSente,
-                modifier = Modifier.rotate(rotation),
-            )
+            PieceView(piece, color, isFlipped, fontSize)
         }
     }
+}
+
+private fun getCellBackgroundColor(isLastFrom: Boolean, isLastTo: Boolean): Color = when {
+    isLastTo -> ShogiColors.HighlightLastTo
+    isLastFrom -> ShogiColors.HighlightLastFrom
+    else -> Color.Transparent
+}
+
+@Composable
+private fun PieceView(
+    piece: dev.irof.kifuzo.models.Piece,
+    color: PieceColor,
+    isFlipped: Boolean,
+    fontSize: TextUnit,
+) {
+    val isSentePiece = color == PieceColor.Black
+    val rotation = when {
+        isFlipped -> if (isSentePiece) ROTATION_UPSIDE_DOWN else ROTATION_UPRIGHT
+        else -> if (isSentePiece) ROTATION_UPRIGHT else ROTATION_UPSIDE_DOWN
+    }
+    Text(
+        text = piece.symbol,
+        fontSize = fontSize,
+        color = if (piece.isPromoted()) ShogiColors.PiecePromoted else ShogiColors.PieceSente,
+        modifier = Modifier.rotate(rotation),
+    )
 }

@@ -45,38 +45,40 @@ internal fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
 
 private fun parseNormalMove(line: String, lastTo: Square?): KifuParsedMove.Move? {
     val match = moveRegex.find(line) ?: return null
-    val moveNum = match.groups["moveNum"]?.value?.toIntOrNull() ?: return null
-    val toPosStr = match.groups["toPos"]?.value?.trim() ?: ""
-    val pieceName = match.groups["pieceName"]?.value?.trim() ?: ""
-    val fromPosStr = match.groups["fromPos"]?.value ?: ""
+    return match.groups["moveNum"]?.value?.toIntOrNull()?.let { moveNum ->
+        val toPosStr = match.groups["toPos"]?.value?.trim() ?: ""
+        val pieceName = match.groups["pieceName"]?.value?.trim() ?: ""
+        val fromPosStr = match.groups["fromPos"]?.value ?: ""
 
-    val toSquare = if (toPosStr.startsWith("同")) {
-        lastTo ?: throw KifuParseException("同の移動先が不明です")
-    } else {
-        Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
+        val toSquare = if (toPosStr.startsWith("同")) {
+            lastTo ?: throw KifuParseException("同の移動先が不明です")
+        } else {
+            Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
+        }
+
+        KifuParsedMove.Move(
+            moveNum = moveNum,
+            to = toSquare,
+            from = Square(fromPosStr[0] - '0', fromPosStr[1] - '0'),
+            isPromote = pieceName.contains("成") || pieceName in listOf("竜", "馬", "龍", "圭", "杏", "全"),
+            consumptionSeconds = parseTime(match),
+        )
     }
-
-    return KifuParsedMove.Move(
-        moveNum = moveNum,
-        to = toSquare,
-        from = Square(fromPosStr[0] - '0', fromPosStr[1] - '0'),
-        isPromote = pieceName.contains("成") || pieceName in listOf("竜", "馬", "龍", "圭", "杏", "全"),
-        consumptionSeconds = parseTime(match),
-    )
 }
 
 private fun parseDropMove(line: String): KifuParsedMove.Drop? {
     val match = dropRegex.find(line) ?: return null
-    val moveNum = match.groups["moveNum"]?.value?.toIntOrNull() ?: return null
-    val toPosStr = match.groups["toPos"]?.value ?: ""
-    val pieceSym = match.groups["pieceName"]?.value?.substring(0, 1) ?: ""
+    return match.groups["moveNum"]?.value?.toIntOrNull()?.let { moveNum ->
+        val toPosStr = match.groups["toPos"]?.value ?: ""
+        val pieceSym = match.groups["pieceName"]?.value?.substring(0, 1) ?: ""
 
-    return KifuParsedMove.Drop(
-        moveNum = moveNum,
-        to = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1])),
-        piece = findPieceForDrop(pieceSym),
-        consumptionSeconds = parseTime(match),
-    )
+        KifuParsedMove.Drop(
+            moveNum = moveNum,
+            to = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1])),
+            piece = findPieceForDrop(pieceSym),
+            consumptionSeconds = parseTime(match),
+        )
+    }
 }
 
 private fun findPieceForDrop(symbol: String): Piece = Piece.entries.find {

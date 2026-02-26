@@ -165,9 +165,53 @@ class KifuzoViewModel(
 
     private fun handleFileAction(action: KifuzoAction) {
         when (action) {
+            is KifuzoAction.SelectFile,
+            is KifuzoAction.SelectNextFile,
+            is KifuzoAction.SelectPrevFile,
+            -> handleSelectionAction(action)
+
+            is KifuzoAction.ShowRenameDialog,
+            is KifuzoAction.HideRenameDialog,
+            is KifuzoAction.PerformRename,
+            -> handleRenameAction(action)
+
+            is KifuzoAction.ConvertCsa,
+            is KifuzoAction.ForceParseAsKifu,
+            is KifuzoAction.ConfirmOverwrite,
+            is KifuzoAction.HideOverwriteConfirm,
+            -> handleConversionAction(action)
+
+            is KifuzoAction.WriteGameResult,
+            is KifuzoAction.UpdateMetadata,
+            is KifuzoAction.ShowEditMetadataDialog,
+            is KifuzoAction.HideEditMetadataDialog,
+            -> handleMetadataAction(action)
+
+            else -> {}
+        }
+    }
+
+    private fun handleSelectionAction(action: KifuzoAction) {
+        when (action) {
             is KifuzoAction.SelectFile -> fileActionHandler.selectFile(action.path).also { updateState { it.copy(selectedFile = action.path) } }
-            is KifuzoAction.SelectNextFile -> selectAdjacentFile(forward = true)
-            is KifuzoAction.SelectPrevFile -> selectAdjacentFile(forward = false)
+            is KifuzoAction.SelectNextFile, is KifuzoAction.SelectPrevFile -> {
+                val forward = action is KifuzoAction.SelectNextFile
+                val nodes = uiState.treeNodes
+                val currentIndex = uiState.selectedFile?.let { selected -> nodes.indexOfFirst { it.path == selected } } ?: -1
+                if (currentIndex != -1) {
+                    val targetIndices = if (forward) (currentIndex + 1 until nodes.size) else (currentIndex - 1 downTo 0)
+                    targetIndices.asSequence().map { nodes[it] }.firstOrNull { !it.isDirectory }?.let { node ->
+                        fileActionHandler.selectFile(node.path)
+                        updateState { it.copy(selectedFile = node.path) }
+                    }
+                }
+            }
+            else -> {}
+        }
+    }
+
+    private fun handleRenameAction(action: KifuzoAction) {
+        when (action) {
             is KifuzoAction.ShowRenameDialog -> {
                 val proposedName = repository.generateProposedName(action.path, uiState.filenameTemplate) ?: action.path.fileName.toString()
                 updateState { it.copy(renameTarget = action.path, proposedRenameName = proposedName) }
@@ -177,6 +221,12 @@ class KifuzoViewModel(
                 fileActionHandler.performRename(action.path, action.newName)
                 updateState { it.copy(renameTarget = null, proposedRenameName = null) }
             }
+            else -> {}
+        }
+    }
+
+    private fun handleConversionAction(action: KifuzoAction) {
+        when (action) {
             is KifuzoAction.ConvertCsa -> {
                 val targetFile = (action.path.parent ?: action.path).resolve(action.path.nameWithoutExtension + ".kifu")
                 if (java.nio.file.Files.exists(targetFile)) {
@@ -193,6 +243,12 @@ class KifuzoViewModel(
                 }
             }
             is KifuzoAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
+            else -> {}
+        }
+    }
+
+    private fun handleMetadataAction(action: KifuzoAction) {
+        when (action) {
             is KifuzoAction.WriteGameResult -> fileActionHandler.writeGameResult(action.path, action.result)
             is KifuzoAction.UpdateMetadata -> fileActionHandler.updateMetadata(action.path, action.event, action.startTime)
             is KifuzoAction.ShowEditMetadataDialog -> updateState { it.copy(editMetadataTarget = action.path) }
@@ -213,7 +269,14 @@ class KifuzoViewModel(
             is KifuzoAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
             is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, errorDetail = null, infoMessage = null) }
             is KifuzoAction.ImportFiles -> importHandler.importFiles(action.sourceDir, currentRootDirectory)
-            is KifuzoAction.UpdateSidebarWidth -> updateSidebarWidth(action.delta)
+            is KifuzoAction.UpdateSidebarWidth -> {
+                val newWidth = (uiState.sidebarWidth + action.delta).coerceIn(
+                    dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH,
+                    dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH,
+                )
+                AppSettings.sidebarWidth = newWidth
+                updateState { it.copy(sidebarWidth = newWidth) }
+            }
             is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
             is KifuzoAction.ToggleMoveList -> updateState { it.copy(isMoveListVisible = !it.isMoveListVisible) }
             else -> {}
@@ -229,36 +292,6 @@ class KifuzoViewModel(
             is KifuzoAction.ResetToMainHistory -> boardState.resetToMainHistory()
             else -> {}
         }
-    }
-
-    private fun updateSidebarWidth(delta: Float) {
-        val newWidth = (uiState.sidebarWidth + delta).coerceIn(
-            dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH,
-            dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH,
-        )
-        AppSettings.sidebarWidth = newWidth
-        updateState { it.copy(sidebarWidth = newWidth) }
-    }
-
-    private fun selectAdjacentFile(forward: Boolean) {
-        val nodes = uiState.treeNodes
-        val currentIndex = uiState.selectedFile?.let { selected -> nodes.indexOfFirst { it.path == selected } } ?: -1
-        if (currentIndex == -1) return
-
-        val step = if (forward) 1 else -1
-        val targetIndices = if (forward) {
-            (currentIndex + 1 until nodes.size)
-        } else {
-            (currentIndex - 1 downTo 0)
-        }
-
-        targetIndices.asSequence()
-            .map { nodes[it] }
-            .firstOrNull { !it.isDirectory }
-            ?.let { node ->
-                fileActionHandler.selectFile(node.path)
-                updateState { it.copy(selectedFile = node.path) }
-            }
     }
 
     private fun updateState(update: (KifuzoUiState) -> KifuzoUiState) {

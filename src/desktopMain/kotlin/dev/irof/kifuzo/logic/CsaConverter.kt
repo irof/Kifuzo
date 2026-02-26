@@ -17,6 +17,11 @@ private object CsaConstants {
     const val OPENING_PREFIX = "\$OPENING:"
     const val TIME_LIMIT_PREFIX = "\$TIME_LIMIT:"
     const val MOVE_MIN_LENGTH = 7
+    const val COLOR_SYMBOL_POS = 1
+    const val INITIAL_PIECES_START_INDEX = 2
+    const val PIECE_ENTRY_LENGTH = 4
+    const val PIECE_NAME_OFFSET = 2
+    const val PIECE_NAME_LENGTH = 2
 }
 
 /**
@@ -47,13 +52,7 @@ fun convertCsaToKifuLines(lines: List<String>): List<String> {
 }
 
 private fun convertSingleCsaLine(line: String, index: Int, lines: List<String>, context: CsaConvertContext): String? = when {
-    line.startsWith(CsaConstants.SENTE_NAME_PREFIX) -> "先手：" + line.substring(CsaConstants.SENTE_NAME_PREFIX.length)
-    line.startsWith(CsaConstants.GOTE_NAME_PREFIX) -> "後手：" + line.substring(CsaConstants.GOTE_NAME_PREFIX.length)
-    line.startsWith(CsaConstants.EVENT_PREFIX) -> "棋戦：" + line.substring(CsaConstants.EVENT_PREFIX.length)
-    line.startsWith(CsaConstants.SITE_PREFIX) -> "場所：" + line.substring(CsaConstants.SITE_PREFIX.length)
-    line.startsWith(CsaConstants.START_TIME_PREFIX) -> "開始日時：" + line.substring(CsaConstants.START_TIME_PREFIX.length)
-    line.startsWith(CsaConstants.OPENING_PREFIX) -> "戦型：" + line.substring(CsaConstants.OPENING_PREFIX.length)
-    line.startsWith(CsaConstants.TIME_LIMIT_PREFIX) -> "持ち時間：" + line.substring(CsaConstants.TIME_LIMIT_PREFIX.length)
+    isMetadataLine(line) -> processMetadataLine(line)
     line == "PI" -> {
         context.setupInitialPosition()
         null
@@ -62,34 +61,54 @@ private fun convertSingleCsaLine(line: String, index: Int, lines: List<String>, 
         context.setupRow(line)
         null
     }
-    line.startsWith("P+") || line.startsWith("P-") -> {
-        val color = if (line[1] == '+') "先手" else "後手"
-        val pieces = mutableListOf<String>()
-        var i = 2
-        while (i + 4 <= line.length) {
-            val pieceCsa = line.substring(i + 2, i + 4)
-            if (pieceCsa != "AL") {
-                val piece = Piece.entries.find { it.name == pieceCsa }
-                if (piece != null) pieces.add(piece.symbol)
-            }
-            i += 4
-        }
-        if (pieces.isEmpty()) "${color}持駒：なし" else "${color}持駒：" + pieces.joinToString("　")
-    }
+    line.startsWith("P+") || line.startsWith("P-") -> processInitialPieces(line)
     line.startsWith("%") -> processResultLine(line, context.moveCount)
-    line.startsWith("+") || line.startsWith("-") -> {
-        if (line.length >= CsaConstants.MOVE_MIN_LENGTH) {
-            val seconds = if (index + 1 < lines.size && lines[index + 1].trim().startsWith("T")) {
-                lines[index + 1].trim().substring(1).toIntOrNull() ?: 0
-            } else {
-                0
-            }
-            context.processMove(line, seconds)
-        } else {
-            null
-        }
-    }
+    line.startsWith("+") || line.startsWith("-") -> processMoveLine(line, index, lines, context)
     else -> null
+}
+
+private fun isMetadataLine(line: String): Boolean = line.startsWith(CsaConstants.SENTE_NAME_PREFIX) ||
+    line.startsWith(CsaConstants.GOTE_NAME_PREFIX) ||
+    line.startsWith(CsaConstants.EVENT_PREFIX) ||
+    line.startsWith(CsaConstants.SITE_PREFIX) ||
+    line.startsWith(CsaConstants.START_TIME_PREFIX) ||
+    line.startsWith(CsaConstants.OPENING_PREFIX) ||
+    line.startsWith(CsaConstants.TIME_LIMIT_PREFIX)
+
+private fun processMetadataLine(line: String): String? = when {
+    line.startsWith(CsaConstants.SENTE_NAME_PREFIX) -> "先手：" + line.substring(CsaConstants.SENTE_NAME_PREFIX.length)
+    line.startsWith(CsaConstants.GOTE_NAME_PREFIX) -> "後手：" + line.substring(CsaConstants.GOTE_NAME_PREFIX.length)
+    line.startsWith(CsaConstants.EVENT_PREFIX) -> "棋戦：" + line.substring(CsaConstants.EVENT_PREFIX.length)
+    line.startsWith(CsaConstants.SITE_PREFIX) -> "場所：" + line.substring(CsaConstants.SITE_PREFIX.length)
+    line.startsWith(CsaConstants.START_TIME_PREFIX) -> "開始日時：" + line.substring(CsaConstants.START_TIME_PREFIX.length)
+    line.startsWith(CsaConstants.OPENING_PREFIX) -> "戦型：" + line.substring(CsaConstants.OPENING_PREFIX.length)
+    line.startsWith(CsaConstants.TIME_LIMIT_PREFIX) -> "持ち時間：" + line.substring(CsaConstants.TIME_LIMIT_PREFIX.length)
+    else -> null
+}
+
+private fun processInitialPieces(line: String): String {
+    val color = if (line[CsaConstants.COLOR_SYMBOL_POS] == '+') "先手" else "後手"
+    val pieces = mutableListOf<String>()
+    var i = CsaConstants.INITIAL_PIECES_START_INDEX
+    while (i + CsaConstants.PIECE_ENTRY_LENGTH <= line.length) {
+        val pieceCsa = line.substring(i + CsaConstants.PIECE_NAME_OFFSET, i + CsaConstants.PIECE_NAME_OFFSET + CsaConstants.PIECE_NAME_LENGTH)
+        if (pieceCsa != "AL") {
+            val piece = Piece.entries.find { it.name == pieceCsa }
+            if (piece != null) pieces.add(piece.symbol)
+        }
+        i += CsaConstants.PIECE_ENTRY_LENGTH
+    }
+    return if (pieces.isEmpty()) "${color}持駒：なし" else "${color}持駒：" + pieces.joinToString("　")
+}
+
+private fun processMoveLine(line: String, index: Int, lines: List<String>, context: CsaConvertContext): String? {
+    if (line.length < CsaConstants.MOVE_MIN_LENGTH) return null
+    val seconds = if (index + 1 < lines.size && lines[index + 1].trim().startsWith("T")) {
+        lines[index + 1].trim().substring(1).toIntOrNull() ?: 0
+    } else {
+        0
+    }
+    return context.processMove(line, seconds)
 }
 
 private fun processResultLine(line: String, moveCount: Int): String? {
@@ -198,7 +217,9 @@ private class CsaConvertContext {
         val s = seconds % ShogiConstants.SECONDS_IN_MINUTE
         val tm = totalSeconds / ShogiConstants.SECONDS_IN_MINUTE
         val ts = totalSeconds % ShogiConstants.SECONDS_IN_MINUTE
-        return String.format(java.util.Locale.US, "   (%2d:%02d/%02d:%02d:%02d)", m, s, tm / ShogiConstants.MINUTES_IN_HOUR, tm % ShogiConstants.MINUTES_IN_HOUR, ts)
+        val totalHours = tm / ShogiConstants.MINUTES_IN_HOUR
+        val totalMinutes = tm % ShogiConstants.MINUTES_IN_HOUR
+        return String.format(java.util.Locale.US, "   (%2d:%02d/%02d:%02d:%02d)", m, s, totalHours, totalMinutes, ts)
     }
 
     private fun findPiece(csaName: String): Piece = Piece.entries.find { it.name == csaName } ?: Piece.FU
@@ -214,14 +235,22 @@ private data class MoveDetail(
     val isPromoteMarker: Boolean,
 ) {
     companion object {
+        private const val FROM_X_POS = 1
+        private const val FROM_Y_POS = 2
+        private const val TO_X_POS = 3
+        private const val TO_Y_POS = 4
+        private const val PIECE_START_POS = 5
+        private const val PIECE_END_POS = 7
+        private const val PROMOTE_MARKER_MIN_LENGTH = 8
+
         fun parse(line: String): MoveDetail = MoveDetail(
             isSente = line.startsWith("+"),
-            fromX = line[1] - '0',
-            fromY = line[2] - '0',
-            toX = line[3] - '0',
-            toY = line[4] - '0',
-            pieceCsa = line.substring(5, 7),
-            isPromoteMarker = line.length > 7,
+            fromX = line[FROM_X_POS] - '0',
+            fromY = line[FROM_Y_POS] - '0',
+            toX = line[TO_X_POS] - '0',
+            toY = line[TO_Y_POS] - '0',
+            pieceCsa = line.substring(PIECE_START_POS, PIECE_END_POS),
+            isPromoteMarker = line.length >= PROMOTE_MARKER_MIN_LENGTH,
         )
     }
 }

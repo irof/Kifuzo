@@ -36,6 +36,7 @@ import kotlin.math.max
 
 private object TimeGraphConstants {
     const val ALPHA_BAR = 0.6f
+    const val ALPHA_HIGHLIGHT = 0.2f
     const val MIN_MAX_SECONDS = 60f // デフォルトの最低表示秒数
 
     const val GRID_SEC_5 = 5f
@@ -97,13 +98,7 @@ fun ConsumptionTimeGraph(
             if (totalSteps == 0) return@Canvas
 
             val stepWidth = size.width / totalSteps
-            val maxSecondsActual = (times.filterNotNull().maxOrNull() ?: 0).toFloat()
-            val maxSeconds = when {
-                maxSecondsActual < 5f -> 5f
-                maxSecondsActual < 10f -> 10f
-                maxSecondsActual < 20f -> 20f
-                else -> max(TimeGraphConstants.MIN_MAX_SECONDS, maxSecondsActual)
-            }
+            val maxSeconds = calculateMaxSeconds(times)
             val scaler = NonLinearScaler(
                 maxActualValue = maxSeconds,
                 height = size.height,
@@ -115,21 +110,38 @@ fun ConsumptionTimeGraph(
             drawTimeGridLines(maxSeconds, scaler, textMeasurer)
             drawTimeCurrentHighlight(currentStep, totalSteps, stepWidth)
             drawTimeBars(times, stepWidth, scaler)
-
-            hoverStep?.let { step ->
-                val seconds = times.getOrNull(step)
-                if (seconds != null) {
-                    val timeStr = "${seconds / ShogiConstants.SECONDS_IN_MINUTE}:${(seconds % ShogiConstants.SECONDS_IN_MINUTE).toString().padStart(2, '0')}"
-                    drawGraphTooltip(
-                        x = step * stepWidth,
-                        y = scaler.getScaledY(seconds.toFloat()),
-                        label = "${step}手目: $timeStr",
-                        textMeasurer = textMeasurer,
-                    )
-                }
-            }
+            drawTimeHoverIndicator(hoverStep, times, stepWidth, scaler, textMeasurer)
         }
     }
+}
+
+private fun calculateMaxSeconds(times: List<Int?>): Float {
+    val maxSecondsActual = (times.filterNotNull().maxOrNull() ?: 0).toFloat()
+    return when {
+        maxSecondsActual < TimeGraphConstants.GRID_SEC_5 -> TimeGraphConstants.GRID_SEC_5
+        maxSecondsActual < TimeGraphConstants.GRID_SEC_10 -> TimeGraphConstants.GRID_SEC_10
+        maxSecondsActual < TimeGraphConstants.GRID_SEC_20 -> TimeGraphConstants.GRID_SEC_20
+        else -> max(TimeGraphConstants.MIN_MAX_SECONDS, maxSecondsActual)
+    }
+}
+
+@OptIn(ExperimentalTextApi::class)
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeHoverIndicator(
+    hoverStep: Int?,
+    times: List<Int?>,
+    stepWidth: Float,
+    scaler: NonLinearScaler,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+) {
+    val step = hoverStep ?: return
+    val seconds = times.getOrNull(step) ?: return
+    val timeStr = "${seconds / ShogiConstants.SECONDS_IN_MINUTE}:${(seconds % ShogiConstants.SECONDS_IN_MINUTE).toString().padStart(2, '0')}"
+    drawGraphTooltip(
+        x = step * stepWidth,
+        y = scaler.getScaledY(seconds.toFloat()),
+        label = "${step}手目: $timeStr",
+        textMeasurer = textMeasurer,
+    )
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeGridLines(

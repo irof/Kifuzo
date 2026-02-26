@@ -21,6 +21,14 @@ import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 
+private const val ROTATION_UPRIGHT = 0f
+private const val ROTATION_UPSIDE_DOWN = 180f
+private const val PIECE_FONT_SCALE = 0.55f
+private const val COUNT_FONT_SCALE = 0.35f
+private const val NAME_FONT_SCALE = 0.45f
+private const val KOMADAI_WIDTH_SCALE = 6.5f
+private const val KOMADAI_MIN_HEIGHT_SCALE = 0.8f
+
 @Composable
 fun KomaDai(
     pieces: List<Piece>,
@@ -30,48 +38,58 @@ fun KomaDai(
 ) {
     val grouped = pieces.groupBy { it }.mapValues { it.value.size }
         .toSortedMap(compareBy { it.mochigomaOrder })
-    val pieceFontSize = (cellSize.value * 0.55f).sp
-    val countFontSize = (cellSize.value * 0.35f).sp
+    val pieceFontSize = (cellSize.value * PIECE_FONT_SCALE).sp
+    val countFontSize = (cellSize.value * COUNT_FONT_SCALE).sp
 
     val rotation = when {
-        isFlipped -> if (isSente) 180f else 0f
-        else -> if (isSente) 0f else 180f
+        isFlipped -> if (isSente) ROTATION_UPSIDE_DOWN else ROTATION_UPRIGHT
+        else -> if (isSente) ROTATION_UPRIGHT else ROTATION_UPSIDE_DOWN
     }
 
     Box(
         modifier = Modifier
-            .width(cellSize * 6.5f)
+            .width(cellSize * KOMADAI_WIDTH_SCALE)
             .background(ShogiColors.BoardBackground)
             .border(ShogiDimensions.BoardLineThickness, ShogiColors.BoardLine)
             .padding(horizontal = 4.dp, vertical = 2.dp)
-            .heightIn(min = cellSize * 0.8f),
+            .heightIn(min = cellSize * KOMADAI_MIN_HEIGHT_SCALE),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (grouped.isEmpty()) {
                 Text(text = " ", fontSize = pieceFontSize)
             } else {
-                grouped.forEach { (piece, count) ->
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                    ) {
-                        Text(
-                            text = piece.symbol,
-                            fontSize = pieceFontSize,
-                            modifier = Modifier.rotate(rotation),
-                        )
-                        if (count > 1) {
-                            Text(
-                                text = count.toString(),
-                                fontSize = countFontSize,
-                                color = Color.Gray,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(start = 1.dp),
-                            )
-                        }
-                    }
-                }
+                MochigomaList(grouped, pieceFontSize, countFontSize, rotation)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MochigomaList(
+    grouped: Map<Piece, Int>,
+    pieceFontSize: androidx.compose.ui.unit.TextUnit,
+    countFontSize: androidx.compose.ui.unit.TextUnit,
+    rotation: Float,
+) {
+    grouped.forEach { (piece, count) ->
+        Row(
+            verticalAlignment = Alignment.Bottom,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        ) {
+            Text(
+                text = piece.symbol,
+                fontSize = pieceFontSize,
+                modifier = Modifier.rotate(rotation),
+            )
+            if (count > 1) {
+                Text(
+                    text = count.toString(),
+                    fontSize = countFontSize,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 1.dp),
+                )
             }
         }
     }
@@ -83,7 +101,7 @@ fun PlayerNameLabel(
     isTurn: Boolean,
     cellSize: Dp,
 ) {
-    val fontSize = (cellSize.value * 0.45f).sp
+    val fontSize = (cellSize.value * NAME_FONT_SCALE).sp
     val nameColor = if (isTurn) Color.Black else Color.Gray
 
     Text(

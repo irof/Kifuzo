@@ -4,10 +4,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object ShogiDimensions {
+    val PaddingExtraSmall = 2.dp
     val PaddingSmall = 4.dp
     val PaddingMedium = 8.dp
     val PaddingLarge = 16.dp
 
+    val CornerMedium = 8.dp
+
+    val IconSizeExtraSmall = 12.dp
     val IconSizeSmall = 16.dp
     val IconSizeMedium = 24.dp
 

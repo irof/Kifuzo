@@ -54,6 +54,7 @@ private object MoveListConstants {
     val EVALUATION_INFO_WIDTH = 50.dp
     val FONT_SIZE_DIFF = 9.sp
     val FONT_SIZE_MARKER = 11.sp
+    val FONT_SIZE_SMALL = 11.sp
 }
 
 @Composable
@@ -68,17 +69,8 @@ fun KifuMoveList(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val showEvaluation = history.any {
-        it.evaluation is Evaluation.SenteWin ||
-            it.evaluation is Evaluation.GoteWin ||
-            (it.evaluation is Evaluation.Score && it.evaluation.value != 0)
-    }
-
-    val lastSnapshot = history.lastOrNull()
-    val lastMove = lastSnapshot?.lastMoveText ?: ""
-    val evaluation = lastSnapshot?.evaluation?.orZero() ?: 0
-    val isMate = kotlin.math.abs(evaluation) >= ShogiConstants.MATE_SCORE_THRESHOLD
-    val isFinished = isMate || GameResult.ALL_KEYWORDS.any { lastMove.contains(it) }
+    val showEvaluation = history.any { it.evaluation.isSignificant() }
+    val isFinished = checkIfFinished(history)
 
     LaunchedEffect(currentStep) {
         if (currentStep in history.indices) {
@@ -95,56 +87,85 @@ fun KifuMoveList(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(vertical = ShogiDimensions.PaddingSmall),
         ) {
-            if (!isMainHistory) {
-                item {
-                    ResetToMainButton(onResetMain)
-                }
-            }
+            if (!isMainHistory) item { ResetToMainButton(onResetMain) }
 
             item {
-                MoveRow(
-                    step = 0,
-                    label = AppStrings.START_POSITION,
-                    evaluation = history[0].evaluation,
-                    diff = null,
-                    isSelected = currentStep == 0,
-                    showEvaluation = showEvaluation,
-                    variations = history[0].variations,
-                    onStepChange = onStepChange,
-                    onSelectVariation = onSelectVariation,
-                )
+                StartPositionRow(history[0], currentStep == 0, showEvaluation, onStepChange, onSelectVariation)
             }
 
             items(history.size - 1) { index ->
-                val i = index + 1
-                val board = history[i]
-                val prevEval = history[i - 1].evaluation.orZero()
-                val currentEvaluation = board.evaluation
-                val diff = if (currentEvaluation is Evaluation.Score) currentEvaluation.value - prevEval else null
-
-                val colorSymbol = if (i % 2 != 0) "▲" else "△"
-                val moveText = board.lastMoveText.trim().split(Regex("""\s+""")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
-
-                MoveRow(
-                    step = i,
-                    label = "$colorSymbol$moveText",
-                    evaluation = currentEvaluation,
-                    diff = diff,
-                    isSelected = currentStep == i,
-                    showEvaluation = showEvaluation,
-                    variations = board.variations,
-                    onStepChange = onStepChange,
-                    onSelectVariation = onSelectVariation,
-                )
+                val step = index + 1
+                MoveHistoryRow(step, history, currentStep == step, showEvaluation, onStepChange, onSelectVariation)
             }
 
-            if (!isFinished && isMainHistory) {
-                item {
-                    AddResultRow(onWriteResult)
-                }
-            }
+            if (!isFinished && isMainHistory) item { AddResultRow(onWriteResult) }
         }
     }
+}
+
+private fun Evaluation.isSignificant(): Boolean = when (this) {
+    is Evaluation.SenteWin, is Evaluation.GoteWin -> true
+    is Evaluation.Score -> value != 0
+    is Evaluation.Unknown -> false
+}
+
+private fun checkIfFinished(history: List<BoardSnapshot>): Boolean {
+    val lastSnapshot = history.lastOrNull() ?: return false
+    val lastMove = lastSnapshot.lastMoveText
+    val evaluation = lastSnapshot.evaluation.orZero()
+    val isMate = kotlin.math.abs(evaluation) >= ShogiConstants.MATE_SCORE_THRESHOLD
+    return isMate || GameResult.ALL_KEYWORDS.any { lastMove.contains(it) }
+}
+
+@Composable
+private fun StartPositionRow(
+    snapshot: BoardSnapshot,
+    isSelected: Boolean,
+    showEvaluation: Boolean,
+    onStepChange: (Int) -> Unit,
+    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+) {
+    MoveRow(
+        step = 0,
+        label = AppStrings.START_POSITION,
+        evaluation = snapshot.evaluation,
+        diff = null,
+        isSelected = isSelected,
+        showEvaluation = showEvaluation,
+        variations = snapshot.variations,
+        onStepChange = onStepChange,
+        onSelectVariation = onSelectVariation,
+    )
+}
+
+@Composable
+private fun MoveHistoryRow(
+    step: Int,
+    history: List<BoardSnapshot>,
+    isSelected: Boolean,
+    showEvaluation: Boolean,
+    onStepChange: (Int) -> Unit,
+    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+) {
+    val board = history[step]
+    val prevEval = history[step - 1].evaluation.orZero()
+    val currentEvaluation = board.evaluation
+    val diff = if (currentEvaluation is Evaluation.Score) currentEvaluation.value - prevEval else null
+
+    val colorSymbol = if (step % 2 != 0) "▲" else "△"
+    val moveText = board.lastMoveText.trim().split(Regex("""\s+""")).getOrNull(1)?.substringBefore("(") ?: board.lastMoveText
+
+    MoveRow(
+        step = step,
+        label = "$colorSymbol$moveText",
+        evaluation = currentEvaluation,
+        diff = diff,
+        isSelected = isSelected,
+        showEvaluation = showEvaluation,
+        variations = board.variations,
+        onStepChange = onStepChange,
+        onSelectVariation = onSelectVariation,
+    )
 }
 
 @Composable
@@ -159,7 +180,7 @@ private fun ResetToMainButton(onResetMain: () -> Unit) {
             modifier = Modifier.fillMaxWidth().height(ShogiDimensions.ButtonHeight),
             contentPadding = PaddingValues(0.dp),
         ) {
-            Text("本譜に戻る", fontSize = 11.sp)
+            Text("本譜に戻る", fontSize = MoveListConstants.FONT_SIZE_SMALL)
         }
     }
 }
@@ -181,9 +202,9 @@ private fun AddResultRow(onWriteResult: (String) -> Unit) {
                 modifier = Modifier.height(ShogiDimensions.ButtonHeight),
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
             ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("終局手を追加", fontSize = 11.sp)
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(ShogiDimensions.IconSizeSmall))
+                Spacer(Modifier.width(ShogiDimensions.PaddingExtraSmall))
+                Text("終局手を追加", fontSize = MoveListConstants.FONT_SIZE_SMALL)
             }
             DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                 GameResult.UI_SELECTIONS.forEach { result ->
