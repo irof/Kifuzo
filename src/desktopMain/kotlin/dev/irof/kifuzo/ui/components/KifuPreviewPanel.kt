@@ -174,20 +174,25 @@ private fun KifuHeader(
             contentAlignment = Alignment.CenterEnd,
         ) {
             if (hasHistory) {
-                IconButton(
-                    onClick = onToggleMoveList,
-                    modifier = Modifier.size(ShogiDimensions.IconSizeMedium),
-                ) {
-                    Icon(
-                        imageVector = ShogiIcons.SidebarToggle,
-                        contentDescription = if (isMoveListVisible) "手順を隠す" else "手順を表示",
-                        tint = if (isMoveListVisible) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = ICON_ALPHA_INACTIVE),
-                    )
-                }
+                MoveListToggleButton(isMoveListVisible, onToggleMoveList)
             } else {
                 Spacer(Modifier.size(ShogiDimensions.IconSizeMedium))
             }
         }
+    }
+}
+
+@Composable
+private fun MoveListToggleButton(isVisible: Boolean, onClick: () -> Unit) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(ShogiDimensions.IconSizeMedium),
+    ) {
+        Icon(
+            imageVector = ShogiIcons.SidebarToggle,
+            contentDescription = if (isVisible) "手順を隠す" else "手順を表示",
+            tint = if (isVisible) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = ICON_ALPHA_INACTIVE),
+        )
     }
 }
 
@@ -218,6 +223,8 @@ private fun ColumnScope.KifuMainContent(
                 history = boardState.currentHistory,
                 isStandardStart = boardState.session.isStandardStart,
                 firstContactStep = boardState.session.firstContactStep,
+                senteName = boardState.session.senteName,
+                goteName = boardState.session.goteName,
                 startTime = boardState.session.startTime,
                 event = boardState.session.event,
                 isFlipped = state.isFlipped,
@@ -248,6 +255,8 @@ private fun KifuOperationBar(
     history: List<BoardSnapshot>,
     isStandardStart: Boolean,
     firstContactStep: Int,
+    senteName: String,
+    goteName: String,
     startTime: String,
     event: String,
     isFlipped: Boolean,
@@ -266,7 +275,7 @@ private fun KifuOperationBar(
         )
 
         KifuGraphs(history, currentStep, isFlipped, onStepChange)
-        KifuMetaInfo(startTime, event, onShowEditMetadata)
+        KifuMetaInfo(senteName, goteName, startTime, event, onShowEditMetadata)
     }
 }
 
@@ -323,7 +332,7 @@ private fun KifuGraphs(
 }
 
 @Composable
-private fun KifuMetaInfo(startTime: String, event: String, onEdit: () -> Unit) {
+private fun KifuMetaInfo(senteName: String, goteName: String, startTime: String, event: String, onEdit: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -337,7 +346,7 @@ private fun KifuMetaInfo(startTime: String, event: String, onEdit: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
         ) {
-            KifuMetaText(startTime, event, modifier = Modifier.weight(1f))
+            KifuMetaText(senteName, goteName, startTime, event, modifier = Modifier.weight(1f))
 
             IconButton(onClick = onEdit, modifier = Modifier.size(ShogiDimensions.IconSizeSmall)) {
                 Icon(
@@ -352,23 +361,27 @@ private fun KifuMetaInfo(startTime: String, event: String, onEdit: () -> Unit) {
 }
 
 @Composable
-private fun KifuMetaText(startTime: String, event: String, modifier: Modifier = Modifier) {
+private fun KifuMetaText(sente: String, gote: String, startTime: String, event: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingSmall),
     ) {
-        if (event.isEmpty() && startTime.isEmpty()) {
+        if (isAllMetadataEmpty(sente, gote, startTime, event)) {
             Text(
                 text = AppStrings.NO_METADATA_HINT,
                 style = MaterialTheme.typography.caption,
                 color = Color.Gray.copy(alpha = ICON_ALPHA_INACTIVE),
             )
         } else {
+            if (sente.isNotEmpty()) MetaRow(AppStrings.LABEL_SENTE, sente)
+            if (gote.isNotEmpty()) MetaRow(AppStrings.LABEL_GOTE, gote)
             if (event.isNotEmpty()) MetaRow(AppStrings.LABEL_EVENT, event)
             if (startTime.isNotEmpty()) MetaRow(AppStrings.LABEL_START_TIME, startTime)
         }
     }
 }
+
+private fun isAllMetadataEmpty(sente: String, gote: String, startTime: String, event: String): Boolean = sente.isEmpty() && gote.isEmpty() && startTime.isEmpty() && event.isEmpty()
 
 @Composable
 private fun MetaRow(label: String, value: String) {

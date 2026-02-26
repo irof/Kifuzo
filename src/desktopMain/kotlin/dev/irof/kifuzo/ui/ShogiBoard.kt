@@ -53,7 +53,7 @@ fun ShogiBoardView(
             val rangeX = BoardLayout.getRangeX(isFlipped)
             val rangeY = BoardLayout.getRangeY(isFlipped)
 
-            // 上段: 後手(上手)名と駒台（左に駒台） ※反転時は入れ替え
+            // 上段: 後手(上手)の駒台 ※反転時は先手
             Row(
                 modifier = Modifier.widthInBoard(cellSize),
                 horizontalArrangement = Arrangement.Start,
@@ -61,10 +61,8 @@ fun ShogiBoardView(
             ) {
                 if (isFlipped) {
                     KomaDai(board.senteMochigoma, isSente = true, isFlipped = isFlipped, cellSize = cellSize)
-                    PlayerNameLabel(PieceColor.Black.toSymbol() + session.senteName, isTurn = isSenteTurn, cellSize = cellSize)
                 } else {
                     KomaDai(board.goteMochigoma, isSente = false, isFlipped = isFlipped, cellSize = cellSize)
-                    PlayerNameLabel(PieceColor.White.toSymbol() + session.goteName, isTurn = !isSenteTurn, cellSize = cellSize)
                 }
             }
 
@@ -82,17 +80,15 @@ fun ShogiBoardView(
 
             Spacer(Modifier.height(ShogiDimensions.PaddingSmall))
 
-            // 下段: 先手(下手)名と駒台（右に駒台） ※反転時は入れ替え
+            // 下段: 先手(下手)の駒台 ※反転時は後手
             Row(
                 modifier = Modifier.widthInBoard(cellSize),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (isFlipped) {
-                    PlayerNameLabel(PieceColor.White.toSymbol() + session.goteName, isTurn = !isSenteTurn, cellSize = cellSize)
                     KomaDai(board.goteMochigoma, isSente = false, isFlipped = isFlipped, cellSize = cellSize)
                 } else {
-                    PlayerNameLabel(PieceColor.Black.toSymbol() + session.senteName, isTurn = isSenteTurn, cellSize = cellSize)
                     KomaDai(board.senteMochigoma, isSente = true, isFlipped = isFlipped, cellSize = cellSize)
                 }
             }

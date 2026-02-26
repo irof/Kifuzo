@@ -40,6 +40,8 @@ object AppStrings {
     const val SORT_NAME = "名前順"
     const val SORT_DATE = "更新順"
 
+    const val LABEL_SENTE = "先手："
+    const val LABEL_GOTE = "後手："
     const val LABEL_EVENT = "棋戦："
     const val LABEL_START_TIME = "開始日時："
     const val EDIT_METADATA = "棋譜情報の編集"
