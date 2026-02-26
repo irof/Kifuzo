@@ -1,7 +1,7 @@
 package dev.irof.kifuzo
 
 import dev.irof.kifuzo.logic.KifuRepository
-import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.ShogiBoardState
@@ -51,7 +51,7 @@ open class StubKifuRepository : KifuRepository {
 /**
  * 盤面の特定の座標にある駒を検証します。
  */
-fun BoardSnapshot.assertAt(file: Int, rank: Int, expected: dev.irof.kifuzo.models.BoardPiece?) {
+fun dev.irof.kifuzo.models.BoardSnapshot.assertAt(file: Int, rank: Int, expected: BoardPiece?) {
     val square = Square(file, rank)
     val actual = cells[square.yIndex][square.xIndex]
     assertEquals(expected, actual, "At $file$rank: expected $expected but was $actual")

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
+import dev.irof.kifuzo.models.Move
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 
@@ -62,15 +63,16 @@ fun KifuStepButtons(
 
 @Composable
 fun KifuGraphs(
-    history: List<BoardSnapshot>,
+    moves: List<Move>,
     currentStep: Int,
     isFlipped: Boolean,
     onStepChange: (Int) -> Unit,
 ) {
-    val evaluations = history.map { it.evaluation }
-    val consumptionTimes = history.map { it.consumptionSeconds }
-    val hasEval = evaluations.any { it is Evaluation.Score }
-    val hasTime = consumptionTimes.any { it != null && it > 0 }
+    val allEvaluations = listOf(Evaluation.Unknown) + moves.map { it.evaluation }
+    val allConsumptionTimes = listOf(null) + moves.map { it.consumptionSeconds }
+
+    val hasEval = allEvaluations.any { it.isSignificant() }
+    val hasTime = allConsumptionTimes.any { it != null && it > 0 }
 
     if (hasEval || hasTime) {
         Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
@@ -80,10 +82,10 @@ fun KifuGraphs(
         ) {
             val targetHeight = if (hasEval && hasTime) ShogiDimensions.DualGraphHeight else ShogiDimensions.GraphHeight
             if (hasEval) {
-                EvaluationGraph(evaluations, currentStep, isFlipped, onStepChange, Modifier.height(targetHeight).fillMaxWidth())
+                EvaluationGraph(allEvaluations, currentStep, isFlipped, onStepChange, Modifier.height(targetHeight).fillMaxWidth())
             }
             if (hasTime) {
-                ConsumptionTimeGraph(consumptionTimes, currentStep, onStepChange, Modifier.height(targetHeight).fillMaxWidth())
+                ConsumptionTimeGraph(allConsumptionTimes, currentStep, onStepChange, Modifier.height(targetHeight).fillMaxWidth())
             }
         }
     }

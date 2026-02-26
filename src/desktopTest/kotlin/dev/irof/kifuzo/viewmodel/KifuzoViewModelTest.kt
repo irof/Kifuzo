@@ -3,6 +3,7 @@ package dev.irof.kifuzo.viewmodel
 import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.KifuSession
+import dev.irof.kifuzo.models.Move
 import java.nio.file.Paths
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -26,7 +27,7 @@ class KifuzoViewModelTest {
         stubRepository.parseAction = { state ->
             state.updateSession(
                 KifuSession(
-                    history = listOf(BoardSnapshot(List(9) { List(9) { null } })),
+                    initialSnapshot = BoardSnapshot(List(9) { List(9) { null } }),
                     senteName = "先手",
                     goteName = "後手",
                 ),
@@ -42,9 +43,11 @@ class KifuzoViewModelTest {
     @Test
     fun 手数移動のアクションで現在のステップが正しく更新されること() {
         // 3手ある棋譜をセット
+        val snapshot = BoardSnapshot(List(9) { List(9) { null } })
         viewModel.boardState.updateSession(
             KifuSession(
-                history = List(4) { BoardSnapshot(List(9) { List(9) { null } }) }, // 0, 1, 2, 3手
+                initialSnapshot = snapshot,
+                moves = List(3) { i -> Move(i + 1, "${i + 1} test", snapshot) },
             ),
         )
         viewModel.boardState.currentStep = 0
@@ -90,7 +93,7 @@ class KifuzoViewModelTest {
         stubRepository.parseAction = { state ->
             state.updateSession(
                 KifuSession(
-                    history = listOf(BoardSnapshot(List(9) { List(9) { null } })),
+                    initialSnapshot = BoardSnapshot(List(9) { List(9) { null } }),
                     senteName = "相手",
                     goteName = "irof",
                 ),
@@ -106,7 +109,7 @@ class KifuzoViewModelTest {
         stubRepository.parseAction = { state ->
             state.updateSession(
                 KifuSession(
-                    history = listOf(BoardSnapshot(List(9) { List(9) { null } })),
+                    initialSnapshot = BoardSnapshot(List(9) { List(9) { null } }),
                     senteName = "irof",
                     goteName = "相手",
                 ),

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -33,47 +34,55 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.GameResult
+import dev.irof.kifuzo.models.Move
 import dev.irof.kifuzo.models.toMoveLabel
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 
 @Composable
 fun KifuMoveList(
-    history: List<BoardSnapshot>,
+    moves: List<Move>,
     currentStep: Int,
     isMainHistory: Boolean,
     onStepChange: (Int) -> Unit,
     onWriteResult: (String) -> Unit,
-    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+    onSelectVariation: (List<Move>) -> Unit,
     onResetMain: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val showEvaluation = history.any { it.evaluation.isSignificant() }
-    val lastSnapshot = history.lastOrNull()
-    val isFinished = lastSnapshot != null && GameResult.isFinished(lastSnapshot.lastMoveText, lastSnapshot.evaluation)
+    val showEval = moves.any { it.evaluation.isSignificant() }
+    val isFinished = moves.lastOrNull()?.let { GameResult.isFinished(it.moveText, it.evaluation) } ?: false
 
     LaunchedEffect(currentStep) {
-        if (currentStep in history.indices) listState.animateScrollToItem(currentStep)
+        if (currentStep in 0..moves.size) listState.animateScrollToItem(currentStep)
     }
 
     Box(modifier = modifier.background(Color.White, MaterialTheme.shapes.medium).border(ShogiDimensions.CellBorderThickness, Color.LightGray, MaterialTheme.shapes.medium)) {
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(vertical = ShogiDimensions.PaddingSmall)) {
             if (!isMainHistory) item { ResetToMainButton(onResetMain) }
-            items(history.size) { step ->
-                val board = history[step]
-                val diff = if (step > 0) calculateEvaluationDiff(board.evaluation, history[step - 1].evaluation) else null
-                MoveRow(step, board.toMoveLabel(step), board.evaluation, diff, currentStep == step, showEvaluation, board.variations, onStepChange, onSelectVariation)
+
+            item { StartPositionItem(currentStep == 0, showEval, onStepChange, onSelectVariation) }
+
+            items(moves.size) { index ->
+                val move = moves[index]
+                val prevEval = if (index > 0) moves[index - 1].evaluation else Evaluation.Unknown
+                MoveRow(index + 1, move.toMoveLabel(), move.evaluation, calculateDiff(move.evaluation, prevEval), currentStep == index + 1, showEval, move.variations, onStepChange, onSelectVariation)
             }
+
             if (!isFinished && isMainHistory) item { AddResultRow(onWriteResult) }
         }
     }
 }
 
-private fun calculateEvaluationDiff(current: Evaluation, previous: Evaluation): Int? = if (current is Evaluation.Score) current.value - previous.orZero() else null
+@Composable
+private fun StartPositionItem(isSelected: Boolean, showEval: Boolean, onStepChange: (Int) -> Unit, onSelectVariation: (List<Move>) -> Unit) {
+    MoveRow(0, AppStrings.START_POSITION, Evaluation.Unknown, null, isSelected, showEval, emptyList(), onStepChange, onSelectVariation)
+}
+
+private fun calculateDiff(current: Evaluation, previous: Evaluation): Int? = if (current is Evaluation.Score) current.value - previous.orZero() else null
 
 @Composable
 private fun ResetToMainButton(onResetMain: () -> Unit) {

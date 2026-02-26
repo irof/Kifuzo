@@ -42,6 +42,6 @@ sealed class KifuzoAction {
     data class ChangeStep(val step: Int) : KifuzoAction()
     data object NextStep : KifuzoAction()
     data object PrevStep : KifuzoAction()
-    data class SelectVariation(val history: List<dev.irof.kifuzo.models.BoardSnapshot>) : KifuzoAction()
+    data class SelectVariation(val moves: List<dev.irof.kifuzo.models.Move>) : KifuzoAction()
     data object ResetToMainHistory : KifuzoAction()
 }

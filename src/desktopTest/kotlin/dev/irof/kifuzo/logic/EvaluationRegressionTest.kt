@@ -23,8 +23,8 @@ class EvaluationRegressionTest {
         """.trimIndent()
 
         val session = parse(kifu)
-        assertEquals(Evaluation.SenteWin, session.history[1].evaluation, "1手目は先手勝ち")
-        assertEquals(Evaluation.Score(500), session.history[2].evaluation, "2手目は500点に戻るべき")
+        assertEquals(Evaluation.SenteWin, session.moves[0].evaluation, "1手目は先手勝ち")
+        assertEquals(Evaluation.Score(500), session.moves[1].evaluation, "2手目は500点に戻るべき")
     }
 
     @Test
@@ -37,7 +37,7 @@ class EvaluationRegressionTest {
         """.trimIndent()
 
         val session = parse(kifu)
-        assertEquals(Evaluation.SenteWin, session.history[1].evaluation)
-        assertEquals(Evaluation.SenteWin, session.history[2].evaluation)
+        assertEquals(Evaluation.SenteWin, session.moves[0].evaluation)
+        assertEquals(Evaluation.SenteWin, session.moves[1].evaluation)
     }
 }

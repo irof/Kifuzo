@@ -1,15 +1,14 @@
 package dev.irof.kifuzo.models
 
+/**
+ * 盤面の特定の時点での状態（盤上の駒と両対局者の持駒）を表します。
+ */
 data class BoardSnapshot(
     val cells: List<List<BoardPiece?>>,
     val senteMochigoma: List<Piece> = emptyList(),
     val goteMochigoma: List<Piece> = emptyList(),
-    val lastMoveText: String = "",
     val lastFrom: Square? = null,
     val lastTo: Square? = null,
-    val evaluation: Evaluation = Evaluation.Unknown,
-    val consumptionSeconds: Int? = null,
-    val variations: List<List<BoardSnapshot>> = emptyList(),
 ) {
     /**
      * このスナップショットが標準の平手初期配置であるか判定します。

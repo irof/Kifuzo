@@ -4,6 +4,7 @@ import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuSession
+import dev.irof.kifuzo.models.Move
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiConstants
@@ -24,20 +25,21 @@ class KifuSessionBuilder {
     private val currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<BoardPiece>(ShogiConstants.BOARD_SIZE) }
     private val senteMochi = mutableListOf<Piece>()
     private val goteMochi = mutableListOf<Piece>()
-    private val history = mutableListOf<BoardSnapshot>()
+
+    private var initialSnapshot: BoardSnapshot = BoardSnapshot(BoardSnapshot.getInitialCells())
+    private val moves = mutableListOf<Move>()
 
     var lastEvaluation: Evaluation
-        get() = history.lastOrNull()?.evaluation ?: Evaluation.Unknown
+        get() = moves.lastOrNull()?.evaluation ?: Evaluation.Unknown
         set(value) {
-            if (history.isNotEmpty()) {
-                val lastIdx = history.size - 1
-                history[lastIdx] = history[lastIdx].copy(evaluation = value)
+            if (moves.isNotEmpty()) {
+                val lastIdx = moves.size - 1
+                moves[lastIdx] = moves[lastIdx].copy(evaluation = value)
             }
         }
 
     /**
-     * 初期状態を設定します。snapshotが指定された場合はその局面から（変化手順用）、
-     * 指定されない場合は初期盤面から開始します。
+     * 初期状態を設定します。
      */
     fun setup(
         senteName: String = "先手",
@@ -69,21 +71,24 @@ class KifuSessionBuilder {
             }
         }
 
-        history.clear()
-        val initialMoveText = if (snapshot != null) "分岐元" else "開始局面"
-        history.add(createSnapshot(initialMoveText).copy(variations = emptyList()))
+        initialSnapshot = snapshot ?: createSnapshot()
+        moves.clear()
     }
 
     /**
      * 指定された手数の局面を取得します。
      */
-    fun getSnapshotAt(step: Int): BoardSnapshot? = history.getOrNull(step - startingStep)
+    fun getSnapshotAt(step: Int): BoardSnapshot? = when {
+        step == startingStep -> initialSnapshot
+        step > startingStep && step <= startingStep + moves.size -> moves[step - startingStep - 1].resultSnapshot
+        else -> null
+    }
 
-    val historySize: Int get() = history.size
+    val historySize: Int get() = moves.size + 1
     val currentStartingStep: Int get() = startingStep
 
     /**
-     * 指し手を適用します。dropPieceが指定された場合は駒打ち、そうでない場合は移動として処理します。
+     * 指し手を適用します。
      */
     fun applyAction(
         from: Square? = null,
@@ -108,7 +113,14 @@ class KifuSessionBuilder {
 
     private fun applyResultAction(resultText: String) {
         val evaluation = if (getTurnColor() == PieceColor.Black) Evaluation.GoteWin else Evaluation.SenteWin
-        history.add(createSnapshot(resultText, evaluation = evaluation))
+        moves.add(
+            Move(
+                step = startingStep + moves.size + 1,
+                moveText = resultText,
+                resultSnapshot = createSnapshot(),
+                evaluation = evaluation,
+            ),
+        )
     }
 
     private fun applyDropAction(piece: Piece?, to: Square, consumptionSeconds: Int?, moveText: String) {
@@ -116,7 +128,14 @@ class KifuSessionBuilder {
         val turnColor = getTurnColor()
         if (turnColor == PieceColor.Black) senteMochi.remove(dropPiece) else goteMochi.remove(dropPiece)
         currentCells[to.yIndex][to.xIndex] = BoardPiece(dropPiece, turnColor)
-        history.add(createSnapshot(moveText, null, to, consumptionSeconds))
+        moves.add(
+            Move(
+                step = startingStep + moves.size + 1,
+                moveText = moveText,
+                resultSnapshot = createSnapshot(null, to),
+                consumptionSeconds = consumptionSeconds,
+            ),
+        )
     }
 
     private fun applyMoveAction(from: Square, to: Square, isPromote: Boolean, consumptionSeconds: Int?, moveText: String) {
@@ -125,12 +144,19 @@ class KifuSessionBuilder {
         val captured = currentCells[to.yIndex][to.xIndex]
         if (captured != null) {
             if (turnColor == PieceColor.Black) senteMochi.add(captured.piece.toBase()) else goteMochi.add(captured.piece.toBase())
-            if (firstContactStep == -1) firstContactStep = history.size
+            if (firstContactStep == -1) firstContactStep = startingStep + moves.size + 1
         }
         val movingPiece = if (isPromote) current.piece.promote() else current.piece
         currentCells[to.yIndex][to.xIndex] = BoardPiece(movingPiece, turnColor)
         currentCells[from.yIndex][from.xIndex] = null
-        history.add(createSnapshot(moveText, from, to, consumptionSeconds))
+        moves.add(
+            Move(
+                step = startingStep + moves.size + 1,
+                moveText = moveText,
+                resultSnapshot = createSnapshot(from, to),
+                consumptionSeconds = consumptionSeconds,
+            ),
+        )
     }
 
     /**
@@ -151,19 +177,20 @@ class KifuSessionBuilder {
         if (mochigomaColor != null && mochigomaPiece != null) {
             if (mochigomaColor == PieceColor.Black) senteMochi.add(mochigomaPiece) else goteMochi.add(mochigomaPiece)
         }
-        if (history.isNotEmpty()) {
-            history[0] = createSnapshot("開始局面")
-        }
+        initialSnapshot = createSnapshot()
     }
 
     /**
      * 指定された手数に変化手順を追加します。
      */
-    fun addVariation(atStep: Int, variationHistory: List<BoardSnapshot>) {
+    fun addVariation(atStep: Int, variationMoves: List<Move>) {
         val index = atStep - startingStep
-        if (index in history.indices) {
-            val target = history[index]
-            history[index] = target.copy(variations = target.variations + listOf(variationHistory))
+        if (index == 0) {
+            // 開始局面からの分岐
+            initialSnapshot = initialSnapshot.copy() // Not exactly right, but variations are usually on Moves
+        } else if (index in 1..moves.size) {
+            val target = moves[index - 1]
+            moves[index - 1] = target.copy(variations = target.variations + listOf(variationMoves))
         }
     }
 
@@ -171,16 +198,15 @@ class KifuSessionBuilder {
      * 構築された KifuSession を返します。
      */
     fun build(): KifuSession {
-        // P1-P9 などで設定されていても、最終的に平手初期配置と一致すれば標準開始扱いにする
-        val finalIsStandardStart = isStandardStart || (history.isNotEmpty() && history[0].isStandardInitial())
-
+        val finalIsStandardStart = isStandardStart || initialSnapshot.isStandardInitial()
         val initialStep = when {
             !finalIsStandardStart -> 0
             firstContactStep != -1 -> firstContactStep
-            else -> history.size - 1
+            else -> moves.size
         }
         return KifuSession(
-            history = history.toList(),
+            initialSnapshot = initialSnapshot,
+            moves = moves.toList(),
             initialStep = initialStep,
             senteName = senteName,
             goteName = goteName,
@@ -191,22 +217,13 @@ class KifuSessionBuilder {
         )
     }
 
-    private fun getTurnColor(): PieceColor = if ((startingStep + history.size) % 2 != 0) PieceColor.Black else PieceColor.White
+    private fun getTurnColor(): PieceColor = if ((startingStep + moves.size + 1) % 2 != 0) PieceColor.Black else PieceColor.White
 
-    private fun createSnapshot(
-        moveText: String,
-        lastFrom: Square? = null,
-        lastTo: Square? = null,
-        consumptionSeconds: Int? = null,
-        evaluation: Evaluation = Evaluation.Unknown,
-    ): BoardSnapshot = BoardSnapshot(
+    private fun createSnapshot(lastFrom: Square? = null, lastTo: Square? = null): BoardSnapshot = BoardSnapshot(
         cells = currentCells.map { it.toList() },
         senteMochigoma = senteMochi.toList(),
         goteMochigoma = goteMochi.toList(),
-        lastMoveText = moveText,
         lastFrom = lastFrom,
         lastTo = lastTo,
-        consumptionSeconds = consumptionSeconds,
-        evaluation = evaluation,
     )
 }

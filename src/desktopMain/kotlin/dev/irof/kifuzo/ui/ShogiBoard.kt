@@ -35,7 +35,7 @@ fun ShogiBoardView(
     isFlipped: Boolean = false,
     onToggleFlip: (() -> Unit)? = null,
 ) {
-    val board = state.currentBoard ?: return
+    val board = state.currentBoard
     val session = state.session
     val isSenteTurn = state.currentStep % 2 == 0
 

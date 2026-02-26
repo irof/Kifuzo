@@ -4,6 +4,7 @@ import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.KifuSession
+import dev.irof.kifuzo.models.Move
 import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.models.ShogiConstants
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -120,7 +121,7 @@ private fun applyVariationsRecursive(parser: ParserState, childrenMap: Map<Parse
     val children = childrenMap[parser] ?: return
     for ((atStep, childParser) in children) {
         applyVariationsRecursive(childParser, childrenMap)
-        parser.addVariation(atStep, childParser.buildHistory())
+        parser.addVariation(atStep, childParser.buildMoves())
     }
 }
 
@@ -197,9 +198,9 @@ private class ParserState(private val header: KifuHeader, initialSnapshot: Board
 
     fun getSnapshotAt(step: Int): BoardSnapshot? = builder.getSnapshotAt(step)
 
-    fun addVariation(atStep: Int, history: List<BoardSnapshot>) = builder.addVariation(atStep, history)
+    fun addVariation(atStep: Int, moves: List<Move>) = builder.addVariation(atStep, moves)
 
-    fun buildHistory(): List<BoardSnapshot> = builder.build().history
+    fun buildMoves(): List<Move> = builder.build().moves
 
     fun buildSession(): KifuSession = builder.build()
 }

@@ -26,8 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
+import dev.irof.kifuzo.models.Move
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.ui.theme.ShogiIcons
@@ -49,9 +49,9 @@ fun MoveRow(
     diff: Int?,
     isSelected: Boolean,
     showEvaluation: Boolean,
-    variations: List<List<BoardSnapshot>>,
+    variations: List<List<Move>>,
     onStepChange: (Int) -> Unit,
-    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+    onSelectVariation: (List<Move>) -> Unit,
 ) {
     val backgroundColor = if (isSelected) ShogiColors.Primary.copy(alpha = MoveRowConstants.SELECTED_ALPHA) else Color.Transparent
 
@@ -82,8 +82,8 @@ private fun MoveLabel(
     diff: Int?,
     isSelected: Boolean,
     showEvaluation: Boolean,
-    variations: List<List<BoardSnapshot>>,
-    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+    variations: List<List<Move>>,
+    onSelectVariation: (List<Move>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
@@ -103,8 +103,8 @@ private fun MoveLabel(
 
 @Composable
 private fun VariationBadge(
-    variations: List<List<BoardSnapshot>>,
-    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+    variations: List<List<Move>>,
+    onSelectVariation: (List<Move>) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -121,7 +121,7 @@ private fun VariationBadge(
                     expanded = false
                     onSelectVariation(variation)
                 }) {
-                    val nextMove = variation.getOrNull(1)?.lastMoveText?.trim()?.split(Regex("""\s+"""))?.getOrNull(1) ?: "不明"
+                    val nextMove = variation.getOrNull(0)?.moveText ?: "不明"
                     Text("変化 ${index + 1}: $nextMove...", fontSize = ShogiDimensions.FontSizeSmall)
                 }
             }

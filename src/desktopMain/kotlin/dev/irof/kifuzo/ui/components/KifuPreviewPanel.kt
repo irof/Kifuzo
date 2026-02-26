@@ -35,7 +35,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
-import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.Move
 import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.ui.ShogiBoardView
 import dev.irof.kifuzo.ui.theme.ShogiColors
@@ -61,7 +61,7 @@ fun KifuPreviewPanel(
     onNextStep: () -> Unit,
     onPrevStep: () -> Unit,
     onForceParse: (Path) -> Unit,
-    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+    onSelectVariation: (List<Move>) -> Unit,
     onResetToMainHistory: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -92,7 +92,7 @@ fun KifuPreviewPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
-        val isMainHistory = boardState.currentHistory === boardState.session.history
+        val isMainHistory = boardState.currentMoves === boardState.session.moves
         val fileName = (state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT) + if (!isMainHistory) " [変化]" else ""
 
         KifuMetaInfo(
@@ -105,14 +105,14 @@ fun KifuPreviewPanel(
         )
 
         KifuHeader(
-            hasHistory = boardState.session.history.isNotEmpty(),
+            hasHistory = boardState.session.moves.isNotEmpty(),
             isMoveListVisible = state.isMoveListVisible,
             onToggleMoveList = onToggleMoveList,
         )
 
-        KifuOpenButton(state.selectedFile, boardState.session.history.isEmpty(), onForceParse)
+        KifuOpenButton(state.selectedFile, boardState.session.moves.isEmpty(), onForceParse)
 
-        if (boardState.session.history.isNotEmpty()) {
+        if (boardState.session.moves.isNotEmpty() || !boardState.session.initialSnapshot.isStandardInitial()) {
             Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
             KifuMainContent(
                 state = state,
@@ -147,7 +147,11 @@ private fun KifuHeader(
 @Composable
 private fun MoveListToggleButton(isVisible: Boolean, onClick: () -> Unit) {
     IconButton(onClick = onClick, modifier = Modifier.size(ShogiDimensions.IconSizeMedium)) {
-        Icon(imageVector = ShogiIcons.SidebarToggle, contentDescription = if (isVisible) "手順を隠す" else "手順を表示", tint = if (isVisible) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = ICON_ALPHA_INACTIVE))
+        Icon(
+            imageVector = ShogiIcons.SidebarToggle,
+            contentDescription = if (isVisible) "手順を隠す" else "手順を表示",
+            tint = if (isVisible) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = ICON_ALPHA_INACTIVE),
+        )
     }
 }
 
@@ -156,7 +160,10 @@ private fun KifuOpenButton(selectedFile: Path?, isHistoryEmpty: Boolean, onForce
     selectedFile?.let { selected ->
         if (isHistoryEmpty && selected.extension.lowercase() == "txt") {
             Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
-            Button(onClick = { onForceParse(selected) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
+            Button(
+                onClick = { onForceParse(selected) },
+                modifier = Modifier.height(ShogiDimensions.ButtonHeight),
+            ) {
                 Text("棋譜として開く")
             }
         }
@@ -169,19 +176,34 @@ private fun ColumnScope.KifuMainContent(
     boardState: ShogiBoardState,
     onToggleFlip: () -> Unit,
     onStepChange: (Int) -> Unit,
-    onSelectVariation: (List<BoardSnapshot>) -> Unit,
+    onSelectVariation: (List<Move>) -> Unit,
     onResetToMainHistory: () -> Unit,
     onWriteResult: (String) -> Unit,
 ) {
-    Row(modifier = Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge)) {
-        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
+    Row(
+        modifier = Modifier.fillMaxWidth().weight(1f),
+        horizontalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             ShogiBoardView(boardState, isFlipped = state.isFlipped, onToggleFlip = onToggleFlip)
             Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
             KifuOperationBar(boardState, state.isFlipped, onStepChange)
         }
 
         if (state.isMoveListVisible) {
-            KifuMoveList(history = boardState.currentHistory, currentStep = boardState.currentStep, isMainHistory = boardState.currentHistory === boardState.session.history, onStepChange = onStepChange, onWriteResult = onWriteResult, onSelectVariation = onSelectVariation, onResetMain = onResetToMainHistory, modifier = Modifier.width(ShogiDimensions.MoveListWidth).fillMaxHeight())
+            KifuMoveList(
+                moves = boardState.currentMoves,
+                currentStep = boardState.currentStep,
+                isMainHistory = boardState.currentMoves === boardState.session.moves,
+                onStepChange = onStepChange,
+                onWriteResult = onWriteResult,
+                onSelectVariation = onSelectVariation,
+                onResetMain = onResetToMainHistory,
+                modifier = Modifier.width(ShogiDimensions.MoveListWidth).fillMaxHeight(),
+            )
         }
     }
 }
@@ -192,10 +214,16 @@ private fun KifuOperationBar(
     isFlipped: Boolean,
     onStepChange: (Int) -> Unit,
 ) {
-    val maxStep = boardState.currentHistory.size - 1
+    val maxStep = boardState.currentMoves.size
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         KifuStepButtons(boardState.currentStep, maxStep, boardState.session.isStandardStart, boardState.session.firstContactStep, onStepChange)
-        Slider(value = boardState.currentStep.toFloat(), onValueChange = { onStepChange(it.toInt()) }, valueRange = 0f..maxStep.toFloat(), steps = if (maxStep > 1) maxStep - 1 else 0, modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge))
-        KifuGraphs(boardState.currentHistory, boardState.currentStep, isFlipped, onStepChange)
+        Slider(
+            value = boardState.currentStep.toFloat(),
+            onValueChange = { onStepChange(it.toInt()) },
+            valueRange = 0f..maxStep.toFloat(),
+            steps = if (maxStep > 1) maxStep - 1 else 0,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingLarge),
+        )
+        KifuGraphs(boardState.currentMoves, boardState.currentStep, isFlipped, onStepChange)
     }
 }

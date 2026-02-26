@@ -55,6 +55,18 @@ enum class PieceColor {
  */
 data class BoardPiece(val piece: Piece, val color: PieceColor)
 
+/**
+ * 棋譜の一手を表します。
+ */
+data class Move(
+    val step: Int,
+    val moveText: String,
+    val resultSnapshot: BoardSnapshot,
+    val evaluation: Evaluation = Evaluation.Unknown,
+    val consumptionSeconds: Int? = null,
+    val variations: List<List<Move>> = emptyList(),
+)
+
 data class Square(val file: Int, val rank: Int) {
     // file: 1-9 (筋), rank: 1-9 (段)
 
@@ -90,10 +102,9 @@ object GameResult {
     }
 }
 
-fun BoardSnapshot.toMoveLabel(step: Int): String {
-    if (step == 0) return AppStrings.START_POSITION
+fun Move.toMoveLabel(): String {
     val colorSymbol = if (step % 2 != 0) "▲" else "△"
-    val movePart = lastMoveText.trim().split(Regex("""\s+""")).getOrNull(1)?.substringBefore("(") ?: lastMoveText
+    val movePart = moveText.trim().split(Regex("""\s+""")).getOrNull(1)?.substringBefore("(") ?: moveText
     return "$colorSymbol$movePart"
 }
 
