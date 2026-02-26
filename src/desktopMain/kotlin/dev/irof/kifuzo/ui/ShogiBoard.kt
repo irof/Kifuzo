@@ -7,15 +7,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.BoardLayout
-import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiBoardState
-import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.ui.board.BoardGrid
 import dev.irof.kifuzo.ui.board.DanLabels
 import dev.irof.kifuzo.ui.board.KomaDai
@@ -40,14 +39,16 @@ fun ShogiBoardView(
 
     androidx.compose.foundation.layout.BoxWithConstraints(
         modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.PaddingMedium),
+        contentAlignment = Alignment.Center,
     ) {
-        // 盤面(9) + 段符号(0.5) + 少し余裕 = 11. 11で割る
+        // 盤面(9) + 段符号(1) = 10. 10で割る (+ 余裕を持たせて11)
         val cellSize = min(maxWidth / 11f, ShogiDimensions.BoardCellMaxSize)
         val fontSize = (cellSize.value * BoardViewConstants.PIECE_FONT_SIZE_RATIO).sp
         val labelSize = (cellSize.value * BoardViewConstants.LABEL_FONT_SIZE_RATIO).sp
+        val boardWidth = cellSize * 10
 
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.width(boardWidth),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val rangeX = BoardLayout.getRangeX(isFlipped)
@@ -55,7 +56,7 @@ fun ShogiBoardView(
 
             // 上段: 後手(上手)の駒台 ※反転時は先手
             Row(
-                modifier = Modifier.widthInBoard(cellSize),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -84,7 +85,7 @@ fun ShogiBoardView(
 
             // 下段: 先手(下手)の駒台 ※反転時は後手
             Row(
-                modifier = Modifier.widthInBoard(cellSize),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -99,5 +100,3 @@ fun ShogiBoardView(
         }
     }
 }
-
-private fun Modifier.widthInBoard(cellSize: androidx.compose.ui.unit.Dp): Modifier = this.padding(horizontal = cellSize * 0.5f).fillMaxWidth(0.9f)
