@@ -61,8 +61,10 @@ fun ShogiBoardView(
             ) {
                 if (isFlipped) {
                     KomaDai(board.senteMochigoma, isSente = true, isFlipped = isFlipped, cellSize = cellSize)
+                    PlayerNameLabel("先手", isTurn = isSenteTurn, cellSize = cellSize)
                 } else {
                     KomaDai(board.goteMochigoma, isSente = false, isFlipped = isFlipped, cellSize = cellSize)
+                    PlayerNameLabel("後手", isTurn = !isSenteTurn, cellSize = cellSize)
                 }
             }
 
@@ -87,8 +89,10 @@ fun ShogiBoardView(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (isFlipped) {
+                    PlayerNameLabel("後手", isTurn = !isSenteTurn, cellSize = cellSize)
                     KomaDai(board.goteMochigoma, isSente = false, isFlipped = isFlipped, cellSize = cellSize)
                 } else {
+                    PlayerNameLabel("先手", isTurn = isSenteTurn, cellSize = cellSize)
                     KomaDai(board.senteMochigoma, isSente = true, isFlipped = isFlipped, cellSize = cellSize)
                 }
             }
