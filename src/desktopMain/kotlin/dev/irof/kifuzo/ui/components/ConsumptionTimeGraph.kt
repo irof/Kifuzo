@@ -67,6 +67,7 @@ private object TimeGraphConstants {
     const val AVG_LINE_DASH_ON = 10f
     const val AVG_LINE_DASH_OFF = 10f
     const val AVG_LINE_ALPHA = 0.8f
+    const val PRECISION_THRESHOLD = 10.0
 }
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalTextApi::class)
@@ -132,8 +133,8 @@ fun ConsumptionTimeGraph(
         }
 
         AverageLabelsRow(
-            senteAvg = senteTimes.takeIf { it.isNotEmpty() }?.average()?.toInt(),
-            goteAvg = goteTimes.takeIf { it.isNotEmpty() }?.average()?.toInt(),
+            senteAvg = senteTimes.takeIf { it.isNotEmpty() }?.average(),
+            goteAvg = goteTimes.takeIf { it.isNotEmpty() }?.average(),
         )
     }
 }
@@ -173,7 +174,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSingleAverageLi
 }
 
 @Composable
-private fun AverageLabelsRow(senteAvg: Int?, goteAvg: Int?) {
+private fun AverageLabelsRow(senteAvg: Double?, goteAvg: Double?) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
         horizontalArrangement = Arrangement.End,
@@ -190,7 +191,13 @@ private fun AverageLabelsRow(senteAvg: Int?, goteAvg: Int?) {
 }
 
 @Composable
-private fun AverageLabel(prefix: String, value: Int, color: Color) {
+private fun AverageLabel(prefix: String, value: Double, color: Color) {
+    val formattedValue = if (value < TimeGraphConstants.PRECISION_THRESHOLD) {
+        String.format(java.util.Locale.US, "%.1fs", value)
+    } else {
+        "${value.toInt()}s"
+    }
+
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = "$prefix avg:",
@@ -199,7 +206,7 @@ private fun AverageLabel(prefix: String, value: Int, color: Color) {
         )
         Spacer(Modifier.width(4.dp))
         Text(
-            text = "${value}s",
+            text = formattedValue,
             style = MaterialTheme.typography.caption,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
             color = color.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA),
