@@ -49,20 +49,27 @@ import kotlin.io.path.name
 
 private const val ICON_ALPHA_INACTIVE = 0.6f
 
+/**
+ * 棋譜プレビューパネルでの操作を抽象化するインターフェース。
+ */
+interface KifuPreviewActions {
+    fun onToggleFlip()
+    fun onToggleMoveList()
+    fun onWriteResult(path: Path, result: String)
+    fun onShowEditMetadata(path: Path)
+    fun onStepChange(step: Int)
+    fun onNextStep()
+    fun onPrevStep()
+    fun onForceParse(path: Path)
+    fun onSelectVariation(moves: List<Move>)
+    fun onResetToMainHistory()
+}
+
 @Composable
 fun KifuPreviewPanel(
     state: KifuzoUiState,
     boardState: ShogiBoardState,
-    onToggleFlip: () -> Unit,
-    onToggleMoveList: () -> Unit,
-    onWriteResult: (Path, String) -> Unit,
-    onShowEditMetadata: (Path) -> Unit,
-    onStepChange: (Int) -> Unit,
-    onNextStep: () -> Unit,
-    onPrevStep: () -> Unit,
-    onForceParse: (Path) -> Unit,
-    onSelectVariation: (List<Move>) -> Unit,
-    onResetToMainHistory: () -> Unit,
+    actions: KifuPreviewActions,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -78,11 +85,11 @@ fun KifuPreviewPanel(
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (event.key) {
                     Key.DirectionDown -> {
-                        onNextStep()
+                        actions.onNextStep()
                         true
                     }
                     Key.DirectionUp -> {
-                        onPrevStep()
+                        actions.onPrevStep()
                         true
                     }
                     else -> false
@@ -101,28 +108,20 @@ fun KifuPreviewPanel(
             goteName = boardState.session.goteName,
             startTime = boardState.session.startTime,
             event = boardState.session.event,
-            onEdit = { state.selectedFile?.let { onShowEditMetadata(it) } },
+            onEdit = { state.selectedFile?.let { actions.onShowEditMetadata(it) } },
         )
 
         KifuHeader(
             hasHistory = boardState.session.moves.isNotEmpty(),
             isMoveListVisible = state.isMoveListVisible,
-            onToggleMoveList = onToggleMoveList,
+            onToggleMoveList = { actions.onToggleMoveList() },
         )
 
-        KifuOpenButton(state.selectedFile, boardState.session.moves.isEmpty(), onForceParse)
+        KifuOpenButton(state.selectedFile, boardState.session.moves.isEmpty(), actions::onForceParse)
 
         if (boardState.session.moves.isNotEmpty() || !boardState.session.initialSnapshot.isStandardInitial()) {
             Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
-            KifuMainContent(
-                state = state,
-                boardState = boardState,
-                onToggleFlip = onToggleFlip,
-                onStepChange = onStepChange,
-                onSelectVariation = onSelectVariation,
-                onResetToMainHistory = onResetToMainHistory,
-                onWriteResult = { result -> state.selectedFile?.let { onWriteResult(it, result) } },
-            )
+            KifuMainContent(state, boardState, actions)
         }
     }
 }
@@ -133,11 +132,7 @@ private fun KifuHeader(
     isMoveListVisible: Boolean,
     onToggleMoveList: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.End,
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
         if (hasHistory) {
             MoveListToggleButton(isMoveListVisible, onToggleMoveList)
         }
@@ -160,10 +155,7 @@ private fun KifuOpenButton(selectedFile: Path?, isHistoryEmpty: Boolean, onForce
     selectedFile?.let { selected ->
         if (isHistoryEmpty && selected.extension.lowercase() == "txt") {
             Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
-            Button(
-                onClick = { onForceParse(selected) },
-                modifier = Modifier.height(ShogiDimensions.ButtonHeight),
-            ) {
+            Button(onClick = { onForceParse(selected) }, modifier = Modifier.height(ShogiDimensions.ButtonHeight)) {
                 Text("棋譜として開く")
             }
         }
@@ -174,23 +166,13 @@ private fun KifuOpenButton(selectedFile: Path?, isHistoryEmpty: Boolean, onForce
 private fun ColumnScope.KifuMainContent(
     state: KifuzoUiState,
     boardState: ShogiBoardState,
-    onToggleFlip: () -> Unit,
-    onStepChange: (Int) -> Unit,
-    onSelectVariation: (List<Move>) -> Unit,
-    onResetToMainHistory: () -> Unit,
-    onWriteResult: (String) -> Unit,
+    actions: KifuPreviewActions,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().weight(1f),
-        horizontalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge),
-    ) {
-        Column(
-            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            ShogiBoardView(boardState, isFlipped = state.isFlipped, onToggleFlip = onToggleFlip)
+    Row(modifier = Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(ShogiDimensions.PaddingLarge)) {
+        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
+            ShogiBoardView(boardState, isFlipped = state.isFlipped, onToggleFlip = actions::onToggleFlip)
             Spacer(Modifier.height(ShogiDimensions.PaddingLarge))
-            KifuOperationBar(boardState, state.isFlipped, onStepChange)
+            KifuOperationBar(boardState, state.isFlipped, actions::onStepChange)
         }
 
         if (state.isMoveListVisible) {
@@ -198,10 +180,10 @@ private fun ColumnScope.KifuMainContent(
                 moves = boardState.currentMoves,
                 currentStep = boardState.currentStep,
                 isMainHistory = boardState.currentMoves === boardState.session.moves,
-                onStepChange = onStepChange,
-                onWriteResult = onWriteResult,
-                onSelectVariation = onSelectVariation,
-                onResetMain = onResetToMainHistory,
+                onStepChange = actions::onStepChange,
+                onWriteResult = { result -> state.selectedFile?.let { actions.onWriteResult(it, result) } },
+                onSelectVariation = actions::onSelectVariation,
+                onResetMain = actions::onResetToMainHistory,
                 modifier = Modifier.width(ShogiDimensions.MoveListWidth).fillMaxHeight(),
             )
         }

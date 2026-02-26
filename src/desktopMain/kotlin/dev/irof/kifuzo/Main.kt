@@ -34,7 +34,9 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import dev.irof.kifuzo.models.AppSettings
+import dev.irof.kifuzo.models.Move
 import dev.irof.kifuzo.ui.components.KifuMenuBar
+import dev.irof.kifuzo.ui.components.KifuPreviewActions
 import dev.irof.kifuzo.ui.components.KifuPreviewPanel
 import dev.irof.kifuzo.ui.components.KifuSidebar
 import dev.irof.kifuzo.ui.dialogs.KifuzoDialogs
@@ -42,6 +44,7 @@ import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.viewmodel.KifuzoAction
 import dev.irof.kifuzo.viewmodel.KifuzoViewModel
 import java.awt.Cursor
+import java.nio.file.Path
 
 fun main() = application {
     val windowState = rememberWindowState(
@@ -134,19 +137,25 @@ private fun RowScope.KifuzoMainLayout(viewModel: KifuzoViewModel) {
         SidebarResizer { viewModel.dispatch(KifuzoAction.UpdateSidebarWidth(it)) }
     }
 
+    val previewActions = remember(viewModel) {
+        object : KifuPreviewActions {
+            override fun onToggleFlip() = viewModel.dispatch(KifuzoAction.ToggleFlipped)
+            override fun onToggleMoveList() = viewModel.dispatch(KifuzoAction.ToggleMoveList)
+            override fun onWriteResult(path: Path, result: String) = viewModel.dispatch(KifuzoAction.WriteGameResult(path, result))
+            override fun onShowEditMetadata(path: Path) = viewModel.dispatch(KifuzoAction.ShowEditMetadataDialog(path))
+            override fun onStepChange(step: Int) = viewModel.dispatch(KifuzoAction.ChangeStep(step))
+            override fun onNextStep() = viewModel.dispatch(KifuzoAction.NextStep)
+            override fun onPrevStep() = viewModel.dispatch(KifuzoAction.PrevStep)
+            override fun onForceParse(path: Path) = viewModel.dispatch(KifuzoAction.ForceParseAsKifu(path))
+            override fun onSelectVariation(moves: List<Move>) = viewModel.dispatch(KifuzoAction.SelectVariation(moves))
+            override fun onResetToMainHistory() = viewModel.dispatch(KifuzoAction.ResetToMainHistory)
+        }
+    }
+
     KifuPreviewPanel(
         state = state,
         boardState = viewModel.boardState,
-        onToggleFlip = { viewModel.dispatch(KifuzoAction.ToggleFlipped) },
-        onToggleMoveList = { viewModel.dispatch(KifuzoAction.ToggleMoveList) },
-        onWriteResult = { path, result -> viewModel.dispatch(KifuzoAction.WriteGameResult(path, result)) },
-        onShowEditMetadata = { viewModel.dispatch(KifuzoAction.ShowEditMetadataDialog(it)) },
-        onStepChange = { viewModel.dispatch(KifuzoAction.ChangeStep(it)) },
-        onNextStep = { viewModel.dispatch(KifuzoAction.NextStep) },
-        onPrevStep = { viewModel.dispatch(KifuzoAction.PrevStep) },
-        onForceParse = { viewModel.dispatch(KifuzoAction.ForceParseAsKifu(it)) },
-        onSelectVariation = { viewModel.dispatch(KifuzoAction.SelectVariation(it)) },
-        onResetToMainHistory = { viewModel.dispatch(KifuzoAction.ResetToMainHistory) },
+        actions = previewActions,
         modifier = Modifier.weight(1.0f),
     )
 }
