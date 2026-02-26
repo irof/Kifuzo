@@ -70,7 +70,7 @@ fun KifuGraphs(
     val evaluations = history.map { it.evaluation }
     val consumptionTimes = history.map { it.consumptionSeconds }
     val hasEval = evaluations.any { it is Evaluation.Score }
-    val hasTime = consumptionTimes.any { it != null }
+    val hasTime = consumptionTimes.any { it != null && it > 0 }
 
     if (hasEval || hasTime) {
         Spacer(Modifier.height(ShogiDimensions.PaddingMedium))
