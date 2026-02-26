@@ -129,20 +129,23 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeAverageLine
     val goteTimes = times.filterIndexed { i, t -> i > 0 && i % 2 == 0 && t != null }.mapNotNull { it }
 
     if (senteTimes.isNotEmpty()) {
-        drawSingleAverageLine(senteTimes.average().toFloat(), "▲", ShogiColors.EvalPositive, scaler, textMeasurer, isTopLabel = true)
+        drawSingleAverageLine(senteTimes.average().toFloat(), ShogiColors.EvalPositive, scaler)
     }
     if (goteTimes.isNotEmpty()) {
-        drawSingleAverageLine(goteTimes.average().toFloat(), "△", ShogiColors.EvalNegative, scaler, textMeasurer, isTopLabel = false)
+        drawSingleAverageLine(goteTimes.average().toFloat(), ShogiColors.EvalNegative, scaler)
     }
+
+    drawAverageLabels(
+        senteAvg = senteTimes.takeIf { it.isNotEmpty() }?.average()?.toFloat(),
+        goteAvg = goteTimes.takeIf { it.isNotEmpty() }?.average()?.toFloat(),
+        textMeasurer = textMeasurer,
+    )
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSingleAverageLine(
     average: Float,
-    labelPrefix: String,
     baseColor: Color,
     scaler: NonLinearScaler,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
-    isTopLabel: Boolean,
 ) {
     val y = scaler.getScaledY(average)
     if (y < 0 || y > size.height) return
@@ -158,20 +161,53 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSingleAverageLi
             0f,
         ),
     )
+}
 
-    val label = "$labelPrefix avg: ${average.toInt()}s"
-    val textLayoutResult = textMeasurer.measure(
-        text = AnnotatedString(label),
-        style = TextStyle(color = color, fontSize = GraphCommonConstants.LABEL_FONT_SIZE, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
-    )
-    val labelY = if (isTopLabel) y - textLayoutResult.size.height else y
-    drawText(
-        textLayoutResult,
-        topLeft = Offset(
-            size.width - textLayoutResult.size.width - ShogiDimensions.PaddingSmall.toPx(),
-            labelY,
-        ),
-    )
+@OptIn(ExperimentalTextApi::class)
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawAverageLabels(
+    senteAvg: Float?,
+    goteAvg: Float?,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+) {
+    val padding = ShogiDimensions.PaddingSmall.toPx()
+    var currentX = size.width - padding
+
+    // 後手のラベル（右側）
+    goteAvg?.let {
+        val label = "△ avg: ${it.toInt()}s"
+        val textLayoutResult = textMeasurer.measure(
+            text = AnnotatedString(label),
+            style = TextStyle(
+                color = ShogiColors.EvalNegative.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA),
+                fontSize = GraphCommonConstants.LABEL_FONT_SIZE,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            ),
+        )
+        currentX -= textLayoutResult.size.width
+        drawText(
+            textLayoutResult,
+            topLeft = Offset(currentX, size.height - textLayoutResult.size.height - padding),
+        )
+        currentX -= padding * 2 // ラベル間のスペース
+    }
+
+    // 先手のラベル（後手の左側）
+    senteAvg?.let {
+        val label = "▲ avg: ${it.toInt()}s"
+        val textLayoutResult = textMeasurer.measure(
+            text = AnnotatedString(label),
+            style = TextStyle(
+                color = ShogiColors.EvalPositive.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA),
+                fontSize = GraphCommonConstants.LABEL_FONT_SIZE,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            ),
+        )
+        currentX -= textLayoutResult.size.width
+        drawText(
+            textLayoutResult,
+            topLeft = Offset(currentX, size.height - textLayoutResult.size.height - padding),
+        )
+    }
 }
 
 private fun calculateMaxSeconds(times: List<Int?>): Float {
