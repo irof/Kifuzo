@@ -56,6 +56,10 @@ private object TimeGraphConstants {
 
     const val SCALE_THRESHOLD = 60f // 1分を超えたら圧縮
     const val SCALE_COMPRESSION = 0.2f // 圧縮率
+
+    const val AVG_LINE_DASH_ON = 10f
+    const val AVG_LINE_DASH_OFF = 10f
+    const val AVG_LINE_ALPHA = 0.8f
 }
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalTextApi::class)
@@ -110,9 +114,48 @@ fun ConsumptionTimeGraph(
             drawTimeGridLines(maxSeconds, scaler, textMeasurer)
             drawTimeCurrentHighlight(currentStep, totalSteps, stepWidth)
             drawTimeBars(times, stepWidth, scaler)
+            drawTimeAverageLine(times, scaler, textMeasurer)
             drawTimeHoverIndicator(hoverStep, times, stepWidth, scaler, textMeasurer)
         }
     }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeAverageLine(
+    times: List<Int?>,
+    scaler: NonLinearScaler,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+) {
+    val validTimes = times.filterNotNull()
+    if (validTimes.isEmpty()) return
+
+    val average = validTimes.average().toFloat()
+    val y = scaler.getScaledY(average)
+    if (y < 0 || y > size.height) return
+
+    val color = Color.Gray.copy(alpha = TimeGraphConstants.AVG_LINE_ALPHA)
+    drawLine(
+        color = color,
+        start = Offset(0f, y),
+        end = Offset(size.width, y),
+        strokeWidth = GraphCommonConstants.LINE_WIDTH_THIN,
+        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
+            floatArrayOf(TimeGraphConstants.AVG_LINE_DASH_ON, TimeGraphConstants.AVG_LINE_DASH_OFF),
+            0f,
+        ),
+    )
+
+    val label = "avg: ${average.toInt()}s"
+    val textLayoutResult = textMeasurer.measure(
+        text = AnnotatedString(label),
+        style = TextStyle(color = color, fontSize = GraphCommonConstants.LABEL_FONT_SIZE),
+    )
+    drawText(
+        textLayoutResult,
+        topLeft = Offset(
+            size.width - textLayoutResult.size.width - ShogiDimensions.PaddingSmall.toPx(),
+            y - textLayoutResult.size.height,
+        ),
+    )
 }
 
 private fun calculateMaxSeconds(times: List<Int?>): Float {
