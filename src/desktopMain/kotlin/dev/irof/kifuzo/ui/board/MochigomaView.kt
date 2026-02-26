@@ -36,8 +36,9 @@ fun KomaDai(
     isFlipped: Boolean,
     cellSize: Dp,
 ) {
+    val comparator = if (isSente) compareByDescending<Piece> { it.mochigomaOrder } else compareBy { it.mochigomaOrder }
     val grouped = pieces.groupBy { it }.mapValues { it.value.size }
-        .toSortedMap(compareBy { it.mochigomaOrder })
+        .toSortedMap(comparator)
     val pieceFontSize = (cellSize.value * PIECE_FONT_SCALE).sp
     val countFontSize = (cellSize.value * COUNT_FONT_SCALE).sp
 
@@ -53,7 +54,7 @@ fun KomaDai(
             .border(ShogiDimensions.BoardLineThickness, ShogiColors.BoardLine)
             .padding(horizontal = 4.dp, vertical = 2.dp)
             .heightIn(min = cellSize * KOMADAI_MIN_HEIGHT_SCALE),
-        contentAlignment = Alignment.CenterStart,
+        contentAlignment = if (isSente) Alignment.CenterEnd else Alignment.CenterStart,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (grouped.isEmpty()) {
