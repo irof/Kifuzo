@@ -80,9 +80,15 @@ internal class HeaderParser {
     private fun isMochigomaLine(l: String) = l.startsWith("P+") || l.startsWith("P-") || Regex("""^[上下先後]手(の)?持駒：""").containsMatchIn(l)
     private fun isMoveLine(l: String) = Regex("""^\s*\d+\s+.*""").matches(l) || l.startsWith("+") || l.startsWith("-")
 
-    fun build(): KifuHeader = KifuHeader(
-        senteName = senteName, goteName = goteName, startTime = startTime, event = event,
-        initialCells = currentCells.map { it.toList() }, senteMochi = senteMochi.toList(), goteMochi = goteMochi.toList(),
-        isStandardStart = isStandardStart, moveStartIndex = moveStartIndex,
-    )
+    fun build(): KifuHeader {
+        // boardY > 0 は KIFの盤面図(|)が1行以上現れたことを示す
+        if (boardY in 1 until ShogiConstants.BOARD_SIZE) {
+            throw KifuParseException("盤面図が不完全です（${boardY}行しか見つかりませんでした）。")
+        }
+        return KifuHeader(
+            senteName = senteName, goteName = goteName, startTime = startTime, event = event,
+            initialCells = currentCells.map { it.toList() }, senteMochi = senteMochi.toList(), goteMochi = goteMochi.toList(),
+            isStandardStart = isStandardStart, moveStartIndex = moveStartIndex,
+        )
+    }
 }

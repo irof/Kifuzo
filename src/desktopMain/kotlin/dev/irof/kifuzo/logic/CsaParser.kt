@@ -148,13 +148,18 @@ private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx
 
     if (fromX == 0) {
         val moveText = destinationText + targetPiece.symbol + "打"
-        ctx.builder.applyAction(to = Square(toX, toY), piece = targetPiece, consumptionSeconds = seconds, moveText = "${ctx.moveCount} $moveText")
+        try {
+            ctx.builder.applyAction(to = Square(toX, toY), piece = targetPiece, consumptionSeconds = seconds, moveText = "${ctx.moveCount} $moveText")
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            throw KifuParseException("${index + 1}行目: ${e.message}", lineNumber = index + 1, lineContent = line, cause = e)
+        }
     } else {
-        applyCsaNormalMove(fromX, fromY, toX, toY, targetPiece, destinationText, seconds, ctx)
+        applyCsaNormalMove(line, fromX, fromY, toX, toY, targetPiece, destinationText, seconds, index, ctx)
     }
 }
 
 private fun applyCsaNormalMove(
+    line: String,
     fromX: Int,
     fromY: Int,
     toX: Int,
@@ -162,6 +167,7 @@ private fun applyCsaNormalMove(
     targetPiece: Piece,
     destinationText: String,
     seconds: Int?,
+    index: Int,
     ctx: CsaParseContext,
 ) {
     val fromSquare = Square(fromX, fromY)
@@ -171,7 +177,11 @@ private fun applyCsaNormalMove(
 
     val movePieceSymbol = if (isPromote) fromPiece?.symbol ?: "" else targetPiece.symbol
     val moveText = destinationText + movePieceSymbol + if (isPromote) "成" else ""
-    ctx.builder.applyAction(from = fromSquare, to = Square(toX, toY), isPromote = isPromote, consumptionSeconds = seconds, moveText = "${ctx.moveCount} $moveText")
+    try {
+        ctx.builder.applyAction(from = fromSquare, to = Square(toX, toY), isPromote = isPromote, consumptionSeconds = seconds, moveText = "${ctx.moveCount} $moveText")
+    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        throw KifuParseException("${index + 1}行目: ${e.message}", lineNumber = index + 1, lineContent = line, cause = e)
+    }
 }
 
 private fun extractCsaEvaluation(line: String, builder: KifuSessionBuilder) {

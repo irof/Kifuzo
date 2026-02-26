@@ -115,7 +115,12 @@ private fun handleMoveLine(line: String, lineIndex: Int, parserState: ParserStat
     try {
         parserState.applyMove(parsedMove, line)
     } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-        throw KifuParseException("${lineIndex + 1}行目: ${e.message}\n(内容: $line)", e)
+        throw KifuParseException(
+            message = "${lineIndex + 1}行目: ${e.message}",
+            lineNumber = lineIndex + 1,
+            lineContent = line,
+            cause = e,
+        )
     }
 }
 
@@ -199,4 +204,10 @@ private fun parseHeader(lines: List<String>): KifuHeader {
     return parser.build()
 }
 
-class KifuParseException(message: String, cause: Throwable? = null) : Exception(message, cause)
+class KifuParseException(
+    message: String,
+    val lineNumber: Int? = null,
+    val lineContent: String? = null,
+    val path: Path? = null,
+    cause: Throwable? = null,
+) : Exception(message, cause)
