@@ -47,17 +47,38 @@ fun parseCsa(lines: List<String>, state: ShogiBoardState) {
 
     for (i in lines.indices) {
         val line = lines[i].trim()
-        if (line.startsWith("+") || line.startsWith("-")) {
-            if (line.length >= CSA_MOVE_LINE_MIN_LENGTH) {
-                handleCsaMoveLine(line, i, lines, ctx)
-                ctx.moveCount++
+        when {
+            line.startsWith("+") || line.startsWith("-") -> {
+                if (line.length >= CSA_MOVE_LINE_MIN_LENGTH) {
+                    handleCsaMoveLine(line, i, lines, ctx)
+                    ctx.moveCount++
+                }
             }
-        } else if (line.startsWith("'")) {
-            extractCsaEvaluation(line, ctx.builder)
+            line.startsWith("%") -> {
+                handleCsaResultLine(line, ctx)
+            }
+            line.startsWith("'") -> {
+                extractCsaEvaluation(line, ctx.builder)
+            }
         }
     }
 
     state.updateSession(ctx.builder.build())
+}
+
+private fun handleCsaResultLine(line: String, ctx: CsaParseContext) {
+    val resultText = when (line) {
+        "%TORYO" -> "投了"
+        "%TSUMI" -> "詰み"
+        "%CHUDAN" -> "中断"
+        "%SENNICHITE" -> "千日手"
+        "%TIME_UP" -> "切れ負け"
+        "%JISHOGI" -> "持将棋"
+        "%KACHI" -> "入玉勝ち"
+        "%HIKIWAKE" -> "引き分け"
+        else -> line.substring(1) // 未知のコードは % を除いてそのまま
+    }
+    ctx.builder.applyAction(consumptionSeconds = null, moveText = "", resultText = "${ctx.moveCount} $resultText")
 }
 
 private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx: CsaParseContext) {
