@@ -107,4 +107,16 @@ class FileActionHandlerTest {
         assertEquals(newPath, renamedPath)
         assertEquals(true, filesChangedCalled)
     }
+
+    @Test
+    fun CSA形式からKIF形式への変換に失敗した時にエラー通知されること() {
+        val path = Paths.get("error.csa")
+        val errorMsgDetail = "Conversion error"
+        repository.convertCsaAction = { throw KifuParseException(errorMsgDetail) }
+
+        handler.performCsaConversion(path)
+
+        assertEquals("変換エラー", errorMsg)
+        assertEquals(errorMsgDetail, errorDetail)
+    }
 }

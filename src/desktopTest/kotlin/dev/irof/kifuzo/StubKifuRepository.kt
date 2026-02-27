@@ -22,6 +22,7 @@ open class StubKifuRepository : KifuRepository {
     var lastParsedPath: Path? = null
     var lastMethodCalled: String? = null
     var parseAction: (ShogiBoardState) -> Unit = {}
+    var convertCsaAction: () -> Unit = {}
     var renameResult: Path? = null
     var proposedName: String? = null
     var importResult: Int = 0
@@ -38,7 +39,10 @@ open class StubKifuRepository : KifuRepository {
         lastMethodCalled = "parseManually"
         parseAction(state)
     }
-    override fun convertCsa(path: Path): Path = path
+    override fun convertCsa(path: Path): Path {
+        convertCsaAction()
+        return path
+    }
     override fun updateResult(path: Path, result: String) { /* Stub */ }
     override fun updateHeader(path: Path, event: String, startTime: String) { /* Stub */ }
     override fun generateProposedName(path: Path, template: String): String? = proposedName ?: path.fileName.toString()
