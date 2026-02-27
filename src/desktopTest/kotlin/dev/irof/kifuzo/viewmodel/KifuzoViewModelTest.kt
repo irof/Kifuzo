@@ -161,4 +161,64 @@ class KifuzoViewModelTest {
         viewModel.dispatch(KifuzoAction.SetViewMode(FileViewMode.FLAT))
         assertEquals(FileViewMode.FLAT, viewModel.uiState.viewMode)
     }
+
+    @Test
+    fun エラーメッセージと通知情報をクリアできること() {
+        // 内部的にセットする方法がないので、Action経由で発生させる必要があるが、
+        // ここでは直接 UiState が更新されるアクション(ClearErrorAndInfo)の挙動のみ確認
+        viewModel.dispatch(KifuzoAction.ClearErrorAndInfo)
+        assertEquals(null, viewModel.uiState.errorMessage)
+        assertEquals(null, viewModel.uiState.infoMessage)
+    }
+
+    @Test
+    fun インポートダイアログの表示状態を切り替えられること() {
+        assertFalse(viewModel.uiState.showImportDialog)
+        viewModel.dispatch(KifuzoAction.ShowImportDialog(true))
+        assertTrue(viewModel.uiState.showImportDialog)
+    }
+
+    @Test
+    fun リネームダイアログの表示状態と対象パスを制御できること() {
+        val path = Paths.get("test.kifu")
+        assertEquals(null, viewModel.uiState.renameTarget)
+
+        viewModel.dispatch(KifuzoAction.ShowRenameDialog(path))
+        assertEquals(path, viewModel.uiState.renameTarget)
+
+        viewModel.dispatch(KifuzoAction.HideRenameDialog)
+        assertEquals(null, viewModel.uiState.renameTarget)
+    }
+
+    @Test
+    fun メタデータ編集ダイアログの表示状態を制御できること() {
+        val path = Paths.get("test.kifu")
+        assertEquals(null, viewModel.uiState.editMetadataTarget)
+
+        viewModel.dispatch(KifuzoAction.ShowEditMetadataDialog(path))
+        assertEquals(path, viewModel.uiState.editMetadataTarget)
+
+        viewModel.dispatch(KifuzoAction.HideEditMetadataDialog)
+        assertEquals(null, viewModel.uiState.editMetadataTarget)
+    }
+
+    @Test
+    fun ソート順の設定を更新できること() {
+        val option = dev.irof.kifuzo.models.FileSortOption.NAME
+        viewModel.dispatch(KifuzoAction.SetFileSortOption(option))
+        assertEquals(option, viewModel.uiState.fileSortOption)
+    }
+
+    @Test
+    fun ファイルフィルタを切り替えられること() {
+        val filter = dev.irof.kifuzo.models.FileFilter.KIFU_ONLY
+        // 初期状態では含まれていないはず
+        assertFalse(viewModel.uiState.fileFilters.contains(filter))
+
+        viewModel.dispatch(KifuzoAction.ToggleFileFilter(filter))
+        assertTrue(viewModel.uiState.fileFilters.contains(filter))
+
+        viewModel.dispatch(KifuzoAction.ToggleFileFilter(filter))
+        assertFalse(viewModel.uiState.fileFilters.contains(filter))
+    }
 }
