@@ -91,6 +91,7 @@ The project uses **Gradle** as the build tool.
 ## Development Conventions
 
 - **Compliance and Self-Correction:** You MUST strictly adhere to all conventions defined in this file. If the user points out a failure to follow these conventions, you MUST investigate the cause and update `GEMINI.md` in the same task to include stricter, more explicit rules to prevent similar occurrences.
+- **Task Management:** ALWAYS check `TODO.md` at the start of a session. Prioritize resolving existing technical debt and temporary workarounds listed in `TODO.md` whenever you perform related changes. Update `TODO.md` autonomously as tasks are completed or new issues are identified.
 - **Language:**
     - **GEMINI.md:** Must be written in **English**.
     - **Commit Messages:** Must follow **Conventional Commits** using Japanese for the description and English for the type (e.g., `feat: 機能の追加`).
