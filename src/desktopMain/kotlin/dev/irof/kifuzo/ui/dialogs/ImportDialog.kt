@@ -79,14 +79,16 @@ private fun ImportSourceField(path: String, onPathChange: (String) -> Unit) {
     }
 }
 
-private fun createDirectoryChooser(initialPath: String): JFileChooser = JFileChooser().apply {
-    fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-    if (initialPath.isNotEmpty()) {
-        val f = java.io.File(initialPath)
-        if (f.exists()) {
-            currentDirectory = if (f.isDirectory) f else f.parentFile
-        }
+private fun createDirectoryChooser(initialPath: String): JFileChooser {
+    val chooser = JFileChooser()
+    chooser.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+    if (initialPath.isEmpty()) return chooser
+
+    val file = java.io.File(initialPath)
+    if (file.exists()) {
+        chooser.currentDirectory = if (file.isDirectory) file else file.parentFile
     }
+    return chooser
 }
 
 @Composable

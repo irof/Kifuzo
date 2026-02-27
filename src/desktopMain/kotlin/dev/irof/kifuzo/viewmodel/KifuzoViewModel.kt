@@ -84,49 +84,15 @@ class KifuzoViewModel(
         private set
 
     fun dispatch(action: KifuzoAction) {
-        when (action) {
-            is KifuzoAction.SetRootDirectory,
-            is KifuzoAction.ToggleDirectory,
-            is KifuzoAction.SetViewMode,
-            is KifuzoAction.SetFileSortOption,
-            is KifuzoAction.ToggleFileFilter,
-            is KifuzoAction.RefreshFiles -> handleFileTreeAction(action)
-
-            is KifuzoAction.SelectFile,
-            is KifuzoAction.SelectNextFile,
-            is KifuzoAction.SelectPrevFile,
-            is KifuzoAction.ShowRenameDialog,
-            is KifuzoAction.HideRenameDialog,
-            is KifuzoAction.PerformRename,
-            is KifuzoAction.ConvertCsa,
-            is KifuzoAction.ForceParseAsKifu,
-            is KifuzoAction.ConfirmOverwrite,
-            is KifuzoAction.HideOverwriteConfirm,
-            is KifuzoAction.WriteGameResult,
-            is KifuzoAction.UpdateMetadata,
-            is KifuzoAction.ShowEditMetadataDialog,
-            is KifuzoAction.HideEditMetadataDialog -> handleFileAction(action)
-
-            is KifuzoAction.SaveSettings,
-            is KifuzoAction.SetViewingText,
-            is KifuzoAction.ToggleFlipped,
-            is KifuzoAction.ShowSettings,
-            is KifuzoAction.ShowImportDialog,
-            is KifuzoAction.ClearErrorAndInfo,
-            is KifuzoAction.ImportFiles,
-            is KifuzoAction.UpdateSidebarWidth,
-            is KifuzoAction.ToggleSidebar,
-            is KifuzoAction.ToggleMoveList -> handleUiAction(action)
-
-            is KifuzoAction.ChangeStep,
-            is KifuzoAction.NextStep,
-            is KifuzoAction.PrevStep,
-            is KifuzoAction.SelectVariation,
-            is KifuzoAction.ResetToMainHistory -> handleStepAction(action)
+        val handled = handleFileTreeAction(action) ||
+            handleFileAction(action) ||
+            handleUiAction(action)
+        if (!handled) {
+            handleStepAction(action)
         }
     }
 
-    private fun handleFileTreeAction(action: KifuzoAction) {
+    private fun handleFileTreeAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.SetRootDirectory -> {
                 currentRootDirectory = action.path
@@ -155,11 +121,12 @@ class KifuzoViewModel(
                 refreshFiles()
             }
             is KifuzoAction.RefreshFiles -> refreshFiles()
-            else -> {}
+            else -> return false
         }
+        return true
     }
 
-    private fun handleFileAction(action: KifuzoAction) {
+    private fun handleFileAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.SelectFile,
             is KifuzoAction.SelectNextFile,
@@ -183,8 +150,9 @@ class KifuzoViewModel(
             is KifuzoAction.HideEditMetadataDialog,
             -> handleMetadataAction(action)
 
-            else -> {}
+            else -> return false
         }
+        return true
     }
 
     private fun handleSelectionAction(action: KifuzoAction) {
@@ -253,7 +221,7 @@ class KifuzoViewModel(
         }
     }
 
-    private fun handleUiAction(action: KifuzoAction) {
+    private fun handleUiAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.SaveSettings -> {
                 settingsHandler.saveSettings(action.regex, action.template)
@@ -275,19 +243,21 @@ class KifuzoViewModel(
             }
             is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
             is KifuzoAction.ToggleMoveList -> updateState { it.copy(isMoveListVisible = !it.isMoveListVisible) }
-            else -> {}
+            else -> return false
         }
+        return true
     }
 
-    private fun handleStepAction(action: KifuzoAction) {
+    private fun handleStepAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.ChangeStep -> boardState.currentStep = action.step
             is KifuzoAction.NextStep -> boardState.currentStep++
             is KifuzoAction.PrevStep -> boardState.currentStep--
             is KifuzoAction.SelectVariation -> boardState.switchHistory(action.moves)
             is KifuzoAction.ResetToMainHistory -> boardState.resetToMainHistory()
-            else -> {}
+            else -> return false
         }
+        return true
     }
 
     private fun updateState(update: (KifuzoUiState) -> KifuzoUiState) {

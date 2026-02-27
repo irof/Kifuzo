@@ -64,16 +64,14 @@ fun main() = application {
 }
 
 @Composable
-private fun rememberKifuzoWindowState(): androidx.compose.ui.window.WindowState {
-    return rememberWindowState(
-        position = if (AppSettings.windowX != null && AppSettings.windowY != null) {
-            WindowPosition(AppSettings.windowX!!.dp, AppSettings.windowY!!.dp)
-        } else {
-            WindowPosition.Aligned(Alignment.Center)
-        },
-        size = DpSize(AppSettings.windowWidth.dp, AppSettings.windowHeight.dp),
-    )
-}
+private fun rememberKifuzoWindowState(): androidx.compose.ui.window.WindowState = rememberWindowState(
+    position = if (AppSettings.windowX != null && AppSettings.windowY != null) {
+        WindowPosition(AppSettings.windowX!!.dp, AppSettings.windowY!!.dp)
+    } else {
+        WindowPosition.Aligned(Alignment.Center)
+    },
+    size = DpSize(AppSettings.windowWidth.dp, AppSettings.windowHeight.dp),
+)
 
 @Composable
 fun KifuzoApp() {
