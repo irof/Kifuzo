@@ -70,8 +70,7 @@ spotless {
         ktlint().editorConfigOverride(
             mapOf(
                 "ktlint_standard_blank-line-between-when-conditions" to "disabled",
-                "ktlint_function_naming_ignore_when_annotated_with" to "Composable,Test",
-                "ktlint_standard_no-wildcard-imports" to "disabled"
+                "ktlint_function_naming_ignore_when_annotated_with" to "Composable,Test"
             )
         )
         trimTrailingWhitespace()

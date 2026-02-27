@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.irof.kifuzo.logic.io.readLinesWithEncoding
 import dev.irof.kifuzo.logic.io.readTextWithEncoding
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.FileViewMode

@@ -1,6 +1,10 @@
 package dev.irof.kifuzo.logic.parser
-import dev.irof.kifuzo.logic.io.*
-import dev.irof.kifuzo.logic.service.*
+import dev.irof.kifuzo.logic.io.readLinesWithEncoding
+import dev.irof.kifuzo.logic.io.readTextWithEncoding
+import dev.irof.kifuzo.logic.service.FileTreeManager
+import dev.irof.kifuzo.logic.service.KifuRepository
+import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
+import dev.irof.kifuzo.logic.service.KifuSessionBuilder
 import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor

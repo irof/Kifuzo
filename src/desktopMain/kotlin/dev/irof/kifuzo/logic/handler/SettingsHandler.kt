@@ -1,6 +1,9 @@
 package dev.irof.kifuzo.logic.handler
 
+import dev.irof.kifuzo.logic.service.FileTreeManager
 import dev.irof.kifuzo.logic.service.KifuRepository
+import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
+import dev.irof.kifuzo.logic.service.KifuSessionBuilder
 import dev.irof.kifuzo.models.ShogiBoardState
 import java.nio.file.Path
 

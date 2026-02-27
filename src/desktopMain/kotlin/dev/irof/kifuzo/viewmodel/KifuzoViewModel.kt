@@ -9,6 +9,7 @@ import dev.irof.kifuzo.logic.handler.SettingsHandler
 import dev.irof.kifuzo.logic.service.FileTreeManager
 import dev.irof.kifuzo.logic.service.KifuRepository
 import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
+import dev.irof.kifuzo.logic.service.KifuSessionBuilder
 import dev.irof.kifuzo.models.AppSettings
 import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileTreeNode
