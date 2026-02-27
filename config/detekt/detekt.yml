@@ -26,10 +26,10 @@ console-reports:
   active: true
   exclude:
      - 'ProjectStatisticsReport'
-     - 'ComplexityReport'
-     - 'NotificationReport'
-     - 'IssuesReport'
-     - 'FileBasedIssuesReport'
+  #  - 'ComplexityReport'
+  #  - 'NotificationReport'
+  #  - 'IssuesReport'
+  #  - 'FileBasedIssuesReport'
   #  - 'LiteIssuesReport'
 
 comments:
@@ -78,7 +78,7 @@ complexity:
   active: true
   CognitiveComplexMethod:
     active: true
-    allowedComplexity: 15
+    allowedComplexity: 10
   ComplexCondition:
     active: true
     allowedConditions: 3
@@ -90,7 +90,7 @@ complexity:
     ignoreOverloaded: false
   CyclomaticComplexMethod:
     active: true
-    allowedComplexity: 15
+    allowedComplexity: 8
     ignoreSingleWhenExpression: false
     ignoreSimpleWhenEntries: false
     ignoreNestingFunctions: false
@@ -110,10 +110,10 @@ complexity:
     ignoredLabels: []
   LargeClass:
     active: true
-    allowedLines: 600
+    allowedLines: 300
   LongMethod:
     active: true
-    allowedLines: 60
+    allowedLines: 40
   LongParameterList:
     active: true
     allowedFunctionParameters: 5
@@ -131,7 +131,7 @@ complexity:
     ignoreArgumentsMatchingNames: false
   NestedBlockDepth:
     active: true
-    allowedDepth: 4
+    allowedDepth: 3
   NestedScopeFunctions:
     active: false
     allowedDepth: 1
@@ -144,7 +144,7 @@ complexity:
   ReplaceSafeCallChainWithRun:
     active: false
   StringLiteralDuplication:
-    active: false
+    active: true
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
     allowedDuplications: 2
     ignoreAnnotation: true

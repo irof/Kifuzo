@@ -29,13 +29,13 @@ private val logger = KotlinLogging.logger {}
 
 class KifuzoViewModel(
     private val repository: KifuRepository = KifuRepositoryImpl(),
+    private val fileTreeManager: FileTreeManager = FileTreeManager(repository),
 ) {
     companion object {
         private const val SCAN_DEPTH = 3
     }
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private val fileTreeManager = FileTreeManager(repository)
     val boardState = ShogiBoardState()
 
     private val fileActionHandler = FileActionHandler(
@@ -132,16 +132,8 @@ class KifuzoViewModel(
 
     private fun handleFileTreeAction(action: KifuzoAction) {
         when (action) {
-            is KifuzoAction.SetRootDirectory -> {
-                currentRootDirectory = action.path
-                AppSettings.lastRootDir = action.path.toString()
-                updateState { it.copy(treeNodes = emptyList()) }
-                refreshFiles()
-            }
-            is KifuzoAction.ToggleDirectory -> {
-                val newNodes = fileTreeManager.toggleNode(action.node, uiState.treeNodes, uiState.fileSortOption)
-                updateState { it.copy(treeNodes = newNodes) }
-            }
+            is KifuzoAction.SetRootDirectory -> setRootDirectory(action.path)
+            is KifuzoAction.ToggleDirectory -> toggleDirectory(action.node)
             is KifuzoAction.SetViewMode -> {
                 updateState { it.copy(viewMode = action.mode) }
                 refreshFiles()
@@ -161,6 +153,18 @@ class KifuzoViewModel(
             is KifuzoAction.RefreshFiles -> refreshFiles()
             else -> {}
         }
+    }
+
+    private fun setRootDirectory(path: Path) {
+        currentRootDirectory = path
+        AppSettings.lastRootDir = path.toString()
+        updateState { it.copy(treeNodes = emptyList()) }
+        refreshFiles()
+    }
+
+    private fun toggleDirectory(node: FileTreeNode) {
+        val newNodes = fileTreeManager.toggleNode(node, uiState.treeNodes, uiState.fileSortOption)
+        updateState { it.copy(treeNodes = newNodes) }
     }
 
     private fun handleFileAction(action: KifuzoAction) {
@@ -259,28 +263,32 @@ class KifuzoViewModel(
 
     private fun handleUiAction(action: KifuzoAction) {
         when (action) {
-            is KifuzoAction.SaveSettings -> {
-                settingsHandler.saveSettings(action.regex, action.template)
-                updateState { it.copy(myNameRegex = action.regex, filenameTemplate = action.template, showSettings = false) }
-            }
+            is KifuzoAction.SaveSettings -> saveSettings(action)
             is KifuzoAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
             is KifuzoAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
             is KifuzoAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
             is KifuzoAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
             is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, errorDetail = null, infoMessage = null) }
             is KifuzoAction.ImportFiles -> importHandler.importFiles(action.sourceDir, currentRootDirectory)
-            is KifuzoAction.UpdateSidebarWidth -> {
-                val newWidth = (uiState.sidebarWidth + action.delta).coerceIn(
-                    dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH,
-                    dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH,
-                )
-                AppSettings.sidebarWidth = newWidth
-                updateState { it.copy(sidebarWidth = newWidth) }
-            }
+            is KifuzoAction.UpdateSidebarWidth -> updateSidebarWidth(action)
             is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
             is KifuzoAction.ToggleMoveList -> updateState { it.copy(isMoveListVisible = !it.isMoveListVisible) }
             else -> {}
         }
+    }
+
+    private fun saveSettings(action: KifuzoAction.SaveSettings) {
+        settingsHandler.saveSettings(action.regex, action.template)
+        updateState { it.copy(myNameRegex = action.regex, filenameTemplate = action.template, showSettings = false) }
+    }
+
+    private fun updateSidebarWidth(action: KifuzoAction.UpdateSidebarWidth) {
+        val newWidth = (uiState.sidebarWidth + action.delta).coerceIn(
+            dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH,
+            dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH,
+        )
+        AppSettings.sidebarWidth = newWidth
+        updateState { it.copy(sidebarWidth = newWidth) }
     }
 
     private fun handleStepAction(action: KifuzoAction) {
@@ -310,14 +318,22 @@ class KifuzoViewModel(
         } else {
             scope.launch {
                 updateState { it.copy(isScanning = true) }
-                val newNodes = withContext(Dispatchers.IO) {
-                    fileTreeManager.buildFlatList(root, filters, sortOption)
-                }
+                val newNodes = buildFileList(root, filters, sortOption)
                 updateState { it.copy(treeNodes = newNodes, isScanning = false) }
             }
         }
 
         // 棋譜情報のスキャン（対局者名、開始日時など）
+        scanKifuMetadata(root)
+    }
+
+    private suspend fun buildFileList(root: Path, filters: Set<FileFilter>, sortOption: FileSortOption): List<FileTreeNode> {
+        return withContext(Dispatchers.IO) {
+            fileTreeManager.buildFlatList(root, filters, sortOption)
+        }
+    }
+
+    private fun scanKifuMetadata(root: Path) {
         scope.launch {
             updateState { it.copy(isScanning = true) }
             val allKifuFiles = mutableListOf<Path>()

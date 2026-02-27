@@ -2,6 +2,7 @@ package dev.irof.kifuzo.viewmodel
 
 import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.FileViewMode
 import dev.irof.kifuzo.models.KifuSession
 import dev.irof.kifuzo.models.Move
 import java.nio.file.Paths
@@ -19,6 +20,13 @@ class KifuzoViewModelTest {
     @BeforeTest
     fun setup() {
         viewModel = KifuzoViewModel(stubRepository)
+    }
+
+    @Test
+    fun ルートディレクトリを設定すると現在のディレクトリが更新されること() {
+        val root = Paths.get(".")
+        viewModel.dispatch(KifuzoAction.SetRootDirectory(root))
+        assertEquals(root, viewModel.currentRootDirectory)
     }
 
     @Test
@@ -141,5 +149,16 @@ class KifuzoViewModelTest {
 
         viewModel.dispatch(KifuzoAction.ToggleMoveList)
         assertTrue(viewModel.uiState.isMoveListVisible)
+    }
+
+    @Test
+    fun ビューモードを切り替えると更新されること() {
+        assertEquals(FileViewMode.FLAT, viewModel.uiState.viewMode)
+
+        viewModel.dispatch(KifuzoAction.SetViewMode(FileViewMode.HIERARCHY))
+        assertEquals(FileViewMode.HIERARCHY, viewModel.uiState.viewMode)
+
+        viewModel.dispatch(KifuzoAction.SetViewMode(FileViewMode.FLAT))
+        assertEquals(FileViewMode.FLAT, viewModel.uiState.viewMode)
     }
 }
