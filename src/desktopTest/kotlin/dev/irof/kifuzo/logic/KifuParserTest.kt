@@ -217,6 +217,19 @@ class KifuParserTest {
             assertTrue(session.moves[1].moveText.contains(result))
         }
     }
+
+    @Test
+    fun パースエラー時に行番号が含まれる例外がスローされること() {
+        val kifu = """
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|一
+            | ・ ・ ・ ・ ・ ・ ・ ・ ・|二
+        """.trimIndent()
+        // 2行しかない盤面図は KifuParseException を投げるはず
+        val exception = kotlin.test.assertFailsWith<KifuParseException> {
+            parse(kifu)
+        }
+        assertTrue(exception.message!!.contains("不完全"), "エラーメッセージに盤面図の不完全さが含まれること: ${exception.message}")
+    }
 }
 
 private fun parse(kifu: String): KifuSession {
