@@ -1,4 +1,4 @@
-package dev.irof.kifuzo.logic.parser
+package dev.irof.kifuzo.logic.parser.csa
 import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.logic.handler.FileActionHandler
 import dev.irof.kifuzo.logic.handler.ImportHandler
@@ -8,10 +8,10 @@ import dev.irof.kifuzo.logic.io.readTextWithEncoding
 import dev.irof.kifuzo.logic.parser.HeaderParser
 import dev.irof.kifuzo.logic.parser.KifuParseException
 import dev.irof.kifuzo.logic.parser.convertCsaToKifu
-import dev.irof.kifuzo.logic.parser.parseCsa
+import dev.irof.kifuzo.logic.parser.csa.parseCsa
+import dev.irof.kifuzo.logic.parser.kif.parseKifu
+import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
 import dev.irof.kifuzo.logic.parser.parseHeader
-import dev.irof.kifuzo.logic.parser.parseKifu
-import dev.irof.kifuzo.logic.parser.scanKifuInfo
 import dev.irof.kifuzo.logic.service.FileTreeManager
 import dev.irof.kifuzo.logic.service.KifuRepository
 import dev.irof.kifuzo.logic.service.KifuRepositoryImpl

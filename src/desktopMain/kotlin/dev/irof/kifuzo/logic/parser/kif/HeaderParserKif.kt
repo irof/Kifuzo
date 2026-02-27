@@ -1,6 +1,13 @@
-package dev.irof.kifuzo.logic.parser
+package dev.irof.kifuzo.logic.parser.kif
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
 import dev.irof.kifuzo.logic.io.readTextWithEncoding
+import dev.irof.kifuzo.logic.parser.HeaderParser
+import dev.irof.kifuzo.logic.parser.KifuHeader
+import dev.irof.kifuzo.logic.parser.KifuParseException
+import dev.irof.kifuzo.logic.parser.csa.handleCsaMetadataLine
+import dev.irof.kifuzo.logic.parser.csa.handleCsaMochigomaLine
+import dev.irof.kifuzo.logic.parser.csa.parseCsaBoardLine
+import dev.irof.kifuzo.logic.parser.parseHeader
 import dev.irof.kifuzo.logic.service.FileTreeManager
 import dev.irof.kifuzo.logic.service.KifuRepository
 import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
@@ -10,7 +17,7 @@ import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiConstants
 
-internal fun handleMetadataLine(hp: HeaderParser, line: String) {
+fun handleKifMetadataLine(hp: HeaderParser, line: String) {
     when {
         line.startsWith("後手：") -> hp.goteName = line.substringAfter("：").trim()
         line.startsWith("先手：") || line.startsWith("対局者：") -> hp.senteName = line.substringAfter("：").trim()
@@ -35,7 +42,7 @@ internal fun handleMetadataLine(hp: HeaderParser, line: String) {
     }
 }
 
-internal fun handleMochigomaLine(hp: HeaderParser, line: String) {
+fun handleKifMochigomaLine(hp: HeaderParser, line: String) {
     hp.prepareNonStandardBoard()
     if (line.startsWith("P+") || line.startsWith("P-")) {
         handleCsaMochigomaLine(hp, line)
@@ -45,7 +52,7 @@ internal fun handleMochigomaLine(hp: HeaderParser, line: String) {
     }
 }
 
-internal fun handleBoardLine(hp: HeaderParser, line: String) {
+fun handleKifBoardLine(hp: HeaderParser, line: String) {
     hp.prepareNonStandardBoard()
     if (line.startsWith("|")) {
         parseKifBoardLine(hp, line)

@@ -1,6 +1,10 @@
-package dev.irof.kifuzo.logic.parser
+package dev.irof.kifuzo.logic.parser.kif
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
 import dev.irof.kifuzo.logic.io.readTextWithEncoding
+import dev.irof.kifuzo.logic.parser.HeaderParser
+import dev.irof.kifuzo.logic.parser.KifuHeader
+import dev.irof.kifuzo.logic.parser.KifuParseException
+import dev.irof.kifuzo.logic.parser.parseHeader
 import dev.irof.kifuzo.logic.service.FileTreeManager
 import dev.irof.kifuzo.logic.service.KifuRepository
 import dev.irof.kifuzo.logic.service.KifuRepositoryImpl

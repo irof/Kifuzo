@@ -1,6 +1,10 @@
-package dev.irof.kifuzo.logic.parser
+package dev.irof.kifuzo.logic.parser.kif
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
 import dev.irof.kifuzo.logic.io.readTextWithEncoding
+import dev.irof.kifuzo.logic.parser.HeaderParser
+import dev.irof.kifuzo.logic.parser.KifuHeader
+import dev.irof.kifuzo.logic.parser.KifuParseException
+import dev.irof.kifuzo.logic.parser.parseHeader
 import dev.irof.kifuzo.logic.service.FileTreeManager
 import dev.irof.kifuzo.logic.service.KifuRepository
 import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
@@ -13,7 +17,7 @@ private val moveRegex = Regex("""^\s*(?<moveNum>\d+)\s+(?<toPos>[^\s(]{2}|同\s*
 private val dropRegex = Regex("""^\s*(?<moveNum>\d+)\s+(?<toPos>[^\s(]{2})(?<pieceName>[^\s(]+?)打\s*(?:\(\s*(?<timeMin>\d+)\s*:\s*(?<timeSec>\d+)\s*/.*?\))?.*""")
 private val resultRegex = Regex("""^\s*(\d+)\s+(${dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.joinToString("|")}).*""")
 
-internal sealed class KifuParsedMove {
+sealed class KifuParsedMove {
     abstract val moveNum: Int
     abstract val consumptionSeconds: Int?
 
@@ -40,7 +44,7 @@ internal sealed class KifuParsedMove {
     }
 }
 
-internal fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
+fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
     if (!Regex("""^\s*\d+\s+.*""").matches(line)) return null
 
     return parseNormalMove(line, lastTo)

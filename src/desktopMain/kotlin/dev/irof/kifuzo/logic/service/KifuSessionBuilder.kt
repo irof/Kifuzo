@@ -4,10 +4,10 @@ import dev.irof.kifuzo.logic.io.readTextWithEncoding
 import dev.irof.kifuzo.logic.parser.HeaderParser
 import dev.irof.kifuzo.logic.parser.KifuParseException
 import dev.irof.kifuzo.logic.parser.convertCsaToKifu
-import dev.irof.kifuzo.logic.parser.parseCsa
+import dev.irof.kifuzo.logic.parser.csa.parseCsa
+import dev.irof.kifuzo.logic.parser.kif.parseKifu
+import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
 import dev.irof.kifuzo.logic.parser.parseHeader
-import dev.irof.kifuzo.logic.parser.parseKifu
-import dev.irof.kifuzo.logic.parser.scanKifuInfo
 import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
@@ -154,7 +154,7 @@ class KifuSessionBuilder {
      * KifuSession を構築します。
      */
     fun build(): KifuSession {
-        val finalIsStandardStart = isStandardStart || initialSnapshot.isStandardInitial()
+        val finalIsStandardStart = isStandardStart && initialSnapshot.isStandardInitial()
         val initialStep = if (!finalIsStandardStart) {
             0
         } else if (firstContactStep != -1) {

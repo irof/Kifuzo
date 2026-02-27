@@ -1,17 +1,19 @@
 package dev.irof.kifuzo.logic.parser
-import dev.irof.kifuzo.logic.io.readLinesWithEncoding
-import dev.irof.kifuzo.logic.io.readTextWithEncoding
-import dev.irof.kifuzo.logic.service.FileTreeManager
-import dev.irof.kifuzo.logic.service.KifuRepository
-import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
-import dev.irof.kifuzo.logic.service.KifuSessionBuilder
+
+import dev.irof.kifuzo.logic.parser.csa.handleCsaMetadataLine
+import dev.irof.kifuzo.logic.parser.csa.handleCsaMochigomaLine
+import dev.irof.kifuzo.logic.parser.csa.parseCsaBoardLine
+import dev.irof.kifuzo.logic.parser.kif.handleKifBoardLine
+import dev.irof.kifuzo.logic.parser.kif.handleKifMetadataLine
+import dev.irof.kifuzo.logic.parser.kif.handleKifMochigomaLine
+import dev.irof.kifuzo.logic.parser.kif.parseMove
 import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Piece
-import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiConstants
+import java.nio.file.Path
 
-internal data class KifuHeader(
+data class KifuHeader(
     val senteName: String,
     val goteName: String,
     val startTime: String,
@@ -26,7 +28,7 @@ internal data class KifuHeader(
 /**
  * 棋譜のヘッダー部分を解析するクラス。
  */
-internal class HeaderParser {
+class HeaderParser {
     var senteName = "先手"
     var goteName = "後手"
     var startTime = ""
@@ -66,6 +68,30 @@ internal class HeaderParser {
         else -> false
     }
 
+    private fun handleMetadataLine(hp: HeaderParser, line: String) {
+        if (line.startsWith("N+") || line.startsWith("N-") || line.startsWith("$")) {
+            handleCsaMetadataLine(hp, line)
+        } else {
+            handleKifMetadataLine(hp, line)
+        }
+    }
+
+    private fun handleBoardLine(hp: HeaderParser, line: String) {
+        if (line.startsWith("|")) {
+            handleKifBoardLine(hp, line)
+        } else {
+            parseCsaBoardLine(hp, line)
+        }
+    }
+
+    private fun handleMochigomaLine(hp: HeaderParser, line: String) {
+        if (line.startsWith("P+") || line.startsWith("P-")) {
+            handleCsaMochigomaLine(hp, line)
+        } else {
+            handleKifMochigomaLine(hp, line)
+        }
+    }
+
     private fun resetToStandard() {
         isStandardStart = true
         currentCells = BoardSnapshot.getInitialCells().map { it.toMutableList() }.toMutableList()
@@ -81,7 +107,7 @@ internal class HeaderParser {
         }
     }
 
-    private fun isMetadata(l: String) = l.startsWith("先手：") || l.startsWith("対局者：") || l.startsWith("後手：") || l.startsWith("開始日時：") || l.startsWith("棋戦：") || l.startsWith("場所：") || l.startsWith("N+") || l.startsWith("N-") || l.startsWith("\$START_TIME:") || l.startsWith("\$EVENT:")
+    private fun isMetadata(l: String) = l.startsWith("先手：") || l.startsWith("対局者：") || l.startsWith("後手：") || l.startsWith("開始日時：") || l.startsWith("棋戦：") || l.startsWith("場所：") || l.startsWith("N+") || l.startsWith("N-") || l.startsWith("$")
     private fun isBoardLine(l: String) = (l.startsWith("|") && l.count { it == '|' } >= 2) || (l.startsWith("P") && l.length >= 2 && l[1].isDigit())
     private fun isMochigomaLine(l: String) = l.startsWith("P+") || l.startsWith("P-") || Regex("""^[上下先後]手(の)?持駒：""").containsMatchIn(l)
     private fun isMoveLine(l: String) = Regex("""^\s*\d+\s+.*""").matches(l) || (l.length >= 2 && (l.startsWith("+") || l.startsWith("-")) && l[1].isDigit())
@@ -98,3 +124,19 @@ internal class HeaderParser {
         )
     }
 }
+
+fun parseHeader(lines: List<String>): KifuHeader {
+    val parser = HeaderParser()
+    for ((i, line) in lines.withIndex()) {
+        if (parser.processLine(line, i)) break
+    }
+    return parser.build()
+}
+
+class KifuParseException(
+    message: String,
+    val lineNumber: Int? = null,
+    val lineContent: String? = null,
+    val path: Path? = null,
+    cause: Throwable? = null,
+) : Exception(message, cause)

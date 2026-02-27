@@ -1,6 +1,10 @@
-package dev.irof.kifuzo.logic.parser
+package dev.irof.kifuzo.logic.parser.csa
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
 import dev.irof.kifuzo.logic.io.readTextWithEncoding
+import dev.irof.kifuzo.logic.parser.HeaderParser
+import dev.irof.kifuzo.logic.parser.KifuHeader
+import dev.irof.kifuzo.logic.parser.KifuParseException
+import dev.irof.kifuzo.logic.parser.parseHeader
 import dev.irof.kifuzo.logic.service.FileTreeManager
 import dev.irof.kifuzo.logic.service.KifuRepository
 import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
@@ -18,7 +22,7 @@ private object HeaderCsaConstants {
     const val PIECE_WIDTH = 3
 }
 
-internal fun handleCsaMetadataLine(hp: HeaderParser, line: String) {
+fun handleCsaMetadataLine(hp: HeaderParser, line: String) {
     when {
         line.startsWith("N+") -> hp.senteName = line.substring(2).trim()
         line.startsWith("N-") -> hp.goteName = line.substring(2).trim()
@@ -27,7 +31,7 @@ internal fun handleCsaMetadataLine(hp: HeaderParser, line: String) {
     }
 }
 
-internal fun handleCsaMochigomaLine(hp: HeaderParser, line: String) {
+fun handleCsaMochigomaLine(hp: HeaderParser, line: String) {
     val color = if (line[1] == '+') PieceColor.Black else PieceColor.White
     var i = HeaderCsaConstants.START_INDEX
     while (i + HeaderCsaConstants.ENTRY_LENGTH <= line.length) {
@@ -43,7 +47,7 @@ private fun addCsaMochigoma(hp: HeaderParser, pieceStr: String, color: PieceColo
     if (color == PieceColor.Black) hp.senteMochi.add(piece) else hp.goteMochi.add(piece)
 }
 
-internal fun parseCsaBoardLine(hp: HeaderParser, line: String) {
+fun parseCsaBoardLine(hp: HeaderParser, line: String) {
     val rowIdx = line[1] - '1'
     if (rowIdx !in 0 until ShogiConstants.BOARD_SIZE) return
     for (i in 0 until ShogiConstants.BOARD_SIZE) {
