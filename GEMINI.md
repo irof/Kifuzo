@@ -94,7 +94,7 @@ The project uses **Gradle** as the build tool.
 - **Language:**
     - **GEMINI.md:** Must be written in **English**.
     - **Commit Messages:** Must follow **Conventional Commits** using Japanese for the description and English for the type (e.g., `feat: 機能の追加`).
-    - **Commit Trailer:** Every commit must include the trailer `Generated-by: Gemini`.
+    - **Commit Trailer:** Every commit MUST use the `--trailer` flag to include `Generated-by: Gemini`. This ensures the trailer is properly separated from the commit body by a blank line (e.g., `git commit -m "feat: ..." --trailer "Generated-by: Gemini"`).
     - **Code Comments/Documentation:** Must be written in **Japanese**.
 - **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation. **Before committing, you MUST run `./gradlew verify` and ensure it passes. Additionally, if a change affects the content of `GEMINI.md` (e.g., new features, structural changes, or updated conventions), you MUST update `GEMINI.md` accordingly in the same task.**
 - **Refactoring:** When refactoring, always measure the impact using tools like `detekt` (Complexity). Include the "before" and "after" metrics in the commit message to show the quantitative improvement. Ensure that `./gradlew verify` passes after any refactoring.
