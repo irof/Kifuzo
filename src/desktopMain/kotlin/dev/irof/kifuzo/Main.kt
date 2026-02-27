@@ -47,21 +47,11 @@ import java.awt.Cursor
 import java.nio.file.Path
 
 fun main() = application {
-    val windowState = rememberWindowState(
-        position = if (AppSettings.windowX != null && AppSettings.windowY != null) {
-            WindowPosition(AppSettings.windowX!!.dp, AppSettings.windowY!!.dp)
-        } else {
-            WindowPosition.Aligned(Alignment.Center)
-        },
-        size = DpSize(AppSettings.windowWidth.dp, AppSettings.windowHeight.dp),
-    )
+    val windowState = rememberKifuzoWindowState()
 
     Window(
         onCloseRequest = {
-            AppSettings.windowX = windowState.position.let { if (it is WindowPosition.Absolute) it.x.value else null }
-            AppSettings.windowY = windowState.position.let { if (it is WindowPosition.Absolute) it.y.value else null }
-            AppSettings.windowWidth = windowState.size.width.value
-            AppSettings.windowHeight = windowState.size.height.value
+            AppSettings.saveWindowState(windowState)
             exitApplication()
         },
         title = AppStrings.APP_TITLE,
@@ -71,6 +61,18 @@ fun main() = application {
             KifuzoApp()
         }
     }
+}
+
+@Composable
+private fun rememberKifuzoWindowState(): androidx.compose.ui.window.WindowState {
+    return rememberWindowState(
+        position = if (AppSettings.windowX != null && AppSettings.windowY != null) {
+            WindowPosition(AppSettings.windowX!!.dp, AppSettings.windowY!!.dp)
+        } else {
+            WindowPosition.Aligned(Alignment.Center)
+        },
+        size = DpSize(AppSettings.windowWidth.dp, AppSettings.windowHeight.dp),
+    )
 }
 
 @Composable

@@ -78,7 +78,7 @@ complexity:
   active: true
   CognitiveComplexMethod:
     active: true
-    allowedComplexity: 15
+    allowedComplexity: 10
   ComplexCondition:
     active: true
     allowedConditions: 3
@@ -90,7 +90,7 @@ complexity:
     ignoreOverloaded: false
   CyclomaticComplexMethod:
     active: true
-    allowedComplexity: 15
+    allowedComplexity: 10
     ignoreSingleWhenExpression: false
     ignoreSimpleWhenEntries: false
     ignoreNestingFunctions: false

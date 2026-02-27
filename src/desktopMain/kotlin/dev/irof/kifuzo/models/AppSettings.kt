@@ -1,5 +1,7 @@
 package dev.irof.kifuzo.models
 
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.WindowState
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 object AppSettings {
@@ -10,6 +12,13 @@ object AppSettings {
     private const val KEY_WINDOW_Y = "window_y"
     private const val KEY_WINDOW_WIDTH = "window_width"
     private const val KEY_WINDOW_HEIGHT = "window_height"
+
+    fun saveWindowState(windowState: WindowState) {
+        windowX = windowState.position.let { if (it is WindowPosition.Absolute) it.x.value else null }
+        windowY = windowState.position.let { if (it is WindowPosition.Absolute) it.y.value else null }
+        windowWidth = windowState.size.width.value
+        windowHeight = windowState.size.height.value
+    }
 
     var myNameRegex: String
         get() = prefs.get(KEY_MY_NAME_REGEX, "")
