@@ -62,4 +62,31 @@ class KifuIOTest {
         val readText = readTextWithEncoding(tempFile)
         assertEquals(text, readText)
     }
+
+    @Test
+    fun 空のファイルを読み込めること() {
+        tempFile.writeBytes(ByteArray(0))
+        val lines = readLinesWithEncoding(tempFile)
+        assertEquals(0, lines.size)
+    }
+
+    @Test
+    fun 末尾に改行がある場合に空行が除去されること() {
+        val text = "line1\nline2\n"
+        tempFile.writeBytes(text.toByteArray(Charsets.UTF_8))
+        val lines = readLinesWithEncoding(tempFile)
+        assertEquals(2, lines.size)
+        assertEquals("line1", lines[0])
+        assertEquals("line2", lines[1])
+    }
+
+    @Test
+    fun 末尾に改行がない場合に全行が読み込まれること() {
+        val text = "line1\nline2"
+        tempFile.writeBytes(text.toByteArray(Charsets.UTF_8))
+        val lines = readLinesWithEncoding(tempFile)
+        assertEquals(2, lines.size)
+        assertEquals("line1", lines[0])
+        assertEquals("line2", lines[1])
+    }
 }
