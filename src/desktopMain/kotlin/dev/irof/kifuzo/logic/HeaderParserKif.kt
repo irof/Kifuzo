@@ -10,7 +10,22 @@ internal fun handleMetadataLine(hp: HeaderParser, line: String) {
         line.startsWith("後手：") -> hp.goteName = line.substringAfter("：").trim()
         line.startsWith("先手：") || line.startsWith("対局者：") -> hp.senteName = line.substringAfter("：").trim()
         line.startsWith("開始日時：") -> hp.startTime = line.substringAfter("：").trim()
-        line.startsWith("棋戦：") -> hp.event = line.substringAfter("：").trim()
+        line.startsWith("棋戦：") -> {
+            val event = line.substringAfter("：").trim()
+            if (hp.event.isEmpty()) {
+                hp.event = event
+            } else if (!hp.event.contains(event)) {
+                hp.event = "$event (${hp.event})"
+            }
+        }
+        line.startsWith("場所：") -> {
+            val place = line.substringAfter("：").trim()
+            if (hp.event.isEmpty()) {
+                hp.event = place
+            } else if (!hp.event.contains(place)) {
+                hp.event += " ($place)"
+            }
+        }
         else -> handleCsaMetadataLine(hp, line)
     }
 }

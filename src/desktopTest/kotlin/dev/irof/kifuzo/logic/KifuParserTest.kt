@@ -230,6 +230,36 @@ class KifuParserTest {
         }
         assertTrue(exception.message!!.contains("不完全"), "エラーメッセージに盤面図の不完全さが含まれること: ${exception.message}")
     }
+
+    @Test
+    fun あらゆるメタデータが含まれる棋譜をパースできること() {
+        val kifu = """
+            対局者：先手太郎
+            後手：後手花子
+            場所：東京
+            開始日時：2026/02/27
+            棋戦：蔵王戦
+        """.trimIndent()
+        val info = scanKifuInfo(kifu.lines())
+        assertEquals("先手太郎", info.senteName)
+        assertEquals("後手花子", info.goteName)
+        assertEquals("2026/02/27", info.startTime)
+        assertEquals("蔵王戦 (東京)", info.event)
+    }
+
+    @Test
+    fun CSA形式の指し手開始行を正しく判定できること() {
+        val csa = """
+            N+Sente
+            N-Gote
+            +
+            +7776FU
+        """.trimIndent()
+        val state = ShogiBoardState()
+        parseCsa(csa.lines(), state)
+        val session = state.session
+        assertEquals(1, session.moves.size)
+    }
 }
 
 private fun parse(kifu: String): KifuSession {
