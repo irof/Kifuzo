@@ -113,7 +113,8 @@ complexity:
     allowedLines: 600
   LongMethod:
     active: true
-    allowedLines: 60
+    allowedLines: 40
+    excludes: ['**/test/**', '**/desktopTest/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
   LongParameterList:
     active: true
     allowedFunctionParameters: 5

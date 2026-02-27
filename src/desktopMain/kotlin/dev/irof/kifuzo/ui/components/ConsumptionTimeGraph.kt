@@ -71,6 +71,7 @@ private object TimeGraphConstants {
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalTextApi::class)
 @Composable
+@Suppress("LongMethod")
 fun ConsumptionTimeGraph(
     times: List<Int?>,
     currentStep: Int,

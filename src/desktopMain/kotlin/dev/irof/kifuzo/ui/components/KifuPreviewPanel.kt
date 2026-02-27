@@ -66,6 +66,7 @@ interface KifuPreviewActions {
 }
 
 @Composable
+@Suppress("LongMethod")
 fun KifuPreviewPanel(
     state: KifuzoUiState,
     boardState: ShogiBoardState,

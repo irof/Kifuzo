@@ -28,6 +28,7 @@ import javax.swing.JFileChooser
 import kotlin.io.path.toPath
 
 @Composable
+@Suppress("LongMethod")
 fun RootDirectorySelector(
     currentRoot: Path?,
     onSetRoot: (Path) -> Unit,
