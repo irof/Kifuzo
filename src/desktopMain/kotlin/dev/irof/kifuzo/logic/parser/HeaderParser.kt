@@ -1,11 +1,7 @@
 package dev.irof.kifuzo.logic.parser
 
-import dev.irof.kifuzo.logic.parser.csa.handleCsaMetadataLine
-import dev.irof.kifuzo.logic.parser.csa.handleCsaMochigomaLine
-import dev.irof.kifuzo.logic.parser.csa.parseCsaBoardLine
-import dev.irof.kifuzo.logic.parser.kif.handleKifBoardLine
-import dev.irof.kifuzo.logic.parser.kif.handleKifMetadataLine
-import dev.irof.kifuzo.logic.parser.kif.handleKifMochigomaLine
+import dev.irof.kifuzo.logic.parser.csa.CsaHeaderParser
+import dev.irof.kifuzo.logic.parser.kif.KifHeaderParser
 import dev.irof.kifuzo.logic.parser.kif.parseMove
 import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
@@ -41,23 +37,35 @@ class HeaderParser {
     var boardY = 0
 
     fun processLine(line: String, index: Int): Boolean = when {
-        isMetadata(line) -> {
-            handleMetadataLine(this, line)
+        KifHeaderParser.isMetadata(line) -> {
+            KifHeaderParser.handleMetadataLine(this, line)
+            false
+        }
+        CsaHeaderParser.isMetadata(line) -> {
+            CsaHeaderParser.handleMetadataLine(this, line)
             false
         }
         line == "PI" -> {
             resetToStandard()
             false
         }
-        isBoardLine(line) -> {
-            handleBoardLine(this, line)
+        KifHeaderParser.isBoardLine(line) -> {
+            KifHeaderParser.handleBoardLine(this, line)
             false
         }
-        isMochigomaLine(line) -> {
-            handleMochigomaLine(this, line)
+        CsaHeaderParser.isBoardLine(line) -> {
+            CsaHeaderParser.handleBoardLine(this, line)
             false
         }
-        isMoveLine(line) -> {
+        KifHeaderParser.isMochigomaLine(line) -> {
+            KifHeaderParser.handleMochigomaLine(this, line)
+            false
+        }
+        CsaHeaderParser.isMochigomaLine(line) -> {
+            CsaHeaderParser.handleMochigomaLine(this, line)
+            false
+        }
+        KifHeaderParser.isMoveLine(line) || CsaHeaderParser.isMoveLine(line) -> {
             if (parseMove(line, null) != null || line.startsWith("+") || line.startsWith("-")) {
                 moveStartIndex = index
                 true
@@ -66,30 +74,6 @@ class HeaderParser {
             }
         }
         else -> false
-    }
-
-    private fun handleMetadataLine(hp: HeaderParser, line: String) {
-        if (line.startsWith("N+") || line.startsWith("N-") || line.startsWith("$")) {
-            handleCsaMetadataLine(hp, line)
-        } else {
-            handleKifMetadataLine(hp, line)
-        }
-    }
-
-    private fun handleBoardLine(hp: HeaderParser, line: String) {
-        if (line.startsWith("|")) {
-            handleKifBoardLine(hp, line)
-        } else {
-            parseCsaBoardLine(hp, line)
-        }
-    }
-
-    private fun handleMochigomaLine(hp: HeaderParser, line: String) {
-        if (line.startsWith("P+") || line.startsWith("P-")) {
-            handleCsaMochigomaLine(hp, line)
-        } else {
-            handleKifMochigomaLine(hp, line)
-        }
     }
 
     private fun resetToStandard() {
@@ -106,11 +90,6 @@ class HeaderParser {
             currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<BoardPiece>(ShogiConstants.BOARD_SIZE).toMutableList() }.toMutableList()
         }
     }
-
-    private fun isMetadata(l: String) = l.startsWith("先手：") || l.startsWith("対局者：") || l.startsWith("後手：") || l.startsWith("開始日時：") || l.startsWith("棋戦：") || l.startsWith("場所：") || l.startsWith("N+") || l.startsWith("N-") || l.startsWith("$")
-    private fun isBoardLine(l: String) = (l.startsWith("|") && l.count { it == '|' } >= 2) || (l.startsWith("P") && l.length >= 2 && l[1].isDigit())
-    private fun isMochigomaLine(l: String) = l.startsWith("P+") || l.startsWith("P-") || Regex("""^[上下先後]手(の)?持駒：""").containsMatchIn(l)
-    private fun isMoveLine(l: String) = Regex("""^\s*\d+\s+.*""").matches(l) || (l.length >= 2 && (l.startsWith("+") || l.startsWith("-")) && l[1].isDigit())
 
     fun build(): KifuHeader {
         // boardY > 0 は KIFの盤面図(|)が1行以上現れたことを示す
