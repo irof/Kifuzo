@@ -172,4 +172,20 @@ class CsaParserTest {
         // 途中局面開始なので、初期手数は 0 であるべき
         assertEquals(0, state.session.initialStep, "途中局面開始（isStandardStart=false）の場合は開始局面(0)を優先すべき")
     }
+
+    @Test
+    fun 不正な座標に駒打ちをしようとした場合にパースエラーになること() {
+        val csa = """
+            N+Sente
+            N-Gote
+            +0000FU
+        """.trimIndent()
+        val state = ShogiBoardState()
+        val exception = kotlin.test.assertFailsWith<KifuParseException> {
+            parseCsa(csa.lines(), state)
+        }
+        // 3行目(+0000FU) でエラーになるはず
+        kotlin.test.assertTrue(exception.message!!.contains("3行目"), "エラーメッセージに行番号が含まれること: ${exception.message}")
+        assertEquals(3, exception.lineNumber)
+    }
 }
