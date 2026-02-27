@@ -675,7 +675,6 @@ style:
     excludes: ['**/*Test.kt', '**/desktopTest/**', '**/*.kts']
     ignoreNumbers:
       - '-1'
-      - '-0'
       - '0'
       - '1'
       - '2'
