@@ -2,6 +2,8 @@ package dev.irof.kifuzo.models
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class SquareTest {
     @Test
@@ -58,5 +60,19 @@ class SquareTest {
         assertEquals(0, xLast)
         assertEquals("９", labels[xLast])
         assertEquals(9, Square.fromIndex(xLast, 0).file)
+    }
+
+    @Test
+    fun 初期局面判定が正しく機能すること() {
+        val initial = BoardSnapshot(BoardSnapshot.getInitialCells())
+        assertTrue(initial.isStandardInitial())
+
+        // 駒が動いている場合
+        val moved = initial.applyMove(Square(7, 7), Square(7, 6), false, PieceColor.Black)
+        assertFalse(moved.isStandardInitial())
+
+        // 持ち駒がある場合
+        val withMochi = initial.copy(senteMochigoma = listOf(Piece.FU))
+        assertFalse(withMochi.isStandardInitial())
     }
 }
