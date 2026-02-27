@@ -27,13 +27,15 @@ internal fun handleCsaMochigomaLine(hp: HeaderParser, line: String) {
     var i = HeaderCsaConstants.START_INDEX
     while (i + HeaderCsaConstants.ENTRY_LENGTH <= line.length) {
         val pieceStr = line.substring(i + HeaderCsaConstants.NAME_OFFSET, i + HeaderCsaConstants.NAME_OFFSET + HeaderCsaConstants.NAME_LENGTH)
-        if (pieceStr != "AL") {
-            Piece.entries.find { it.name == pieceStr }?.let {
-                if (color == PieceColor.Black) hp.senteMochi.add(it) else hp.goteMochi.add(it)
-            }
-        }
+        addCsaMochigoma(hp, pieceStr, color)
         i += HeaderCsaConstants.ENTRY_LENGTH
     }
+}
+
+private fun addCsaMochigoma(hp: HeaderParser, pieceStr: String, color: PieceColor) {
+    if (pieceStr == "AL") return
+    val piece = Piece.entries.find { it.name == pieceStr } ?: return
+    if (color == PieceColor.Black) hp.senteMochi.add(piece) else hp.goteMochi.add(piece)
 }
 
 internal fun parseCsaBoardLine(hp: HeaderParser, line: String) {
