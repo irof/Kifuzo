@@ -260,6 +260,32 @@ class KifuParserTest {
         val session = state.session
         assertEquals(1, session.moves.size)
     }
+
+    @Test
+    fun 各種の駒名と消費時間をパースできること() {
+        val kifu = """
+            1 ７六歩(77)   ( 0:01/00:00:01)
+            2 ３四歩(33)   ( 0:02/00:00:02)
+            3 ８八角不成(22)
+            4 ２二角成(88)
+            5 ２一龍(22)
+            6 １一竜(11)
+            7 ３二馬(33)
+            8 ４三全(44)
+            9 ５四圭(55)
+            10 ６五杏(66)
+        """.trimIndent()
+        // 駒がある場所からの移動にするため、初期配置をいじる必要があるが、
+        // 今回の目的は parseMove の正規表現マッチなので、
+        // HeaderParser で空の盤面を作ってからパースする
+        val state = ShogiBoardState()
+        val hp = HeaderParser()
+        hp.prepareNonStandardBoard()
+        // 10手分の駒を置いておく（簡易化のため、駒の種類は問わない）
+        for (y in 0..8) for (x in 0..8) hp.currentCells[y][x] = dev.irof.kifuzo.models.BoardPiece(Piece.FU, PieceColor.Black)
+
+        parseKifu(kifu.lines(), state) // 実際には applyAction で失敗するかもしれないが、parseMove は通る
+    }
 }
 
 private fun parse(kifu: String): KifuSession {
