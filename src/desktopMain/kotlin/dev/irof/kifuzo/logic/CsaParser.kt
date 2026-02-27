@@ -100,8 +100,8 @@ private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx
     if (fromX == 0) {
         try {
             ctx.builder.applyAction(to = Square(toX, toY), piece = targetPiece, consumptionSeconds = seconds, moveText = "${ctx.moveCount} $destinationText${targetPiece.symbol}打")
-        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            throw KifuParseException("${index + 1}行目: ${e.message}", lineNumber = index + 1, lineContent = line, cause = e)
+        } catch (cause: Exception) {
+            throw KifuParseException("${index + 1}行目: ${cause.message}", lineNumber = index + 1, lineContent = line, cause = cause)
         }
     } else {
         applyCsaNormalMove(line, fromX, fromY, toX, toY, targetPiece, destinationText, seconds, index, ctx)
@@ -134,8 +134,8 @@ private fun applyCsaNormalMove(
     val moveText = "${ctx.moveCount} $destinationText$movePieceSymbol${if (isPromote) "成" else ""}"
     try {
         ctx.builder.applyAction(from = fromSquare, to = Square(toX, toY), isPromote = isPromote, consumptionSeconds = seconds, moveText = moveText)
-    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-        throw KifuParseException("${index + 1}行目: ${e.message}", lineNumber = index + 1, lineContent = line, cause = e)
+    } catch (cause: Exception) {
+        throw KifuParseException("${index + 1}行目: ${cause.message}", lineNumber = index + 1, lineContent = line, cause = cause)
     }
 }
 

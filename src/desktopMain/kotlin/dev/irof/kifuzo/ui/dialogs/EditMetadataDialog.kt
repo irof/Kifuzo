@@ -96,7 +96,7 @@ private fun StartTimeSection(path: Path, startTime: String, onTimeChange: (Strin
                 val date = lastModified.atZone(ZoneId.systemDefault())
                     .format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"))
                 onTimeChange(date)
-            } catch (@Suppress("SwallowedException") e: IOException) {
+            } catch (_: IOException) {
                 // Ignore error
             }
         }

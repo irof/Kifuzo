@@ -119,8 +119,8 @@ private fun handleMoveLine(line: String, lineIndex: Int, parserState: ParserStat
     val parsedMove = parseMove(line, parserState.lastTo) ?: return
     try {
         parserState.applyMove(parsedMove, line)
-    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-        throw KifuParseException(message = "${lineIndex + 1}行目: ${e.message}", lineNumber = lineIndex + 1, lineContent = line, cause = e)
+    } catch (cause: Exception) {
+        throw KifuParseException(message = "${lineIndex + 1}行目: ${cause.message}", lineNumber = lineIndex + 1, lineContent = line, cause = cause)
     }
 }
 

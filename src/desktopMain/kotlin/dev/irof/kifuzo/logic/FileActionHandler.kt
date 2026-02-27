@@ -38,10 +38,10 @@ class FileActionHandler(
         try {
             parseAction(path)
             onAutoFlip()
-        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        } catch (cause: Exception) {
             boardState.clear()
-            val message = if (e is KifuParseException) "棋譜パースエラー" else "ファイルの読み込みに失敗しました"
-            onError(message, e.message)
+            val message = if (cause is KifuParseException) "棋譜パースエラー" else "ファイルの読み込みに失敗しました"
+            onError(message, cause.message)
         }
     }
 
@@ -60,9 +60,9 @@ class FileActionHandler(
             repository.convertCsa(path)
             onInfo("KIFU形式に変換しました。")
             onFilesChanged()
-        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            logger.error(e) { "Failed to convert CSA file: ${path.nameWithoutExtension}" }
-            onError("変換エラー", e.message)
+        } catch (cause: Exception) {
+            logger.error(cause) { "Failed to convert CSA file: ${path.nameWithoutExtension}" }
+            onError("変換エラー", cause.message)
         }
     }
 

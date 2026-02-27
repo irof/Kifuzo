@@ -90,7 +90,6 @@ data class BoardSnapshot(
         /**
          * 標準の平手初期配置を取得します。
          */
-        @Suppress("MagicNumber")
         fun getInitialCells(): List<List<BoardPiece?>> {
             val cells = Array(9) { arrayOfNulls<BoardPiece>(9) }
             cells[0][0] = BoardPiece(Piece.KY, PieceColor.White)

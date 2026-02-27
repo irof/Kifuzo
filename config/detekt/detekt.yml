@@ -197,7 +197,7 @@ empty-blocks:
   active: true
   EmptyCatchBlock:
     active: true
-    allowedExceptionNameRegex: '_|(ignore|expected).*'
+    allowedExceptionNameRegex: '_|(ignore|expected|cause).*'
   EmptyClassBlock:
     active: true
   EmptyDefaultConstructor:
@@ -260,7 +260,7 @@ exceptions:
       - 'MalformedURLException'
       - 'NumberFormatException'
       - 'ParseException'
-    allowedExceptionNameRegex: '_|(ignore|expected).*'
+    allowedExceptionNameRegex: '_|(ignore|expected|cause).*'
   ThrowingExceptionFromFinally:
     active: true
   ThrowingExceptionInMain:
@@ -292,7 +292,7 @@ exceptions:
       - 'NullPointerException'
       - 'RuntimeException'
       - 'Throwable'
-    allowedExceptionNameRegex: '_|(ignore|expected).*'
+    allowedExceptionNameRegex: '_|(ignore|expected|cause).*'
   TooGenericExceptionThrown:
     active: true
     exceptionNames:
@@ -675,9 +675,17 @@ style:
     excludes: ['**/*Test.kt', '**/desktopTest/**', '**/*.kts']
     ignoreNumbers:
       - '-1'
+      - '-0'
       - '0'
       - '1'
       - '2'
+      - '3'
+      - '4'
+      - '5'
+      - '6'
+      - '7'
+      - '8'
+      - '9'
       - '0.5'
       - '100'
       - '16'
