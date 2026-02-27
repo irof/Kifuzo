@@ -311,6 +311,18 @@ class KifuParserTest {
         assertEquals(dev.irof.kifuzo.models.Piece.OU, info.initialCells[7][7]?.piece)
         assertEquals(dev.irof.kifuzo.models.PieceColor.Black, info.initialCells[7][7]?.color)
     }
+
+    @Test
+    fun 形式が混在している場合に例外がスローされること() {
+        val mixed = """
+            先手：先手太郎
+            N-Gote太郎
+        """.trimIndent()
+        // 先手： は KIF、N- は CSA なのでエラーになるはず
+        kotlin.test.assertFailsWith<dev.irof.kifuzo.logic.parser.KifuParseException> {
+            parseHeader(mixed.lines())
+        }
+    }
 }
 private fun parse(kifu: String): KifuSession {
     val state = ShogiBoardState()

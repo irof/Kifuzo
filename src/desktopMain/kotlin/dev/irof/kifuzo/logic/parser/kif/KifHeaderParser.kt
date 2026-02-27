@@ -1,13 +1,7 @@
 package dev.irof.kifuzo.logic.parser.kif
 
-import dev.irof.kifuzo.logic.io.readLinesWithEncoding
 import dev.irof.kifuzo.logic.parser.HeaderParser
-import dev.irof.kifuzo.logic.parser.KifuHeader
-import dev.irof.kifuzo.logic.parser.KifuParseException
-import dev.irof.kifuzo.logic.parser.csa.handleCsaMetadataLine
-import dev.irof.kifuzo.logic.parser.csa.handleCsaMochigomaLine
-import dev.irof.kifuzo.logic.parser.csa.parseCsaBoardLine
-import dev.irof.kifuzo.logic.parser.parseHeader
+import dev.irof.kifuzo.logic.parser.csa.CsaHeaderParser
 import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.PieceColor
@@ -40,7 +34,7 @@ object KifHeaderParser {
                     hp.event += " ($place)"
                 }
             }
-            else -> handleCsaMetadataLine(hp, line)
+            else -> CsaHeaderParser.handleMetadataLine(hp, line)
         }
     }
 
@@ -96,9 +90,6 @@ private fun updateBoardCell(hp: HeaderParser, x: Int, pStr: String) {
     }
 }
 
-/**
- * 一文字の駒名（例: "歩", "王", "竜"）を解析して Piece を返します。
- */
 fun Piece.Companion.findPieceBySymbol(symbol: String): Piece? {
     val s = symbol.trim()
     if (s.isEmpty()) return null
@@ -113,9 +104,6 @@ fun Piece.Companion.findPieceBySymbol(symbol: String): Piece? {
     return found
 }
 
-/**
- * 持ち駒文字列（例: "飛二 角 銀三"）を解析して Piece のリストを返します。
- */
 fun Piece.Companion.parseMochigoma(text: String): List<Piece> {
     val t = text.trim()
     if (t == "なし" || t.isEmpty()) return emptyList()

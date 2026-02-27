@@ -24,17 +24,24 @@ private object HeaderCsaConstants {
 }
 
 object CsaHeaderParser {
-    fun isMetadata(l: String) = l.startsWith("N+") || l.startsWith("N-") || l.startsWith("$")
+    fun isMetadata(l: String) = l.startsWith("N+") || l.startsWith("N-") || l.startsWith("$") || l == "PI"
     fun isBoardLine(l: String) = l.startsWith("P") && l.length >= 2 && l[1].isDigit()
     fun isMochigomaLine(l: String) = l.startsWith("P+") || l.startsWith("P-")
     fun isMoveLine(l: String) = (l.length >= 2 && (l.startsWith("+") || l.startsWith("-")) && l[1].isDigit())
 
     fun handleMetadataLine(hp: HeaderParser, line: String) {
+        if (line == "PI") {
+            hp.resetToStandard()
+            return
+        }
+        val content = line.substringAfter(":").trim()
+        val csaContent = if (line.length >= 3) line.substring(2).trim() else ""
+
         when {
-            line.startsWith("N+") -> hp.senteName = line.substring(2).trim()
-            line.startsWith("N-") -> hp.goteName = line.substring(2).trim()
-            line.startsWith("\$START_TIME:") -> hp.startTime = line.substringAfter(":").trim()
-            line.startsWith("\$EVENT:") -> hp.event = line.substringAfter(":").trim()
+            line.startsWith("N+") -> hp.senteName = csaContent
+            line.startsWith("N-") -> hp.goteName = csaContent
+            line.startsWith("\$START_TIME:") -> hp.startTime = content
+            line.startsWith("\$EVENT:") -> hp.event = content
         }
     }
 
