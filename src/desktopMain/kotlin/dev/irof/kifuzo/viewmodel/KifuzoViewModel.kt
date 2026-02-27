@@ -3,12 +3,12 @@ package dev.irof.kifuzo.viewmodel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dev.irof.kifuzo.logic.FileActionHandler
-import dev.irof.kifuzo.logic.FileTreeManager
-import dev.irof.kifuzo.logic.ImportHandler
-import dev.irof.kifuzo.logic.KifuRepository
-import dev.irof.kifuzo.logic.KifuRepositoryImpl
-import dev.irof.kifuzo.logic.SettingsHandler
+import dev.irof.kifuzo.logic.handler.FileActionHandler
+import dev.irof.kifuzo.logic.handler.ImportHandler
+import dev.irof.kifuzo.logic.handler.SettingsHandler
+import dev.irof.kifuzo.logic.service.FileTreeManager
+import dev.irof.kifuzo.logic.service.KifuRepository
+import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
 import dev.irof.kifuzo.models.AppSettings
 import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileTreeNode
@@ -58,7 +58,9 @@ class KifuzoViewModel(
     )
 
     private val settingsHandler = SettingsHandler(
+        repository = repository,
         boardState = boardState,
+        onFilesChanged = { refreshFiles() },
         onAutoFlip = { flipped -> updateState { it.copy(isFlipped = flipped) } },
     )
 
@@ -224,7 +226,9 @@ class KifuzoViewModel(
     private fun handleUiAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.SaveSettings -> {
-                settingsHandler.saveSettings(action.regex, action.template)
+                AppSettings.myNameRegex = action.regex
+                AppSettings.filenameTemplate = action.template
+                settingsHandler.updateAutoFlip(action.regex)
                 updateState { it.copy(myNameRegex = action.regex, filenameTemplate = action.template, showSettings = false) }
             }
             is KifuzoAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
@@ -232,7 +236,7 @@ class KifuzoViewModel(
             is KifuzoAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
             is KifuzoAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
             is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, errorDetail = null, infoMessage = null) }
-            is KifuzoAction.ImportFiles -> importHandler.importFiles(action.sourceDir, currentRootDirectory)
+            is KifuzoAction.ImportFiles -> currentRootDirectory?.let { importHandler.performImport(action.sourceDir, it) }
             is KifuzoAction.UpdateSidebarWidth -> {
                 val newWidth = (uiState.sidebarWidth + action.delta).coerceIn(
                     dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH,

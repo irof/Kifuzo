@@ -1,6 +1,6 @@
 package dev.irof.kifuzo
 
-import dev.irof.kifuzo.logic.KifuRepository
+import dev.irof.kifuzo.logic.service.KifuRepository
 import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation

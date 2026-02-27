@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.irof.kifuzo.logic.io.readTextWithEncoding
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.FileViewMode
 import dev.irof.kifuzo.viewmodel.KifuzoUiState
@@ -38,7 +39,7 @@ fun FileTreeList(
                     showParentName = (state.viewMode == FileViewMode.FLAT),
                     onToggle = onToggleDir,
                     onSelect = onSelectFile,
-                    onShowText = { onShowText(dev.irof.kifuzo.logic.readTextWithEncoding(it)) },
+                    onShowText = { onShowText(dev.irof.kifuzo.logic.io.readTextWithEncoding(it)) },
                     onRename = onRename,
                     onConvertCsa = onConvertCsa,
                 )
