@@ -266,32 +266,39 @@ class KifuParserTest {
     }
 
     @Test
-    fun 各種の駒名と消費時間をパースできること() {
+    fun 提示された形式の局面図を正しくパースできること() {
         val kifu = """
-            1 ７六歩(77)   ( 0:01/00:00:01)
-            2 ３四歩(33)   ( 0:02/00:00:02)
-            3 ８八角不成(22)
-            4 ２二角成(88)
-            5 ２一龍(22)
-            6 １一竜(11)
-            7 ３二馬(33)
-            8 ４三全(44)
-            9 ５四圭(55)
-            10 ６五杏(66)
+                後手の持駒：歩五　桂　角　
+                  ９ ８ ７ ６ ５ ４ ３ ２ １
+                +---------------------------+
+                | ・ ・ ・ ・ ・ ・ ・ ・ 龍|一
+                | ・ ・ ・ ・ ・ ・ ・ ・ ・|二
+                | ・v歩 ・v龍v歩 ・v銀v歩 ・|三
+                |v歩 ・v銀 ・ ・v歩 ・v香v歩|四
+                | ・ ・ ・ ・v桂 ・v歩 ・ ・|五
+                | 歩v玉 ・ ・ 香 歩 ・ ・ 歩|六
+                | ・v全 ・ ・ 歩 ・ 歩 歩 ・|七
+                | ・ ・ ・ ・ 金 ・ 銀 玉 ・|八
+                |v角 ・ 桂 ・ ・ 金 ・ 桂 香|九
+                +---------------------------+
+                先手の持駒：香　金二
         """.trimIndent()
-        // 駒がある場所からの移動にするため、初期配置をいじる必要があるが、
-        // 今回の目的は parseMove の正規表現マッチなので、
-        // HeaderParser で空の盤面を作ってからパースする
-        val state = ShogiBoardState()
-        val hp = HeaderParser()
-        hp.prepareNonStandardBoard()
-        // 10手分の駒を置いておく（簡易化のため、駒の種類は問わない）
-        for (y in 0..8) for (x in 0..8) hp.currentCells[y][x] = dev.irof.kifuzo.models.BoardPiece(Piece.FU, PieceColor.Black)
+        val info = parseHeader(kifu.lines())
 
-        parseKifu(kifu.lines(), state) // 実際には applyAction で失敗するかもしれないが、parseMove は通る
+        // 1一に龍（先手）
+        assertEquals(dev.irof.kifuzo.models.Piece.RY, info.initialCells[0][8]?.piece)
+        assertEquals(dev.irof.kifuzo.models.PieceColor.Black, info.initialCells[0][8]?.color)
+
+        // 3三に銀（後手） -> index 6
+        val piece33 = info.initialCells[2][6]
+        assertEquals(dev.irof.kifuzo.models.Piece.GI, piece33?.piece)
+        assertEquals(dev.irof.kifuzo.models.PieceColor.White, piece33?.color)
+
+        // 2八に玉（先手）
+        assertEquals(dev.irof.kifuzo.models.Piece.OU, info.initialCells[7][7]?.piece)
+        assertEquals(dev.irof.kifuzo.models.PieceColor.Black, info.initialCells[7][7]?.color)
     }
 }
-
 private fun parse(kifu: String): KifuSession {
     val state = ShogiBoardState()
     parseKifu(kifu.trimIndent().lines(), state)

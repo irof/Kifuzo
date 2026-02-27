@@ -70,6 +70,7 @@ internal class HeaderParser {
     }
 
     fun prepareNonStandardBoard() {
+        // cellsが平手の初期配置のままであれば、空の盤面に置き換える
         if (isStandardStart) {
             isStandardStart = false
             currentCells = Array(ShogiConstants.BOARD_SIZE) { arrayOfNulls<BoardPiece>(ShogiConstants.BOARD_SIZE).toMutableList() }.toMutableList()
@@ -79,7 +80,7 @@ internal class HeaderParser {
     private fun isMetadata(l: String) = l.startsWith("先手：") || l.startsWith("対局者：") || l.startsWith("後手：") || l.startsWith("開始日時：") || l.startsWith("棋戦：") || l.startsWith("場所：") || l.startsWith("N+") || l.startsWith("N-") || l.startsWith("\$START_TIME:") || l.startsWith("\$EVENT:")
     private fun isBoardLine(l: String) = (l.startsWith("|") && l.count { it == '|' } >= 2) || (l.startsWith("P") && l.length >= 2 && l[1].isDigit())
     private fun isMochigomaLine(l: String) = l.startsWith("P+") || l.startsWith("P-") || Regex("""^[上下先後]手(の)?持駒：""").containsMatchIn(l)
-    private fun isMoveLine(l: String) = Regex("""^\s*\d+\s+.*""").matches(l) || l.startsWith("+") || l.startsWith("-")
+    private fun isMoveLine(l: String) = Regex("""^\s*\d+\s+.*""").matches(l) || (l.length >= 2 && (l.startsWith("+") || l.startsWith("-")) && l[1].isDigit())
 
     fun build(): KifuHeader {
         // boardY > 0 は KIFの盤面図(|)が1行以上現れたことを示す

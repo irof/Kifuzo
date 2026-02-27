@@ -32,7 +32,7 @@ internal fun handleMetadataLine(hp: HeaderParser, line: String) {
 }
 
 internal fun handleMochigomaLine(hp: HeaderParser, line: String) {
-    hp.isStandardStart = false
+    hp.prepareNonStandardBoard()
     if (line.startsWith("P+") || line.startsWith("P-")) {
         handleCsaMochigomaLine(hp, line)
     } else {
@@ -53,24 +53,40 @@ internal fun handleBoardLine(hp: HeaderParser, line: String) {
 private fun parseKifBoardLine(hp: HeaderParser, line: String) {
     if (hp.boardY >= ShogiConstants.BOARD_SIZE) return
     val content = line.substringAfter("|").substringBeforeLast("|")
-    val cells = splitKifBoardCells(content)
+    val cells = extractKifBoardCells(content)
+
     for (x in 0 until ShogiConstants.BOARD_SIZE) {
         if (x < cells.size) {
-            val pStr = cells[x]
-            Piece.findPieceBySymbol(pStr.replace("v", "").replace("・", "").trim())?.let {
-                hp.currentCells[hp.boardY][x] = BoardPiece(it, if (pStr.contains('v')) PieceColor.White else PieceColor.Black)
-            }
+            updateBoardCell(hp, x, cells[x])
         }
     }
     hp.boardY++
 }
 
-private fun splitKifBoardCells(content: String): List<String> = if (content.contains("|")) {
-    content.split("|")
-} else {
-    (0 until ShogiConstants.BOARD_SIZE).map { idx ->
-        val start = idx * 2
-        if (start + 2 <= content.length) content.substring(start, start + 2) else ""
+private fun extractKifBoardCells(content: String): List<String> {
+    val s = content.replace(" ", "").replace("　", "")
+    val cells = mutableListOf<String>()
+    var i = 0
+    while (i < s.length && cells.size < ShogiConstants.BOARD_SIZE) {
+        if (s[i] == 'v') {
+            if (i + 1 < s.length) {
+                cells.add(s.substring(i, i + 2))
+                i += 2
+            } else {
+                i++
+            }
+        } else {
+            cells.add(s.substring(i, i + 1))
+            i++
+        }
+    }
+    return cells
+}
+
+private fun updateBoardCell(hp: HeaderParser, x: Int, pStr: String) {
+    val piece = Piece.findPieceBySymbol(pStr.replace("v", "").replace("・", "").trim())
+    hp.currentCells[hp.boardY][x] = piece?.let {
+        BoardPiece(it, if (pStr.contains('v')) PieceColor.White else PieceColor.Black)
     }
 }
 
@@ -80,7 +96,7 @@ private fun splitKifBoardCells(content: String): List<String> = if (content.cont
 internal fun Piece.Companion.findPieceBySymbol(symbol: String): Piece? {
     val s = symbol.trim()
     if (s.isEmpty()) return null
-    return Piece.entries.find {
+    val found = Piece.entries.find {
         it.symbol == s ||
             (s == "王" && it == Piece.OU) ||
             (s == "玉" && it == Piece.OU) ||
@@ -88,6 +104,7 @@ internal fun Piece.Companion.findPieceBySymbol(symbol: String): Piece? {
             (s == "龍" && it == Piece.RY) ||
             (s == "馬" && it == Piece.UM)
     }
+    return found
 }
 
 /**
