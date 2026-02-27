@@ -32,7 +32,6 @@ import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 
 @Composable
-@Suppress("LongMethod")
 fun KifuTextViewer(
     text: String,
     onDismiss: () -> Unit,

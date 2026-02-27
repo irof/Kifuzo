@@ -30,7 +30,6 @@ private object BoardViewConstants {
 }
 
 @Composable
-@Suppress("LongMethod")
 fun ShogiBoardView(
     state: ShogiBoardState,
     isFlipped: Boolean = false,

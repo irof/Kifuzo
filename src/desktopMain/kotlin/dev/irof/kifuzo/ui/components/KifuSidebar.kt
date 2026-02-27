@@ -28,7 +28,6 @@ import dev.irof.kifuzo.viewmodel.KifuzoUiState
 import java.nio.file.Path
 
 @Composable
-@Suppress("LongMethod")
 fun KifuSidebar(
     state: KifuzoUiState,
     currentRoot: Path?,

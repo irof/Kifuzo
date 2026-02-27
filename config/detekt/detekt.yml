@@ -115,6 +115,8 @@ complexity:
     active: true
     allowedLines: 40
     excludes: ['**/test/**', '**/desktopTest/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
+    ignoreAnnotated:
+      - 'Composable'
   LongParameterList:
     active: true
     allowedFunctionParameters: 5

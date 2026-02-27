@@ -32,7 +32,6 @@ import java.nio.file.Path
 import kotlin.io.path.nameWithoutExtension
 
 @Composable
-@Suppress("LongMethod")
 fun RenameDialog(
     file: Path,
     proposedName: String,
