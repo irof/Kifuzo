@@ -46,10 +46,6 @@ class FileTreeManager(
         return newNodes
     }
 
-    // ディレクトリ判定等の OS 依存のファイル操作において、
-    // 権限や特殊なファイル形式により発生しうる様々な例外を一括で捕捉して
-    // 安全にスキップ（false を返却）するために Exception をキャッチしています。
-    @Suppress("TooGenericExceptionCaught")
     private fun traverse(
         dir: Path,
         level: Int,
@@ -71,22 +67,38 @@ class FileTreeManager(
         }
 
         contents.forEach { path ->
-            if (path.name.startsWith(".")) return@forEach
-            val isDir = try {
-                path.isDirectory()
-            } catch (e: Exception) {
-                logger.debug(e) { "Failed to check if directory: $path" }
-                false
-            }
+            processTraverseItem(path, level, expandedPaths, filters, sortOption, since, result, errorCount)
+        }
+    }
 
-            if (shouldShowFile(isDir, path, filters, since)) {
-                val isExpanded = expandedPaths.contains(path)
-                val node = FileTreeNode(path, level, isDir, isExpanded)
-                result.add(node)
+    private fun processTraverseItem(
+        path: Path,
+        level: Int,
+        expandedPaths: Set<Path>,
+        filters: Set<FileFilter>,
+        sortOption: FileSortOption,
+        since: Instant,
+        result: MutableList<FileTreeNode>,
+        errorCount: java.util.concurrent.atomic.AtomicInteger,
+    ) {
+        if (path.name.startsWith(".")) return
+        val isDir = try {
+            path.isDirectory()
+        } catch (e: IOException) {
+            logger.debug(e) { "Failed to check if directory (IO): $path" }
+            false
+        } catch (e: SecurityException) {
+            logger.debug(e) { "Permission denied checking directory: $path" }
+            false
+        }
 
-                if (isDir && isExpanded) {
-                    traverse(path, level + 1, expandedPaths, filters, sortOption, since, result, errorCount)
-                }
+        if (shouldShowFile(isDir, path, filters, since)) {
+            val isExpanded = expandedPaths.contains(path)
+            val node = FileTreeNode(path, level, isDir, isExpanded)
+            result.add(node)
+
+            if (isDir && isExpanded) {
+                traverse(path, level + 1, expandedPaths, filters, sortOption, since, result, errorCount)
             }
         }
     }
@@ -153,16 +165,16 @@ class FileTreeManager(
         val attrs = Files.readAttributes(path, BasicFileAttributes::class.java)
         attrs.lastModifiedTime().toInstant().isAfter(since)
     } catch (e: IOException) {
-        logger.debug(e) { "Failed to check if file is recent: $path" }
+        logger.debug(e) { "Failed to check if file is recent (IO): $path" }
+        false
+    } catch (e: SecurityException) {
+        logger.debug(e) { "Permission denied checking if file is recent: $path" }
         false
     }
 
     /**
      * 指定されたノードの開閉状態を切り替え、新しいツリーリストを返します。
      */
-    // 子ノードの取得やディレクトリ判定において、
-    // ファイルシステム起因の例外を一括で捕捉して安全にフォールバックするために Exception をキャッチしています。
-    @Suppress("TooGenericExceptionCaught")
     fun toggleNode(node: FileTreeNode, currentNodes: List<FileTreeNode>, sortOption: FileSortOption = FileSortOption.NAME): List<FileTreeNode> {
         val index = if (node.isDirectory) currentNodes.indexOfFirst { it.path == node.path } else -1
         if (index == -1) return currentNodes
@@ -182,8 +194,11 @@ class FileTreeManager(
             val childNodes = children.filter { !it.name.startsWith(".") }.map {
                 val isDir = try {
                     it.isDirectory()
-                } catch (e: Exception) {
-                    logger.debug(e) { "Failed to check if directory: $it" }
+                } catch (e: IOException) {
+                    logger.debug(e) { "Failed to check if directory (IO): $it" }
+                    false
+                } catch (e: SecurityException) {
+                    logger.debug(e) { "Permission denied checking directory: $it" }
                     false
                 }
                 FileTreeNode(it, node.level + 1, isDir)

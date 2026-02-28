@@ -5,7 +5,6 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,26 +13,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Slider
-import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.dp
 import dev.irof.kifuzo.models.Move
 import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.ui.ShogiBoardView
@@ -43,31 +36,40 @@ import dev.irof.kifuzo.ui.theme.ShogiIcons
 import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.viewmodel.KifuzoUiState
 import java.nio.file.Path
-import kotlin.io.path.extension
 import kotlin.io.path.name
 
 private const val ICON_ALPHA_INACTIVE = 0.6f
 
 /**
- * 棋譜プレビューパネルでの操作を抽象化するインターフェース。
- * プレビュー画面でのインタラクションが多く、ViewModel へのディスパッチを一つのインターフェースに集約させているため、
- * メソッド数が規定数を超えています。
+ * 棋譜表示のナビゲーション操作。
  */
-@Suppress("TooManyFunctions")
-interface KifuPreviewActions {
-    fun onToggleFlip()
-    fun onToggleMoveList()
-    fun onWriteResult(path: Path, result: String)
-    fun onShowEditMetadata(path: Path)
+interface KifuNavigationActions {
     fun onStepChange(step: Int)
     fun onNextStep()
     fun onPrevStep()
-    fun onForceParse(path: Path)
+    fun onToggleFlip()
+    fun onToggleMoveList()
     fun onSelectVariation(moves: List<Move>)
     fun onResetToMainHistory()
+}
+
+/**
+ * 棋譜ファイルやメタデータに関連する操作。
+ */
+interface KifuFileActions {
+    fun onWriteResult(path: Path, result: String)
+    fun onShowEditMetadata(path: Path)
+    fun onForceParse(path: Path)
     fun onOpenExternal(path: Path)
     fun onShowSaveDialog()
 }
+
+/**
+ * 棋譜プレビューパネルでの操作を統合したインターフェース。
+ */
+interface KifuPreviewActions :
+    KifuNavigationActions,
+    KifuFileActions
 
 @Composable
 fun KifuPreviewPanel(
@@ -77,34 +79,20 @@ fun KifuPreviewPanel(
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
+    val isFlipped = state.isFlipped
+    val fileName = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT
 
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .background(ShogiColors.Panel.Background)
-            .padding(horizontal = ShogiDimensions.Spacing.Large, vertical = ShogiDimensions.Spacing.Medium)
+            .background(ShogiColors.Panel.MenuBarBackground)
+            .padding(vertical = ShogiDimensions.Spacing.Medium)
             .focusRequester(focusRequester)
             .focusable()
-            .onPreviewKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                when (event.key) {
-                    Key.DirectionDown -> {
-                        actions.onNextStep()
-                        true
-                    }
-                    Key.DirectionUp -> {
-                        actions.onPrevStep()
-                        true
-                    }
-                    else -> false
-                }
-            }
             .pointerInput(Unit) { detectTapGestures { focusRequester.requestFocus() } },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
-        val fileName = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT
-
         KifuMetaInfo(
             fileName = fileName,
             senteName = boardState.session.senteName,
@@ -121,15 +109,28 @@ fun KifuPreviewPanel(
         KifuHeader(
             hasHistory = boardState.session.moves.isNotEmpty(),
             isMoveListVisible = state.isMoveListVisible,
-            onToggleMoveList = { actions.onToggleMoveList() },
+            onToggleMoveList = actions::onToggleMoveList,
+            onToggleFlip = actions::onToggleFlip,
         )
 
-        KifuOpenButton(state.selectedFile, boardState.session.moves.isEmpty(), actions::onForceParse)
+        Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            BoardArea(boardState, isFlipped, actions::onToggleFlip, Modifier.weight(1f))
 
-        if (boardState.session.moves.isNotEmpty() || !boardState.session.initialSnapshot.isStandardInitial()) {
-            Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
-            KifuMainContent(state, boardState, actions)
+            if (state.isMoveListVisible) {
+                KifuMoveList(
+                    moves = boardState.currentMoves,
+                    currentStep = boardState.currentStep,
+                    isMainHistory = boardState.currentMoves == boardState.session.moves,
+                    onStepChange = actions::onStepChange,
+                    onSelectVariation = actions::onSelectVariation,
+                    onResetMain = actions::onResetToMainHistory,
+                    onWriteResult = { result -> state.selectedFile?.let { actions.onWriteResult(it, result) } },
+                    modifier = Modifier.width(ShogiDimensions.Component.MoveListWidth).fillMaxHeight(),
+                )
+            }
         }
+
+        KifuFooter(boardState, isFlipped, actions::onStepChange)
     }
 }
 
@@ -138,89 +139,72 @@ private fun KifuHeader(
     hasHistory: Boolean,
     isMoveListVisible: Boolean,
     onToggleMoveList: () -> Unit,
+    onToggleFlip: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.Spacing.Large),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.End,
     ) {
-        if (hasHistory) {
-            MoveListToggleButton(isMoveListVisible, onToggleMoveList)
+        IconButton(onClick = onToggleMoveList) {
+            Icon(
+                imageVector = ShogiIcons.SidebarToggle,
+                contentDescription = "手順リスト表示切り替え",
+                tint = if (isMoveListVisible) MaterialTheme.colors.primary else Color.Gray.copy(alpha = ICON_ALPHA_INACTIVE),
+            )
         }
-    }
-}
-
-@Composable
-private fun MoveListToggleButton(isVisible: Boolean, onClick: () -> Unit) {
-    IconButton(onClick = onClick, modifier = Modifier.size(ShogiDimensions.Icon.Medium)) {
-        Icon(
-            imageVector = ShogiIcons.SidebarToggle,
-            contentDescription = if (isVisible) "手順を隠す" else "手順を表示",
-            tint = if (isVisible) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = ICON_ALPHA_INACTIVE),
-        )
-    }
-}
-
-@Composable
-private fun KifuOpenButton(selectedFile: Path?, isHistoryEmpty: Boolean, onForceParse: (Path) -> Unit) {
-    selectedFile?.let { selected ->
-        if (isHistoryEmpty && selected.extension.lowercase() == "txt") {
-            Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
-            Button(onClick = { onForceParse(selected) }, modifier = Modifier.height(ShogiDimensions.Component.ButtonHeight)) {
-                Text("棋譜として開く")
+        if (hasHistory) {
+            IconButton(onClick = onToggleFlip) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "盤面反転",
+                    tint = Color.Gray.copy(alpha = ICON_ALPHA_INACTIVE),
+                    modifier = Modifier.size(ShogiDimensions.Icon.Small),
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ColumnScope.KifuMainContent(
-    state: KifuzoUiState,
+private fun BoardArea(
     boardState: ShogiBoardState,
-    actions: KifuPreviewActions,
+    isFlipped: Boolean,
+    onToggleFlip: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().weight(1f),
-        horizontalArrangement = Arrangement.spacedBy(ShogiDimensions.Spacing.Large),
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            ShogiBoardView(boardState, isFlipped = state.isFlipped, onToggleFlip = actions::onToggleFlip)
-            Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
-            KifuOperationBar(boardState, state.isFlipped, actions::onStepChange)
-        }
-
-        if (state.isMoveListVisible) {
-            KifuMoveList(
-                moves = boardState.currentMoves,
-                currentStep = boardState.currentStep,
-                isMainHistory = boardState.currentMoves === boardState.session.moves,
-                onStepChange = actions::onStepChange,
-                onWriteResult = { result -> state.selectedFile?.let { actions.onWriteResult(it, result) } },
-                onSelectVariation = actions::onSelectVariation,
-                onResetMain = actions::onResetToMainHistory,
-                modifier = Modifier.width(ShogiDimensions.Component.MoveListWidth).fillMaxHeight(),
-            )
-        }
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
+        ShogiBoardView(boardState, isFlipped, onToggleFlip)
     }
 }
 
 @Composable
-private fun KifuOperationBar(
+private fun KifuFooter(
     boardState: ShogiBoardState,
     isFlipped: Boolean,
     onStepChange: (Int) -> Unit,
 ) {
     val maxStep = boardState.currentMoves.size
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        KifuStepButtons(boardState.currentStep, maxStep, boardState.session.isStandardStart, boardState.session.firstContactStep, onStepChange)
-        Slider(
-            value = boardState.currentStep.toFloat(),
-            onValueChange = { onStepChange(it.toInt()) },
-            valueRange = 0f..maxStep.toFloat(),
-            steps = if (maxStep > 1) maxStep - 1 else 0,
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(bottom = ShogiDimensions.Spacing.Medium),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        KifuStepButtons(
+            currentStep = boardState.currentStep,
+            maxStep = maxStep,
+            isStandardStart = boardState.session.isStandardStart,
+            firstContactStep = boardState.session.firstContactStep,
+            onStepChange = onStepChange,
+        )
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
+        KifuMoveSlider(
+            currentStep = boardState.currentStep,
+            maxStep = maxStep,
+            onStepChange = onStepChange,
             modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.Spacing.Large),
         )
         KifuGraphs(boardState.currentMoves, boardState.currentStep, isFlipped, onStepChange)

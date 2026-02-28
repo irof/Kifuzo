@@ -120,4 +120,20 @@ class FileActionHandlerTest {
         assertEquals("変換エラー", errorMsg)
         assertEquals(errorMsgDetail, errorDetail)
     }
+
+    @Test
+    fun writeGameResultが成功した時に通知されること() {
+        val path = Paths.get("test.kifu")
+        handler.writeGameResult(path, "投了")
+        assertEquals(true, filesChangedCalled)
+        assertEquals(true, infoMsg?.contains("対局結果"))
+    }
+
+    @Test
+    fun updateMetadataが成功した時に通知されること() {
+        val path = Paths.get("test.kifu")
+        handler.updateMetadata(path, "Event", "2026/03/01")
+        assertEquals(true, filesChangedCalled)
+        assertEquals(true, infoMsg?.contains("棋譜情報"))
+    }
 }

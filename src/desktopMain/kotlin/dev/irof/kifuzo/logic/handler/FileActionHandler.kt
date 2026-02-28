@@ -45,9 +45,6 @@ class FileActionHandler(
         executeParse(path) { repository.parseManually(it, boardState) }
     }
 
-    // 例外のスタックトレースを StringWriter 経由で文字列として取得し、
-    // エラーダイアログの詳細情報に表示するために printStackTrace を使用しています。
-    @Suppress("PrintStackTrace")
     private fun executeParse(path: Path, parseAction: (Path) -> Unit) {
         try {
             parseAction(path)
@@ -58,9 +55,7 @@ class FileActionHandler(
             val detail = if (cause is KifuParseException) {
                 cause.message
             } else {
-                val sw = java.io.StringWriter()
-                cause.printStackTrace(java.io.PrintWriter(sw))
-                "${cause.message}\n\n$sw"
+                cause.stackTraceToString()
             }
             onError(message, detail)
         }
@@ -86,20 +81,20 @@ class FileActionHandler(
             onError("変換エラー", cause.message)
         }
     }
-
     fun writeGameResult(path: Path, result: String) {
         try {
-            repository.updateResult(path, result)
+            repository.updateMetadata(path, result = result)
             onFilesChanged()
-            onInfo("終局結果「$result」を追記しました。")
+            onInfo("対局結果を追記しました。")
         } catch (e: IOException) {
+            logger.error(e) { "Failed to write game result" }
             onError("書込エラー", e.message)
         }
     }
 
     fun updateMetadata(path: Path, event: String, startTime: String) {
         try {
-            repository.updateHeader(path, event, startTime)
+            repository.updateMetadata(path, event = event, startTime = startTime)
             onFilesChanged()
             onInfo("棋譜情報を更新しました。")
         } catch (e: IOException) {

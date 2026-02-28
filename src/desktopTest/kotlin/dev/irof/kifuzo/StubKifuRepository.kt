@@ -54,12 +54,12 @@ open class StubKifuRepository : KifuRepository {
         convertCsaAction()
         return path
     }
-    override fun updateResult(path: Path, result: String) { /* Stub */ }
-    override fun updateHeader(path: Path, event: String, startTime: String) { /* Stub */ }
+
+    override fun updateMetadata(path: Path, event: String?, startTime: String?, result: String?) { /* Stub */ }
+
     override fun generateProposedName(path: Path, info: KifuInfo, template: String): String? = proposedName ?: path.fileName.toString()
     override fun generateProposedNameForPasted(info: KifuInfo, template: String): String? = proposedName
     override fun renameFileTo(path: Path, newName: String): Path? = renameResult
-    override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = importResult
 }
 
 /**

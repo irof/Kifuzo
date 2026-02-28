@@ -229,4 +229,20 @@ private fun MetaRow(label: String, value: String) {
     }
 }
 
+@Composable
+fun KifuMoveSlider(
+    currentStep: Int,
+    maxStep: Int,
+    onStepChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (maxStep <= 0) return
+    androidx.compose.material.Slider(
+        value = currentStep.toFloat(),
+        onValueChange = { onStepChange(it.toInt()) },
+        valueRange = 0f..maxStep.toFloat(),
+        modifier = modifier,
+    )
+}
+
 private fun isAllMetadataEmpty(sente: String, gote: String, startTime: String, event: String): Boolean = sente.isEmpty() && gote.isEmpty() && startTime.isEmpty() && event.isEmpty()
