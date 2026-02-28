@@ -101,7 +101,7 @@ private fun FilenameTemplateSection(value: String, onValueChange: (String) -> Un
 
 @Composable
 private fun RawSettingsSection() {
-    var rawSettings by remember { mutableStateOf(AppSettings.getAllSettings()) }
+    var rawSettings by remember { mutableStateOf(AppSettings.Default.getAllSettings()) }
     Column {
         Text(AppStrings.RAW_PREFS_LABEL, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
@@ -117,15 +117,15 @@ private fun RawSettingsSection() {
                         value = editingValue,
                         onValueChange = {
                             editingValue = it
-                            AppSettings.putSetting(key, it)
+                            AppSettings.Default.putSetting(key, it)
                         },
                         textStyle = TextStyle(fontSize = ShogiDimensions.Text.Body),
                         modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(ShogiDimensions.Spacing.Small),
                     )
                 }
                 IconButton(onClick = {
-                    AppSettings.removeSetting(key)
-                    rawSettings = AppSettings.getAllSettings()
+                    AppSettings.Default.removeSetting(key)
+                    rawSettings = AppSettings.Default.getAllSettings()
                 }) {
                     Icon(Icons.Default.Delete, contentDescription = AppStrings.DELETE, tint = Color.Red, modifier = Modifier.size(ShogiDimensions.Icon.Small))
                 }

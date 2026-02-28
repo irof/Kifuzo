@@ -82,7 +82,7 @@ private fun ImportDialogWrapper(viewModel: KifuzoViewModel) {
     val state = viewModel.uiState
     if (state.showImportDialog) {
         ImportDialog(
-            initialSourceDir = AppSettings.importSourceDir,
+            initialSourceDir = AppSettings.Default.importSourceDir,
             onDismiss = { viewModel.dispatch(KifuzoAction.ShowImportDialog(false)) },
             onImport = { viewModel.dispatch(KifuzoAction.ImportFiles(it)) },
         )

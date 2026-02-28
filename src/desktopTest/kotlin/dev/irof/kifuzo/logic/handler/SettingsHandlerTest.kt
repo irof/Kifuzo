@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.logic.handler
 
+import dev.irof.kifuzo.InMemoryAppSettings
 import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.models.KifuSession
 import dev.irof.kifuzo.models.ShogiBoardState
@@ -17,6 +18,7 @@ class SettingsHandlerTest {
         boardState = ShogiBoardState()
         handler = SettingsHandler(
             repository = StubKifuRepository(),
+            settings = InMemoryAppSettings(),
             boardState = boardState,
             onFilesChanged = {},
             onAutoFlip = { isFlipped = it },

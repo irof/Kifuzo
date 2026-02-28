@@ -63,6 +63,27 @@ open class StubKifuRepository : KifuRepository {
 }
 
 /**
+ * テスト用のメモリ内設定保持クラス。
+ */
+class InMemoryAppSettings : dev.irof.kifuzo.models.AppSettings {
+    override var myNameRegex: String = ""
+    override var windowX: Float? = null
+    override var windowY: Float? = null
+    override var windowWidth: Float = 800f
+    override var windowHeight: Float = 750f
+    override var sidebarWidth: Float = 250f
+    override var importSourceDir: String = ""
+    override var lastRootDir: String = ""
+    override var filenameTemplate: String = "{開始日の年月日}_{開始日の時分秒}_{棋戦名}_{先手}_{後手}"
+    override var fileSortOption: dev.irof.kifuzo.models.FileSortOption = dev.irof.kifuzo.models.FileSortOption.NAME
+
+    override fun saveWindowState(windowState: androidx.compose.ui.window.WindowState) { /* Stub */ }
+    override fun getAllSettings(): Map<String, String> = emptyMap()
+    override fun removeSetting(key: String) { /* Stub */ }
+    override fun putSetting(key: String, value: String) { /* Stub */ }
+}
+
+/**
  * 盤面の特定の座標にある駒を検証します。
  */
 fun BoardSnapshot.assertAt(file: Int, rank: Int, piece: Piece, color: PieceColor) {

@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.viewmodel
 
+import dev.irof.kifuzo.InMemoryAppSettings
 import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.FileViewMode
@@ -16,10 +17,11 @@ class KifuzoViewModelTest {
 
     private lateinit var viewModel: KifuzoViewModel
     private val stubRepository = StubKifuRepository()
+    private val inMemorySettings = InMemoryAppSettings()
 
     @BeforeTest
     fun setup() {
-        viewModel = KifuzoViewModel(stubRepository)
+        viewModel = KifuzoViewModel(stubRepository, inMemorySettings)
     }
 
     @Test

@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic.handler
 
 import dev.irof.kifuzo.logic.service.KifuRepository
+import dev.irof.kifuzo.models.AppSettings
 import dev.irof.kifuzo.models.ShogiBoardState
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
@@ -12,6 +13,7 @@ private val logger = KotlinLogging.logger {}
  */
 class SettingsHandler(
     private val repository: KifuRepository,
+    private val settings: AppSettings,
     private val boardState: ShogiBoardState,
     private val onFilesChanged: () -> Unit,
     private val onAutoFlip: (Boolean) -> Unit,

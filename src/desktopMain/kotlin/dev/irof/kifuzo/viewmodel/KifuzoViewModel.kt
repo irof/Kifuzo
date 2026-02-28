@@ -32,6 +32,7 @@ private val logger = KotlinLogging.logger {}
 @Suppress("TooManyFunctions")
 class KifuzoViewModel(
     private val repository: KifuRepository = KifuRepositoryImpl(),
+    private val settings: AppSettings = AppSettings.Default,
     private val fileTreeManager: FileTreeManager = FileTreeManager(repository),
 ) {
     companion object {
@@ -63,13 +64,13 @@ class KifuzoViewModel(
 
     private val settingsHandler = SettingsHandler(
         repository = repository,
+        settings = settings,
         boardState = boardState,
         onFilesChanged = { refreshFiles() },
         onAutoFlip = { flipped -> uiState = uiState.copy(isFlipped = flipped) },
     )
-
     var currentRootDirectory by mutableStateOf<Path?>(
-        AppSettings.lastRootDir.let {
+        settings.lastRootDir.let {
             val path = if (it.isNotEmpty()) java.nio.file.Paths.get(it) else java.nio.file.Paths.get(System.getProperty("user.home"))
             if (java.nio.file.Files.exists(path)) path else java.nio.file.Paths.get(System.getProperty("user.home"))
         },
@@ -78,9 +79,10 @@ class KifuzoViewModel(
 
     var uiState by mutableStateOf(
         KifuzoUiState(
-            myNameRegex = AppSettings.myNameRegex,
-            filenameTemplate = AppSettings.filenameTemplate,
-            sidebarWidth = AppSettings.sidebarWidth,
+            myNameRegex = settings.myNameRegex,
+            filenameTemplate = settings.filenameTemplate,
+            sidebarWidth = settings.sidebarWidth,
+            fileSortOption = settings.fileSortOption,
         ),
     )
         private set
@@ -106,7 +108,7 @@ class KifuzoViewModel(
         when (action) {
             is KifuzoAction.SetRootDirectory -> {
                 currentRootDirectory = action.path
-                AppSettings.lastRootDir = action.path.toString()
+                settings.lastRootDir = action.path.toString()
                 uiState = uiState.copy(treeNodes = emptyList())
                 refreshFiles()
             }
@@ -124,7 +126,7 @@ class KifuzoViewModel(
                 refreshFiles()
             }
             is KifuzoAction.SetFileSortOption -> {
-                AppSettings.fileSortOption = action.option
+                settings.fileSortOption = action.option
                 uiState = uiState.copy(fileSortOption = action.option)
                 refreshFiles()
             }
@@ -172,7 +174,7 @@ class KifuzoViewModel(
     private fun handleRenameAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.ShowRenameDialog -> {
-                val template = dev.irof.kifuzo.models.AppSettings.filenameTemplate
+                val template = settings.filenameTemplate
                 val info = uiState.kifuInfos[action.path] ?: try {
                     repository.scanKifuInfo(java.nio.file.Files.readAllLines(action.path))
                 } catch (e: Exception) {
@@ -232,8 +234,8 @@ class KifuzoViewModel(
     private fun handleConfigAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.SaveSettings -> {
-                AppSettings.myNameRegex = action.regex
-                AppSettings.filenameTemplate = action.template
+                settings.myNameRegex = action.regex
+                settings.filenameTemplate = action.template
                 settingsHandler.updateAutoFlip(action.regex)
                 uiState = uiState.copy(myNameRegex = action.regex, filenameTemplate = action.template, showSettings = false)
             }
@@ -255,7 +257,7 @@ class KifuzoViewModel(
                     dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH,
                     dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH,
                 )
-                AppSettings.sidebarWidth = newWidth
+                settings.sidebarWidth = newWidth
                 uiState = uiState.copy(sidebarWidth = newWidth)
             }
             is KifuzoAction.ToggleSidebar -> uiState = uiState.copy(isSidebarVisible = !uiState.isSidebarVisible)
@@ -270,7 +272,7 @@ class KifuzoViewModel(
             is KifuzoAction.PasteKifu -> performPasteKifu()
             is KifuzoAction.ShowSavePastedKifuDialog -> {
                 uiState.pastedKifuText?.let { text ->
-                    val template = dev.irof.kifuzo.models.AppSettings.filenameTemplate
+                    val template = settings.filenameTemplate
                     val info = repository.scanKifuInfo(text.lines())
                     val proposedName = repository.generateProposedNameFromText(text, info, template)
                     uiState = uiState.copy(pastedKifuProposedName = proposedName ?: "pasted_kifu.kifu")

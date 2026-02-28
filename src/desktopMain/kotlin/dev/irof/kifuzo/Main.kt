@@ -51,7 +51,7 @@ fun main() = application {
 
     Window(
         onCloseRequest = {
-            AppSettings.saveWindowState(windowState)
+            AppSettings.Default.saveWindowState(windowState)
             exitApplication()
         },
         title = AppStrings.APP_TITLE,
@@ -65,12 +65,12 @@ fun main() = application {
 
 @Composable
 private fun rememberKifuzoWindowState(): androidx.compose.ui.window.WindowState = rememberWindowState(
-    position = if (AppSettings.windowX != null && AppSettings.windowY != null) {
-        WindowPosition(AppSettings.windowX!!.dp, AppSettings.windowY!!.dp)
+    position = if (AppSettings.Default.windowX != null && AppSettings.Default.windowY != null) {
+        WindowPosition(AppSettings.Default.windowX!!.dp, AppSettings.Default.windowY!!.dp)
     } else {
         WindowPosition.Aligned(Alignment.Center)
     },
-    size = DpSize(AppSettings.windowWidth.dp, AppSettings.windowHeight.dp),
+    size = androidx.compose.ui.unit.DpSize(AppSettings.Default.windowWidth.dp, AppSettings.Default.windowHeight.dp),
 )
 
 @Composable
