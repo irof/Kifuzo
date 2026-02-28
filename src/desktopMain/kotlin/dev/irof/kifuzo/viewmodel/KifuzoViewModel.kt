@@ -68,12 +68,8 @@ class KifuzoViewModel(
 
     var currentRootDirectory by mutableStateOf<Path?>(
         AppSettings.lastRootDir.let {
-            if (it.isNotEmpty()) {
-                val path = java.nio.file.Paths.get(it)
-                if (java.nio.file.Files.exists(path)) path else null
-            } else {
-                null
-            }
+            val path = if (it.isNotEmpty()) java.nio.file.Paths.get(it) else java.nio.file.Paths.get(System.getProperty("user.home"))
+            if (java.nio.file.Files.exists(path)) path else java.nio.file.Paths.get(System.getProperty("user.home"))
         },
     )
         private set

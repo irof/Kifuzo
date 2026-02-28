@@ -73,7 +73,7 @@ object AppSettings {
 
     private const val KEY_LAST_ROOT_DIR = "last_root_dir"
     var lastRootDir: String
-        get() = prefs.get(KEY_LAST_ROOT_DIR, "")
+        get() = prefs.get(KEY_LAST_ROOT_DIR, System.getProperty("user.home"))
         set(value) {
             prefs.put(KEY_LAST_ROOT_DIR, value)
             prefs.flush()
