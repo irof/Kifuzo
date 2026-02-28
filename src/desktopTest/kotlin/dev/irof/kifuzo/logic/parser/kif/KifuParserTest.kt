@@ -93,21 +93,7 @@ class KifuParserTest {
 
     @Test
     fun 途中局面から開始の場合に持ち駒が反映されること() {
-        val kifu = """
-            先手の持駒：角　金二
-            後手の持駒：銀
-            | ・ ・ ・ ・ ・ ・ ・ ・ ・|一
-            | ・ ・ ・ ・ ・ ・ ・ ・ ・|二
-            | ・ ・ ・ ・ ・ ・ ・ ・ ・|三
-            | ・ ・ ・ ・ ・ ・ ・ ・ ・|四
-            | ・ ・ ・ ・ ・ ・ ・ ・ ・|五
-            | ・ ・ ・ ・ ・ ・ ・ ・ ・|六
-            | ・ ・ ・ ・ ・ ・ ・ ・ ・|七
-            | ・ ・ ・ ・ ・ ・ ・ ・ ・|八
-            | ・ ・ ・ ・ 王 ・ ・ ・ ・|九
-            1 ５八玉(59)
-        """.trimIndent()
-        val session = parse(kifu)
+        val session = parse(KifuTestData.MID_GAME_START)
         session.initialSnapshot.assertMochigomaCount(PieceColor.Black, Piece.KA, 1)
         session.initialSnapshot.assertMochigomaCount(PieceColor.Black, Piece.KI, 2)
         session.initialSnapshot.assertMochigomaCount(PieceColor.White, Piece.GI, 1)
@@ -134,15 +120,7 @@ class KifuParserTest {
 
     @Test
     fun 変化手順の開始局面でも持ち駒が引き継がれること() {
-        val kifu = """
-            1 ７六歩(77)
-            2 ３四歩(33)
-            3 ２二角成(88)
-            4 同　銀(31)
-            変化：4手
-            4 同　玉(41)
-        """.trimIndent()
-        val session = parse(kifu)
+        val session = parse(KifuTestData.VARIATION_MOCHIGOMA)
         session.moves[2].resultSnapshot.assertMochigomaCount(PieceColor.Black, Piece.KA, 1)
 
         val variations = session.moves[2].variations
@@ -152,20 +130,7 @@ class KifuParserTest {
 
     @Test
     fun ネストされた変化手順を正しくパースできること() {
-        val kifu = """
-            1 ７六歩(77)
-            2 ３四歩(33)
-            3 ２六歩(27)
-            4 ８四歩(83)
-            変化：2手
-            2 ８四歩(83)
-            3 ２六歩(27)
-            4 ８五歩(84)
-            変化：3手
-            3 ７八金(69)
-            4 ３二金(41)
-        """.trimIndent()
-        val session = parse(kifu)
+        val session = parse(KifuTestData.NESTED_VARIATION)
 
         val var2 = session.moves[0].variations
         assertEquals(1, var2.size)
@@ -179,15 +144,7 @@ class KifuParserTest {
 
     @Test
     fun 同一箇所からの複数の変化手順を正しくパースできること() {
-        val kifu = """
-            1 ７六歩(77)
-            2 ３四歩(33)
-            変化：2手
-            2 ８四歩(83)
-            変化：2手
-            2 ４四歩(43)
-        """.trimIndent()
-        val session = parse(kifu)
+        val session = parse(KifuTestData.MULTIPLE_VARIATIONS)
         val variations = session.moves[0].variations
         assertEquals(2, variations.size)
         assertTrue(variations[0][0].moveText.contains("８四歩"))
@@ -224,27 +181,16 @@ class KifuParserTest {
 
     @Test
     fun パースエラー時に行番号が含まれる例外がスローされること() {
-        val kifu = """
-            | ・ ・ ・ ・ ・ ・ ・ ・ ・|一
-            | ・ ・ ・ ・ ・ ・ ・ ・ ・|二
-        """.trimIndent()
         // 2行しかない盤面図は KifuParseException を投げるはず
         val exception = kotlin.test.assertFailsWith<KifuParseException> {
-            parse(kifu)
+            parse(KifuTestData.INCOMPLETE_BOARD)
         }
         assertTrue(exception.message!!.contains("不完全"), "エラーメッセージに盤面図の不完全さが含まれること: ${exception.message}")
     }
 
     @Test
     fun あらゆるメタデータが含まれる棋譜をパースできること() {
-        val kifu = """
-            対局者：先手太郎
-            後手：後手花子
-            場所：東京
-            開始日時：2026/02/27
-            棋戦：蔵王戦
-        """.trimIndent()
-        val info = scanKifuInfo(kifu.lines())
+        val info = scanKifuInfo(KifuTestData.FULL_METADATA.lines())
         assertEquals("先手太郎", info.senteName)
         assertEquals("後手花子", info.goteName)
         assertEquals("2026/02/27", info.startTime)
@@ -253,66 +199,40 @@ class KifuParserTest {
 
     @Test
     fun CSA形式の指し手開始行を正しく判定できること() {
-        val csa = """
-            N+Sente
-            N-Gote
-            +
-            +7776FU
-        """.trimIndent()
         val state = ShogiBoardState()
-        parseCsa(csa.lines(), state)
+        parseCsa(KifuTestData.SIMPLE_CSA.lines(), state)
         val session = state.session
         assertEquals(1, session.moves.size)
     }
 
     @Test
     fun 提示された形式の局面図を正しくパースできること() {
-        val kifu = """
-                後手の持駒：歩五　桂　角　
-                  ９ ８ ７ ６ ５ ４ ３ ２ １
-                +---------------------------+
-                | ・ ・ ・ ・ ・ ・ ・ ・ 龍|一
-                | ・ ・ ・ ・ ・ ・ ・ ・ ・|二
-                | ・v歩 ・v龍v歩 ・v銀v歩 ・|三
-                |v歩 ・v銀 ・ ・v歩 ・v香v歩|四
-                | ・ ・ ・ ・v桂 ・v歩 ・ ・|五
-                | 歩v玉 ・ ・ 香 歩 ・ ・ 歩|六
-                | ・v全 ・ ・ 歩 ・ 歩 歩 ・|七
-                | ・ ・ ・ ・ 金 ・ 銀 玉 ・|八
-                |v角 ・ 桂 ・ ・ 金 ・ 桂 香|九
-                +---------------------------+
-                先手の持駒：香　金二
-        """.trimIndent()
-        val info = parseHeader(kifu.lines())
+        val info = parseHeader(KifuTestData.COMPLEX_BOARD.lines())
 
         // 1一に龍（先手）
-        assertEquals(dev.irof.kifuzo.models.Piece.RY, info.initialCells[0][8]?.piece)
-        assertEquals(dev.irof.kifuzo.models.PieceColor.Black, info.initialCells[0][8]?.color)
+        assertEquals(Piece.RY, info.initialCells[0][8]?.piece)
+        assertEquals(PieceColor.Black, info.initialCells[0][8]?.color)
 
         // 3三に銀（後手） -> index 6
         val piece33 = info.initialCells[2][6]
-        assertEquals(dev.irof.kifuzo.models.Piece.GI, piece33?.piece)
-        assertEquals(dev.irof.kifuzo.models.PieceColor.White, piece33?.color)
+        assertEquals(Piece.GI, piece33?.piece)
+        assertEquals(PieceColor.White, piece33?.color)
 
         // 2八に玉（先手）
-        assertEquals(dev.irof.kifuzo.models.Piece.OU, info.initialCells[7][7]?.piece)
-        assertEquals(dev.irof.kifuzo.models.PieceColor.Black, info.initialCells[7][7]?.color)
+        assertEquals(Piece.OU, info.initialCells[7][7]?.piece)
+        assertEquals(PieceColor.Black, info.initialCells[7][7]?.color)
     }
 
     @Test
     fun 形式が混在している場合に例外がスローされること() {
-        val mixed = """
-            先手：先手太郎
-            N-Gote太郎
-        """.trimIndent()
         // 先手： は KIF、N- は CSA なのでエラーになるはず
         kotlin.test.assertFailsWith<KifuParseException> {
-            parseHeader(mixed.lines())
+            parseHeader(KifuTestData.MIXED_FORMAT.lines())
         }
     }
 }
 private fun parse(kifu: String): KifuSession {
     val state = ShogiBoardState()
-    parseKifu(kifu.trimIndent().lines(), state)
+    parseKifu(kifu.lines(), state)
     return state.session
 }
