@@ -31,4 +31,25 @@ object KifuTestData {
     val MIXED_FORMAT get() = readResource("kif/mixed_format.kif")
 
     val SIMPLE_CSA get() = readResource("csa/simple.csa")
+    val CSA_EVALUATION get() = readResource("csa/evaluation.csa")
+    val CSA_DOU_1 get() = readResource("csa/dou_notation_1.csa")
+    val CSA_DOU_2 get() = readResource("csa/dou_notation_2.csa")
+    val CSA_FIRST_CONTACT get() = readResource("csa/first_contact.csa")
+    val CSA_PROMOTION get() = readResource("csa/promotion.csa")
+    val CSA_INCOMPLETE get() = readResource("csa/incomplete_moves.csa")
+    val CSA_INITIAL_MOCHI get() = readResource("csa/initial_mochi.csa")
+    val CSA_MID_GAME_START get() = readResource("csa/mid_game_start.csa")
+    val CSA_INVALID_DROP get() = readResource("csa/invalid_drop.csa")
+
+    val CSA_FULL_SESSION get() = readResource("csa/full_session.csa")
+    val CSA_PROMOTION_SEQ get() = readResource("csa/promotion_sequential.csa")
+    val CSA_PROMOTION_AFTER get() = readResource("csa/promotion_after.csa")
+    val CSA_KA_PROM_1 get() = readResource("csa/ka_promotion_1.csa")
+    val CSA_KA_PROM_2 get() = readResource("csa/ka_promotion_2.csa")
+    val CSA_DROP_PROM get() = readResource("csa/drop_then_promote.csa")
+    val CSA_PROM_MOVE get() = readResource("csa/promote_then_move.csa")
+    val CSA_BOARD_SETUP_PROM get() = readResource("csa/board_setup_promote.csa")
+
+    val EVALUATION_REGRESSION_1 get() = readResource("kif/evaluation_regression_1.kif")
+    val EVALUATION_REGRESSION_2 get() = readResource("kif/evaluation_regression_2.kif")
 }

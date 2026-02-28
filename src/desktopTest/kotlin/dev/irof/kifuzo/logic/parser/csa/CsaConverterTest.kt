@@ -1,22 +1,7 @@
 package dev.irof.kifuzo.logic.parser.csa
-import dev.irof.kifuzo.StubKifuRepository
-import dev.irof.kifuzo.logic.handler.FileActionHandler
-import dev.irof.kifuzo.logic.handler.ImportHandler
-import dev.irof.kifuzo.logic.handler.SettingsHandler
-import dev.irof.kifuzo.logic.io.readLinesWithEncoding
-import dev.irof.kifuzo.logic.io.readTextWithEncoding
-import dev.irof.kifuzo.logic.parser.HeaderParser
-import dev.irof.kifuzo.logic.parser.KifuParseException
-import dev.irof.kifuzo.logic.parser.convertCsaToKifu
+
+import dev.irof.kifuzo.logic.parser.KifuTestData
 import dev.irof.kifuzo.logic.parser.convertCsaToKifuLines
-import dev.irof.kifuzo.logic.parser.csa.parseCsa
-import dev.irof.kifuzo.logic.parser.kif.parseKifu
-import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
-import dev.irof.kifuzo.logic.parser.parseHeader
-import dev.irof.kifuzo.logic.service.FileTreeManager
-import dev.irof.kifuzo.logic.service.KifuRepository
-import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
-import dev.irof.kifuzo.logic.service.KifuSessionBuilder
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -24,27 +9,7 @@ class CsaConverterTest {
 
     @Test
     fun CSA形式の行リストをKIF形式に変換できること() {
-        val csaLines = """
-            V2.2
-            N+SenteUser
-            N-GoteUser
-            ${'$'}EVENT:Tournament
-            ${'$'}SITE:Online
-            ${'$'}START_TIME:2026/02/21 12:00:00
-            ${'$'}OPENING:Yagura
-            ${'$'}TIME_LIMIT:00:30+00
-            +7776FU
-            T3
-            -3334FU
-            T5
-            +8822KA+
-            T10
-            -3122GI
-            T15
-            %TORYO
-        """.trimIndent().lines()
-
-        val kifLines = convertCsaToKifuLines(csaLines)
+        val kifLines = convertCsaToKifuLines(KifuTestData.CSA_FULL_SESSION.lines())
 
         // ヘッダー確認
         assertTrue(kifLines.any { it.startsWith("先手：SenteUser") })
@@ -71,12 +36,7 @@ class CsaConverterTest {
 
     @Test
     fun CSAの初期持駒をKIFに変換できること() {
-        val csaLines = """
-            P+00HI00KA
-            P-00KI00GI
-            +7776FU
-        """.trimIndent().lines()
-        val kifLines = convertCsaToKifuLines(csaLines)
+        val kifLines = convertCsaToKifuLines(KifuTestData.CSA_INITIAL_MOCHI.lines())
         // 先手持駒：飛　角
         assertTrue(kifLines.any { it == "先手持駒：飛　角" }, "先手持駒が変換されていること")
         // 後手持駒：金　銀
@@ -85,92 +45,47 @@ class CsaConverterTest {
 
     @Test
     fun 成り駒への成りを正しく処理できること() {
-        val csaLines = """
-            +7776FU
-            -3334FU
-            +7675FU
-            -3435FU
-            +7574FU
-            -3536FU
-            +7473TO
-        """.trimIndent().lines()
-        val kifLines = convertCsaToKifuLines(csaLines)
+        val kifLines = convertCsaToKifuLines(KifuTestData.CSA_PROMOTION_SEQ.lines())
 
         // 7手目が「７三歩成」となっていること (「７三と」ではない)
         assertTrue(kifLines.any { it.contains("7 ７三歩成(74)") }, "7手目が「７三歩成」であること")
 
-        val csaLines2 = """
-            +7776FU
-            -3334FU
-            +7675FU
-            -3435FU
-            +7574FU
-            -3536FU
-            +7473TO
-            -3132GI
-            +7363TO
-        """.trimIndent().lines()
-        val kifLines2 = convertCsaToKifuLines(csaLines2)
+        val kifLines2 = convertCsaToKifuLines(KifuTestData.CSA_PROMOTION_AFTER.lines())
         assertTrue(kifLines2.any { it.contains("7 ７三歩成(74)") }, "成った瞬間は「歩成」")
         assertTrue(kifLines2.any { it.contains("9 ６三と(73)") }, "成った後の移動は「と」")
     }
 
     @Test
     fun 角の成りを正しく処理できること() {
-        val csaLines = """
-            +7776FU
-            -3334FU
-            +8822UM
-        """.trimIndent().lines()
-        val kifLines = convertCsaToKifuLines(csaLines)
+        val kifLines = convertCsaToKifuLines(KifuTestData.CSA_KA_PROM_1.lines())
         // 3手目が「２二角成(88)」となっていること
         assertTrue(kifLines.any { it.contains("3 ２二角成(88)") }, "3手目が「角成」であること")
 
-        val csaLines2 = """
-            +7776FU
-            -3334FU
-            +8822KA+
-        """.trimIndent().lines()
-        val kifLines2 = convertCsaToKifuLines(csaLines2)
+        val kifLines2 = convertCsaToKifuLines(KifuTestData.CSA_KA_PROM_2.lines())
         assertTrue(kifLines2.any { it.contains("3 ２二角成(88)") }, "3手目が「角成」であること(KA+)")
     }
 
     @Test
     fun 駒打ち直後の成りを正しく処理できること() {
-        val csaLines = """
-            +0022KA
-            -3132GI
-            +2211UM
-        """.trimIndent().lines()
-        val kifLines = convertCsaToKifuLines(csaLines)
+        val kifLines = convertCsaToKifuLines(KifuTestData.CSA_DROP_PROM.lines())
         // 3手目が「１一角成(22)」となっていること
         assertTrue(kifLines.any { it.contains("3 １一角成(22)") }, "打った角が成った時に「角成」と表示されること")
     }
 
     @Test
     fun 成りマーカーを伴う移動で盤面が正しく更新されること() {
-        val csaLines = """
-            +7776FU
-            -3334FU
-            +8822KA+
-            -3132GI
-            +2211UM
-        """.trimIndent().lines()
-        // 3手目 +8822KA+ で角が成る
-        // 5手目 +2211UM で22にある駒(3手目で成った角=馬)が移動する
-        val kifLines = convertCsaToKifuLines(csaLines)
+        val kifLines = convertCsaToKifuLines(KifuTestData.CSA_PROM_MOVE.trim().lines())
 
         assertTrue(kifLines.any { it.contains("3 ２二角成(88)") }, "3手目が「角成」であること")
-        // 5手目が「１一馬(22)」であること（「１一角成」ではない）
+        // 4手目: -3132GI (32銀)
+        // 5手目: +2211UM (1一馬)
         assertTrue(kifLines.any { it.contains("5 １一馬(22)") }, "5手目が「馬」であること(既に成っているため)")
     }
 
     @Test
     fun 盤面状態が不明な場合でも成りを正しく推測できること() {
         // 初期配置にはないはずの場所での移動
-        val csaLines = """
-            +5554TO
-        """.trimIndent().lines()
+        val csaLines = listOf("+5554TO")
         val kifLines = convertCsaToKifuLines(csaLines)
         // 55にとがいることは初期配置からは分からないが、TO(と)に移動したので「歩成」と推測する
         assertTrue(kifLines.any { it.contains("1 ５四歩成(55)") })
@@ -178,42 +93,21 @@ class CsaConverterTest {
 
     @Test
     fun 盤面設定行がある場合に正しく成りを判定できること() {
-        val csaLines = """
-            P1-KY-KE-GI-KI-OU-KI-GI-KE-KY
-            P2 * -HI *  *  *  *  * -KA *
-            P3-FU-FU-FU-FU-FU-FU-FU-FU-FU
-            P4 *  *  *  *  *  *  *  *  *
-            P5 *  *  *  *  *  *  *  *  *
-            P6 *  *  *  *  *  *  *  *  *
-            P7+FU+FU+FU+FU+FU+FU+FU+FU+FU
-            P8 * +KA *  *  *  *  * +HI *
-            P9+KY+KE+GI+KI+OU+KI+GI+KE+KY
-            +7776FU
-            -3334FU
-            +8822KA+
-        """.trimIndent().lines()
-        val kifLines = convertCsaToKifuLines(csaLines)
+        val kifLines = convertCsaToKifuLines(KifuTestData.CSA_BOARD_SETUP_PROM.lines())
         // 12手目(CSAでの3手目) +8822KA+ が「２二角成」となること
         assertTrue(kifLines.any { it.contains("3 ２二角成(88)") })
     }
 
     @Test
     fun 終局コードを正しく変換できること() {
-        val csaLines = """
-            +7776FU
-            %TIME_UP
-        """.trimIndent().lines()
+        val csaLines = listOf("+7776FU", "%TIME_UP")
         val kifLines = convertCsaToKifuLines(csaLines)
         // 2手目に「切れ負け」があること
         assertTrue(kifLines.any { it.contains("2 切れ負け") }, "2手目が「切れ負け」であること")
         // summary行があること
         assertTrue(kifLines.any { it.contains("まで1手でタイムアップ") }, "タイムアップの要約行があること")
 
-        val csaLines2 = """
-            +7776FU
-            -3334FU
-            %TORYO
-        """.trimIndent().lines()
+        val csaLines2 = listOf("+7776FU", "-3334FU", "%TORYO")
         val kifLines2 = convertCsaToKifuLines(csaLines2)
         // 3手目に「投了」があること
         assertTrue(kifLines2.any { it.contains("3 投了") }, "3手目が「投了」であること")
