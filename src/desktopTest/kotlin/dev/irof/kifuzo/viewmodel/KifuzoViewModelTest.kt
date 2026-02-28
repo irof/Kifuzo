@@ -153,13 +153,13 @@ class KifuzoViewModelTest {
 
     @Test
     fun ビューモードを切り替えると更新されること() {
-        assertEquals(FileViewMode.FLAT, viewModel.uiState.viewMode)
-
-        viewModel.dispatch(KifuzoAction.SetViewMode(FileViewMode.HIERARCHY))
         assertEquals(FileViewMode.HIERARCHY, viewModel.uiState.viewMode)
 
         viewModel.dispatch(KifuzoAction.SetViewMode(FileViewMode.FLAT))
         assertEquals(FileViewMode.FLAT, viewModel.uiState.viewMode)
+
+        viewModel.dispatch(KifuzoAction.SetViewMode(FileViewMode.HIERARCHY))
+        assertEquals(FileViewMode.HIERARCHY, viewModel.uiState.viewMode)
     }
 
     @Test
