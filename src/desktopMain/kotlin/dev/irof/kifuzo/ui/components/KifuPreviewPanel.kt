@@ -99,8 +99,7 @@ fun KifuPreviewPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
-        val isMainHistory = boardState.currentMoves === boardState.session.moves
-        val fileName = (state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT) + if (!isMainHistory) " [変化]" else ""
+        val fileName = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT
 
         KifuMetaInfo(
             fileName = fileName,
