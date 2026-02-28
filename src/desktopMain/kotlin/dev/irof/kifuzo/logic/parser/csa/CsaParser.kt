@@ -1,15 +1,12 @@
 package dev.irof.kifuzo.logic.parser.csa
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
-import dev.irof.kifuzo.logic.io.readTextWithEncoding
-import dev.irof.kifuzo.logic.parser.HeaderParser
 import dev.irof.kifuzo.logic.parser.KifuHeader
 import dev.irof.kifuzo.logic.parser.KifuParseException
 import dev.irof.kifuzo.logic.parser.parseHeader
-import dev.irof.kifuzo.logic.service.FileTreeManager
-import dev.irof.kifuzo.logic.service.KifuRepository
-import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
 import dev.irof.kifuzo.logic.service.KifuSessionBuilder
+import dev.irof.kifuzo.models.BoardLayout
 import dev.irof.kifuzo.models.Evaluation
+import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.ShogiBoardState
 import dev.irof.kifuzo.models.ShogiConstants
 import dev.irof.kifuzo.models.Square
@@ -105,7 +102,7 @@ private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx
     val toX = line[TO_X_POS] - '0'
     val toY = line[TO_Y_POS] - '0'
     val pieceCsa = line.substring(PIECE_START_POS, PIECE_END_POS)
-    val targetPiece = dev.irof.kifuzo.models.Piece.entries.find { it.name == pieceCsa } ?: dev.irof.kifuzo.models.Piece.FU
+    val targetPiece = Piece.entries.find { it.name == pieceCsa } ?: Piece.FU
 
     val seconds = if (index + 1 < lines.size && lines[index + 1].trim().startsWith("T")) {
         lines[index + 1].trim().substring(1).toIntOrNull()
@@ -127,7 +124,7 @@ private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx
 
 private fun getCsaDestinationText(ctx: CsaParseContext, toX: Int, toY: Int): String {
     val lastTo = ctx.builder.build().moves.lastOrNull()?.resultSnapshot?.lastTo
-    return if (lastTo != null && lastTo.file == toX && lastTo.rank == toY) "同　" else dev.irof.kifuzo.models.BoardLayout.toShogiNotation(toX, toY)
+    return if (lastTo != null && lastTo.file == toX && lastTo.rank == toY) "同　" else BoardLayout.toShogiNotation(toX, toY)
 }
 
 private fun applyCsaNormalMove(
@@ -135,18 +132,18 @@ private fun applyCsaNormalMove(
     fromY: Int,
     toX: Int,
     toY: Int,
-    targetPiece: dev.irof.kifuzo.models.Piece,
+    targetPiece: Piece,
     destinationText: String,
     seconds: Int?,
     ctx: CsaParseContext,
 ) {
     val fromSquare = Square(fromX, fromY)
 
-    val currentSnapshot = ctx.builder.build().getSnapshotAt(ctx.moveCount - 1) ?: ctx.builder.build().initialSnapshot
+    val currentSnapshot = ctx.builder.getSnapshotAt(ctx.moveCount - 1) ?: ctx.builder.build().initialSnapshot
     val fromPiece = currentSnapshot.cells[fromSquare.yIndex][fromSquare.xIndex]?.piece
     val isPromote = fromPiece != null && !fromPiece.isPromoted() && targetPiece.isPromoted()
 
-    val movePieceSymbol = if (isPromote) fromPiece?.symbol ?: "" else targetPiece.symbol
+    val movePieceSymbol = if (isPromote) fromPiece.symbol else targetPiece.symbol
     val moveText = "${ctx.moveCount} $destinationText$movePieceSymbol${if (isPromote) "成" else ""}"
     ctx.builder.applyAction(from = fromSquare, to = Square(toX, toY), isPromote = isPromote, consumptionSeconds = seconds, moveText = moveText)
 }

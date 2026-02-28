@@ -27,13 +27,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import dev.irof.kifuzo.models.ShogiConstants
@@ -69,7 +72,7 @@ private object TimeGraphConstants {
     const val PRECISION_THRESHOLD = 10.0
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalTextApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ConsumptionTimeGraph(
     times: List<Int?>,
@@ -138,7 +141,7 @@ fun ConsumptionTimeGraph(
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeAverageLines(
+private fun DrawScope.drawTimeAverageLines(
     senteTimes: List<Int>,
     goteTimes: List<Int>,
     scaler: NonLinearScaler,
@@ -151,7 +154,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeAverageLine
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSingleAverageLine(
+private fun DrawScope.drawSingleAverageLine(
     average: Float,
     baseColor: Color,
     scaler: NonLinearScaler,
@@ -165,7 +168,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSingleAverageLi
         start = Offset(0f, y),
         end = Offset(size.width, y),
         strokeWidth = GraphCommonConstants.LINE_WIDTH_THIN,
-        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
+        pathEffect = PathEffect.dashPathEffect(
             floatArrayOf(TimeGraphConstants.AVG_LINE_DASH_ON, TimeGraphConstants.AVG_LINE_DASH_OFF),
             0f,
         ),
@@ -223,13 +226,12 @@ private fun calculateMaxSeconds(times: List<Int?>): Float {
     }
 }
 
-@OptIn(ExperimentalTextApi::class)
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeHoverIndicator(
+private fun DrawScope.drawTimeHoverIndicator(
     hoverStep: Int?,
     times: List<Int?>,
     stepWidth: Float,
     scaler: NonLinearScaler,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    textMeasurer: TextMeasurer,
 ) {
     val step = hoverStep ?: return
     val seconds = times.getOrNull(step) ?: return
@@ -242,10 +244,10 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeHoverIndica
     )
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeGridLines(
+private fun DrawScope.drawTimeGridLines(
     maxSeconds: Float,
     scaler: NonLinearScaler,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    textMeasurer: TextMeasurer,
 ) {
     val gridInterval = when {
         maxSeconds <= TimeGraphConstants.GRID_SEC_5 -> TimeGraphConstants.INTERVAL_SEC_1
@@ -290,7 +292,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeGridLines(
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeBars(
+private fun DrawScope.drawTimeBars(
     times: List<Int?>,
     stepWidth: Float,
     scaler: NonLinearScaler,
@@ -310,7 +312,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeBars(
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTimeCurrentHighlight(currentStep: Int, totalSteps: Int, stepWidth: Float) {
+private fun DrawScope.drawTimeCurrentHighlight(currentStep: Int, totalSteps: Int, stepWidth: Float) {
     if (totalSteps == 0) return
     val currentX = currentStep.coerceIn(0, totalSteps - 1) * stepWidth
     drawRect(
