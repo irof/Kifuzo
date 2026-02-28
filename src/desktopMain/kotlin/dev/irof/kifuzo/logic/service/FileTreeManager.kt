@@ -14,6 +14,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
 
 private val logger = KotlinLogging.logger {}
 
@@ -60,22 +61,16 @@ class FileTreeManager(
         }
 
         contents.forEach { path ->
+            if (path.name.startsWith(".")) return@forEach
             val isDir = try {
                 path.isDirectory()
             } catch (e: Exception) {
                 logger.debug(e) { "Failed to check if directory: $path" }
                 false
             }
-            val isExpanded = expandedPaths.contains(path)
 
-            // フィルタの適用
-            val matchesFilter = isDir || filters.all { filter ->
-                when (filter) {
-                    FileFilter.RECENT -> isRecentFile(path, since)
-                }
-            }
-
-            if (matchesFilter) {
+            if (shouldShowFile(isDir, path, filters, since)) {
+                val isExpanded = expandedPaths.contains(path)
                 val node = FileTreeNode(path, level, isDir, isExpanded)
                 result.add(node)
 
@@ -83,6 +78,12 @@ class FileTreeManager(
                     traverse(path, level + 1, expandedPaths, filters, sortOption, since, result)
                 }
             }
+        }
+    }
+
+    private fun shouldShowFile(isDir: Boolean, path: Path, filters: Set<FileFilter>, since: Instant): Boolean = isDir || filters.all { filter ->
+        when (filter) {
+            FileFilter.RECENT -> isRecentFile(path, since)
         }
     }
 
@@ -102,12 +103,8 @@ class FileTreeManager(
             root,
             object : SimpleFileVisitor<Path>() {
                 override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-                    val matchesFilter = filters.all { filter ->
-                        when (filter) {
-                            FileFilter.RECENT -> isRecentFile(file, twentyFourHoursAgo)
-                        }
-                    }
-                    if (matchesFilter) {
+                    if (file.name.startsWith(".")) return FileVisitResult.CONTINUE
+                    if (shouldShowFile(false, file, filters, twentyFourHoursAgo)) {
                         newNodes.add(FileTreeNode(file, 0, false, false))
                     }
                     return FileVisitResult.CONTINUE
@@ -119,7 +116,7 @@ class FileTreeManager(
                 }
 
                 override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
-                    // ルートディレクトリ自体の失敗は visitFileFailed でハンドルされる
+                    if (dir != root && dir.name.startsWith(".")) return FileVisitResult.SKIP_SUBTREE
                     return FileVisitResult.CONTINUE
                 }
             },
@@ -166,7 +163,7 @@ class FileTreeManager(
             // 展開: 子ノードを追加
             newNodes[index] = node.copy(isExpanded = true)
             val children = repository.scanDirectory(node.path, sortOption)
-            val childNodes = children.map {
+            val childNodes = children.filter { !it.name.startsWith(".") }.map {
                 val isDir = try {
                     it.isDirectory()
                 } catch (e: Exception) {

@@ -24,6 +24,7 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
 private val logger = KotlinLogging.logger {}
@@ -357,19 +358,7 @@ class KifuzoViewModel(
                             root,
                             java.util.EnumSet.noneOf(java.nio.file.FileVisitOption::class.java),
                             SCAN_DEPTH,
-                            object : java.nio.file.SimpleFileVisitor<Path>() {
-                                override fun visitFile(file: Path, attrs: java.nio.file.attribute.BasicFileAttributes): java.nio.file.FileVisitResult {
-                                    if (file.extension.lowercase() in listOf("kifu", "kif", "csa")) {
-                                        allKifuFiles.add(file)
-                                    }
-                                    return java.nio.file.FileVisitResult.CONTINUE
-                                }
-
-                                override fun visitFileFailed(file: Path, exc: java.io.IOException): java.nio.file.FileVisitResult {
-                                    logger.debug(exc) { "Failed to visit file or directory for kifu infos: $file" }
-                                    return java.nio.file.FileVisitResult.CONTINUE
-                                }
-                            },
+                            KifuInfoVisitor(root, allKifuFiles),
                         )
                     } catch (e: Exception) {
                         logger.warn(e) { "Failed to walk directory for kifu infos: $root" }
@@ -382,6 +371,26 @@ class KifuzoViewModel(
                 // 棋譜情報のスキャン失敗は致命的ではないため詳細ログのみ
                 uiState = uiState.copy(isScanning = false)
             }
+        }
+    }
+
+    private class KifuInfoVisitor(private val root: Path, private val allKifuFiles: MutableList<Path>) : java.nio.file.SimpleFileVisitor<Path>() {
+        override fun visitFile(file: Path, attrs: java.nio.file.attribute.BasicFileAttributes): java.nio.file.FileVisitResult {
+            if (file.name.startsWith(".")) return java.nio.file.FileVisitResult.CONTINUE
+            if (file.extension.lowercase() in listOf("kifu", "kif", "csa")) {
+                allKifuFiles.add(file)
+            }
+            return java.nio.file.FileVisitResult.CONTINUE
+        }
+
+        override fun preVisitDirectory(dir: Path, attrs: java.nio.file.attribute.BasicFileAttributes): java.nio.file.FileVisitResult {
+            if (dir != root && dir.name.startsWith(".")) return java.nio.file.FileVisitResult.SKIP_SUBTREE
+            return java.nio.file.FileVisitResult.CONTINUE
+        }
+
+        override fun visitFileFailed(file: Path, exc: java.io.IOException): java.nio.file.FileVisitResult {
+            logger.debug(exc) { "Failed to visit file or directory for kifu infos: $file" }
+            return java.nio.file.FileVisitResult.CONTINUE
         }
     }
 }
