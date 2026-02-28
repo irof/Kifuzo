@@ -31,6 +31,9 @@ sealed class KifuzoAction {
     data object ToggleSidebar : KifuzoAction()
     data object ToggleMoveList : KifuzoAction()
 
+    // 外部アプリ
+    data class OpenInExternalApp(val path: Path) : KifuzoAction()
+
     // 貼り付け
     data object PasteKifu : KifuzoAction()
     data object HideSavePastedKifuDialog : KifuzoAction()

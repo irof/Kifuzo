@@ -209,6 +209,7 @@ class KifuzoViewModel(
             is KifuzoAction.UpdateMetadata -> fileActionHandler.updateMetadata(action.path, action.event, action.startTime)
             is KifuzoAction.ShowEditMetadataDialog -> uiState = uiState.copy(editMetadataTarget = action.path)
             is KifuzoAction.HideEditMetadataDialog -> uiState = uiState.copy(editMetadataTarget = null)
+            is KifuzoAction.OpenInExternalApp -> fileActionHandler.openInExternalApp(action.path)
             else -> return false
         }
         return true

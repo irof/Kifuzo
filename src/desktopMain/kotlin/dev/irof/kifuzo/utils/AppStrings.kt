@@ -49,6 +49,7 @@ object AppStrings {
     const val LABEL_EVENT = "棋戦："
     const val LABEL_START_TIME = "開始日時："
     const val EDIT_METADATA = "棋譜情報の編集"
+    const val OPEN_IN_SHOGIHOME = "ShogiHomeで開く"
     const val NO_METADATA_HINT = "（棋譜情報なし）"
 
     const val LABEL_QUEST = "将棋クエスト"

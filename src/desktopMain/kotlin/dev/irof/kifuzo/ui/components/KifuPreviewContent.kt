@@ -20,6 +20,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Launch
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -100,6 +101,7 @@ fun KifuMetaInfo(
     event: String,
     warningMessage: String? = null,
     onEdit: () -> Unit,
+    onOpenExternal: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -115,13 +117,26 @@ fun KifuMetaInfo(
         ) {
             KifuMetaText(fileName, senteName, goteName, startTime, event, warningMessage, modifier = Modifier.weight(1f))
 
-            IconButton(onClick = onEdit, modifier = Modifier.size(ShogiDimensions.Icon.Small)) {
-                Icon(
-                    Icons.Default.Edit,
-                    contentDescription = AppStrings.EDIT_METADATA,
-                    tint = Color.Gray,
-                    modifier = Modifier.size(ShogiDimensions.Icon.Small),
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onOpenExternal, modifier = Modifier.size(ShogiDimensions.Icon.Small)) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Launch,
+                        contentDescription = AppStrings.OPEN_IN_SHOGIHOME,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(ShogiDimensions.Icon.Small),
+                    )
+                }
+
+                Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
+
+                IconButton(onClick = onEdit, modifier = Modifier.size(ShogiDimensions.Icon.Small)) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = AppStrings.EDIT_METADATA,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(ShogiDimensions.Icon.Small),
+                    )
+                }
             }
         }
     }

@@ -105,6 +105,21 @@ class FileActionHandler(
         }
     }
 
+    fun openInExternalApp(path: Path) {
+        try {
+            val absolutePath = path.toAbsolutePath().toString()
+            val command = arrayOf("open", "-n", "/Applications/ShogiHome.app", absolutePath)
+            Runtime.getRuntime().exec(command)
+            onInfo("ShogiHomeで開いています...")
+        } catch (e: java.io.IOException) {
+            logger.error(e) { "Failed to execute open command" }
+            onError("起動エラー", "ShogiHomeの起動に失敗しました。/Applications/ShogiHome.app が存在するか確認してください。\n\n${e.message}")
+        } catch (e: SecurityException) {
+            logger.error(e) { "Security restriction prevented opening ShogiHome" }
+            onError("起動エラー", "セキュリティ制限によりShogiHomeを起動できませんでした。\n\n${e.message}")
+        }
+    }
+
     fun savePastedKifu(root: Path, filename: String, text: String) {
         try {
             val targetPath = root.resolve(filename)

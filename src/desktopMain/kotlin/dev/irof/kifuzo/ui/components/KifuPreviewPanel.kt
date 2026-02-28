@@ -62,6 +62,7 @@ interface KifuPreviewActions {
     fun onForceParse(path: Path)
     fun onSelectVariation(moves: List<Move>)
     fun onResetToMainHistory()
+    fun onOpenExternal(path: Path)
 }
 
 @Composable
@@ -108,6 +109,7 @@ fun KifuPreviewPanel(
             event = boardState.session.event,
             warningMessage = boardState.session.warningMessage,
             onEdit = { state.selectedFile?.let { actions.onShowEditMetadata(it) } },
+            onOpenExternal = { state.selectedFile?.let { actions.onOpenExternal(it) } },
         )
 
         KifuHeader(
