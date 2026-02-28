@@ -272,7 +272,7 @@ class KifuzoViewModel(
             is KifuzoAction.ShowSavePastedKifuDialog -> {
                 uiState.pastedKifuText?.let { text ->
                     val info = repository.scanKifuInfo(text.lines())
-                    val proposedName = repository.generateProposedNameFromText(text, info, uiState.filenameTemplate)
+                    val proposedName = repository.generateProposedNameForPasted(info, uiState.filenameTemplate)
                     uiState = uiState.copy(pastedKifuProposedName = proposedName ?: "pasted_kifu.kifu")
                 }
             }

@@ -23,7 +23,7 @@ interface KifuFileService {
     fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path>
     fun renameFile(path: Path, newName: String): Path?
     fun generateProposedName(path: Path, info: KifuInfo, template: String): String?
-    fun generateProposedNameFromText(text: String, info: KifuInfo, template: String): String?
+    fun generateProposedNameForPasted(info: KifuInfo, template: String): String?
     fun updateResult(path: Path, result: String)
     fun updateHeader(path: Path, event: String, startTime: String)
 }
@@ -32,6 +32,7 @@ class KifuFileServiceImpl : KifuFileService {
     companion object {
         private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss")
+        private const val SAMPLE_LINES_FOR_EXTENSION_DETECTION = 20
         private const val DEFAULT_VALUE = "unknown"
     }
 
@@ -82,11 +83,10 @@ class KifuFileServiceImpl : KifuFileService {
             }
         }
 
-        val extension = if (info.format == KifuFormat.CSA) "csa" else "kifu"
-        return generateProposedNameFromInfo(info, template, extension, dt)
+        return generateProposedNameFromInfo(info, template, dt)
     }
 
-    override fun generateProposedNameFromText(text: String, info: KifuInfo, template: String): String? {
+    override fun generateProposedNameForPasted(info: KifuInfo, template: String): String? {
         if (info.isError) return null
 
         val dt = if (info.startTime.isNotEmpty()) {
@@ -95,11 +95,11 @@ class KifuFileServiceImpl : KifuFileService {
             LocalDateTime.now()
         }
 
-        val extension = if (info.format == KifuFormat.CSA) "csa" else "kifu"
-        return generateProposedNameFromInfo(info, template, extension, dt)
+        return generateProposedNameFromInfo(info, template, dt)
     }
 
-    private fun generateProposedNameFromInfo(info: KifuInfo, template: String, extension: String, dt: LocalDateTime): String? {
+    private fun generateProposedNameFromInfo(info: KifuInfo, template: String, dt: LocalDateTime): String? {
+        val extension = if (info.format == KifuFormat.CSA) "csa" else "kifu"
         val replacements = mapOf(
             "{開始日の年月日}" to dt.format(DATE_FORMATTER),
             "{開始日の時分秒}" to dt.format(TIME_FORMATTER),
