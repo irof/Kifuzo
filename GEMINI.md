@@ -95,7 +95,7 @@ The project uses **Gradle** as the build tool.
 - **Task Management:** ALWAYS check `TODO.md` at the start of a session. Prioritize resolving existing technical debt and temporary workarounds listed in `TODO.md` whenever you perform related changes. Update `TODO.md` autonomously as tasks are completed or new issues are identified.
 - **Language:**
     - **GEMINI.md:** Must be written in **English**.
-    - **Commit Messages:** Must follow **Conventional Commits** using Japanese for the description and English for the type (e.g., `feat: 機能の追加`).
+    - **Commit Messages:** Must follow **Conventional Commits** using Japanese for the description and English for the type (e.g., `feat: 機能の追加`). **Every commit MUST include a body that explains the technical rationale and the "why" behind the changes, not just "what" was changed.**
     - **Commit Trailer:** Every commit MUST use the `--trailer` flag to include `Generated-by: Gemini`. This ensures the trailer is properly separated from the commit body by a blank line (e.g., `git commit -m "feat: ..." --trailer "Generated-by: Gemini"`).
     - **Code Comments/Documentation:** Must be written in **Japanese**.
 - **Workflow:** Commit changes autonomously after finishing each task (feature addition, bug fix, etc.) without waiting for explicit user confirmation. **Before committing, you MUST run `./gradlew verify` and ensure it passes. Additionally, if a change affects the content of `GEMINI.md` (e.g., new features, structural changes, or updated conventions), you MUST update `GEMINI.md` accordingly in the same task.**
