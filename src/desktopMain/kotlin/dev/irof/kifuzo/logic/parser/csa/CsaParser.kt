@@ -90,7 +90,15 @@ private fun handleCsaResultLine(line: String, ctx: CsaParseContext) {
     ctx.builder.applyAction(consumptionSeconds = null, moveText = "", resultText = "${ctx.moveCount} $resultText")
 }
 
+private fun isValidCsaMove(line: String): Boolean = line.length >= CSA_MOVE_LINE_MIN_LENGTH &&
+    line[FROM_X_POS].isDigit() && line[FROM_Y_POS].isDigit() &&
+    line[TO_X_POS].isDigit() && line[TO_Y_POS].isDigit()
+
 private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx: CsaParseContext) {
+    if (!isValidCsaMove(line)) {
+        throw KifuParseException("${index + 1}行目: CSA形式の指し手として正しくありません: $line", lineNumber = index + 1, lineContent = line)
+    }
+
     val fromX = line[FROM_X_POS] - '0'
     val fromY = line[FROM_Y_POS] - '0'
     val toX = line[TO_X_POS] - '0'
@@ -105,15 +113,14 @@ private fun handleCsaMoveLine(line: String, index: Int, lines: List<String>, ctx
     }
 
     val destinationText = getCsaDestinationText(ctx, toX, toY)
-
-    if (fromX == 0) {
-        try {
+    try {
+        if (fromX == 0) {
             ctx.builder.applyAction(to = Square(toX, toY), piece = targetPiece, consumptionSeconds = seconds, moveText = "${ctx.moveCount} $destinationText${targetPiece.symbol}打")
-        } catch (cause: Exception) {
-            throw KifuParseException("${index + 1}行目: ${cause.message}", lineNumber = index + 1, lineContent = line, cause = cause)
+        } else {
+            applyCsaNormalMove(fromX, fromY, toX, toY, targetPiece, destinationText, seconds, ctx)
         }
-    } else {
-        applyCsaNormalMove(line, fromX, fromY, toX, toY, targetPiece, destinationText, seconds, index, ctx)
+    } catch (cause: Exception) {
+        throw KifuParseException("${index + 1}行目: ${cause.message}", lineNumber = index + 1, lineContent = line, cause = cause)
     }
 }
 
@@ -123,7 +130,6 @@ private fun getCsaDestinationText(ctx: CsaParseContext, toX: Int, toY: Int): Str
 }
 
 private fun applyCsaNormalMove(
-    line: String,
     fromX: Int,
     fromY: Int,
     toX: Int,
@@ -131,21 +137,17 @@ private fun applyCsaNormalMove(
     targetPiece: dev.irof.kifuzo.models.Piece,
     destinationText: String,
     seconds: Int?,
-    index: Int,
     ctx: CsaParseContext,
 ) {
     val fromSquare = Square(fromX, fromY)
+
     val currentSnapshot = ctx.builder.build().getSnapshotAt(ctx.moveCount - 1) ?: ctx.builder.build().initialSnapshot
     val fromPiece = currentSnapshot.cells[fromSquare.yIndex][fromSquare.xIndex]?.piece
     val isPromote = fromPiece != null && !fromPiece.isPromoted() && targetPiece.isPromoted()
 
     val movePieceSymbol = if (isPromote) fromPiece?.symbol ?: "" else targetPiece.symbol
     val moveText = "${ctx.moveCount} $destinationText$movePieceSymbol${if (isPromote) "成" else ""}"
-    try {
-        ctx.builder.applyAction(from = fromSquare, to = Square(toX, toY), isPromote = isPromote, consumptionSeconds = seconds, moveText = moveText)
-    } catch (cause: Exception) {
-        throw KifuParseException("${index + 1}行目: ${cause.message}", lineNumber = index + 1, lineContent = line, cause = cause)
-    }
+    ctx.builder.applyAction(from = fromSquare, to = Square(toX, toY), isPromote = isPromote, consumptionSeconds = seconds, moveText = moveText)
 }
 
 private fun extractCsaEvaluation(line: String, builder: KifuSessionBuilder) {

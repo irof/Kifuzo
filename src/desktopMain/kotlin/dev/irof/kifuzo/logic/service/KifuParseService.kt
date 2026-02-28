@@ -84,7 +84,9 @@ class KifuParseServiceImpl : KifuParseService {
 
     private fun isCsaFormat(sample: List<String>): Boolean = sample.any { line ->
         line.startsWith("V") || line.startsWith("N+") || line.startsWith("N-") ||
-            line.startsWith("P") || line.startsWith("$") || line.startsWith("+") || line.startsWith("-")
+            line.startsWith("$") ||
+            Regex("""^P[1-9+ -]""").containsMatchIn(line) ||
+            Regex("""^[+-]\d{4}[A-Z]{2}""").containsMatchIn(line)
     }
 
     private fun isKifFormat(sample: List<String>): Boolean = sample.any { line ->
