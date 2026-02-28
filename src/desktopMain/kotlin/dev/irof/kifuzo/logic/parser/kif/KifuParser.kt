@@ -59,9 +59,10 @@ fun parseKifu(path: Path, state: ShogiBoardState) {
 /**
  * KIF形式の行リストを解析します。
  */
-fun parseKifu(lines: List<String>, state: ShogiBoardState) {
+fun parseKifu(lines: List<String>, state: ShogiBoardState, warningMessage: String? = null) {
     val header = parseHeader(lines)
     val mainParser = ParserState(header)
+    mainParser.setWarningMessage(warningMessage)
 
     if (header.moveStartIndex == -1) {
         state.updateSession(mainParser.buildSession())
@@ -144,6 +145,10 @@ private class ParserState(private val header: KifuHeader, initialSnapshot: Board
     var lastTo: dev.irof.kifuzo.models.Square? = null
     val historySize: Int get() = builder.historySize
     val startingStep: Int get() = builder.currentStartingStep
+
+    fun setWarningMessage(message: String?) {
+        builder.warningMessage = message
+    }
 
     fun extractEvaluation(line: String) {
         val currentEval = builder.lastEvaluation.orNull()

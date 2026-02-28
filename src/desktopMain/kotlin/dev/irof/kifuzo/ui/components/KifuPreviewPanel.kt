@@ -108,6 +108,7 @@ fun KifuPreviewPanel(
             goteName = boardState.session.goteName,
             startTime = boardState.session.startTime,
             event = boardState.session.event,
+            warningMessage = boardState.session.warningMessage,
             onEdit = { state.selectedFile?.let { actions.onShowEditMetadata(it) } },
         )
 

@@ -99,6 +99,7 @@ fun KifuMetaInfo(
     goteName: String,
     startTime: String,
     event: String,
+    warningMessage: String? = null,
     onEdit: () -> Unit,
 ) {
     Box(
@@ -113,7 +114,7 @@ fun KifuMetaInfo(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
         ) {
-            KifuMetaText(fileName, senteName, goteName, startTime, event, modifier = Modifier.weight(1f))
+            KifuMetaText(fileName, senteName, goteName, startTime, event, warningMessage, modifier = Modifier.weight(1f))
 
             IconButton(onClick = onEdit, modifier = Modifier.size(ShogiDimensions.Icon.Small)) {
                 Icon(
@@ -127,6 +128,7 @@ fun KifuMetaInfo(
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun KifuMetaText(
     fileName: String,
@@ -134,25 +136,57 @@ private fun KifuMetaText(
     gote: String,
     startTime: String,
     event: String,
+    warningMessage: String? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ShogiDimensions.Spacing.Small),
     ) {
-        Text(
-            text = fileName,
-            style = MaterialTheme.typography.subtitle1,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        KifuFileNameWithWarning(fileName, warningMessage)
 
         if (!isAllMetadataEmpty(sente, gote, startTime, event)) {
             if (sente.isNotEmpty()) MetaRow(AppStrings.LABEL_SENTE, sente)
             if (gote.isNotEmpty()) MetaRow(AppStrings.LABEL_GOTE, gote)
             if (event.isNotEmpty()) MetaRow(AppStrings.LABEL_EVENT, event)
             if (startTime.isNotEmpty()) MetaRow(AppStrings.LABEL_START_TIME, startTime)
+        }
+    }
+}
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun KifuFileNameWithWarning(fileName: String, warningMessage: String?) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = fileName,
+            style = MaterialTheme.typography.subtitle1,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+
+        if (warningMessage != null) {
+            Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
+            androidx.compose.foundation.TooltipArea(
+                tooltip = {
+                    Box(
+                        modifier = Modifier
+                            .background(Color.DarkGray.copy(alpha = 0.9f), RoundedCornerShape(4.dp))
+                            .padding(ShogiDimensions.Spacing.Small),
+                    ) {
+                        Text(warningMessage, color = Color.White, style = MaterialTheme.typography.caption)
+                    }
+                },
+            ) {
+                Icon(
+                    imageVector = dev.irof.kifuzo.ui.theme.ShogiIcons.Warning,
+                    contentDescription = "Warning",
+                    tint = Color.Red,
+                    modifier = Modifier.size(ShogiDimensions.Icon.Small),
+                )
+            }
         }
     }
 }

@@ -26,6 +26,7 @@ class KifuSessionBuilder {
     var goteName: String = "後手"
     var startTime: String = ""
     var event: String = ""
+    var warningMessage: String? = null
     private var isStandardStart: Boolean = true
     private var firstContactStep: Int = -1
     private var startingStep: Int = 0
@@ -166,6 +167,7 @@ class KifuSessionBuilder {
             initialSnapshot = initialSnapshot, moves = moves.toList(), initialStep = initialStep,
             senteName = senteName, goteName = goteName, startTime = startTime, event = event,
             firstContactStep = firstContactStep, isStandardStart = finalIsStandardStart,
+            warningMessage = warningMessage,
         )
     }
 }

@@ -50,9 +50,10 @@ private class CsaParseContext(header: KifuHeader) {
 /**
  * CSA形式の行リストを解析します。
  */
-fun parseCsa(lines: List<String>, state: ShogiBoardState) {
+fun parseCsa(lines: List<String>, state: ShogiBoardState, warningMessage: String? = null) {
     val header = parseHeader(lines)
     val ctx = CsaParseContext(header)
+    ctx.builder.warningMessage = warningMessage
 
     for (i in lines.indices) {
         val line = lines[i].trim()

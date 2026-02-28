@@ -40,16 +40,20 @@ class KifuParseServiceImpl : KifuParseService {
 
         when {
             isCsa -> {
-                if (ext != "csa") {
-                    logger.warn { "File extension is .$ext but content seems to be CSA: $path" }
+                val warning = if (ext != "csa") {
+                    "拡張子は .$ext ですが、中身は CSA 形式のようです。CSA として読み込みました。"
+                } else {
+                    null
                 }
-                parseCsa(lines, state)
+                parseCsa(lines, state, warningMessage = warning)
             }
             isKif -> {
-                if (ext == "csa") {
-                    throw KifuParseException("ファイル名が .csa ですが、中身は KIF 形式のようです。拡張子を .kifu に変更するか、右クリックメニューから「強制的にKIFとして読み込む」を試してください。")
+                val warning = if (ext == "csa") {
+                    "拡張子は .csa ですが、中身は KIF 形式のようです。KIF として読み込みました。"
+                } else {
+                    null
                 }
-                parseKifu(lines, state)
+                parseKifu(lines, state, warningMessage = warning)
             }
             else -> {
                 // どちらとも判定できない場合は拡張子に従ってフォールバックを試みる

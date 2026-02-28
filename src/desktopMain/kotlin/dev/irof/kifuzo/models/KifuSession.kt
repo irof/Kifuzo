@@ -13,6 +13,7 @@ data class KifuSession(
     val event: String = "",
     val firstContactStep: Int = -1,
     val isStandardStart: Boolean = true,
+    val warningMessage: String? = null,
 ) {
     /**
      * 指定された手数の局面を取得します。
