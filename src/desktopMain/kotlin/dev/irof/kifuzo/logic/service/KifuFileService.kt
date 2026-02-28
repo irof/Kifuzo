@@ -21,8 +21,8 @@ private val logger = KotlinLogging.logger {}
 interface KifuFileService {
     fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path>
     fun renameFile(path: Path, newName: String): Path?
-    fun generateProposedName(path: Path, template: String): String?
-    fun generateProposedNameFromText(text: String, template: String): String?
+    fun generateProposedName(path: Path, info: KifuInfo, template: String): String?
+    fun generateProposedNameFromText(text: String, info: KifuInfo, template: String): String?
     fun updateResult(path: Path, result: String)
     fun updateHeader(path: Path, event: String, startTime: String)
 }
@@ -31,6 +31,7 @@ class KifuFileServiceImpl : KifuFileService {
     companion object {
         private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss")
+        private const val SAMPLE_LINES_FOR_EXTENSION_DETECTION = 20
     }
 
     override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> {
@@ -66,8 +67,7 @@ class KifuFileServiceImpl : KifuFileService {
         }
     }
 
-    override fun generateProposedName(path: Path, template: String): String? {
-        val info = scanKifuInfo(path)
+    override fun generateProposedName(path: Path, info: KifuInfo, template: String): String? {
         if (info.isError) return null
 
         val dt = if (info.startTime.isNotEmpty()) {
@@ -84,9 +84,7 @@ class KifuFileServiceImpl : KifuFileService {
         return generateProposedNameFromInfo(info, template, path.extension.ifEmpty { "kifu" }, dt)
     }
 
-    override fun generateProposedNameFromText(text: String, template: String): String? {
-        val lines = text.lines()
-        val info = scanKifuInfo(lines)
+    override fun generateProposedNameFromText(text: String, info: KifuInfo, template: String): String? {
         if (info.isError) return null
 
         val dt = if (info.startTime.isNotEmpty()) {
@@ -96,7 +94,15 @@ class KifuFileServiceImpl : KifuFileService {
         }
 
         // 形式を判定して拡張子を決める
-        val extension = if (lines.any { it.startsWith("V") || it.startsWith("+") || it.startsWith("-") }) "csa" else "kifu"
+        val lines = text.lines()
+        val sample = lines.take(SAMPLE_LINES_FOR_EXTENSION_DETECTION)
+        val isCsa = sample.any { line ->
+            line.startsWith("V") || line.startsWith("N+") || line.startsWith("N-") ||
+                line.startsWith("$") ||
+                Regex("""^P[1-9+ -]""").containsMatchIn(line) ||
+                Regex("""^[+-]\d{4}[A-Z]{2}""").containsMatchIn(line)
+        }
+        val extension = if (isCsa) "csa" else "kifu"
         return generateProposedNameFromInfo(info, template, extension, dt)
     }
 

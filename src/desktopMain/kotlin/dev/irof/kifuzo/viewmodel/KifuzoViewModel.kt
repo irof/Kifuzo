@@ -168,10 +168,17 @@ class KifuzoViewModel(
 
     private fun handleFileEditAction(action: KifuzoAction): Boolean = handleRenameAction(action) || handleConversionAction(action) || handleMetadataAction(action)
 
+    @Suppress("TooGenericExceptionCaught")
     private fun handleRenameAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.ShowRenameDialog -> {
-                val proposedName = repository.generateProposedName(action.path, uiState.filenameTemplate) ?: action.path.fileName.toString()
+                val info = uiState.kifuInfos[action.path] ?: try {
+                    repository.scanKifuInfo(java.nio.file.Files.readAllLines(action.path))
+                } catch (e: Exception) {
+                    logger.debug(e) { "Failed to scan kifu info for rename dialog: ${action.path}" }
+                    dev.irof.kifuzo.models.KifuInfo(action.path)
+                }
+                val proposedName = repository.generateProposedName(action.path, info, uiState.filenameTemplate) ?: action.path.fileName.toString()
                 uiState = uiState.copy(renameTarget = action.path, proposedRenameName = proposedName)
             }
             is KifuzoAction.HideRenameDialog -> uiState = uiState.copy(renameTarget = null, proposedRenameName = null)
@@ -262,7 +269,8 @@ class KifuzoViewModel(
             is KifuzoAction.PasteKifu -> performPasteKifu()
             is KifuzoAction.ShowSavePastedKifuDialog -> {
                 uiState.pastedKifuText?.let { text ->
-                    val proposedName = repository.generateProposedNameFromText(text, uiState.filenameTemplate)
+                    val info = repository.scanKifuInfo(text.lines())
+                    val proposedName = repository.generateProposedNameFromText(text, info, uiState.filenameTemplate)
                     uiState = uiState.copy(pastedKifuProposedName = proposedName ?: "pasted_kifu.kifu")
                 }
             }

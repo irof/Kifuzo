@@ -24,11 +24,12 @@ interface KifuRepository {
     fun parse(path: Path, state: ShogiBoardState)
     fun parseManually(path: Path, state: ShogiBoardState)
     fun parseManually(lines: List<String>, state: ShogiBoardState)
+    fun scanKifuInfo(lines: List<String>): KifuInfo
     fun convertCsa(path: Path): Path
     fun updateResult(path: Path, result: String)
     fun updateHeader(path: Path, event: String, startTime: String)
-    fun generateProposedName(path: Path, template: String): String?
-    fun generateProposedNameFromText(text: String, template: String): String?
+    fun generateProposedName(path: Path, info: KifuInfo, template: String): String?
+    fun generateProposedNameFromText(text: String, info: KifuInfo, template: String): String?
     fun renameFileTo(path: Path, newName: String): Path?
     fun importQuestFiles(sourceDir: Path, targetDir: Path): Int
 }
@@ -50,15 +51,17 @@ class KifuRepositoryImpl(
 
     override fun parseManually(lines: List<String>, state: ShogiBoardState) = parseService.parseManually(lines, state)
 
+    override fun scanKifuInfo(lines: List<String>): KifuInfo = parseService.scanKifuInfo(lines)
+
     override fun convertCsa(path: Path): Path = parseService.convertCsaToKifu(path)
 
     override fun updateResult(path: Path, result: String) = fileService.updateResult(path, result)
 
     override fun updateHeader(path: Path, event: String, startTime: String) = fileService.updateHeader(path, event, startTime)
 
-    override fun generateProposedName(path: Path, template: String): String? = fileService.generateProposedName(path, template)
+    override fun generateProposedName(path: Path, info: KifuInfo, template: String): String? = fileService.generateProposedName(path, info, template)
 
-    override fun generateProposedNameFromText(text: String, template: String): String? = fileService.generateProposedNameFromText(text, template)
+    override fun generateProposedNameFromText(text: String, info: KifuInfo, template: String): String? = fileService.generateProposedNameFromText(text, info, template)
 
     override fun renameFileTo(path: Path, newName: String): Path? = fileService.renameFile(path, newName)
 

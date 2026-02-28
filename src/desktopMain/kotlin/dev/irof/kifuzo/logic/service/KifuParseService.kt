@@ -18,6 +18,7 @@ interface KifuParseService {
     fun parse(path: Path, state: ShogiBoardState)
     fun parseManually(path: Path, state: ShogiBoardState)
     fun parseManually(lines: List<String>, state: ShogiBoardState)
+    fun scanKifuInfo(lines: List<String>): KifuInfo
     fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo>
     fun convertCsaToKifu(path: Path): Path
 }
@@ -73,6 +74,20 @@ class KifuParseServiceImpl : KifuParseService {
         }
 
         parser.parse(lines, state)
+    }
+
+    override fun scanKifuInfo(lines: List<String>): KifuInfo {
+        if (lines.isEmpty()) return KifuInfo(java.nio.file.Paths.get(""), isError = true)
+
+        val sample = lines.take(SAMPLE_LINES_FOR_FORMAT_DETECTION)
+        val isCsa = isCsaFormat(sample)
+
+        val parser = when {
+            isCsa -> csaParser
+            else -> kifParser
+        }
+
+        return parser.scanInfo(lines)
     }
 
     private fun isCsaFormat(sample: List<String>): Boolean = sample.any { line ->
