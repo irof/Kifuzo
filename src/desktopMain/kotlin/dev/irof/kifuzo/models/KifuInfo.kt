@@ -1,5 +1,6 @@
 package dev.irof.kifuzo.models
 
+import dev.irof.kifuzo.logic.parser.KifuFormat
 import java.nio.file.Path
 
 /**
@@ -11,5 +12,6 @@ data class KifuInfo(
     val goteName: String = "",
     val startTime: String = "",
     val event: String = "",
+    val format: KifuFormat? = null,
     val isError: Boolean = false,
 )

@@ -21,6 +21,7 @@ data class KifuHeader(
     val goteMochi: List<Piece>,
     val isStandardStart: Boolean,
     val moveStartIndex: Int,
+    val format: KifuFormat? = null,
 )
 
 /**
@@ -140,6 +141,7 @@ class HeaderParser {
             senteName = senteName, goteName = goteName, startTime = startTime, event = event,
             initialCells = currentCells.map { it.toList() }, senteMochi = senteMochi.toList(), goteMochi = goteMochi.toList(),
             isStandardStart = isStandardStart, moveStartIndex = moveStartIndex,
+            format = detectedFormat,
         )
     }
 }

@@ -32,6 +32,7 @@ class CsaParser : KifuFormatParser {
             goteName = header.goteName,
             startTime = header.startTime,
             event = header.event,
+            format = header.format,
         )
     }
 

@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic.service
 
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
+import dev.irof.kifuzo.logic.parser.KifuFormat
 import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
 import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.KifuInfo
@@ -31,7 +32,6 @@ class KifuFileServiceImpl : KifuFileService {
     companion object {
         private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss")
-        private const val SAMPLE_LINES_FOR_EXTENSION_DETECTION = 20
         private const val DEFAULT_VALUE = "unknown"
     }
 
@@ -82,7 +82,8 @@ class KifuFileServiceImpl : KifuFileService {
             }
         }
 
-        return generateProposedNameFromInfo(info, template, path.extension.ifEmpty { "kifu" }, dt)
+        val extension = if (info.format == KifuFormat.CSA) "csa" else "kifu"
+        return generateProposedNameFromInfo(info, template, extension, dt)
     }
 
     override fun generateProposedNameFromText(text: String, info: KifuInfo, template: String): String? {
@@ -94,25 +95,8 @@ class KifuFileServiceImpl : KifuFileService {
             LocalDateTime.now()
         }
 
-        val lines = text.lines()
-        val extension = determineExtension(lines)
+        val extension = if (info.format == KifuFormat.CSA) "csa" else "kifu"
         return generateProposedNameFromInfo(info, template, extension, dt)
-    }
-
-    private fun determineExtension(lines: List<String>): String {
-        val sample = lines.take(SAMPLE_LINES_FOR_EXTENSION_DETECTION)
-        val isKif = sample.any { line ->
-            line.startsWith("開始日時") || line.startsWith("場所") || line.startsWith("手合割") ||
-                line.startsWith("先手") || line.startsWith("後手") || line.startsWith("指し手") ||
-                line.startsWith("対局者")
-        }
-        val isCsa = !isKif && sample.any { line ->
-            line.startsWith("V") || line.startsWith("N+") || line.startsWith("N-") ||
-                line.startsWith("$") ||
-                Regex("""^P[1-9+ -]""").containsMatchIn(line) ||
-                Regex("""^[+-]\d{4}[A-Z]{2}""").containsMatchIn(line)
-        }
-        return if (isCsa) "csa" else "kifu"
     }
 
     private fun generateProposedNameFromInfo(info: KifuInfo, template: String, extension: String, dt: LocalDateTime): String? {
