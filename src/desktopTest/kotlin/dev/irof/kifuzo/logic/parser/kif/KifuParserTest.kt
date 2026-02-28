@@ -1,26 +1,13 @@
 package dev.irof.kifuzo.logic.parser.kif
-import dev.irof.kifuzo.StubKifuRepository
+
 import dev.irof.kifuzo.assertAt
 import dev.irof.kifuzo.assertMaxStep
 import dev.irof.kifuzo.assertMochigomaCount
 import dev.irof.kifuzo.assertMove
-import dev.irof.kifuzo.logic.handler.FileActionHandler
-import dev.irof.kifuzo.logic.handler.ImportHandler
-import dev.irof.kifuzo.logic.handler.SettingsHandler
-import dev.irof.kifuzo.logic.io.readLinesWithEncoding
-import dev.irof.kifuzo.logic.io.readTextWithEncoding
-import dev.irof.kifuzo.logic.parser.HeaderParser
 import dev.irof.kifuzo.logic.parser.KifuParseException
 import dev.irof.kifuzo.logic.parser.KifuTestData
-import dev.irof.kifuzo.logic.parser.convertCsaToKifu
 import dev.irof.kifuzo.logic.parser.csa.parseCsa
-import dev.irof.kifuzo.logic.parser.kif.parseKifu
-import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
 import dev.irof.kifuzo.logic.parser.parseHeader
-import dev.irof.kifuzo.logic.service.FileTreeManager
-import dev.irof.kifuzo.logic.service.KifuRepository
-import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
-import dev.irof.kifuzo.logic.service.KifuSessionBuilder
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuSession
 import dev.irof.kifuzo.models.Piece
@@ -319,7 +306,7 @@ class KifuParserTest {
             N-Gote太郎
         """.trimIndent()
         // 先手： は KIF、N- は CSA なのでエラーになるはず
-        kotlin.test.assertFailsWith<dev.irof.kifuzo.logic.parser.KifuParseException> {
+        kotlin.test.assertFailsWith<KifuParseException> {
             parseHeader(mixed.lines())
         }
     }
