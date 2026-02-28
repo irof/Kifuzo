@@ -40,7 +40,7 @@ private const val KEY_WINDOW_HEIGHT = "window_height"
 private const val KEY_SIDEBAR_WIDTH = "sidebar_width"
 private const val KEY_IMPORT_SOURCE_DIR = "import_source_dir"
 private const val KEY_LAST_ROOT_DIR = "last_root_dir"
-private const val KEY_FILENAME_TEMPLATE = "kifu_filename_template_v2"
+private const val KEY_FILENAME_TEMPLATE = "kifu_filename_template"
 private const val KEY_FILE_SORT_OPTION = "file_sort_option"
 
 private class StandardAppSettings : AppSettings {
