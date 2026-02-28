@@ -1,5 +1,7 @@
 package dev.irof.kifuzo.logic.service
 
+import dev.irof.kifuzo.logic.parser.TooManyErrorsException
+import dev.irof.kifuzo.models.AppConfig
 import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.FileTreeNode
@@ -38,8 +40,9 @@ class FileTreeManager(
         val newNodes = mutableListOf<FileTreeNode>()
         val now = Instant.now()
         val twentyFourHoursAgo = now.minus(RECENT_FILE_HOURS, ChronoUnit.HOURS)
+        val errorCount = java.util.concurrent.atomic.AtomicInteger(0)
 
-        traverse(root, 0, expandedPaths, filters, sortOption, twentyFourHoursAgo, newNodes)
+        traverse(root, 0, expandedPaths, filters, sortOption, twentyFourHoursAgo, newNodes, errorCount)
         return newNodes
     }
 
@@ -52,11 +55,15 @@ class FileTreeManager(
         sortOption: FileSortOption,
         since: Instant,
         result: MutableList<FileTreeNode>,
+        errorCount: java.util.concurrent.atomic.AtomicInteger,
     ) {
         val contents = try {
             repository.scanDirectory(dir, sortOption)
         } catch (e: IOException) {
             logger.warn(e) { "Failed to scan directory: $dir" }
+            if (errorCount.incrementAndGet() >= AppConfig.MAX_PERMISSION_ERRORS) {
+                throw TooManyErrorsException("権限エラーが多発したため、走査を中断しました。", e)
+            }
             return
         }
 
@@ -75,7 +82,7 @@ class FileTreeManager(
                 result.add(node)
 
                 if (isDir && isExpanded) {
-                    traverse(path, level + 1, expandedPaths, filters, sortOption, since, result)
+                    traverse(path, level + 1, expandedPaths, filters, sortOption, since, result, errorCount)
                 }
             }
         }
@@ -98,6 +105,7 @@ class FileTreeManager(
         val newNodes = mutableListOf<FileTreeNode>()
         val now = Instant.now()
         val twentyFourHoursAgo = now.minus(RECENT_FILE_HOURS, ChronoUnit.HOURS)
+        val errorCount = java.util.concurrent.atomic.AtomicInteger(0)
 
         Files.walkFileTree(
             root,
@@ -112,6 +120,9 @@ class FileTreeManager(
 
                 override fun visitFileFailed(file: Path, exc: IOException): FileVisitResult {
                     logger.warn(exc) { "Failed to visit file or directory: $file" }
+                    if (errorCount.incrementAndGet() >= AppConfig.MAX_PERMISSION_ERRORS) {
+                        throw TooManyErrorsException("権限エラーが多発したため、走査を中断しました。", exc)
+                    }
                     return FileVisitResult.CONTINUE
                 }
 

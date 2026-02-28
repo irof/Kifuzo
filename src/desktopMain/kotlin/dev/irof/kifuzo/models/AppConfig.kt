@@ -16,4 +16,7 @@ object AppConfig {
     // ウィンドウ設定
     const val DEFAULT_WINDOW_WIDTH = 800f
     const val DEFAULT_WINDOW_HEIGHT = 750f
+
+    // 走査エラー設定
+    const val MAX_PERMISSION_ERRORS = 3
 }

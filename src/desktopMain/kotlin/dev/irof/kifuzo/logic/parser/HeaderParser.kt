@@ -165,3 +165,8 @@ class KifuParseException(
     val path: Path? = null,
     cause: Throwable? = null,
 ) : Exception(message, cause)
+
+/**
+ * 走査中にエラーが多発した場合に中断するための例外。
+ */
+class TooManyErrorsException(message: String, cause: Throwable? = null) : Exception(message, cause)

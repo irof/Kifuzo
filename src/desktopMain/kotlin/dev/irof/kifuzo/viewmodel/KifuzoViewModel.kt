@@ -319,6 +319,9 @@ class KifuzoViewModel(
         try {
             val newNodes = fileTreeManager.buildTree(root, uiState.treeNodes, filters, sortOption)
             uiState = uiState.copy(treeNodes = newNodes)
+        } catch (e: dev.irof.kifuzo.logic.parser.TooManyErrorsException) {
+            logger.error(e) { "Too many permission errors during hierarchy build" }
+            uiState = uiState.copy(errorMessage = "アクセス拒否が多発したため中断しました。", errorDetail = e.message)
         } catch (e: Exception) {
             logger.error(e) { "Failed to build file tree" }
             uiState = uiState.copy(errorMessage = "フォルダの走査に失敗しました。", errorDetail = formatThrowable(e))
@@ -334,6 +337,9 @@ class KifuzoViewModel(
                     fileTreeManager.buildFlatList(root, filters, sortOption)
                 }
                 uiState = uiState.copy(treeNodes = newNodes, isScanning = false)
+            } catch (e: dev.irof.kifuzo.logic.parser.TooManyErrorsException) {
+                logger.error(e) { "Too many permission errors during flat list build" }
+                uiState = uiState.copy(errorMessage = "アクセス拒否が多発したため中断しました。", errorDetail = e.message, isScanning = false)
             } catch (e: Exception) {
                 logger.error(e) { "Failed to build flat list" }
                 uiState = uiState.copy(
