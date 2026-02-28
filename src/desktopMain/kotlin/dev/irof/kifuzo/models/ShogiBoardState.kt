@@ -4,39 +4,55 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
+/**
+ * 盤面の表示状態を管理するクラス。
+ * 複数の関連する状態を一括で更新することで、不整合の発生を防ぎます。
+ */
 class ShogiBoardState {
-    // 対局データ全体
-    var session by mutableStateOf(KifuSession())
-        private set
+    private data class State(
+        val session: KifuSession,
+        val currentInitialSnapshot: BoardSnapshot,
+        val currentMoves: List<Move>,
+        val currentStep: Int,
+    )
 
-    // 現在表示中の初期局面と指し手リスト
-    var currentInitialSnapshot by mutableStateOf(BoardSnapshot(BoardSnapshot.getInitialCells()))
-        private set
-    var currentMoves by mutableStateOf(emptyList<Move>())
-        private set
+    private var state by mutableStateOf(
+        KifuSession().let {
+            State(it, it.initialSnapshot, it.moves, it.initialStep)
+        },
+    )
 
-    // 現在表示中の局面リスト（0手目を含む、UI互換用）
-    val currentHistory: List<BoardSnapshot> get() = listOf(currentInitialSnapshot) + currentMoves.map { it.resultSnapshot }
+    // 外部公開用プロパティ（常に現在の state から取得）
+    val session: KifuSession get() = state.session
+    val currentInitialSnapshot: BoardSnapshot get() = state.currentInitialSnapshot
+    val currentMoves: List<Move> get() = state.currentMoves
 
-    // 現在の手数
-    private var _currentStep by mutableStateOf(0)
     var currentStep: Int
-        get() = _currentStep
+        get() = state.currentStep
         set(value) {
-            _currentStep = value.coerceIn(0, currentMoves.size)
+            state = state.copy(currentStep = value.coerceIn(0, state.currentMoves.size))
         }
 
+    val currentHistory: List<BoardSnapshot>
+        get() = listOf(state.currentInitialSnapshot) + state.currentMoves.map { it.resultSnapshot }
+
     val currentBoard: BoardSnapshot
-        get() = if (currentStep == 0) currentInitialSnapshot else currentMoves[currentStep - 1].resultSnapshot
+        get() = if (state.currentStep == 0) {
+            state.currentInitialSnapshot
+        } else {
+            state.currentMoves[state.currentStep - 1].resultSnapshot
+        }
 
     /**
      * 新しい対局データをセットします。
      */
     fun updateSession(newSession: KifuSession) {
-        session = newSession
-        currentInitialSnapshot = newSession.initialSnapshot
-        currentMoves = newSession.moves
-        currentStep = newSession.initialStep
+        state = State(
+            session = newSession,
+            currentInitialSnapshot = newSession.initialSnapshot,
+            currentMoves = newSession.moves,
+            currentStep = newSession.initialStep,
+        )
     }
 
     /**
@@ -44,18 +60,22 @@ class ShogiBoardState {
      */
     fun switchHistory(newMoves: List<Move>) {
         if (newMoves.isEmpty()) return
-        currentInitialSnapshot = newMoves[0].resultSnapshot // 分岐元
-        currentMoves = newMoves.drop(1)
-        currentStep = 0
+        state = state.copy(
+            currentInitialSnapshot = newMoves[0].resultSnapshot, // 分岐元
+            currentMoves = newMoves.drop(1),
+            currentStep = 0,
+        )
     }
 
     /**
      * 本譜に戻ります。
      */
     fun resetToMainHistory() {
-        currentInitialSnapshot = session.initialSnapshot
-        currentMoves = session.moves
-        currentStep = session.coerceStep(currentStep)
+        state = state.copy(
+            currentInitialSnapshot = state.session.initialSnapshot,
+            currentMoves = state.session.moves,
+            currentStep = state.session.coerceStep(state.currentStep),
+        )
     }
 
     /**
