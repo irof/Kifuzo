@@ -17,6 +17,10 @@ private val moveRegex = Regex("""^\s*(?<moveNum>\d+)\s+(?<toPos>[^\s(]{2}|同\s*
 private val dropRegex = Regex("""^\s*(?<moveNum>\d+)\s+(?<toPos>[^\s(]{2})(?<pieceName>[^\s(]+?)打\s*(?:\(\s*(?<timeMin>\d+)\s*:\s*(?<timeSec>\d+)\s*/.*?\))?.*""")
 private val resultRegex = Regex("""^\s*(\d+)\s+(${dev.irof.kifuzo.models.GameResult.ALL_KEYWORDS.joinToString("|")}).*""")
 
+private const val KANJI_NUMS = "一二三四五六七八九"
+private const val ZEN_NUMS = "１２３４５６７８９"
+private const val HALF_NUMS = "123456789"
+
 sealed class KifuParsedMove {
     abstract val moveNum: Int
     abstract val consumptionSeconds: Int?
@@ -54,36 +58,65 @@ fun parseMove(line: String, lastTo: Square?): KifuParsedMove? {
 
 private fun parseNormalMove(line: String, lastTo: Square?): KifuParsedMove.Move? {
     val match = moveRegex.find(line) ?: return null
-    return match.groups["moveNum"]?.value?.toIntOrNull()?.let { moveNum ->
-        val toPosStr = match.groups["toPos"]?.value?.trim() ?: ""
-        val pieceName = match.groups["pieceName"]?.value?.trim() ?: ""
-        val fromPosStr = match.groups["fromPos"]?.value ?: ""
+    val groups = match.groups
+    val moveNum = groups["moveNum"]?.value?.toIntOrNull()
+    val toPosStr = groups["toPos"]?.value?.trim() ?: ""
+    val pieceName = groups["pieceName"]?.value?.trim() ?: ""
+    val fromPosStr = groups["fromPos"]?.value ?: ""
 
-        val toSquare = if (toPosStr.startsWith("同")) {
-            lastTo ?: throw KifuParseException("同の移動先が不明です")
-        } else {
-            Square(decodeX(toPosStr[0]), decodeY(toPosStr[1]))
-        }
-
+    return moveNum?.let {
         KifuParsedMove.Move(
-            moveNum = moveNum,
-            to = toSquare,
-            from = Square(fromPosStr[0] - '0', fromPosStr[1] - '0'),
+            moveNum = it,
+            to = getToSquare(toPosStr, lastTo),
+            from = getFromSquare(fromPosStr),
             isPromote = pieceName.contains("成") || pieceName in listOf("竜", "馬", "龍", "圭", "杏", "全"),
             consumptionSeconds = parseTime(match),
         )
     }
 }
 
+private fun validateToPosStr(toPosStr: String) {
+    if (toPosStr.length < 2) {
+        throw KifuParseException("指し手の座標が読み取れません: $toPosStr")
+    }
+}
+
+private fun getToSquare(toPosStr: String, lastTo: Square?): Square {
+    if (toPosStr.startsWith("同")) {
+        return lastTo ?: throw KifuParseException("同の移動先が不明です")
+    }
+    validateToPosStr(toPosStr)
+    val file = decodeX(toPosStr[0])
+    val rank = decodeY(toPosStr[1])
+    if (file == -1 || rank == -1) throw KifuParseException("不正な座標です: $toPosStr")
+    return Square(file, rank)
+}
+
+private fun getFromSquare(fromPosStr: String): Square {
+    if (fromPosStr.length < 2) {
+        throw KifuParseException("移動元座標が読み取れません: $fromPosStr")
+    }
+    val file = fromPosStr[0] - '0'
+    val rank = fromPosStr[1] - '0'
+    if (file !in 1..9 || rank !in 1..9) throw KifuParseException("不正な移動元座標です: $fromPosStr")
+    return Square(file, rank)
+}
+
 private fun parseDropMove(line: String): KifuParsedMove.Drop? {
     val match = dropRegex.find(line) ?: return null
-    return match.groups["moveNum"]?.value?.toIntOrNull()?.let { moveNum ->
-        val toPosStr = match.groups["toPos"]?.value ?: ""
-        val pieceSym = match.groups["pieceName"]?.value?.substring(0, 1) ?: ""
+    val groups = match.groups
+    val moveNum = groups["moveNum"]?.value?.toIntOrNull()
+    val toPosStr = groups["toPos"]?.value ?: ""
+    val pieceSym = groups["pieceName"]?.value?.substring(0, 1) ?: ""
+
+    return moveNum?.let {
+        val file = decodeX(toPosStr[0])
+        val rank = decodeY(toPosStr[1])
+        if (file == -1 || rank == -1) throw KifuParseException("不正な座標です: $toPosStr")
 
         KifuParsedMove.Drop(
-            moveNum = moveNum,
-            to = Square(decodeX(toPosStr[0]), decodeY(toPosStr[1])),
+            moveNum = it,
+            to = Square(file, rank),
             piece = findPieceForDrop(pieceSym),
             consumptionSeconds = parseTime(match),
         )
@@ -117,12 +150,15 @@ private fun parseResultMove(line: String): KifuParsedMove.Result? {
     return KifuParsedMove.Result(moveNum, result)
 }
 
-private fun decodeX(c: Char): Int {
-    val idx = "１２３４５６７８９123456789".indexOf(c)
-    return if (idx == -1) -1 else (idx % ShogiConstants.BOARD_SIZE) + 1
+private fun decodeX(c: Char): Int = when {
+    ZEN_NUMS.indexOf(c) != -1 -> ZEN_NUMS.indexOf(c) + 1
+    HALF_NUMS.indexOf(c) != -1 -> HALF_NUMS.indexOf(c) + 1
+    else -> -1
 }
 
-private fun decodeY(c: Char): Int {
-    val idx = "一二三四五六七八九１２３４５６７８９123456789".indexOf(c)
-    return if (idx == -1) -1 else (idx % ShogiConstants.BOARD_SIZE) + 1
+private fun decodeY(c: Char): Int = when {
+    KANJI_NUMS.indexOf(c) != -1 -> KANJI_NUMS.indexOf(c) + 1
+    ZEN_NUMS.indexOf(c) != -1 -> ZEN_NUMS.indexOf(c) + 1
+    HALF_NUMS.indexOf(c) != -1 -> HALF_NUMS.indexOf(c) + 1
+    else -> -1
 }
