@@ -32,6 +32,8 @@ class KifuFileServiceImpl : KifuFileService {
         private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss")
         private const val SAMPLE_LINES_FOR_EXTENSION_DETECTION = 20
+        private const val DEFAULT_EVENT_NAME = "unknown_event"
+        private const val DEFAULT_PLAYER_NAME = "unknown"
     }
 
     override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> {
@@ -111,11 +113,17 @@ class KifuFileServiceImpl : KifuFileService {
         val hhmmss = dt.format(TIME_FORMATTER)
 
         return template
+            .replace("{開始日の年月日}", yyyymmdd)
+            .replace("{開始日の時分秒}", hhmmss)
+            .replace("{棋戦名}", sanitizeFilename(info.event).ifEmpty { DEFAULT_EVENT_NAME })
+            .replace("{先手}", sanitizeFilename(info.senteName).ifEmpty { DEFAULT_PLAYER_NAME })
+            .replace("{後手}", sanitizeFilename(info.goteName).ifEmpty { DEFAULT_PLAYER_NAME })
+            // 互換性のために英語名も残しておく（任意）
             .replace("{YYYYMMDD}", yyyymmdd)
             .replace("{HHMMSS}", hhmmss)
-            .replace("{Event}", sanitizeFilename(info.event).ifEmpty { "unknown_event" })
-            .replace("{Sente}", sanitizeFilename(info.senteName).ifEmpty { "unknown" })
-            .replace("{Gote}", sanitizeFilename(info.goteName).ifEmpty { "unknown" })
+            .replace("{Event}", sanitizeFilename(info.event).ifEmpty { DEFAULT_EVENT_NAME })
+            .replace("{Sente}", sanitizeFilename(info.senteName).ifEmpty { DEFAULT_PLAYER_NAME })
+            .replace("{Gote}", sanitizeFilename(info.goteName).ifEmpty { DEFAULT_PLAYER_NAME })
             .let { "$it.$extension" }
     }
 
