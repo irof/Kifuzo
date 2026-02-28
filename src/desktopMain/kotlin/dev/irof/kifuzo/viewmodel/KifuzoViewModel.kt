@@ -353,16 +353,24 @@ class KifuzoViewModel(
                 val allKifuFiles = mutableListOf<Path>()
                 withContext(Dispatchers.IO) {
                     try {
-                        java.nio.file.Files.walk(root, SCAN_DEPTH).use { stream ->
-                            stream.filter {
-                                try {
-                                    it.isRegularFile() && (it.extension.lowercase() in listOf("kifu", "kif", "csa"))
-                                } catch (e: Exception) {
-                                    logger.debug(e) { "Failed to access file: $it" }
-                                    false
+                        java.nio.file.Files.walkFileTree(
+                            root,
+                            java.util.EnumSet.noneOf(java.nio.file.FileVisitOption::class.java),
+                            SCAN_DEPTH,
+                            object : java.nio.file.SimpleFileVisitor<Path>() {
+                                override fun visitFile(file: Path, attrs: java.nio.file.attribute.BasicFileAttributes): java.nio.file.FileVisitResult {
+                                    if (file.extension.lowercase() in listOf("kifu", "kif", "csa")) {
+                                        allKifuFiles.add(file)
+                                    }
+                                    return java.nio.file.FileVisitResult.CONTINUE
                                 }
-                            }.forEach { allKifuFiles.add(it) }
-                        }
+
+                                override fun visitFileFailed(file: Path, exc: java.io.IOException): java.nio.file.FileVisitResult {
+                                    logger.debug(exc) { "Failed to visit file or directory for kifu infos: $file" }
+                                    return java.nio.file.FileVisitResult.CONTINUE
+                                }
+                            },
+                        )
                     } catch (e: Exception) {
                         logger.warn(e) { "Failed to walk directory for kifu infos: $root" }
                     }
