@@ -17,11 +17,13 @@ import java.nio.file.Path
  * 棋譜に関する全ての操作を提供する統合リポジトリ。
  * 内部的には個別のサービス（FileService, ParseService, ImportService）に処理を委譲します。
  */
+@Suppress("TooManyFunctions")
 interface KifuRepository {
     fun scanDirectory(directory: Path, sortOption: FileSortOption = FileSortOption.NAME): List<Path>
     fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo>
     fun parse(path: Path, state: ShogiBoardState)
     fun parseManually(path: Path, state: ShogiBoardState)
+    fun parseManually(lines: List<String>, state: ShogiBoardState)
     fun convertCsa(path: Path): Path
     fun updateResult(path: Path, result: String)
     fun updateHeader(path: Path, event: String, startTime: String)
@@ -31,6 +33,7 @@ interface KifuRepository {
     fun importQuestFiles(sourceDir: Path, targetDir: Path): Int
 }
 
+@Suppress("TooManyFunctions")
 class KifuRepositoryImpl(
     private val fileService: KifuFileService = KifuFileServiceImpl(),
     private val parseService: KifuParseService = KifuParseServiceImpl(),
@@ -44,6 +47,8 @@ class KifuRepositoryImpl(
     override fun parse(path: Path, state: ShogiBoardState) = parseService.parse(path, state)
 
     override fun parseManually(path: Path, state: ShogiBoardState) = parseService.parseManually(path, state)
+
+    override fun parseManually(lines: List<String>, state: ShogiBoardState) = parseService.parseManually(lines, state)
 
     override fun convertCsa(path: Path): Path = parseService.convertCsaToKifu(path)
 

@@ -36,6 +36,7 @@ sealed class KifuzoAction {
 
     // 貼り付け
     data object PasteKifu : KifuzoAction()
+    data object ShowSavePastedKifuDialog : KifuzoAction()
     data object HideSavePastedKifuDialog : KifuzoAction()
     data class SavePastedKifu(val filename: String, val text: String) : KifuzoAction()
 

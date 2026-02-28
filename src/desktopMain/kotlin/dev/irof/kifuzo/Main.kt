@@ -151,6 +151,7 @@ private fun RowScope.KifuzoMainLayout(viewModel: KifuzoViewModel) {
             override fun onSelectVariation(moves: List<Move>) = viewModel.dispatch(KifuzoAction.SelectVariation(moves))
             override fun onResetToMainHistory() = viewModel.dispatch(KifuzoAction.ResetToMainHistory)
             override fun onOpenExternal(path: Path) = viewModel.dispatch(KifuzoAction.OpenInExternalApp(path))
+            override fun onShowSaveDialog() = viewModel.dispatch(KifuzoAction.ShowSavePastedKifuDialog)
         }
     }
 

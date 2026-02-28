@@ -51,6 +51,7 @@ private const val ICON_ALPHA_INACTIVE = 0.6f
 /**
  * 棋譜プレビューパネルでの操作を抽象化するインターフェース。
  */
+@Suppress("TooManyFunctions")
 interface KifuPreviewActions {
     fun onToggleFlip()
     fun onToggleMoveList()
@@ -63,6 +64,7 @@ interface KifuPreviewActions {
     fun onSelectVariation(moves: List<Move>)
     fun onResetToMainHistory()
     fun onOpenExternal(path: Path)
+    fun onShowSaveDialog()
 }
 
 @Composable
@@ -108,8 +110,10 @@ fun KifuPreviewPanel(
             startTime = boardState.session.startTime,
             event = boardState.session.event,
             warningMessage = boardState.session.warningMessage,
+            isPasted = state.pastedKifuText != null,
             onEdit = { state.selectedFile?.let { actions.onShowEditMetadata(it) } },
             onOpenExternal = { state.selectedFile?.let { actions.onOpenExternal(it) } },
+            onSave = { actions.onShowSaveDialog() },
         )
 
         KifuHeader(

@@ -17,6 +17,7 @@ private val logger = KotlinLogging.logger {}
 interface KifuParseService {
     fun parse(path: Path, state: ShogiBoardState)
     fun parseManually(path: Path, state: ShogiBoardState)
+    fun parseManually(lines: List<String>, state: ShogiBoardState)
     fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo>
     fun convertCsaToKifu(path: Path): Path
 }
@@ -58,7 +59,7 @@ class KifuParseServiceImpl : KifuParseService {
         parseManually(lines, state)
     }
 
-    fun parseManually(lines: List<String>, state: ShogiBoardState) {
+    override fun parseManually(lines: List<String>, state: ShogiBoardState) {
         if (lines.isEmpty()) throw KifuParseException("ファイルが空です。")
 
         val sample = lines.take(SAMPLE_LINES_FOR_FORMAT_DETECTION)

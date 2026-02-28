@@ -22,6 +22,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Launch
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -100,8 +101,10 @@ fun KifuMetaInfo(
     startTime: String,
     event: String,
     warningMessage: String? = null,
+    isPasted: Boolean = false,
     onEdit: () -> Unit,
     onOpenExternal: () -> Unit,
+    onSave: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -118,6 +121,19 @@ fun KifuMetaInfo(
             KifuMetaText(fileName, senteName, goteName, startTime, event, warningMessage, modifier = Modifier.weight(1f))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isPasted) {
+                    IconButton(onClick = onSave, modifier = Modifier.size(ShogiDimensions.Icon.Small)) {
+                        Icon(
+                            Icons.Default.Save,
+                            contentDescription = AppStrings.SAVE_KIFU,
+                            tint = Color.Gray,
+                            modifier = Modifier.size(ShogiDimensions.Icon.Small),
+                        )
+                    }
+
+                    Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
+                }
+
                 IconButton(onClick = onOpenExternal, modifier = Modifier.size(ShogiDimensions.Icon.Small)) {
                     Icon(
                         Icons.AutoMirrored.Filled.Launch,

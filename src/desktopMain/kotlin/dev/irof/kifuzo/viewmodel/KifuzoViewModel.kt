@@ -147,7 +147,7 @@ class KifuzoViewModel(
         when (action) {
             is KifuzoAction.SelectFile -> {
                 fileActionHandler.selectFile(action.path)
-                uiState = uiState.copy(selectedFile = action.path)
+                uiState = uiState.copy(selectedFile = action.path, pastedKifuText = null)
             }
             is KifuzoAction.SelectNextFile, is KifuzoAction.SelectPrevFile -> {
                 val forward = action is KifuzoAction.SelectNextFile
@@ -260,7 +260,13 @@ class KifuzoViewModel(
     private fun handlePasteAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.PasteKifu -> performPasteKifu()
-            is KifuzoAction.HideSavePastedKifuDialog -> uiState = uiState.copy(pastedKifuText = null, pastedKifuProposedName = null)
+            is KifuzoAction.ShowSavePastedKifuDialog -> {
+                uiState.pastedKifuText?.let { text ->
+                    val proposedName = repository.generateProposedNameFromText(text, uiState.filenameTemplate)
+                    uiState = uiState.copy(pastedKifuProposedName = proposedName ?: "pasted_kifu.kifu")
+                }
+            }
+            is KifuzoAction.HideSavePastedKifuDialog -> uiState = uiState.copy(pastedKifuProposedName = null)
             is KifuzoAction.SavePastedKifu -> {
                 currentRootDirectory?.let {
                     fileActionHandler.savePastedKifu(it, action.filename, action.text)
@@ -280,12 +286,11 @@ class KifuzoViewModel(
         }
 
         try {
-            val proposedName = repository.generateProposedNameFromText(text, uiState.filenameTemplate)
-            if (proposedName == null) {
-                uiState = uiState.copy(errorMessage = "棋譜として認識できませんでした。", errorDetail = text.take(ERROR_DETAIL_PREVIEW_LENGTH))
-            } else {
-                uiState = uiState.copy(pastedKifuText = text, pastedKifuProposedName = proposedName)
-            }
+            // パースして盤面を更新（ファイル保存はしない）
+            val lines = text.lines()
+            repository.parseManually(lines, boardState)
+            uiState = uiState.copy(pastedKifuText = text, selectedFile = null)
+            settingsHandler.updateAutoFlip(uiState.myNameRegex)
         } catch (cause: Exception) {
             uiState = uiState.copy(errorMessage = "棋譜の解析に失敗しました。", errorDetail = formatThrowable(cause))
         }

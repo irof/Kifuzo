@@ -42,6 +42,11 @@ open class StubKifuRepository : KifuRepository {
         lastMethodCalled = "parseManually"
         parseAction(state)
     }
+
+    override fun parseManually(lines: List<String>, state: ShogiBoardState) {
+        lastMethodCalled = "parseManuallyLines"
+        parseAction(state)
+    }
     override fun convertCsa(path: Path): Path {
         convertCsaAction()
         return path
