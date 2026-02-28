@@ -15,6 +15,10 @@ class ShogiBoardState {
     var currentMoves by mutableStateOf(emptyList<Move>())
         private set
 
+    // 現在表示中の手順が変化（分岐手順）であるか
+    var isVariation by mutableStateOf(false)
+        private set
+
     // 現在表示中の局面リスト（0手目を含む、UI互換用）
     val currentHistory: List<BoardSnapshot> get() = listOf(currentInitialSnapshot) + currentMoves.map { it.resultSnapshot }
 
@@ -37,6 +41,7 @@ class ShogiBoardState {
         currentInitialSnapshot = newSession.initialSnapshot
         currentMoves = newSession.moves
         currentStep = newSession.initialStep
+        isVariation = false
     }
 
     /**
@@ -47,6 +52,7 @@ class ShogiBoardState {
         currentInitialSnapshot = newMoves[0].resultSnapshot // 分岐元
         currentMoves = newMoves.drop(1)
         currentStep = 0
+        isVariation = true
     }
 
     /**
@@ -56,6 +62,7 @@ class ShogiBoardState {
         currentInitialSnapshot = session.initialSnapshot
         currentMoves = session.moves
         currentStep = session.coerceStep(currentStep)
+        isVariation = false
     }
 
     /**
