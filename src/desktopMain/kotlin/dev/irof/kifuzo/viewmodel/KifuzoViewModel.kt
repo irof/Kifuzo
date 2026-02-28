@@ -11,6 +11,7 @@ import dev.irof.kifuzo.logic.service.KifuRepository
 import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
 import dev.irof.kifuzo.models.AppSettings
 import dev.irof.kifuzo.models.FileFilter
+import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.models.FileViewMode
 import dev.irof.kifuzo.models.ShogiBoardState
@@ -99,6 +100,7 @@ class KifuzoViewModel(
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun handleFileTreeAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.SetRootDirectory -> {
@@ -108,8 +110,13 @@ class KifuzoViewModel(
                 refreshFiles()
             }
             is KifuzoAction.ToggleDirectory -> {
-                val newNodes = fileTreeManager.toggleNode(action.node, uiState.treeNodes, uiState.fileSortOption)
-                uiState = uiState.copy(treeNodes = newNodes)
+                try {
+                    val newNodes = fileTreeManager.toggleNode(action.node, uiState.treeNodes, uiState.fileSortOption)
+                    uiState = uiState.copy(treeNodes = newNodes)
+                } catch (e: Exception) {
+                    logger.error(e) { "Failed to toggle directory: ${action.node.path}" }
+                    uiState = uiState.copy(errorMessage = "フォルダの展開に失敗しました。", errorDetail = formatThrowable(e))
+                }
             }
             is KifuzoAction.SetViewMode -> {
                 uiState = uiState.copy(viewMode = action.mode)
@@ -290,6 +297,7 @@ class KifuzoViewModel(
         return "$sw"
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun refreshFiles() {
         val root = currentRootDirectory ?: return
         val mode = uiState.viewMode
@@ -297,29 +305,75 @@ class KifuzoViewModel(
         val sortOption = uiState.fileSortOption
 
         if (mode == FileViewMode.HIERARCHY) {
+            refreshHierarchy(root, filters, sortOption)
+        } else {
+            refreshFlatList(root, filters, sortOption)
+        }
+
+        scanKifuInfos(root)
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun refreshHierarchy(root: Path, filters: Set<FileFilter>, sortOption: FileSortOption) {
+        try {
             val newNodes = fileTreeManager.buildTree(root, uiState.treeNodes, filters, sortOption)
             uiState = uiState.copy(treeNodes = newNodes)
-        } else {
-            scope.launch {
-                uiState = uiState.copy(isScanning = true)
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to build file tree" }
+            uiState = uiState.copy(errorMessage = "フォルダの走査に失敗しました。", errorDetail = formatThrowable(e))
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun refreshFlatList(root: Path, filters: Set<FileFilter>, sortOption: FileSortOption) {
+        scope.launch {
+            uiState = uiState.copy(isScanning = true)
+            try {
                 val newNodes = withContext(Dispatchers.IO) {
                     fileTreeManager.buildFlatList(root, filters, sortOption)
                 }
                 uiState = uiState.copy(treeNodes = newNodes, isScanning = false)
+            } catch (e: Exception) {
+                logger.error(e) { "Failed to build flat list" }
+                uiState = uiState.copy(
+                    errorMessage = "ファイルの取得に失敗しました。",
+                    errorDetail = formatThrowable(e),
+                    isScanning = false,
+                )
             }
         }
+    }
 
+    @Suppress("TooGenericExceptionCaught")
+    private fun scanKifuInfos(root: Path) {
         // 棋譜情報のスキャン（対局者名、開始日時など）
         scope.launch {
             uiState = uiState.copy(isScanning = true)
-            val allKifuFiles = mutableListOf<Path>()
-            withContext(Dispatchers.IO) {
-                java.nio.file.Files.walk(root, SCAN_DEPTH)
-                    .filter { it.isRegularFile() && (it.extension.lowercase() in listOf("kifu", "kif", "csa")) }
-                    .forEach { allKifuFiles.add(it) }
+            try {
+                val allKifuFiles = mutableListOf<Path>()
+                withContext(Dispatchers.IO) {
+                    try {
+                        java.nio.file.Files.walk(root, SCAN_DEPTH).use { stream ->
+                            stream.filter {
+                                try {
+                                    it.isRegularFile() && (it.extension.lowercase() in listOf("kifu", "kif", "csa"))
+                                } catch (e: Exception) {
+                                    logger.debug(e) { "Failed to access file: $it" }
+                                    false
+                                }
+                            }.forEach { allKifuFiles.add(it) }
+                        }
+                    } catch (e: Exception) {
+                        logger.warn(e) { "Failed to walk directory for kifu infos: $root" }
+                    }
+                }
+                val infos = withContext(Dispatchers.IO) { repository.getKifuInfos(allKifuFiles) }
+                uiState = uiState.copy(kifuInfos = infos, isScanning = false)
+            } catch (e: Exception) {
+                logger.error(e) { "Failed to scan kifu infos" }
+                // 棋譜情報のスキャン失敗は致命的ではないため詳細ログのみ
+                uiState = uiState.copy(isScanning = false)
             }
-            val infos = withContext(Dispatchers.IO) { repository.getKifuInfos(allKifuFiles) }
-            uiState = uiState.copy(kifuInfos = infos, isScanning = false)
         }
     }
 }

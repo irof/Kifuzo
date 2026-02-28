@@ -35,9 +35,9 @@ class KifuFileServiceImpl : KifuFileService {
         private const val DATE_STRING_LENGTH = 8
     }
 
-    override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> = try {
+    override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> {
         val entries = directory.listDirectoryEntries()
-        when (sortOption) {
+        return when (sortOption) {
             FileSortOption.NAME -> entries.sortedWith(compareBy({ !it.isDirectory() }, { it.name.lowercase() }))
             FileSortOption.LAST_MODIFIED -> entries.sortedWith(
                 compareBy<Path> { !it.isDirectory() }
@@ -51,9 +51,6 @@ class KifuFileServiceImpl : KifuFileService {
                     },
             )
         }
-    } catch (e: IOException) {
-        logger.error(e) { "Failed to scan directory: $directory" }
-        emptyList()
     }
 
     override fun renameFile(path: Path, newName: String): Path? {

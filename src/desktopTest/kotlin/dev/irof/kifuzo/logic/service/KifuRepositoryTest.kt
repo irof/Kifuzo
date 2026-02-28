@@ -55,9 +55,10 @@ class KifuRepositoryTest {
     }
 
     @Test
-    fun 存在しないディレクトリ走査で空リストを返すこと() {
+    fun 存在しないディレクトリ走査で例外を投げること() {
         val nonExistent = tempDir.resolve("non_existent")
-        val contents = repository.scanDirectory(nonExistent)
-        assertTrue(contents.isEmpty())
+        kotlin.test.assertFailsWith<java.nio.file.NoSuchFileException> {
+            repository.scanDirectory(nonExistent)
+        }
     }
 }
