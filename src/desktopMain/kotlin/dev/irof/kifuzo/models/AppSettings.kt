@@ -81,7 +81,7 @@ object AppSettings {
 
     private const val KEY_FILENAME_TEMPLATE = "kifu_filename_template"
     var filenameTemplate: String
-        get() = prefs.get(KEY_FILENAME_TEMPLATE, "{YYYYMMDD}-{Sente}-{Gote}")
+        get() = prefs.get(KEY_FILENAME_TEMPLATE, "{YYYYMMDD}_{HHMMSS}_{Event}_{Sente}_{Gote}")
         set(value) {
             prefs.put(KEY_FILENAME_TEMPLATE, value)
             prefs.flush()

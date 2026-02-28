@@ -1,19 +1,16 @@
 package dev.irof.kifuzo.logic.service
+
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
-import dev.irof.kifuzo.logic.io.readTextWithEncoding
-import dev.irof.kifuzo.logic.parser.HeaderParser
-import dev.irof.kifuzo.logic.parser.KifuParseException
-import dev.irof.kifuzo.logic.parser.convertCsaToKifu
-import dev.irof.kifuzo.logic.parser.csa.parseCsa
-import dev.irof.kifuzo.logic.parser.kif.parseKifu
 import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
-import dev.irof.kifuzo.logic.parser.parseHeader
 import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.KifuInfo
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -32,7 +29,8 @@ interface KifuFileService {
 
 class KifuFileServiceImpl : KifuFileService {
     companion object {
-        private const val DATE_STRING_LENGTH = 8
+        private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd")
+        private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss")
     }
 
     override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> {
@@ -70,31 +68,66 @@ class KifuFileServiceImpl : KifuFileService {
 
     override fun generateProposedName(path: Path, template: String): String? {
         val info = scanKifuInfo(path)
-        return generateProposedNameFromInfo(info, template, path.extension.ifEmpty { "kifu" })
+        if (info.isError) return null
+
+        val dt = if (info.startTime.isNotEmpty()) {
+            parseStartTime(info.startTime)
+        } else {
+            try {
+                LocalDateTime.ofInstant(Files.getLastModifiedTime(path).toInstant(), ZoneId.systemDefault())
+            } catch (e: IOException) {
+                logger.debug(e) { "Failed to get last modified time for $path" }
+                LocalDateTime.now()
+            }
+        }
+
+        return generateProposedNameFromInfo(info, template, path.extension.ifEmpty { "kifu" }, dt)
     }
 
     override fun generateProposedNameFromText(text: String, template: String): String? {
-        val info = scanKifuInfo(text.lines())
+        val lines = text.lines()
+        val info = scanKifuInfo(lines)
         if (info.isError) return null
+
+        val dt = if (info.startTime.isNotEmpty()) {
+            parseStartTime(info.startTime)
+        } else {
+            LocalDateTime.now()
+        }
 
         // 形式を判定して拡張子を決める
-        val extension = if (text.lines().any { it.startsWith("V") || it.startsWith("+") || it.startsWith("-") }) "csa" else "kifu"
-        return generateProposedNameFromInfo(info, template, extension)
+        val extension = if (lines.any { it.startsWith("V") || it.startsWith("+") || it.startsWith("-") }) "csa" else "kifu"
+        return generateProposedNameFromInfo(info, template, extension, dt)
     }
 
-    private fun generateProposedNameFromInfo(info: KifuInfo, template: String, extension: String): String? {
-        if (info.isError) return null
-
-        // "2026/02/21 12:00:00" -> "20260221"
-        val yyyymmdd = info.startTime.replace("/", "").substringBefore(" ").take(DATE_STRING_LENGTH)
-            .ifEmpty { "00000000" }
+    private fun generateProposedNameFromInfo(info: KifuInfo, template: String, extension: String, dt: LocalDateTime): String? {
+        val yyyymmdd = dt.format(DATE_FORMATTER)
+        val hhmmss = dt.format(TIME_FORMATTER)
 
         return template
             .replace("{YYYYMMDD}", yyyymmdd)
-            .replace("{Sente}", info.senteName.ifEmpty { "unknown" })
-            .replace("{Gote}", info.goteName.ifEmpty { "unknown" })
+            .replace("{HHMMSS}", hhmmss)
+            .replace("{Event}", sanitizeFilename(info.event).ifEmpty { "unknown_event" })
+            .replace("{Sente}", sanitizeFilename(info.senteName).ifEmpty { "unknown" })
+            .replace("{Gote}", sanitizeFilename(info.goteName).ifEmpty { "unknown" })
             .let { "$it.$extension" }
     }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun parseStartTime(startTime: String): LocalDateTime = try {
+        // "2026/02/21 12:00:00" または "2026/02/21" などの形式を想定
+        val datePart = startTime.substringBefore(" ").replace("/", "-")
+        val timePart = startTime.substringAfter(" ", "00:00:00")
+        LocalDateTime.parse("${datePart}T$timePart")
+    } catch (e: java.time.format.DateTimeParseException) {
+        logger.debug(e) { "Failed to parse startTime: $startTime" }
+        LocalDateTime.now()
+    } catch (e: IndexOutOfBoundsException) {
+        logger.debug(e) { "Invalid startTime format: $startTime" }
+        LocalDateTime.now()
+    }
+
+    private fun sanitizeFilename(name: String): String = name.replace(Regex("[\\\\/:*?\"<>|]"), "_")
 
     override fun updateResult(path: Path, result: String) {
         updateKifuResult(path, result)
