@@ -36,12 +36,6 @@ fun FileFiltersAndSorting(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             FilterChip(
-                label = AppStrings.FILTER_KIFU,
-                isSelected = currentFilters.contains(FileFilter.KIFU_ONLY),
-                onClick = { onToggleFilter(FileFilter.KIFU_ONLY) },
-            )
-            Spacer(Modifier.width(ShogiDimensions.Spacing.Small))
-            FilterChip(
                 label = AppStrings.FILTER_RECENT,
                 isSelected = currentFilters.contains(FileFilter.RECENT),
                 onClick = { onToggleFilter(FileFilter.RECENT) },

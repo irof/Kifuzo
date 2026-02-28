@@ -54,7 +54,6 @@ class FileTreeManager(
                 // フィルタの適用
                 val matchesFilter = isDir || filters.all { filter ->
                     when (filter) {
-                        FileFilter.KIFU_ONLY -> isKifuFile(path)
                         FileFilter.RECENT -> isRecentFile(path, twentyFourHoursAgo)
                     }
                 }
@@ -89,7 +88,6 @@ class FileTreeManager(
         Files.walk(root).filter { it.isRegularFile() }.forEach { path ->
             val matchesFilter = filters.all { filter ->
                 when (filter) {
-                    FileFilter.KIFU_ONLY -> isKifuFile(path)
                     FileFilter.RECENT -> isRecentFile(path, twentyFourHoursAgo)
                 }
             }
@@ -110,11 +108,6 @@ class FileTreeManager(
                 }
             }
         }
-    }
-
-    private fun isKifuFile(path: Path): Boolean {
-        val ext = path.extension.lowercase()
-        return ext in listOf("kifu", "kif", "csa")
     }
 
     private fun isRecentFile(path: Path, since: Instant): Boolean = try {

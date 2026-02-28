@@ -211,7 +211,7 @@ class KifuzoViewModelTest {
 
     @Test
     fun ファイルフィルタを切り替えられること() {
-        val filter = dev.irof.kifuzo.models.FileFilter.KIFU_ONLY
+        val filter = dev.irof.kifuzo.models.FileFilter.RECENT
         // 初期状態では含まれていないはず
         assertFalse(viewModel.uiState.fileFilters.contains(filter))
 

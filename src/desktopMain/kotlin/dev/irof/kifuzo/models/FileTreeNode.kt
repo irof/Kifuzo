@@ -21,7 +21,6 @@ enum class FileViewMode {
 }
 
 enum class FileFilter {
-    KIFU_ONLY,
     RECENT,
 }
 
