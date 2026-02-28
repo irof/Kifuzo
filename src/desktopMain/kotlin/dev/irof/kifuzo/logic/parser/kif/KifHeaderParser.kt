@@ -8,30 +8,31 @@ import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiConstants
 
 object KifHeaderParser {
-    fun isMetadata(l: String) = l.startsWith("先手：") || l.startsWith("対局者：") || l.startsWith("後手：") || l.startsWith("開始日時：") || l.startsWith("棋戦：") || l.startsWith("場所：")
+    fun isMetadata(l: String) = l.startsWith("先手：") || l.startsWith("対局者：") || l.startsWith("後手：") || l.startsWith("開始日時：") || l.startsWith("棋戦：") || l.startsWith("場所：") ||
+        l.startsWith("先手:") || l.startsWith("対局者:") || l.startsWith("後手:") || l.startsWith("開始日時:") || l.startsWith("棋戦:") || l.startsWith("場所:")
+
     fun isBoardLine(l: String) = l.startsWith("|") && l.count { it == '|' } >= 2
     fun isMochigomaLine(l: String) = Regex("""^[上下先後]手(の)?持駒：""").containsMatchIn(l)
     fun isMoveLine(l: String) = Regex("""^\s*\d+\s+.*""").matches(l)
 
     fun handleMetadataLine(hp: HeaderParser, line: String) {
+        val content = if (line.contains("：")) line.substringAfter("：").trim() else line.substringAfter(":").trim()
         when {
-            line.startsWith("後手：") -> hp.goteName = line.substringAfter("：").trim()
-            line.startsWith("先手：") || line.startsWith("対局者：") -> hp.senteName = line.substringAfter("：").trim()
-            line.startsWith("開始日時：") -> hp.startTime = line.substringAfter("：").trim()
-            line.startsWith("棋戦：") -> {
-                val event = line.substringAfter("：").trim()
+            line.startsWith("後手") -> hp.goteName = content
+            line.startsWith("先手") || line.startsWith("対局者") -> hp.senteName = content
+            line.startsWith("開始日時") -> hp.startTime = content
+            line.startsWith("棋戦") -> {
                 if (hp.event.isEmpty()) {
-                    hp.event = event
-                } else if (!hp.event.contains(event)) {
-                    hp.event = "$event (${hp.event})"
+                    hp.event = content
+                } else if (!hp.event.contains(content)) {
+                    hp.event = "$content (${hp.event})"
                 }
             }
-            line.startsWith("場所：") -> {
-                val place = line.substringAfter("：").trim()
+            line.startsWith("場所") -> {
                 if (hp.event.isEmpty()) {
-                    hp.event = place
-                } else if (!hp.event.contains(place)) {
-                    hp.event += " ($place)"
+                    hp.event = content
+                } else if (!hp.event.contains(content)) {
+                    hp.event += " ($content)"
                 }
             }
             else -> CsaHeaderParser.handleMetadataLine(hp, line)

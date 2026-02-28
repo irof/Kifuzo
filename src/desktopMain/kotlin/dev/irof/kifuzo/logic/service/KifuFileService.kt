@@ -95,24 +95,34 @@ class KifuFileServiceImpl : KifuFileService {
             LocalDateTime.now()
         }
 
-        // 形式を判定して拡張子を決める
         val lines = text.lines()
+        val extension = determineExtension(lines)
+        return generateProposedNameFromInfo(info, template, extension, dt)
+    }
+
+    private fun determineExtension(lines: List<String>): String {
         val sample = lines.take(SAMPLE_LINES_FOR_EXTENSION_DETECTION)
-        val isCsa = sample.any { line ->
+        val isKif = sample.any { line ->
+            line.startsWith("開始日時") || line.startsWith("場所") || line.startsWith("手合割") ||
+                line.startsWith("先手") || line.startsWith("後手") || line.startsWith("指し手") ||
+                line.startsWith("対局者")
+        }
+        val isCsa = !isKif && sample.any { line ->
             line.startsWith("V") || line.startsWith("N+") || line.startsWith("N-") ||
                 line.startsWith("$") ||
                 Regex("""^P[1-9+ -]""").containsMatchIn(line) ||
                 Regex("""^[+-]\d{4}[A-Z]{2}""").containsMatchIn(line)
         }
-        val extension = if (isCsa) "csa" else "kifu"
-        return generateProposedNameFromInfo(info, template, extension, dt)
+        return if (isCsa) "csa" else "kifu"
     }
 
     private fun generateProposedNameFromInfo(info: KifuInfo, template: String, extension: String, dt: LocalDateTime): String? {
         val yyyymmdd = dt.format(DATE_FORMATTER)
         val hhmmss = dt.format(TIME_FORMATTER)
 
-        return template
+        logger.info { "Generating name with template: $template, info: $info, dt: $dt" }
+
+        val name = template
             .replace("{開始日の年月日}", yyyymmdd)
             .replace("{開始日の時分秒}", hhmmss)
             .replace("{棋戦名}", sanitizeFilename(info.event).ifEmpty { DEFAULT_EVENT_NAME })
@@ -124,7 +134,9 @@ class KifuFileServiceImpl : KifuFileService {
             .replace("{Event}", sanitizeFilename(info.event).ifEmpty { DEFAULT_EVENT_NAME })
             .replace("{Sente}", sanitizeFilename(info.senteName).ifEmpty { DEFAULT_PLAYER_NAME })
             .replace("{Gote}", sanitizeFilename(info.goteName).ifEmpty { DEFAULT_PLAYER_NAME })
-            .let { "$it.$extension" }
+
+        logger.info { "Generated name before extension: $name" }
+        return "$name.$extension"
     }
 
     @Suppress("TooGenericExceptionCaught")
