@@ -1,13 +1,10 @@
 package dev.irof.kifuzo.logic.service
+
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
-import dev.irof.kifuzo.logic.io.readTextWithEncoding
-import dev.irof.kifuzo.logic.parser.HeaderParser
+import dev.irof.kifuzo.logic.parser.KifuFormatParser
 import dev.irof.kifuzo.logic.parser.KifuParseException
-import dev.irof.kifuzo.logic.parser.convertCsaToKifu
-import dev.irof.kifuzo.logic.parser.csa.parseCsa
-import dev.irof.kifuzo.logic.parser.kif.parseKifu
-import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
-import dev.irof.kifuzo.logic.parser.parseHeader
+import dev.irof.kifuzo.logic.parser.csa.CsaParser
+import dev.irof.kifuzo.logic.parser.kif.KifParser
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.ShogiBoardState
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -29,6 +26,9 @@ class KifuParseServiceImpl : KifuParseService {
         private const val SAMPLE_LINES_FOR_FORMAT_DETECTION = 20
     }
 
+    private val kifParser: KifuFormatParser = KifParser()
+    private val csaParser: KifuFormatParser = CsaParser()
+
     override fun parse(path: Path, state: ShogiBoardState) {
         val lines = readLinesWithEncoding(path)
         if (lines.isEmpty()) throw KifuParseException("ファイルが空です。")
@@ -38,32 +38,19 @@ class KifuParseServiceImpl : KifuParseService {
         val isKif = isKifFormat(sample)
         val ext = path.extension.lowercase()
 
-        when {
-            isCsa -> {
-                val warning = if (ext != "csa") {
-                    "拡張子は .$ext ですが、中身は CSA 形式のようです。CSA として読み込みました。"
-                } else {
-                    null
-                }
-                parseCsa(lines, state, warningMessage = warning)
-            }
-            isKif -> {
-                val warning = if (ext == "csa") {
-                    "拡張子は .csa ですが、中身は KIF 形式のようです。KIF として読み込みました。"
-                } else {
-                    null
-                }
-                parseKifu(lines, state, warningMessage = warning)
-            }
-            else -> {
-                // どちらとも判定できない場合は拡張子に従ってフォールバックを試みる
-                if (ext == "csa") {
-                    parseCsa(lines, state)
-                } else {
-                    parseKifu(lines, state)
-                }
-            }
+        val parser = when {
+            isCsa -> csaParser
+            isKif -> kifParser
+            else -> if (ext == "csa") csaParser else kifParser
         }
+
+        val warning = when {
+            isCsa && ext != "csa" -> "拡張子は .$ext ですが、中身は CSA 形式のようです。CSA として読み込みました。"
+            isKif && ext == "csa" -> "拡張子は .csa ですが、中身は KIF 形式のようです。KIF として読み込みました。"
+            else -> null
+        }
+
+        parser.parse(lines, state, warningMessage = warning)
     }
 
     override fun parseManually(path: Path, state: ShogiBoardState) {
@@ -74,16 +61,17 @@ class KifuParseServiceImpl : KifuParseService {
     fun parseManually(lines: List<String>, state: ShogiBoardState) {
         if (lines.isEmpty()) throw KifuParseException("ファイルが空です。")
 
-        // 最初の数行で判定
         val sample = lines.take(SAMPLE_LINES_FOR_FORMAT_DETECTION)
         val isCsa = isCsaFormat(sample)
         val isKif = isKifFormat(sample)
 
-        when {
-            isCsa -> parseCsa(lines, state)
-            isKif -> parseKifu(lines, state)
+        val parser = when {
+            isCsa -> csaParser
+            isKif -> kifParser
             else -> throw KifuParseException("棋譜形式（KIF/CSA）を判定できませんでした。")
         }
+
+        parser.parse(lines, state)
     }
 
     private fun isCsaFormat(sample: List<String>): Boolean = sample.any { line ->
@@ -101,7 +89,19 @@ class KifuParseServiceImpl : KifuParseService {
 
     override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = files
         .filter { it.extension.lowercase() in listOf("kifu", "kif", "csa") }
-        .associateWith { scanKifuInfo(it) }
+        .associateWith { path ->
+            try {
+                val lines = readLinesWithEncoding(path)
+                val parser = if (path.extension.lowercase() == "csa") csaParser else kifParser
+                parser.scanInfo(lines).copy(path = path)
+            } catch (e: java.io.IOException) {
+                logger.error(e) { "IO error scanning header for $path" }
+                KifuInfo(path, isError = true)
+            } catch (e: KifuParseException) {
+                logger.error(e) { "Parse error scanning header for $path" }
+                KifuInfo(path, isError = true)
+            }
+        }
 
     override fun convertCsaToKifu(path: Path): Path {
         dev.irof.kifuzo.logic.parser.convertCsaToKifu(path)
