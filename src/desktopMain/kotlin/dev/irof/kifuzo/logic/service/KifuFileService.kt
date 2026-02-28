@@ -32,8 +32,7 @@ class KifuFileServiceImpl : KifuFileService {
         private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss")
         private const val SAMPLE_LINES_FOR_EXTENSION_DETECTION = 20
-        private const val DEFAULT_EVENT_NAME = "unknown_event"
-        private const val DEFAULT_PLAYER_NAME = "unknown"
+        private const val DEFAULT_VALUE = "unknown"
     }
 
     override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> {
@@ -117,26 +116,12 @@ class KifuFileServiceImpl : KifuFileService {
     }
 
     private fun generateProposedNameFromInfo(info: KifuInfo, template: String, extension: String, dt: LocalDateTime): String? {
-        val yyyymmdd = dt.format(DATE_FORMATTER)
-        val hhmmss = dt.format(TIME_FORMATTER)
-        val event = sanitizeFilename(info.event).ifEmpty { DEFAULT_EVENT_NAME }
-        val sente = sanitizeFilename(info.senteName).ifEmpty { DEFAULT_PLAYER_NAME }
-        val gote = sanitizeFilename(info.goteName).ifEmpty { DEFAULT_PLAYER_NAME }
-
-        // 日本語・英語両方のプレースホルダーに対応。
-        // もし template が極端に短い（例: "{先手}" だけ）場合でも置換は行われますが、
-        // ユーザーの要望は特定の詳細形式なので、template が期待されたものでない場合の挙動を注意深く見守る必要があります。
         val replacements = mapOf(
-            "{開始日の年月日}" to yyyymmdd,
-            "{YYYYMMDD}" to yyyymmdd,
-            "{開始日の時分秒}" to hhmmss,
-            "{HHMMSS}" to hhmmss,
-            "{棋戦名}" to event,
-            "{Event}" to event,
-            "{先手}" to sente,
-            "{Sente}" to sente,
-            "{後手}" to gote,
-            "{Gote}" to gote,
+            "{開始日の年月日}" to dt.format(DATE_FORMATTER),
+            "{開始日の時分秒}" to dt.format(TIME_FORMATTER),
+            "{棋戦名}" to sanitizeFilename(info.event).ifEmpty { DEFAULT_VALUE },
+            "{先手}" to sanitizeFilename(info.senteName).ifEmpty { DEFAULT_VALUE },
+            "{後手}" to sanitizeFilename(info.goteName).ifEmpty { DEFAULT_VALUE },
         )
 
         var resultName = template
@@ -144,27 +129,16 @@ class KifuFileServiceImpl : KifuFileService {
             resultName = resultName.replace(key, value)
         }
 
-        // もし置換が全く行われず、結果が template と同じ（かつプレースホルダーが残っている）場合は
-        // デフォルト形式を強制適用する（セーフガード）
-        if (resultName == template && template.contains("{")) {
-            resultName = "${yyyymmdd}_${hhmmss}_${event}_${sente}_$gote"
-        }
-
-        logger.info { "Generated proposed name: $resultName.$extension (using template: $template)" }
         return "$resultName.$extension"
     }
 
     @Suppress("TooGenericExceptionCaught")
     private fun parseStartTime(startTime: String): LocalDateTime = try {
-        // "2026/02/21 12:00:00" または "2026/02/21" などの形式を想定
         val datePart = startTime.substringBefore(" ").replace("/", "-")
         val timePart = startTime.substringAfter(" ", "00:00:00")
         LocalDateTime.parse("${datePart}T$timePart")
-    } catch (e: java.time.format.DateTimeParseException) {
+    } catch (e: Exception) {
         logger.debug(e) { "Failed to parse startTime: $startTime" }
-        LocalDateTime.now()
-    } catch (e: IndexOutOfBoundsException) {
-        logger.debug(e) { "Invalid startTime format: $startTime" }
         LocalDateTime.now()
     }
 
