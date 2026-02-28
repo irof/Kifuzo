@@ -10,9 +10,12 @@ import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
 import dev.irof.kifuzo.logic.parser.parseHeader
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.ShogiBoardState
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
+
+private val logger = KotlinLogging.logger {}
 
 interface KifuParseService {
     fun parse(path: Path, state: ShogiBoardState)
@@ -27,10 +30,35 @@ class KifuParseServiceImpl : KifuParseService {
     }
 
     override fun parse(path: Path, state: ShogiBoardState) {
-        if (path.extension.lowercase() == "csa") {
-            parseCsa(path, state)
-        } else {
-            parseKifu(path, state)
+        val lines = readLinesWithEncoding(path)
+        if (lines.isEmpty()) throw KifuParseException("ファイルが空です。")
+
+        val sample = lines.take(SAMPLE_LINES_FOR_FORMAT_DETECTION)
+        val isCsa = isCsaFormat(sample)
+        val isKif = isKifFormat(sample)
+        val ext = path.extension.lowercase()
+
+        when {
+            isCsa -> {
+                if (ext != "csa") {
+                    logger.warn { "File extension is .$ext but content seems to be CSA: $path" }
+                }
+                parseCsa(lines, state)
+            }
+            isKif -> {
+                if (ext == "csa") {
+                    throw KifuParseException("ファイル名が .csa ですが、中身は KIF 形式のようです。拡張子を .kifu に変更するか、右クリックメニューから「強制的にKIFとして読み込む」を試してください。")
+                }
+                parseKifu(lines, state)
+            }
+            else -> {
+                // どちらとも判定できない場合は拡張子に従ってフォールバックを試みる
+                if (ext == "csa") {
+                    parseCsa(lines, state)
+                } else {
+                    parseKifu(lines, state)
+                }
+            }
         }
     }
 

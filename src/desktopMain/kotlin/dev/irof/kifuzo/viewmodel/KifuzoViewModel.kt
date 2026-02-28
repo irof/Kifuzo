@@ -255,19 +255,7 @@ class KifuzoViewModel(
 
     private fun handlePasteAction(action: KifuzoAction): Boolean {
         when (action) {
-            is KifuzoAction.PasteKifu -> {
-                val text = dev.irof.kifuzo.utils.getFromClipboard()
-                if (text.isNullOrBlank()) {
-                    uiState = uiState.copy(errorMessage = "クリップボードが空です。")
-                } else {
-                    val proposedName = repository.generateProposedNameFromText(text, uiState.filenameTemplate)
-                    if (proposedName == null) {
-                        uiState = uiState.copy(errorMessage = "棋譜として認識できませんでした。", errorDetail = text.take(ERROR_DETAIL_PREVIEW_LENGTH))
-                    } else {
-                        uiState = uiState.copy(pastedKifuText = text, pastedKifuProposedName = proposedName)
-                    }
-                }
-            }
+            is KifuzoAction.PasteKifu -> performPasteKifu()
             is KifuzoAction.HideSavePastedKifuDialog -> uiState = uiState.copy(pastedKifuText = null, pastedKifuProposedName = null)
             is KifuzoAction.SavePastedKifu -> {
                 currentRootDirectory?.let {
@@ -278,6 +266,32 @@ class KifuzoViewModel(
             else -> return false
         }
         return true
+    }
+
+    private fun performPasteKifu() {
+        val text = dev.irof.kifuzo.utils.getFromClipboard()
+        if (text.isNullOrBlank()) {
+            uiState = uiState.copy(errorMessage = "クリップボードが空です。")
+            return
+        }
+
+        try {
+            val proposedName = repository.generateProposedNameFromText(text, uiState.filenameTemplate)
+            if (proposedName == null) {
+                uiState = uiState.copy(errorMessage = "棋譜として認識できませんでした。", errorDetail = text.take(ERROR_DETAIL_PREVIEW_LENGTH))
+            } else {
+                uiState = uiState.copy(pastedKifuText = text, pastedKifuProposedName = proposedName)
+            }
+        } catch (cause: Exception) {
+            uiState = uiState.copy(errorMessage = "棋譜の解析に失敗しました。", errorDetail = formatThrowable(cause))
+        }
+    }
+
+    @Suppress("PrintStackTrace")
+    private fun formatThrowable(t: Throwable): String {
+        val sw = java.io.StringWriter()
+        t.printStackTrace(java.io.PrintWriter(sw))
+        return "$sw"
     }
 
     fun refreshFiles() {

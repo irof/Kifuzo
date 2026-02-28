@@ -1,15 +1,27 @@
 package dev.irof.kifuzo.ui.dialogs
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.irof.kifuzo.models.AppSettings
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
@@ -147,8 +159,32 @@ private fun MessageDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(msg) },
+        title = { Text(title, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            ) {
+                Text(msg)
+                if (errorDetail != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .background(Color.LightGray.copy(alpha = 0.2f))
+                            .padding(4.dp),
+                    ) {
+                        val scrollState = rememberScrollState()
+                        Text(
+                            text = errorDetail,
+                            modifier = Modifier.verticalScroll(scrollState),
+                            style = MaterialTheme.typography.caption,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    }
+                }
+            }
+        },
         buttons = {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.Spacing.Medium),
@@ -156,7 +192,7 @@ private fun MessageDialog(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (errorMessage != null) {
-                    androidx.compose.material.OutlinedButton(
+                    OutlinedButton(
                         onClick = { copyToClipboard(copyText) },
                         modifier = Modifier.padding(end = 8.dp),
                     ) {

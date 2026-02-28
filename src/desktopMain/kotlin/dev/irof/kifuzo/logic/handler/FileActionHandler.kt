@@ -45,6 +45,7 @@ class FileActionHandler(
         executeParse(path) { repository.parseManually(it, boardState) }
     }
 
+    @Suppress("PrintStackTrace")
     private fun executeParse(path: Path, parseAction: (Path) -> Unit) {
         try {
             parseAction(path)
@@ -52,7 +53,14 @@ class FileActionHandler(
         } catch (cause: Exception) {
             boardState.clear()
             val message = if (cause is KifuParseException) "棋譜パースエラー" else "ファイルの読み込みに失敗しました"
-            onError(message, cause.message)
+            val detail = if (cause is KifuParseException) {
+                cause.message
+            } else {
+                val sw = java.io.StringWriter()
+                cause.printStackTrace(java.io.PrintWriter(sw))
+                "${cause.message}\n\n$sw"
+            }
+            onError(message, detail)
         }
     }
 
