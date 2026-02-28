@@ -348,20 +348,23 @@ class KifuzoViewModel(
     @Suppress("TooGenericExceptionCaught")
     private fun scanKifuInfos(root: Path) {
         // 棋譜情報のスキャン（対局者名、開始日時など）
+        // 階層表示の場合は現在見えている（展開済みの）ディレクトリのみ、
+        // フラット表示の場合はルート直下のみをスキャン対象とする。
         scope.launch {
             uiState = uiState.copy(isScanning = true)
             try {
+                val targetDirs = getScanTargetDirectories(root)
                 val allKifuFiles = mutableListOf<Path>()
+
                 withContext(Dispatchers.IO) {
-                    try {
-                        java.nio.file.Files.walkFileTree(
-                            root,
-                            java.util.EnumSet.noneOf(java.nio.file.FileVisitOption::class.java),
-                            SCAN_DEPTH,
-                            KifuInfoVisitor(root, allKifuFiles),
-                        )
-                    } catch (e: Exception) {
-                        logger.warn(e) { "Failed to walk directory for kifu infos: $root" }
+                    targetDirs.forEach { dir ->
+                        try {
+                            java.nio.file.Files.list(dir).use { stream ->
+                                stream.filter { isKifuFile(it) }.forEach { allKifuFiles.add(it) }
+                            }
+                        } catch (e: Exception) {
+                            logger.warn(e) { "Failed to list directory for kifu infos: $dir" }
+                        }
                     }
                 }
                 val infos = withContext(Dispatchers.IO) { repository.getKifuInfos(allKifuFiles) }
@@ -374,23 +377,18 @@ class KifuzoViewModel(
         }
     }
 
-    private class KifuInfoVisitor(private val root: Path, private val allKifuFiles: MutableList<Path>) : java.nio.file.SimpleFileVisitor<Path>() {
-        override fun visitFile(file: Path, attrs: java.nio.file.attribute.BasicFileAttributes): java.nio.file.FileVisitResult {
-            if (file.name.startsWith(".")) return java.nio.file.FileVisitResult.CONTINUE
-            if (file.extension.lowercase() in listOf("kifu", "kif", "csa")) {
-                allKifuFiles.add(file)
-            }
-            return java.nio.file.FileVisitResult.CONTINUE
-        }
+    private fun getScanTargetDirectories(root: Path): List<Path> = if (uiState.viewMode == FileViewMode.HIERARCHY) {
+        // ルート + 展開済みのディレクトリ
+        listOf(root) + uiState.treeNodes.filter { it.isDirectory && it.isExpanded }.map { it.path }
+    } else {
+        listOf(root)
+    }
 
-        override fun preVisitDirectory(dir: Path, attrs: java.nio.file.attribute.BasicFileAttributes): java.nio.file.FileVisitResult {
-            if (dir != root && dir.name.startsWith(".")) return java.nio.file.FileVisitResult.SKIP_SUBTREE
-            return java.nio.file.FileVisitResult.CONTINUE
-        }
-
-        override fun visitFileFailed(file: Path, exc: java.io.IOException): java.nio.file.FileVisitResult {
-            logger.debug(exc) { "Failed to visit file or directory for kifu infos: $file" }
-            return java.nio.file.FileVisitResult.CONTINUE
-        }
+    @Suppress("TooGenericExceptionCaught")
+    private fun isKifuFile(path: Path): Boolean = try {
+        !path.name.startsWith(".") && path.isRegularFile() && (path.extension.lowercase() in listOf("kifu", "kif", "csa"))
+    } catch (e: Exception) {
+        logger.debug(e) { "Failed to check if kifu file: $path" }
+        false
     }
 }
