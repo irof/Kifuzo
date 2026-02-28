@@ -46,6 +46,9 @@ class FileTreeManager(
         return newNodes
     }
 
+    // ディレクトリ判定等の OS 依存のファイル操作において、
+    // 権限や特殊なファイル形式により発生しうる様々な例外を一括で捕捉して
+    // 安全にスキップ（false を返却）するために Exception をキャッチしています。
     @Suppress("TooGenericExceptionCaught")
     private fun traverse(
         dir: Path,
@@ -157,6 +160,8 @@ class FileTreeManager(
     /**
      * 指定されたノードの開閉状態を切り替え、新しいツリーリストを返します。
      */
+    // 子ノードの取得やディレクトリ判定において、
+    // ファイルシステム起因の例外を一括で捕捉して安全にフォールバックするために Exception をキャッチしています。
     @Suppress("TooGenericExceptionCaught")
     fun toggleNode(node: FileTreeNode, currentNodes: List<FileTreeNode>, sortOption: FileSortOption = FileSortOption.NAME): List<FileTreeNode> {
         val index = if (node.isDirectory) currentNodes.indexOfFirst { it.path == node.path } else -1

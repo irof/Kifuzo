@@ -116,6 +116,9 @@ class KifuFileServiceImpl : KifuFileService {
         return "$resultName.$extension"
     }
 
+    // 棋譜内の自由な形式の開始日時をパースするため、
+    // 発生しうる様々な例外（DateTimeParseException, IndexOutOfBoundsException等）を一括で捕捉して
+    // フォールバック（現在日時）を適用するために Exception をキャッチしています。
     @Suppress("TooGenericExceptionCaught")
     private fun parseStartTime(startTime: String): LocalDateTime = try {
         val datePart = startTime.substringBefore(" ").replace("/", "-")

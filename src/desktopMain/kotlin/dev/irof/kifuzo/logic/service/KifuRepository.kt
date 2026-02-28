@@ -16,6 +16,8 @@ import java.nio.file.Path
 /**
  * 棋譜に関する全ての操作を提供する統合リポジトリ。
  * 内部的には個別のサービス（FileService, ParseService, ImportService）に処理を委譲します。
+ * UI層からのアクセスの利便性と、棋譜ドメインの操作をこのインターフェースに集約させるため、
+ * あえて多くのメソッドを公開しています。
  */
 @Suppress("TooManyFunctions")
 interface KifuRepository {
@@ -34,6 +36,10 @@ interface KifuRepository {
     fun importQuestFiles(sourceDir: Path, targetDir: Path): Int
 }
 
+/**
+ * KifuRepository の標準実装。
+ * 複数の専門的なサービスを統合して Facade として機能するため、意図的に多くのメソッドを実装しています。
+ */
 @Suppress("TooManyFunctions")
 class KifuRepositoryImpl(
     private val fileService: KifuFileService = KifuFileServiceImpl(),

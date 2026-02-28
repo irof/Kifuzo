@@ -29,6 +29,11 @@ import kotlin.io.path.nameWithoutExtension
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * Kifuzo アプリケーションのメインとなる ViewModel。
+ * 画面全体の状態管理および多岐にわたる UI 操作（ファイル、設定、盤面、インポートなど）を単一のクラスで集約・ハンドリングしているため、
+ * 公開メソッドおよびプライベートなハンドラーメソッドの数が規定数を超えています。
+ */
 @Suppress("TooManyFunctions")
 class KifuzoViewModel(
     private val repository: KifuRepository = KifuRepositoryImpl(),
@@ -103,6 +108,8 @@ class KifuzoViewModel(
         }
     }
 
+    // ディレクトリ走査や展開において、OSやファイルシステム起因の例外（権限エラー等）を一括で捕捉し、
+    // 安全にエラーメッセージとして UI に通知するために Exception をキャッチしています。
     @Suppress("TooGenericExceptionCaught")
     private fun handleFileTreeAction(action: KifuzoAction): Boolean {
         when (action) {
@@ -170,6 +177,8 @@ class KifuzoViewModel(
 
     private fun handleFileEditAction(action: KifuzoAction): Boolean = handleRenameAction(action) || handleConversionAction(action) || handleMetadataAction(action)
 
+    // リネームダイアログ表示時のファイル読み込み等で発生しうる例外を一括で捕捉し、
+    // 安全にデフォルト値へフォールバックさせるために Exception をキャッチしています。
     @Suppress("TooGenericExceptionCaught")
     private fun handleRenameAction(action: KifuzoAction): Boolean {
         when (action) {
@@ -306,6 +315,8 @@ class KifuzoViewModel(
         }
     }
 
+    // 例外のスタックトレースを StringWriter 経由で文字列として取得し、
+    // エラーダイアログの詳細情報に表示するために printStackTrace を使用しています。
     @Suppress("PrintStackTrace")
     private fun formatThrowable(t: Throwable): String {
         val sw = java.io.StringWriter()
@@ -329,6 +340,7 @@ class KifuzoViewModel(
         scanKifuInfos(root)
     }
 
+    // フォルダ走査時の例外を UI に通知するために Exception を一括でキャッチしています。
     @Suppress("TooGenericExceptionCaught")
     private fun refreshHierarchy(root: Path, filters: Set<FileFilter>, sortOption: FileSortOption) {
         try {
@@ -343,6 +355,7 @@ class KifuzoViewModel(
         }
     }
 
+    // フラットリスト構築時の例外を UI に通知するために Exception を一括でキャッチしています。
     @Suppress("TooGenericExceptionCaught")
     private fun refreshFlatList(root: Path, filters: Set<FileFilter>, sortOption: FileSortOption) {
         scope.launch {
@@ -366,6 +379,8 @@ class KifuzoViewModel(
         }
     }
 
+    // 棋譜情報の非同期スキャンにおいて、個別のファイルアクセス失敗等で全体の処理を止めないよう、
+    // また失敗を安全にハンドリングするために Exception をキャッチしています。
     @Suppress("TooGenericExceptionCaught")
     private fun scanKifuInfos(root: Path) {
         // 棋譜情報のスキャン（対局者名、開始日時など）
@@ -405,6 +420,8 @@ class KifuzoViewModel(
         listOf(root)
     }
 
+    // 個別のファイル判定における OS 起因の例外を一括で捕捉し、
+    // 安全にスキップ（false を返却）するために Exception をキャッチしています。
     @Suppress("TooGenericExceptionCaught")
     private fun isKifuFile(path: Path): Boolean = try {
         !path.name.startsWith(".") && path.isRegularFile() && (path.extension.lowercase() in listOf("kifu", "kif", "csa"))

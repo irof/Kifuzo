@@ -50,6 +50,8 @@ private const val ICON_ALPHA_INACTIVE = 0.6f
 
 /**
  * 棋譜プレビューパネルでの操作を抽象化するインターフェース。
+ * プレビュー画面でのインタラクションが多く、ViewModel へのディスパッチを一つのインターフェースに集約させているため、
+ * メソッド数が規定数を超えています。
  */
 @Suppress("TooManyFunctions")
 interface KifuPreviewActions {

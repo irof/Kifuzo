@@ -45,6 +45,8 @@ class FileActionHandler(
         executeParse(path) { repository.parseManually(it, boardState) }
     }
 
+    // 例外のスタックトレースを StringWriter 経由で文字列として取得し、
+    // エラーダイアログの詳細情報に表示するために printStackTrace を使用しています。
     @Suppress("PrintStackTrace")
     private fun executeParse(path: Path, parseAction: (Path) -> Unit) {
         try {
