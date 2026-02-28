@@ -39,6 +39,7 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
     - Automatically renames files to `{YYYYMMDD}-{Sente}-{Gote}.csa` based on game metadata and file timestamps.
     - Remembers the last used import source directory in application settings.
 - **Clipboard Integration:** Buttons to copy kifu text or error logs for easy sharing.
+    - **Pasted Kifu Support:** Allows pasting game records directly from the clipboard. Automatically detects KIF or CSA format, parses the content, and provides a "Save As" dialog with a proposed filename based on the metadata. Supports saving to the current root directory.
 
 ## Building and Running
 
@@ -102,6 +103,7 @@ The project uses **Gradle** as the build tool.
 - **Bug Fixing:** You MUST empirically reproduce the reported failure with a new test case or reproduction script before applying a fix. Fulfill the user's request thoroughly, including adding tests when fixing bugs to prevent regressions.
 - **UI Framework:** Jetpack Compose (Desktop).
 - **State Management:** Uses a **ViewModel** pattern with `UiState` and `Action` objects for predictable state transitions.
+    - Large handler methods in the ViewModel are split into smaller logical units (e.g., `handleFileSelectAction`, `handleFileEditAction`, `handleUiAction`) to manage complexity and comply with static analysis (Detekt).
 - **Error Handling:** Do not swallow exceptions silently. Use `KifuParseException` to propagate errors (line numbers, content) to the UI. For bulk processing, record error states (e.g., `isError` in `KifuInfo`) to ensure visibility for the user.
 - **Parsing:** Primarily uses Regex and line-by-line processing for game records.
 - **Encoding:** Standardizes on **UTF-8** for all file operations.

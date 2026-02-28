@@ -9,6 +9,7 @@ import dev.irof.kifuzo.logic.parser.kif.parseKifu
 import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
 import dev.irof.kifuzo.logic.parser.parseHeader
 import dev.irof.kifuzo.models.FileSortOption
+import dev.irof.kifuzo.models.KifuInfo
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.IOException
 import java.nio.file.Files
@@ -24,6 +25,7 @@ interface KifuFileService {
     fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path>
     fun renameFile(path: Path, newName: String): Path?
     fun generateProposedName(path: Path, template: String): String?
+    fun generateProposedNameFromText(text: String, template: String): String?
     fun updateResult(path: Path, result: String)
     fun updateHeader(path: Path, event: String, startTime: String)
 }
@@ -71,6 +73,19 @@ class KifuFileServiceImpl : KifuFileService {
 
     override fun generateProposedName(path: Path, template: String): String? {
         val info = scanKifuInfo(path)
+        return generateProposedNameFromInfo(info, template, path.extension.ifEmpty { "kifu" })
+    }
+
+    override fun generateProposedNameFromText(text: String, template: String): String? {
+        val info = scanKifuInfo(text.lines())
+        if (info.isError) return null
+
+        // 形式を判定して拡張子を決める
+        val extension = if (text.lines().any { it.startsWith("V") || it.startsWith("+") || it.startsWith("-") }) "csa" else "kifu"
+        return generateProposedNameFromInfo(info, template, extension)
+    }
+
+    private fun generateProposedNameFromInfo(info: KifuInfo, template: String, extension: String): String? {
         if (info.isError) return null
 
         // "2026/02/21 12:00:00" -> "20260221"
@@ -81,7 +96,7 @@ class KifuFileServiceImpl : KifuFileService {
             .replace("{YYYYMMDD}", yyyymmdd)
             .replace("{Sente}", info.senteName.ifEmpty { "unknown" })
             .replace("{Gote}", info.goteName.ifEmpty { "unknown" })
-            .let { it + "." + path.extension }
+            .let { "$it.$extension" }
     }
 
     override fun updateResult(path: Path, result: String) {

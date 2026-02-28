@@ -37,3 +37,11 @@ fun readLinesWithEncoding(path: Path): List<String> {
         lines
     }
 }
+
+/**
+ * 棋譜テキストをファイルに書き込みます。
+ * 常に UTF-8 を使用します。
+ */
+fun writeTextToFile(path: Path, text: String) {
+    java.nio.file.Files.writeString(path, text, Charsets.UTF_8)
+}

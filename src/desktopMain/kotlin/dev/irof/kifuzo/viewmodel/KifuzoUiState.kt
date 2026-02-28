@@ -31,4 +31,6 @@ data class KifuzoUiState(
     val renameTarget: Path? = null,
     val proposedRenameName: String? = null,
     val editMetadataTarget: Path? = null,
+    val pastedKifuText: String? = null,
+    val pastedKifuProposedName: String? = null,
 )

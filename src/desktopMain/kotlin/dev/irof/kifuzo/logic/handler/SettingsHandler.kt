@@ -17,7 +17,8 @@ class SettingsHandler(
     private val onAutoFlip: (Boolean) -> Unit,
 ) {
     fun renameWithTemplate(path: Path, template: String) {
-        val newPath = repository.renameKifuFile(path, template)
+        val proposedName = repository.generateProposedName(path, template) ?: return
+        val newPath = repository.renameFileTo(path, proposedName)
         if (newPath != null) {
             onFilesChanged()
         }

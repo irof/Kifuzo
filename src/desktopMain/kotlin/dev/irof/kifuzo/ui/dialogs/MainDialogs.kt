@@ -35,6 +35,7 @@ fun KifuzoDialogs(viewModel: KifuzoViewModel) {
     SettingsDialogWrapper(viewModel)
     ImportDialogWrapper(viewModel)
     RenameDialogWrapper(viewModel)
+    SavePastedKifuDialogWrapper(viewModel)
     TextViewerDialogWrapper(viewModel)
     EditMetadataDialogWrapper(viewModel)
 }
@@ -85,6 +86,18 @@ private fun RenameDialogWrapper(viewModel: KifuzoViewModel) {
             proposedName = state.proposedRenameName,
             onDismiss = { viewModel.dispatch(KifuzoAction.HideRenameDialog) },
             onConfirm = { viewModel.dispatch(KifuzoAction.PerformRename(state.renameTarget, it)) },
+        )
+    }
+}
+
+@Composable
+private fun SavePastedKifuDialogWrapper(viewModel: KifuzoViewModel) {
+    val state = viewModel.uiState
+    if (state.pastedKifuText != null && state.pastedKifuProposedName != null) {
+        SavePastedKifuDialog(
+            proposedName = state.pastedKifuProposedName,
+            onDismiss = { viewModel.dispatch(KifuzoAction.HideSavePastedKifuDialog) },
+            onConfirm = { viewModel.dispatch(KifuzoAction.SavePastedKifu(it, state.pastedKifuText)) },
         )
     }
 }

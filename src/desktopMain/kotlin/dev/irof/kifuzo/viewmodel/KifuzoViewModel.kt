@@ -28,12 +28,14 @@ import kotlin.io.path.nameWithoutExtension
 
 private val logger = KotlinLogging.logger {}
 
+@Suppress("TooManyFunctions")
 class KifuzoViewModel(
     private val repository: KifuRepository = KifuRepositoryImpl(),
     private val fileTreeManager: FileTreeManager = FileTreeManager(repository),
 ) {
     companion object {
         private const val SCAN_DEPTH = 3
+        private const val ERROR_DETAIL_PREVIEW_LENGTH = 100
     }
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -42,18 +44,18 @@ class KifuzoViewModel(
     private val fileActionHandler = FileActionHandler(
         repository = repository,
         boardState = boardState,
-        onError = { msg, detail -> updateState { it.copy(errorMessage = msg, errorDetail = detail) } },
-        onInfo = { msg -> updateState { it.copy(infoMessage = msg) } },
-        onFileRenamed = { path -> updateState { it.copy(selectedFile = path) } },
+        onError = { msg, detail -> uiState = uiState.copy(errorMessage = msg, errorDetail = detail) },
+        onInfo = { msg -> uiState = uiState.copy(infoMessage = msg) },
+        onFileRenamed = { path -> uiState = uiState.copy(selectedFile = path) },
         onFilesChanged = { refreshFiles() },
         onAutoFlip = { settingsHandler.updateAutoFlip(uiState.myNameRegex) },
     )
 
     private val importHandler = ImportHandler(
         repository = repository,
-        onInfo = { msg -> updateState { it.copy(infoMessage = msg) } },
+        onInfo = { msg -> uiState = uiState.copy(infoMessage = msg) },
         onImported = {
-            updateState { it.copy(showImportDialog = false) }
+            uiState = uiState.copy(showImportDialog = false)
             refreshFiles()
         },
     )
@@ -62,7 +64,7 @@ class KifuzoViewModel(
         repository = repository,
         boardState = boardState,
         onFilesChanged = { refreshFiles() },
-        onAutoFlip = { flipped -> updateState { it.copy(isFlipped = flipped) } },
+        onAutoFlip = { flipped -> uiState = uiState.copy(isFlipped = flipped) },
     )
 
     var currentRootDirectory by mutableStateOf<Path?>(
@@ -91,7 +93,14 @@ class KifuzoViewModel(
             handleFileAction(action) ||
             handleUiAction(action)
         if (!handled) {
-            handleStepAction(action)
+            when (action) {
+                is KifuzoAction.ChangeStep -> boardState.currentStep = action.step
+                is KifuzoAction.NextStep -> boardState.currentStep++
+                is KifuzoAction.PrevStep -> boardState.currentStep--
+                is KifuzoAction.SelectVariation -> boardState.switchHistory(action.moves)
+                is KifuzoAction.ResetToMainHistory -> boardState.resetToMainHistory()
+                else -> {}
+            }
         }
     }
 
@@ -100,24 +109,24 @@ class KifuzoViewModel(
             is KifuzoAction.SetRootDirectory -> {
                 currentRootDirectory = action.path
                 AppSettings.lastRootDir = action.path.toString()
-                updateState { it.copy(treeNodes = emptyList()) }
+                uiState = uiState.copy(treeNodes = emptyList())
                 refreshFiles()
             }
             is KifuzoAction.ToggleDirectory -> {
                 val newNodes = fileTreeManager.toggleNode(action.node, uiState.treeNodes, uiState.fileSortOption)
-                updateState { it.copy(treeNodes = newNodes) }
+                uiState = uiState.copy(treeNodes = newNodes)
             }
             is KifuzoAction.SetViewMode -> {
-                updateState { it.copy(viewMode = action.mode) }
+                uiState = uiState.copy(viewMode = action.mode)
                 refreshFiles()
             }
             is KifuzoAction.SetFileSortOption -> {
                 AppSettings.fileSortOption = action.option
-                updateState { it.copy(fileSortOption = action.option) }
+                uiState = uiState.copy(fileSortOption = action.option)
                 refreshFiles()
             }
             is KifuzoAction.ToggleFileFilter -> {
-                updateState {
+                uiState = uiState.let {
                     val newFilters = if (it.fileFilters.contains(action.filter)) it.fileFilters - action.filter else it.fileFilters + action.filter
                     it.copy(fileFilters = newFilters)
                 }
@@ -129,38 +138,14 @@ class KifuzoViewModel(
         return true
     }
 
-    private fun handleFileAction(action: KifuzoAction): Boolean {
+    private fun handleFileAction(action: KifuzoAction): Boolean = handleFileSelectAction(action) || handleFileEditAction(action)
+
+    private fun handleFileSelectAction(action: KifuzoAction): Boolean {
         when (action) {
-            is KifuzoAction.SelectFile,
-            is KifuzoAction.SelectNextFile,
-            is KifuzoAction.SelectPrevFile,
-            -> handleSelectionAction(action)
-
-            is KifuzoAction.ShowRenameDialog,
-            is KifuzoAction.HideRenameDialog,
-            is KifuzoAction.PerformRename,
-            -> handleRenameAction(action)
-
-            is KifuzoAction.ConvertCsa,
-            is KifuzoAction.ForceParseAsKifu,
-            is KifuzoAction.ConfirmOverwrite,
-            is KifuzoAction.HideOverwriteConfirm,
-            -> handleConversionAction(action)
-
-            is KifuzoAction.WriteGameResult,
-            is KifuzoAction.UpdateMetadata,
-            is KifuzoAction.ShowEditMetadataDialog,
-            is KifuzoAction.HideEditMetadataDialog,
-            -> handleMetadataAction(action)
-
-            else -> return false
-        }
-        return true
-    }
-
-    private fun handleSelectionAction(action: KifuzoAction) {
-        when (action) {
-            is KifuzoAction.SelectFile -> fileActionHandler.selectFile(action.path).also { updateState { it.copy(selectedFile = action.path) } }
+            is KifuzoAction.SelectFile -> {
+                fileActionHandler.selectFile(action.path)
+                uiState = uiState.copy(selectedFile = action.path)
+            }
             is KifuzoAction.SelectNextFile, is KifuzoAction.SelectPrevFile -> {
                 val forward = action is KifuzoAction.SelectNextFile
                 val nodes = uiState.treeNodes
@@ -169,35 +154,39 @@ class KifuzoViewModel(
                     val targetIndices = if (forward) (currentIndex + 1 until nodes.size) else (currentIndex - 1 downTo 0)
                     targetIndices.asSequence().map { nodes[it] }.firstOrNull { !it.isDirectory }?.let { node ->
                         fileActionHandler.selectFile(node.path)
-                        updateState { it.copy(selectedFile = node.path) }
+                        uiState = uiState.copy(selectedFile = node.path)
                     }
                 }
             }
-            else -> {}
+            else -> return false
         }
+        return true
     }
 
-    private fun handleRenameAction(action: KifuzoAction) {
+    private fun handleFileEditAction(action: KifuzoAction): Boolean = handleRenameAction(action) || handleConversionAction(action) || handleMetadataAction(action)
+
+    private fun handleRenameAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.ShowRenameDialog -> {
                 val proposedName = repository.generateProposedName(action.path, uiState.filenameTemplate) ?: action.path.fileName.toString()
-                updateState { it.copy(renameTarget = action.path, proposedRenameName = proposedName) }
+                uiState = uiState.copy(renameTarget = action.path, proposedRenameName = proposedName)
             }
-            is KifuzoAction.HideRenameDialog -> updateState { it.copy(renameTarget = null, proposedRenameName = null) }
+            is KifuzoAction.HideRenameDialog -> uiState = uiState.copy(renameTarget = null, proposedRenameName = null)
             is KifuzoAction.PerformRename -> {
                 fileActionHandler.performRename(action.path, action.newName)
-                updateState { it.copy(renameTarget = null, proposedRenameName = null) }
+                uiState = uiState.copy(renameTarget = null, proposedRenameName = null)
             }
-            else -> {}
+            else -> return false
         }
+        return true
     }
 
-    private fun handleConversionAction(action: KifuzoAction) {
+    private fun handleConversionAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.ConvertCsa -> {
                 val targetFile = (action.path.parent ?: action.path).resolve(action.path.nameWithoutExtension + ".kifu")
                 if (java.nio.file.Files.exists(targetFile)) {
-                    updateState { it.copy(showOverwriteConfirm = action.path) }
+                    uiState = uiState.copy(showOverwriteConfirm = action.path)
                 } else {
                     fileActionHandler.performCsaConversion(action.path)
                 }
@@ -206,67 +195,89 @@ class KifuzoViewModel(
             is KifuzoAction.ConfirmOverwrite -> {
                 uiState.showOverwriteConfirm?.let {
                     fileActionHandler.performCsaConversion(it)
-                    updateState { it.copy(showOverwriteConfirm = null) }
+                    uiState = uiState.copy(showOverwriteConfirm = null)
                 }
             }
-            is KifuzoAction.HideOverwriteConfirm -> updateState { it.copy(showOverwriteConfirm = null) }
-            else -> {}
+            is KifuzoAction.HideOverwriteConfirm -> uiState = uiState.copy(showOverwriteConfirm = null)
+            else -> return false
         }
+        return true
     }
 
-    private fun handleMetadataAction(action: KifuzoAction) {
+    private fun handleMetadataAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.WriteGameResult -> fileActionHandler.writeGameResult(action.path, action.result)
             is KifuzoAction.UpdateMetadata -> fileActionHandler.updateMetadata(action.path, action.event, action.startTime)
-            is KifuzoAction.ShowEditMetadataDialog -> updateState { it.copy(editMetadataTarget = action.path) }
-            is KifuzoAction.HideEditMetadataDialog -> updateState { it.copy(editMetadataTarget = null) }
-            else -> {}
+            is KifuzoAction.ShowEditMetadataDialog -> uiState = uiState.copy(editMetadataTarget = action.path)
+            is KifuzoAction.HideEditMetadataDialog -> uiState = uiState.copy(editMetadataTarget = null)
+            else -> return false
         }
+        return true
     }
 
-    private fun handleUiAction(action: KifuzoAction): Boolean {
+    private fun handleUiAction(action: KifuzoAction): Boolean = handleConfigAction(action) || handleDisplayAction(action) || handlePasteAction(action)
+
+    private fun handleConfigAction(action: KifuzoAction): Boolean {
         when (action) {
             is KifuzoAction.SaveSettings -> {
                 AppSettings.myNameRegex = action.regex
                 AppSettings.filenameTemplate = action.template
                 settingsHandler.updateAutoFlip(action.regex)
-                updateState { it.copy(myNameRegex = action.regex, filenameTemplate = action.template, showSettings = false) }
+                uiState = uiState.copy(myNameRegex = action.regex, filenameTemplate = action.template, showSettings = false)
             }
-            is KifuzoAction.SetViewingText -> updateState { it.copy(viewingText = action.text) }
-            is KifuzoAction.ToggleFlipped -> updateState { it.copy(isFlipped = !it.isFlipped) }
-            is KifuzoAction.ShowSettings -> updateState { it.copy(showSettings = action.show) }
-            is KifuzoAction.ShowImportDialog -> updateState { it.copy(showImportDialog = action.show) }
-            is KifuzoAction.ClearErrorAndInfo -> updateState { it.copy(errorMessage = null, errorDetail = null, infoMessage = null) }
+            is KifuzoAction.ShowSettings -> uiState = uiState.copy(showSettings = action.show)
+            is KifuzoAction.ShowImportDialog -> uiState = uiState.copy(showImportDialog = action.show)
             is KifuzoAction.ImportFiles -> currentRootDirectory?.let { importHandler.performImport(action.sourceDir, it) }
+            else -> return false
+        }
+        return true
+    }
+
+    private fun handleDisplayAction(action: KifuzoAction): Boolean {
+        when (action) {
+            is KifuzoAction.SetViewingText -> uiState = uiState.copy(viewingText = action.text)
+            is KifuzoAction.ToggleFlipped -> uiState = uiState.copy(isFlipped = !uiState.isFlipped)
+            is KifuzoAction.ClearErrorAndInfo -> uiState = uiState.copy(errorMessage = null, errorDetail = null, infoMessage = null)
             is KifuzoAction.UpdateSidebarWidth -> {
                 val newWidth = (uiState.sidebarWidth + action.delta).coerceIn(
                     dev.irof.kifuzo.models.AppConfig.MIN_SIDEBAR_WIDTH,
                     dev.irof.kifuzo.models.AppConfig.MAX_SIDEBAR_WIDTH,
                 )
                 AppSettings.sidebarWidth = newWidth
-                updateState { it.copy(sidebarWidth = newWidth) }
+                uiState = uiState.copy(sidebarWidth = newWidth)
             }
-            is KifuzoAction.ToggleSidebar -> updateState { it.copy(isSidebarVisible = !it.isSidebarVisible) }
-            is KifuzoAction.ToggleMoveList -> updateState { it.copy(isMoveListVisible = !it.isMoveListVisible) }
+            is KifuzoAction.ToggleSidebar -> uiState = uiState.copy(isSidebarVisible = !uiState.isSidebarVisible)
+            is KifuzoAction.ToggleMoveList -> uiState = uiState.copy(isMoveListVisible = !uiState.isMoveListVisible)
             else -> return false
         }
         return true
     }
 
-    private fun handleStepAction(action: KifuzoAction): Boolean {
+    private fun handlePasteAction(action: KifuzoAction): Boolean {
         when (action) {
-            is KifuzoAction.ChangeStep -> boardState.currentStep = action.step
-            is KifuzoAction.NextStep -> boardState.currentStep++
-            is KifuzoAction.PrevStep -> boardState.currentStep--
-            is KifuzoAction.SelectVariation -> boardState.switchHistory(action.moves)
-            is KifuzoAction.ResetToMainHistory -> boardState.resetToMainHistory()
+            is KifuzoAction.PasteKifu -> {
+                val text = dev.irof.kifuzo.utils.getFromClipboard()
+                if (text.isNullOrBlank()) {
+                    uiState = uiState.copy(errorMessage = "クリップボードが空です。")
+                } else {
+                    val proposedName = repository.generateProposedNameFromText(text, uiState.filenameTemplate)
+                    if (proposedName == null) {
+                        uiState = uiState.copy(errorMessage = "棋譜として認識できませんでした。", errorDetail = text.take(ERROR_DETAIL_PREVIEW_LENGTH))
+                    } else {
+                        uiState = uiState.copy(pastedKifuText = text, pastedKifuProposedName = proposedName)
+                    }
+                }
+            }
+            is KifuzoAction.HideSavePastedKifuDialog -> uiState = uiState.copy(pastedKifuText = null, pastedKifuProposedName = null)
+            is KifuzoAction.SavePastedKifu -> {
+                currentRootDirectory?.let {
+                    fileActionHandler.savePastedKifu(it, action.filename, action.text)
+                } ?: run { uiState = uiState.copy(errorMessage = "保存先ディレクトリが選択されていません。") }
+                uiState = uiState.copy(pastedKifuText = null, pastedKifuProposedName = null)
+            }
             else -> return false
         }
         return true
-    }
-
-    private fun updateState(update: (KifuzoUiState) -> KifuzoUiState) {
-        uiState = update(uiState)
     }
 
     fun refreshFiles() {
@@ -277,20 +288,20 @@ class KifuzoViewModel(
 
         if (mode == FileViewMode.HIERARCHY) {
             val newNodes = fileTreeManager.buildTree(root, uiState.treeNodes, filters, sortOption)
-            updateState { it.copy(treeNodes = newNodes) }
+            uiState = uiState.copy(treeNodes = newNodes)
         } else {
             scope.launch {
-                updateState { it.copy(isScanning = true) }
+                uiState = uiState.copy(isScanning = true)
                 val newNodes = withContext(Dispatchers.IO) {
                     fileTreeManager.buildFlatList(root, filters, sortOption)
                 }
-                updateState { it.copy(treeNodes = newNodes, isScanning = false) }
+                uiState = uiState.copy(treeNodes = newNodes, isScanning = false)
             }
         }
 
         // 棋譜情報のスキャン（対局者名、開始日時など）
         scope.launch {
-            updateState { it.copy(isScanning = true) }
+            uiState = uiState.copy(isScanning = true)
             val allKifuFiles = mutableListOf<Path>()
             withContext(Dispatchers.IO) {
                 java.nio.file.Files.walk(root, SCAN_DEPTH)
@@ -298,7 +309,7 @@ class KifuzoViewModel(
                     .forEach { allKifuFiles.add(it) }
             }
             val infos = withContext(Dispatchers.IO) { repository.getKifuInfos(allKifuFiles) }
-            updateState { it.copy(kifuInfos = infos, isScanning = false) }
+            uiState = uiState.copy(kifuInfos = infos, isScanning = false)
         }
     }
 }

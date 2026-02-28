@@ -26,8 +26,8 @@ interface KifuRepository {
     fun updateResult(path: Path, result: String)
     fun updateHeader(path: Path, event: String, startTime: String)
     fun generateProposedName(path: Path, template: String): String?
+    fun generateProposedNameFromText(text: String, template: String): String?
     fun renameFileTo(path: Path, newName: String): Path?
-    fun renameKifuFile(path: Path, template: String): Path?
     fun importQuestFiles(sourceDir: Path, targetDir: Path): Int
 }
 
@@ -53,12 +53,9 @@ class KifuRepositoryImpl(
 
     override fun generateProposedName(path: Path, template: String): String? = fileService.generateProposedName(path, template)
 
-    override fun renameFileTo(path: Path, newName: String): Path? = fileService.renameFile(path, newName)
+    override fun generateProposedNameFromText(text: String, template: String): String? = fileService.generateProposedNameFromText(text, template)
 
-    override fun renameKifuFile(path: Path, template: String): Path? {
-        val proposedName = generateProposedName(path, template) ?: return null
-        return renameFileTo(path, proposedName)
-    }
+    override fun renameFileTo(path: Path, newName: String): Path? = fileService.renameFile(path, newName)
 
     override fun importQuestFiles(sourceDir: Path, targetDir: Path): Int = importService.importQuestFiles(sourceDir, targetDir)
 }

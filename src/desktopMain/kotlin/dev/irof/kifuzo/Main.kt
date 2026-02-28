@@ -129,6 +129,7 @@ private fun RowScope.KifuzoMainLayout(viewModel: KifuzoViewModel) {
         isSidebarVisible = state.isSidebarVisible,
         onToggleSidebar = { viewModel.dispatch(KifuzoAction.ToggleSidebar) },
         onImport = { viewModel.dispatch(KifuzoAction.ShowImportDialog(true)) },
+        onPaste = { viewModel.dispatch(KifuzoAction.PasteKifu) },
         onShowSettings = { viewModel.dispatch(KifuzoAction.ShowSettings(true)) },
     )
 

@@ -30,6 +30,12 @@ sealed class KifuzoAction {
     data object HideEditMetadataDialog : KifuzoAction()
     data object ToggleSidebar : KifuzoAction()
     data object ToggleMoveList : KifuzoAction()
+
+    // 貼り付け
+    data object PasteKifu : KifuzoAction()
+    data object HideSavePastedKifuDialog : KifuzoAction()
+    data class SavePastedKifu(val filename: String, val text: String) : KifuzoAction()
+
     data class SetViewMode(val mode: FileViewMode) : KifuzoAction()
     data class SetFileSortOption(val option: FileSortOption) : KifuzoAction()
     data class ToggleFileFilter(val filter: FileFilter) : KifuzoAction()

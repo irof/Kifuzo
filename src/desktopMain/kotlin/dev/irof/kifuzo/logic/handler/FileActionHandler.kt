@@ -96,4 +96,17 @@ class FileActionHandler(
             onError("書込エラー", e.message)
         }
     }
+
+    fun savePastedKifu(root: Path, filename: String, text: String) {
+        try {
+            val targetPath = root.resolve(filename)
+            dev.irof.kifuzo.logic.io.writeTextToFile(targetPath, text)
+            onInfo("棋譜を保存しました: $filename")
+            onFileRenamed(targetPath)
+            onFilesChanged()
+        } catch (e: java.io.IOException) {
+            logger.error(e) { "Failed to save pasted kifu" }
+            onError("保存エラー", e.message)
+        }
+    }
 }

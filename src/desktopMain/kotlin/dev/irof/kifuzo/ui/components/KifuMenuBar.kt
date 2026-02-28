@@ -13,6 +13,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Input
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,6 +30,7 @@ fun KifuMenuBar(
     isSidebarVisible: Boolean,
     onToggleSidebar: () -> Unit,
     onImport: () -> Unit,
+    onPaste: () -> Unit,
     onShowSettings: () -> Unit,
 ) {
     Column(
@@ -55,6 +57,17 @@ fun KifuMenuBar(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Input,
                 contentDescription = AppStrings.IMPORT_KIFU,
+                tint = Color.Gray,
+            )
+        }
+
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
+
+        // 貼り付け
+        IconButton(onClick = onPaste) {
+            Icon(
+                imageVector = Icons.Default.ContentPaste,
+                contentDescription = AppStrings.PASTE_KIFU,
                 tint = Color.Gray,
             )
         }
