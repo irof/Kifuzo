@@ -21,7 +21,7 @@ data class KifuzoUiState(
     val showSettings: Boolean = false,
     val showImportDialog: Boolean = false,
     val myNameRegex: String = "",
-    val filenameTemplate: String = "{YYYYMMDD}-{Sente}-{Gote}",
+    val filenameTemplate: String = "{開始日の年月日}_{開始日の時分秒}_{棋戦名}_{先手}_{後手}",
     val isSidebarVisible: Boolean = true,
     val isMoveListVisible: Boolean = true,
     val sidebarWidth: Float = 250f,

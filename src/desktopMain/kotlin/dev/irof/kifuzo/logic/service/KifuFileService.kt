@@ -119,23 +119,29 @@ class KifuFileServiceImpl : KifuFileService {
     private fun generateProposedNameFromInfo(info: KifuInfo, template: String, extension: String, dt: LocalDateTime): String? {
         val yyyymmdd = dt.format(DATE_FORMATTER)
         val hhmmss = dt.format(TIME_FORMATTER)
+        val event = sanitizeFilename(info.event).ifEmpty { DEFAULT_EVENT_NAME }
+        val sente = sanitizeFilename(info.senteName).ifEmpty { DEFAULT_PLAYER_NAME }
+        val gote = sanitizeFilename(info.goteName).ifEmpty { DEFAULT_PLAYER_NAME }
 
-        logger.info { "Generating name with template: $template, info: $info, dt: $dt" }
+        // 日本語・英語両方のプレースホルダーに対応
+        val replacements = mapOf(
+            "{開始日の年月日}" to yyyymmdd,
+            "{YYYYMMDD}" to yyyymmdd,
+            "{開始日の時分秒}" to hhmmss,
+            "{HHMMSS}" to hhmmss,
+            "{棋戦名}" to event,
+            "{Event}" to event,
+            "{先手}" to sente,
+            "{Sente}" to sente,
+            "{後手}" to gote,
+            "{Gote}" to gote,
+        )
 
-        val name = template
-            .replace("{開始日の年月日}", yyyymmdd)
-            .replace("{開始日の時分秒}", hhmmss)
-            .replace("{棋戦名}", sanitizeFilename(info.event).ifEmpty { DEFAULT_EVENT_NAME })
-            .replace("{先手}", sanitizeFilename(info.senteName).ifEmpty { DEFAULT_PLAYER_NAME })
-            .replace("{後手}", sanitizeFilename(info.goteName).ifEmpty { DEFAULT_PLAYER_NAME })
-            // 互換性のために英語名も残しておく（任意）
-            .replace("{YYYYMMDD}", yyyymmdd)
-            .replace("{HHMMSS}", hhmmss)
-            .replace("{Event}", sanitizeFilename(info.event).ifEmpty { DEFAULT_EVENT_NAME })
-            .replace("{Sente}", sanitizeFilename(info.senteName).ifEmpty { DEFAULT_PLAYER_NAME })
-            .replace("{Gote}", sanitizeFilename(info.goteName).ifEmpty { DEFAULT_PLAYER_NAME })
+        var name = template
+        replacements.forEach { (key, value) ->
+            name = name.replace(key, value)
+        }
 
-        logger.info { "Generated name before extension: $name" }
         return "$name.$extension"
     }
 

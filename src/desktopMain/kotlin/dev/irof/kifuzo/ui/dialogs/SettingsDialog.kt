@@ -92,7 +92,7 @@ private fun FilenameTemplateSection(value: String, onValueChange: (String) -> Un
         TextField(
             value = value,
             onValueChange = onValueChange,
-            placeholder = { Text("例: {YYYYMMDD}-{Sente}-{Gote}") },
+            placeholder = { Text("例: {開始日の年月日}_{開始日の時分秒}_{棋戦名}_{先手}_{後手}") },
             modifier = Modifier.fillMaxWidth(),
         )
         Text(AppStrings.FILENAME_TEMPLATE_HINT, fontSize = ShogiDimensions.Text.Caption, color = Color.Gray)
