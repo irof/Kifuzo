@@ -123,7 +123,9 @@ class KifuFileServiceImpl : KifuFileService {
         val sente = sanitizeFilename(info.senteName).ifEmpty { DEFAULT_PLAYER_NAME }
         val gote = sanitizeFilename(info.goteName).ifEmpty { DEFAULT_PLAYER_NAME }
 
-        // 日本語・英語両方のプレースホルダーに対応
+        // 日本語・英語両方のプレースホルダーに対応。
+        // もし template が極端に短い（例: "{先手}" だけ）場合でも置換は行われますが、
+        // ユーザーの要望は特定の詳細形式なので、template が期待されたものでない場合の挙動を注意深く見守る必要があります。
         val replacements = mapOf(
             "{開始日の年月日}" to yyyymmdd,
             "{YYYYMMDD}" to yyyymmdd,
@@ -137,12 +139,19 @@ class KifuFileServiceImpl : KifuFileService {
             "{Gote}" to gote,
         )
 
-        var name = template
+        var resultName = template
         replacements.forEach { (key, value) ->
-            name = name.replace(key, value)
+            resultName = resultName.replace(key, value)
         }
 
-        return "$name.$extension"
+        // もし置換が全く行われず、結果が template と同じ（かつプレースホルダーが残っている）場合は
+        // デフォルト形式を強制適用する（セーフガード）
+        if (resultName == template && template.contains("{")) {
+            resultName = "${yyyymmdd}_${hhmmss}_${event}_${sente}_$gote"
+        }
+
+        logger.info { "Generated proposed name: $resultName.$extension (using template: $template)" }
+        return "$resultName.$extension"
     }
 
     @Suppress("TooGenericExceptionCaught")
