@@ -109,11 +109,11 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
 private fun handleKeyEvent(event: androidx.compose.ui.input.key.KeyEvent, viewModel: KifuzoViewModel): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
     return when (event.key) {
-        Key.DirectionRight -> {
+        Key.DirectionRight, Key.DirectionDown -> {
             viewModel.dispatch(KifuzoAction.NextStep)
             true
         }
-        Key.DirectionLeft -> {
+        Key.DirectionLeft, Key.DirectionUp -> {
             viewModel.dispatch(KifuzoAction.PrevStep)
             true
         }
