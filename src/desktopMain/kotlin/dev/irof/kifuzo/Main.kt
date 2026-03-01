@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -44,6 +46,12 @@ import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.viewmodel.KifuzoAction
 import dev.irof.kifuzo.viewmodel.KifuzoViewModel
 import java.awt.Cursor
+import java.awt.datatransfer.DataFlavor
+import java.awt.dnd.DnDConstants
+import java.awt.dnd.DropTarget
+import java.awt.dnd.DropTargetAdapter
+import java.awt.dnd.DropTargetDropEvent
+import java.io.File
 import java.nio.file.Path
 
 fun main() = application {
@@ -58,7 +66,7 @@ fun main() = application {
         state = windowState,
     ) {
         MaterialTheme {
-            KifuzoApp()
+            KifuzoApp(window)
         }
     }
 }
@@ -74,11 +82,44 @@ private fun rememberKifuzoWindowState(): androidx.compose.ui.window.WindowState 
 )
 
 @Composable
-fun KifuzoApp() {
+fun KifuzoApp(window: ComposeWindow) {
     val viewModel = remember { KifuzoViewModel() }
 
     LaunchedEffect(Unit) {
         viewModel.refreshFiles()
+    }
+
+    DisposableEffect(window) {
+        val target = DropTarget(
+            window,
+            object : DropTargetAdapter() {
+                override fun drop(event: DropTargetDropEvent) {
+                    try {
+                        if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                            event.acceptDrop(DnDConstants.ACTION_COPY)
+                            val files = event.transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
+                            val file = files.firstOrNull() as? File
+                            if (file != null) {
+                                viewModel.dispatch(KifuzoAction.FileDrop(file.toPath()))
+                            }
+                            event.dropComplete(true)
+                        } else {
+                            event.rejectDrop()
+                        }
+                    } catch (e: java.awt.datatransfer.UnsupportedFlavorException) {
+                        e.printStackTrace()
+                        event.rejectDrop()
+                    } catch (e: java.io.IOException) {
+                        e.printStackTrace()
+                        event.rejectDrop()
+                    }
+                }
+            },
+        )
+        onDispose {
+            // DropTarget自体が内部でlistenerを保持しているため、特に追加の削除は不要。
+            // 永続的なリークを避けるため、targetへの参照をnullにするなどの処理はComposeのライフサイクルに任せる。
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

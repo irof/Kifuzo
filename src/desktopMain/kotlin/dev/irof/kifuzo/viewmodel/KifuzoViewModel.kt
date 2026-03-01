@@ -91,7 +91,10 @@ class KifuzoViewModel(
             fileEditActionHandler.handle(action) ||
             uiActionHandler.handle(action)
         if (!handled) {
-            handleBoardAction(action)
+            when (action) {
+                is KifuzoAction.FileDrop -> performFileDrop(action.path)
+                else -> handleBoardAction(action)
+            }
         }
     }
 
@@ -123,6 +126,19 @@ class KifuzoViewModel(
             updateUiState { it.copy(errorMessage = "クリップボードが空です。") }
             return
         }
+        parseAndSetKifu(text)
+    }
+
+    internal fun performFileDrop(path: Path) {
+        try {
+            val text = java.nio.file.Files.readString(path)
+            parseAndSetKifu(text)
+        } catch (e: java.io.IOException) {
+            updateUiState { it.copy(errorMessage = "ファイルの読み込みに失敗しました。", errorDetail = e.message) }
+        }
+    }
+
+    private fun parseAndSetKifu(text: String) {
         try {
             repository.parseManually(text.lines(), boardState)
             updateUiState { it.copy(pastedKifuText = text, selectedFile = null) }
