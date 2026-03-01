@@ -126,25 +126,31 @@ class KifuzoViewModel(
             updateUiState { it.copy(errorMessage = "クリップボードが空です。") }
             return
         }
-        parseAndSetKifu(text)
+        if (parseAndSetKifu(text)) {
+            uiActionHandler.handleShowSavePastedDialog()
+        }
     }
 
     internal fun performFileDrop(path: Path) {
         try {
             val text = java.nio.file.Files.readString(path)
-            parseAndSetKifu(text)
+            if (parseAndSetKifu(text)) {
+                uiActionHandler.handleShowSavePastedDialog()
+            }
         } catch (e: java.io.IOException) {
             updateUiState { it.copy(errorMessage = "ファイルの読み込みに失敗しました。", errorDetail = e.message) }
         }
     }
 
-    private fun parseAndSetKifu(text: String) {
+    private fun parseAndSetKifu(text: String): Boolean {
         try {
             repository.parseManually(text.lines(), boardState)
             updateUiState { it.copy(pastedKifuText = text, selectedFile = null) }
             settingsHandler.updateAutoFlip(uiState.myNameRegex)
+            return true
         } catch (e: dev.irof.kifuzo.logic.parser.KifuParseException) {
             updateUiState { it.copy(errorMessage = "棋譜の解析に失敗しました。", errorDetail = e.message) }
+            return false
         }
     }
 
