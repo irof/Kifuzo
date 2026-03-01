@@ -45,6 +45,7 @@ import dev.irof.kifuzo.ui.dialogs.KifuzoDialogs
 import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.viewmodel.KifuzoAction
 import dev.irof.kifuzo.viewmodel.KifuzoViewModel
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.awt.Cursor
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
@@ -53,6 +54,8 @@ import java.awt.dnd.DropTargetAdapter
 import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 import java.nio.file.Path
+
+private val logger = KotlinLogging.logger {}
 
 fun main() = application {
     val windowState = rememberKifuzoWindowState()
@@ -89,42 +92,64 @@ fun KifuzoApp(window: ComposeWindow) {
         viewModel.refreshFiles()
     }
 
-    DisposableEffect(window) {
-        val target = DropTarget(
-            window,
-            object : DropTargetAdapter() {
-                override fun drop(event: DropTargetDropEvent) {
-                    try {
-                        if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                            event.acceptDrop(DnDConstants.ACTION_COPY)
-                            val files = event.transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
-                            val file = files.firstOrNull() as? File
-                            if (file != null) {
-                                viewModel.dispatch(KifuzoAction.FileDrop(file.toPath()))
-                            }
-                            event.dropComplete(true)
-                        } else {
-                            event.rejectDrop()
-                        }
-                    } catch (e: java.awt.datatransfer.UnsupportedFlavorException) {
-                        e.printStackTrace()
-                        event.rejectDrop()
-                    } catch (e: java.io.IOException) {
-                        e.printStackTrace()
-                        event.rejectDrop()
-                    }
-                }
-            },
-        )
-        onDispose {
-            // DropTarget自体が内部でlistenerを保持しているため、特に追加の削除は不要。
-            // 永続的なリークを避けるため、targetへの参照をnullにするなどの処理はComposeのライフサイクルに任せる。
-        }
-    }
+    FileDropTarget(window, viewModel)
 
     Box(modifier = Modifier.fillMaxSize()) {
         KifuzoAppContent(viewModel)
         KifuzoDialogs(viewModel)
+    }
+}
+
+@Composable
+private fun FileDropTarget(window: ComposeWindow, viewModel: KifuzoViewModel) {
+    DisposableEffect(window) {
+        val target = DropTarget(window.contentPane, KifuzoDropTarget(viewModel))
+        onDispose {
+            window.contentPane.dropTarget = null
+        }
+    }
+}
+
+private class KifuzoDropTarget(private val viewModel: KifuzoViewModel) : DropTargetAdapter() {
+    override fun dragEnter(event: java.awt.dnd.DropTargetDragEvent) {
+        if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+            event.acceptDrag(DnDConstants.ACTION_COPY)
+        } else {
+            event.rejectDrag()
+        }
+    }
+
+    override fun dragOver(event: java.awt.dnd.DropTargetDragEvent) {
+        if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+            event.acceptDrag(DnDConstants.ACTION_COPY)
+        } else {
+            event.rejectDrag()
+        }
+    }
+
+    override fun drop(event: DropTargetDropEvent) {
+        try {
+            if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                event.acceptDrop(DnDConstants.ACTION_COPY)
+                val transferable = event.transferable
+                val files = transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
+                val file = files.firstOrNull() as? File
+                if (file != null) {
+                    viewModel.dispatch(KifuzoAction.FileDrop(file.toPath()))
+                    event.dropComplete(true)
+                } else {
+                    event.dropComplete(false)
+                }
+            } else {
+                event.rejectDrop()
+            }
+        } catch (e: java.awt.datatransfer.UnsupportedFlavorException) {
+            logger.error(e) { "Unsupported flavor for drop" }
+            event.rejectDrop()
+        } catch (e: java.io.IOException) {
+            logger.error(e) { "IO error during drop" }
+            event.rejectDrop()
+        }
     }
 }
 
