@@ -218,28 +218,9 @@ class KifParser : KifuFormatHandler {
 }
 
 /**
- * 棋譜ファイルの簡易情報をスキャンします。
- */
-fun scanKifuInfo(path: Path): KifuInfo = try {
-    val lines = readLinesWithEncoding(path)
-    KifParser().scanInfo(lines).copy(path = path)
-} catch (e: IOException) {
-    logger.error(e) { "IO error scanning header for ${path.name}" }
-    KifuInfo(path, isError = true)
-}
-
-/**
  * 行リストから棋譜の簡易情報をスキャンします。
  */
 fun scanKifuInfo(lines: List<String>): KifuInfo = KifParser().scanInfo(lines)
-
-/**
- * KIF形式の棋譜ファイルを解析します。
- */
-fun parseKifu(path: Path, state: ShogiBoardState) {
-    val lines = readLinesWithEncoding(path)
-    parseKifu(lines, state)
-}
 
 /**
  * KIF形式の行リストを解析します。

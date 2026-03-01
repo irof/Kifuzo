@@ -215,14 +215,6 @@ class CsaParser : KifuFormatHandler {
 }
 
 /**
- * CSA形式の棋譜を解析して ShogiBoardState を更新します。
- */
-fun parseCsa(path: Path, state: ShogiBoardState) {
-    val lines = readLinesWithEncoding(path)
-    parseCsa(lines, state)
-}
-
-/**
  * CSA形式の行リストを解析します。
  */
 fun parseCsa(lines: List<String>, state: ShogiBoardState, warningMessage: String? = null) {
