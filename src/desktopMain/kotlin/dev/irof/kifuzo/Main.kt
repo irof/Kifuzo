@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -100,7 +100,7 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
             .fillMaxSize()
             .focusRequester(focusRequester)
             .focusable()
-            .onPreviewKeyEvent { event -> handleKeyEvent(event, viewModel) },
+            .onKeyEvent { event -> handleKeyEvent(event, viewModel) },
     ) {
         KifuzoMainLayout(viewModel)
     }
@@ -109,11 +109,11 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
 private fun handleKeyEvent(event: androidx.compose.ui.input.key.KeyEvent, viewModel: KifuzoViewModel): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
     return when (event.key) {
-        Key.DirectionRight, Key.DirectionDown -> {
+        Key.DirectionRight -> {
             viewModel.dispatch(KifuzoAction.NextStep)
             true
         }
-        Key.DirectionLeft, Key.DirectionUp -> {
+        Key.DirectionLeft -> {
             viewModel.dispatch(KifuzoAction.PrevStep)
             true
         }
