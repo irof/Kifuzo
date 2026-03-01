@@ -1,16 +1,7 @@
 package dev.irof.kifuzo.logic.handler
 
-import dev.irof.kifuzo.logic.parser.HeaderParser
 import dev.irof.kifuzo.logic.parser.KifuParseException
-import dev.irof.kifuzo.logic.parser.convertCsaToKifu
-import dev.irof.kifuzo.logic.parser.csa.parseCsa
-import dev.irof.kifuzo.logic.parser.kif.parseKifu
-import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
-import dev.irof.kifuzo.logic.parser.parseHeader
-import dev.irof.kifuzo.logic.service.FileTreeManager
 import dev.irof.kifuzo.logic.service.KifuRepository
-import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
-import dev.irof.kifuzo.logic.service.KifuSessionBuilder
 import dev.irof.kifuzo.models.ShogiBoardState
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.IOException
@@ -31,10 +22,12 @@ class FileActionHandler(
     private val onFileRenamed: (Path) -> Unit,
     private val onFilesChanged: () -> Unit,
     private val onAutoFlip: () -> Unit,
+    private val onInfoLoaded: (Path, dev.irof.kifuzo.models.KifuInfo) -> Unit = { _, _ -> },
 ) {
     fun selectFile(path: Path) {
         val ext = path.extension.lowercase()
         if (ext in listOf("kifu", "kif", "csa")) {
+            onInfoLoaded(path, repository.scanKifuInfo(path))
             executeParse(path) { repository.parse(it, boardState) }
         } else {
             boardState.clear()

@@ -37,42 +37,6 @@ class KifuDiscoveryService(
         fileTreeManager.buildFlatList(root, filters, sortOption)
     }
 
-    /**
-     * 表示中のディレクトリから棋譜情報をスキャンします。
-     */
-    fun scanVisibleKifuInfos(
-        root: Path,
-        viewMode: FileViewMode,
-        treeNodes: List<FileTreeNode>,
-    ): Map<Path, KifuInfo> {
-        val targetDirs = getScanTargetDirs(root, viewMode, treeNodes)
-        val allKifuFiles = mutableListOf<Path>()
-
-        targetDirs.forEach { dir ->
-            scanDirectoryForKifuFiles(dir, allKifuFiles)
-        }
-
-        return repository.getKifuInfos(allKifuFiles)
-    }
-
-    private fun getScanTargetDirs(root: Path, viewMode: FileViewMode, treeNodes: List<FileTreeNode>): List<Path> = if (viewMode == FileViewMode.HIERARCHY) {
-        listOf(root) + treeNodes.filter { it.isDirectory && it.isExpanded }.map { it.path }
-    } else {
-        listOf(root)
-    }
-
-    private fun scanDirectoryForKifuFiles(dir: Path, result: MutableList<Path>) {
-        try {
-            Files.list(dir).use { stream ->
-                stream.filter { isKifuFile(it) }.forEach { result.add(it) }
-            }
-        } catch (e: IOException) {
-            logger.warn(e) { "Failed to list directory: $dir" }
-        } catch (e: SecurityException) {
-            logger.warn(e) { "Permission denied listing directory: $dir" }
-        }
-    }
-
     private fun isKifuFile(path: Path): Boolean = try {
         !path.name.startsWith(".") && path.isRegularFile() && (path.extension.lowercase() in listOf("kifu", "kif", "csa"))
     } catch (e: IOException) {

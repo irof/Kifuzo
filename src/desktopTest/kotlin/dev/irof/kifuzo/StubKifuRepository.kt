@@ -1,9 +1,6 @@
 package dev.irof.kifuzo
 
-import dev.irof.kifuzo.logic.service.FileTreeManager
 import dev.irof.kifuzo.logic.service.KifuRepository
-import dev.irof.kifuzo.logic.service.KifuRepositoryImpl
-import dev.irof.kifuzo.logic.service.KifuSessionBuilder
 import dev.irof.kifuzo.models.BoardPiece
 import dev.irof.kifuzo.models.BoardSnapshot
 import dev.irof.kifuzo.models.Evaluation
@@ -31,7 +28,6 @@ open class StubKifuRepository : KifuRepository {
     var importResult: Int = 0
 
     override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> = emptyList()
-    override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = emptyMap()
     override fun parse(path: Path, state: ShogiBoardState) {
         lastParsedPath = path
         lastMethodCalled = "parse"
@@ -47,6 +43,8 @@ open class StubKifuRepository : KifuRepository {
         lastMethodCalled = "parseManuallyLines"
         parseAction(state)
     }
+
+    override fun scanKifuInfo(path: Path): KifuInfo = KifuInfo(path)
 
     override fun scanKifuInfo(lines: List<String>): KifuInfo = KifuInfo(java.nio.file.Paths.get("stub"))
 

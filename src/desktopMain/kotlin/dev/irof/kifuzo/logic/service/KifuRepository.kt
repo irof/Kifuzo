@@ -10,7 +10,6 @@ import java.nio.file.Path
  */
 interface KifuSearchRepository {
     fun scanDirectory(directory: Path, sortOption: FileSortOption = FileSortOption.NAME): List<Path>
-    fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo>
 }
 
 /**
@@ -20,6 +19,7 @@ interface KifuParseRepository {
     fun parse(path: Path, state: ShogiBoardState)
     fun parseManually(path: Path, state: ShogiBoardState)
     fun parseManually(lines: List<String>, state: ShogiBoardState)
+    fun scanKifuInfo(path: Path): KifuInfo
     fun scanKifuInfo(lines: List<String>): KifuInfo
 }
 
@@ -59,13 +59,13 @@ class KifuRepositoryImpl(
 
     override fun scanDirectory(directory: Path, sortOption: FileSortOption): List<Path> = fileService.scanDirectory(directory, sortOption)
 
-    override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = parseService.getKifuInfos(files)
-
     override fun parse(path: Path, state: ShogiBoardState) = parseService.parse(path, state)
 
     override fun parseManually(path: Path, state: ShogiBoardState) = parseService.parseManually(path, state)
 
     override fun parseManually(lines: List<String>, state: ShogiBoardState) = parseService.parseManually(lines, state)
+
+    override fun scanKifuInfo(path: Path): KifuInfo = parseService.scanInfo(path)
 
     override fun scanKifuInfo(lines: List<String>): KifuInfo = parseService.scanInfo(lines)
 

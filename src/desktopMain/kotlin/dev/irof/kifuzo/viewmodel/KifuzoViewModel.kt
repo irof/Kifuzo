@@ -45,6 +45,7 @@ class KifuzoViewModel(
         onFileRenamed = { path -> uiState = uiState.copy(selectedFile = path) },
         onFilesChanged = { refreshFiles() },
         onAutoFlip = { settingsHandler.updateAutoFlip(uiState.myNameRegex) },
+        onInfoLoaded = { path, info -> updateUiState { it.copy(kifuInfos = it.kifuInfos + (path to info)) } },
     )
 
     private val importHandler = ImportHandler(
@@ -140,10 +141,7 @@ class KifuzoViewModel(
                 val newNodes = withContext(Dispatchers.IO) {
                     discoveryService.buildFileList(root, uiState.viewMode, uiState.treeNodes, uiState.fileFilters, uiState.fileSortOption)
                 }
-                val infos = withContext(Dispatchers.IO) {
-                    discoveryService.scanVisibleKifuInfos(root, uiState.viewMode, newNodes)
-                }
-                updateUiState { it.copy(treeNodes = newNodes, kifuInfos = infos, isScanning = false) }
+                updateUiState { it.copy(treeNodes = newNodes, isScanning = false) }
             } catch (e: dev.irof.kifuzo.logic.parser.TooManyErrorsException) {
                 logger.error(e) { "Too many permission errors" }
                 updateUiState { it.copy(errorMessage = "アクセス拒否が多発したため中断しました。", errorDetail = e.message, isScanning = false) }

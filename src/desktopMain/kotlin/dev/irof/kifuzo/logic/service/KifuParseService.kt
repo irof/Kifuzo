@@ -24,7 +24,6 @@ interface KifuParseService {
     fun parseManually(lines: List<String>, state: ShogiBoardState)
     fun scanInfo(path: Path): KifuInfo
     fun scanInfo(lines: List<String>): KifuInfo
-    fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo>
     fun convertCsaToKifu(path: Path): Path
 }
 
@@ -75,8 +74,6 @@ class KifuParseServiceImpl : KifuParseService {
         val handler = if (format == "csa") csaParser else kifParser
         return handler.scanInfo(lines)
     }
-
-    override fun getKifuInfos(files: List<Path>): Map<Path, KifuInfo> = files.associateWith { scanInfo(it) }
 
     override fun convertCsaToKifu(path: Path): Path = dev.irof.kifuzo.logic.parser.convertCsaToKifu(path)
 
