@@ -213,10 +213,3 @@ class CsaParser : KifuFormatHandler {
         }
     }
 }
-
-/**
- * CSA形式の行リストを解析します。
- */
-fun parseCsa(lines: List<String>, state: ShogiBoardState, warningMessage: String? = null) {
-    CsaParser().parse(lines, state, warningMessage)
-}

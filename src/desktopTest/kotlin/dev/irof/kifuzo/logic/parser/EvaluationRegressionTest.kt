@@ -1,6 +1,6 @@
 package dev.irof.kifuzo.logic.parser
 
-import dev.irof.kifuzo.logic.parser.kif.parseKifu
+import dev.irof.kifuzo.logic.parser.kif.KifParser
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuSession
 import dev.irof.kifuzo.models.ShogiBoardState
@@ -11,7 +11,7 @@ class EvaluationRegressionTest {
 
     private fun parse(kifu: String): KifuSession {
         val state = ShogiBoardState()
-        parseKifu(kifu.lines(), state)
+        KifParser().parse(kifu.lines(), state)
         return state.session
     }
 

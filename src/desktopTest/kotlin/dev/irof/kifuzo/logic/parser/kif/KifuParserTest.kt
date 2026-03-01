@@ -6,7 +6,7 @@ import dev.irof.kifuzo.assertMochigomaCount
 import dev.irof.kifuzo.assertMove
 import dev.irof.kifuzo.logic.parser.KifuParseException
 import dev.irof.kifuzo.logic.parser.KifuTestData
-import dev.irof.kifuzo.logic.parser.csa.parseCsa
+import dev.irof.kifuzo.logic.parser.csa.CsaParser
 import dev.irof.kifuzo.logic.parser.parseHeader
 import dev.irof.kifuzo.models.Evaluation
 import dev.irof.kifuzo.models.KifuSession
@@ -25,7 +25,7 @@ class KifuParserTest {
         session.initialSnapshot.assertAt(4, 1, Piece.OU, PieceColor.White)
         session.getSnapshotAt(2).assertAt(5, 2, Piece.OU, PieceColor.White)
 
-        val info = scanKifuInfo(KifuTestData.KIFU_WITH_PLAYER_INFO.lines())
+        val info = KifParser().scanInfo(KifuTestData.KIFU_WITH_PLAYER_INFO.lines())
         assertEquals("先手太郎", info.senteName)
         assertEquals("後手花子", info.goteName)
         assertEquals("2026/02/24 10:00:00", info.startTime)
@@ -190,7 +190,7 @@ class KifuParserTest {
 
     @Test
     fun あらゆるメタデータが含まれる棋譜をパースできること() {
-        val info = scanKifuInfo(KifuTestData.FULL_METADATA.lines())
+        val info = KifParser().scanInfo(KifuTestData.FULL_METADATA.lines())
         assertEquals("先手太郎", info.senteName)
         assertEquals("後手花子", info.goteName)
         assertEquals("2026/02/27", info.startTime)
@@ -200,7 +200,7 @@ class KifuParserTest {
     @Test
     fun CSA形式の指し手開始行を正しく判定できること() {
         val state = ShogiBoardState()
-        parseCsa(KifuTestData.SIMPLE_CSA.lines(), state)
+        CsaParser().parse(KifuTestData.SIMPLE_CSA.lines(), state)
         val session = state.session
         assertEquals(1, session.moves.size)
     }
@@ -239,6 +239,6 @@ class KifuParserTest {
 }
 private fun parse(kifu: String): KifuSession {
     val state = ShogiBoardState()
-    parseKifu(kifu.lines(), state)
+    KifParser().parse(kifu.lines(), state)
     return state.session
 }

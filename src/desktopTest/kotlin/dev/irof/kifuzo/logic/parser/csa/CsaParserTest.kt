@@ -14,7 +14,7 @@ class CsaParserTest {
     @Test
     fun CSAの評価値コメントを抽出できること() {
         val state = ShogiBoardState()
-        parseCsa(KifuTestData.CSA_EVALUATION.lines(), state)
+        CsaParser().parse(KifuTestData.CSA_EVALUATION.lines(), state)
 
         // 1手目
         assertEquals(Evaluation.Score(123), state.session.moves[0].evaluation)
@@ -30,13 +30,13 @@ class CsaParserTest {
     @Test
     fun 同の表記を生成できること() {
         val state = ShogiBoardState()
-        parseCsa(KifuTestData.CSA_DOU_1.lines(), state)
+        CsaParser().parse(KifuTestData.CSA_DOU_1.lines(), state)
 
         // 3手目が 22 なので、2手目の 34 とは異なるため通常の座標が表示される
         assertEquals("3 ２二角", state.session.moves[2].moveText)
 
         val stateSame = ShogiBoardState()
-        parseCsa(KifuTestData.CSA_DOU_2.lines(), stateSame)
+        CsaParser().parse(KifuTestData.CSA_DOU_2.lines(), stateSame)
 
         // 4手目(-3122GI)が3手目(+8822KA+)と同じ座標(22)に移動するので「同」になる
         assertEquals("4 同　銀", stateSame.session.moves[3].moveText)
@@ -45,7 +45,7 @@ class CsaParserTest {
     @Test
     fun 駒が取られた時にfirstContactStepが設定されること() {
         val state = ShogiBoardState()
-        parseCsa(KifuTestData.CSA_FIRST_CONTACT.lines(), state)
+        CsaParser().parse(KifuTestData.CSA_FIRST_CONTACT.lines(), state)
 
         // 3手目(+8822KA+)で角が取られるので、firstContactStepは3になるはず
         assertEquals(3, state.session.firstContactStep)
@@ -56,7 +56,7 @@ class CsaParserTest {
     @Test
     fun CSA形式での駒の成りが正しく処理されること() {
         val state = ShogiBoardState()
-        parseCsa(KifuTestData.CSA_PROMOTION.lines(), state)
+        CsaParser().parse(KifuTestData.CSA_PROMOTION.lines(), state)
 
         // 1手目(+7776TO)で歩が「と」になるので、「成」が付くはず
         assertEquals("1 ７六歩成", state.session.moves[0].moveText)
@@ -68,7 +68,7 @@ class CsaParserTest {
     @Test
     fun 不完全な指し手行が含まれていてもエラーにならないこと() {
         val state = ShogiBoardState()
-        parseCsa(KifuTestData.CSA_INCOMPLETE.lines(), state)
+        CsaParser().parse(KifuTestData.CSA_INCOMPLETE.lines(), state)
 
         // 初期局面(initialSnapshot) 以外の指し手(moves)が2手
         assertEquals(2, state.session.moves.size)
@@ -77,7 +77,7 @@ class CsaParserTest {
     @Test
     fun CSA形式の初期持駒が正しく処理されること() {
         val state = ShogiBoardState()
-        parseCsa(KifuTestData.CSA_INITIAL_MOCHI.lines(), state)
+        CsaParser().parse(KifuTestData.CSA_INITIAL_MOCHI.lines(), state)
 
         val initialSnapshot = state.session.initialSnapshot
         assertEquals(listOf(Piece.HI, Piece.KA), initialSnapshot.senteMochigoma)
@@ -87,7 +87,7 @@ class CsaParserTest {
     @Test
     fun 途中局面開始のCSAでは初期手数が0になること() {
         val state = ShogiBoardState()
-        parseCsa(KifuTestData.CSA_MID_GAME_START.lines(), state)
+        CsaParser().parse(KifuTestData.CSA_MID_GAME_START.lines(), state)
 
         // 3手目 (+8822UM) で 22の飛車 を取るので衝突が発生する
         assertEquals(3, state.session.firstContactStep)
@@ -99,7 +99,7 @@ class CsaParserTest {
     fun 不正な座標に駒打ちをしようとした場合にパースエラーになること() {
         val state = ShogiBoardState()
         val exception = kotlin.test.assertFailsWith<KifuParseException> {
-            parseCsa(KifuTestData.CSA_INVALID_DROP.lines(), state)
+            CsaParser().parse(KifuTestData.CSA_INVALID_DROP.lines(), state)
         }
         // 3行目(+0000FU) でエラーになるはず
         assertTrue(exception.message!!.contains("3行目"), "エラーメッセージに行番号が含まれること: ${exception.message}")

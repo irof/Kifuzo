@@ -216,15 +216,3 @@ class KifParser : KifuFormatHandler {
         fun buildSession(): KifuSession = builder.build()
     }
 }
-
-/**
- * 行リストから棋譜の簡易情報をスキャンします。
- */
-fun scanKifuInfo(lines: List<String>): KifuInfo = KifParser().scanInfo(lines)
-
-/**
- * KIF形式の行リストを解析します。
- */
-fun parseKifu(lines: List<String>, state: ShogiBoardState, warningMessage: String? = null) {
-    KifParser().parse(lines, state, warningMessage)
-}
