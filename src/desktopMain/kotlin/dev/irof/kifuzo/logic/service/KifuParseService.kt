@@ -44,11 +44,12 @@ class KifuParseServiceImpl : KifuParseService {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun parseManually(path: Path, state: ShogiBoardState) {
         try {
             val lines = readLinesWithEncoding(path)
             parseManually(lines, state)
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             logger.error(e) { "Failed to read file for manual parse: $path" }
             throw KifuParseException("ファイルの読み込みに失敗しました: ${path.name}")
         }
@@ -60,14 +61,13 @@ class KifuParseServiceImpl : KifuParseService {
         handler.parse(lines, state)
     }
 
-    override fun scanInfo(path: Path): KifuInfo {
-        try {
-            val lines = readLinesWithEncoding(path)
-            return scanInfo(lines).copy(path = path)
-        } catch (e: IOException) {
-            logger.error(e) { "Failed to read file for info: $path" }
-            return KifuInfo(path, isError = true)
-        }
+    @Suppress("TooGenericExceptionCaught")
+    override fun scanInfo(path: Path): KifuInfo = try {
+        val lines = readLinesWithEncoding(path)
+        scanInfo(lines).copy(path = path)
+    } catch (e: Exception) {
+        logger.error(e) { "Failed to scan info for $path" }
+        KifuInfo(path, isError = true)
     }
 
     override fun scanInfo(lines: List<String>): KifuInfo {
@@ -80,20 +80,23 @@ class KifuParseServiceImpl : KifuParseService {
 
     override fun convertCsaToKifu(path: Path): Path = dev.irof.kifuzo.logic.parser.convertCsaToKifu(path)
 
-    private fun detectFormat(lines: List<String>): String? = lines.asSequence()
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
-        .map { t ->
-            when {
-                isCsaLine(t) -> "csa"
-                isKifLine(t) -> "kif"
-                else -> null
+    private fun detectFormat(lines: List<String>): String? {
+        if (lines.isEmpty()) return null
+        return lines.asSequence()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .map { t ->
+                when {
+                    isCsaLine(t) -> "csa"
+                    isKifLine(t) -> "kif"
+                    else -> null
+                }
             }
-        }
-        .filterNotNull()
-        .firstOrNull()
+            .filterNotNull()
+            .firstOrNull()
+    }
 
     private fun isCsaLine(t: String): Boolean = t.startsWith("V2.") || t.startsWith("P") || t.startsWith("+") || t.startsWith("-") || t.startsWith("$")
 
-    private fun isKifLine(t: String): Boolean = t.startsWith("開始日時") || t.startsWith("棋戦") || t.startsWith("先手") || t.startsWith("後手")
+    private fun isKifLine(t: String): Boolean = t.startsWith("開始日時") || t.startsWith("棋戦") || t.startsWith("先手") || t.startsWith("後手") || t.startsWith("指し手")
 }
