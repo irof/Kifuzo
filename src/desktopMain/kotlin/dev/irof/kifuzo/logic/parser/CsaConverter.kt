@@ -33,12 +33,14 @@ private object CsaConstants {
 
 /**
  * CSA形式の棋譜ファイルを KIF形式に変換します。
+ * @return 変換後のファイルパス
  */
-fun convertCsaToKifu(path: Path) {
+fun convertCsaToKifu(path: Path): Path {
     val lines = readLinesWithEncoding(path)
     val kifLines = convertCsaToKifuLines(lines)
     val kifuFile = (path.parent ?: path).resolve(path.nameWithoutExtension + ".kifu")
     java.nio.file.Files.write(kifuFile, kifLines.joinToString("\n", postfix = "\n").toByteArray(Charsets.UTF_8))
+    return kifuFile
 }
 
 /**

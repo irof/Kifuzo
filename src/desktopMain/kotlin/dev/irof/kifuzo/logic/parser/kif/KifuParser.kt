@@ -1,7 +1,7 @@
 package dev.irof.kifuzo.logic.parser.kif
 
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
-import dev.irof.kifuzo.logic.parser.KifuFormatParser
+import dev.irof.kifuzo.logic.parser.KifuFormatHandler
 import dev.irof.kifuzo.logic.parser.KifuHeader
 import dev.irof.kifuzo.logic.parser.KifuParseException
 import dev.irof.kifuzo.logic.parser.parseHeader
@@ -20,7 +20,7 @@ import kotlin.io.path.name
 
 private val logger = KotlinLogging.logger {}
 
-class KifParser : KifuFormatParser {
+class KifParser : KifuFormatHandler {
     override fun scanInfo(lines: List<String>): KifuInfo {
         val header = parseHeader(lines)
         return KifuInfo(
@@ -63,6 +63,55 @@ class KifParser : KifuFormatParser {
 
         applyVariationsRecursive(mainParser, childrenMap)
         state.updateSession(mainParser.buildSession())
+    }
+
+    override fun formatHeader(lines: MutableList<String>, event: String, startTime: String) {
+        updateOrAddKifLine(lines, "棋戦：", event)
+        updateOrAddKifLine(lines, "開始日時：", startTime)
+    }
+
+    override fun formatResult(lines: MutableList<String>, result: String) {
+        if (result.isEmpty()) return
+
+        val lastActualMoveNum = lines.asSequence()
+            .mapNotNull { line ->
+                Regex("""^\s*(\d+)\s+.*""").find(line)?.groupValues?.get(1)?.toIntOrNull()?.let { num ->
+                    if (!dev.irof.kifuzo.models.GameResult.isResultLine(line)) num else null
+                }
+            }.maxOrNull() ?: 0
+
+        val nextMoveNum = lastActualMoveNum + 1
+        val resultLine = String.format(java.util.Locale.US, "%4d %s", nextMoveNum, result)
+
+        val existingResultIndex = lines.indexOfLast { dev.irof.kifuzo.models.GameResult.isResultLine(it) }
+
+        if (existingResultIndex != -1) {
+            lines[existingResultIndex] = resultLine
+        } else {
+            lines.add(resultLine)
+        }
+    }
+
+    private fun updateOrAddKifLine(lines: MutableList<String>, prefix: String, value: String) {
+        val index = lines.indexOfFirst { it.startsWith(prefix) }
+        if (index != -1) {
+            lines[index] = prefix + value
+        } else {
+            val insertIndex = calculateKifHeaderInsertIndex(lines)
+            lines.add(insertIndex, prefix + value)
+        }
+    }
+
+    private fun calculateKifHeaderInsertIndex(lines: List<String>): Int {
+        val headerIndex = lines.indexOfFirst { it.startsWith("手数") && it.contains("指手") }
+        val moveIndex = lines.indexOfFirst { Regex("""^\s*\d+\s+.*""").matches(it) }
+
+        return when {
+            headerIndex != -1 && moveIndex != -1 -> minOf(headerIndex, moveIndex)
+            headerIndex != -1 -> headerIndex
+            moveIndex != -1 -> moveIndex
+            else -> 0
+        }
     }
 
     private fun handleVariation(

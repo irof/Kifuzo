@@ -1,8 +1,5 @@
 package dev.irof.kifuzo.logic.service
 
-import dev.irof.kifuzo.logic.io.readLinesWithEncoding
-import dev.irof.kifuzo.logic.parser.KifuFormat
-import dev.irof.kifuzo.logic.parser.kif.scanKifuInfo
 import dev.irof.kifuzo.models.FileSortOption
 import dev.irof.kifuzo.models.KifuInfo
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -12,7 +9,6 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -32,7 +28,6 @@ class KifuFileServiceImpl : KifuFileService {
     companion object {
         private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss")
-        private const val SAMPLE_LINES_FOR_EXTENSION_DETECTION = 20
         private const val DEFAULT_VALUE = "unknown"
     }
 
@@ -99,7 +94,10 @@ class KifuFileServiceImpl : KifuFileService {
     }
 
     private fun generateProposedNameFromInfo(info: KifuInfo, template: String, dt: LocalDateTime): String? {
-        val extension = if (info.format == KifuFormat.CSA) "csa" else "kifu"
+        // info.format が KifuFormat.CSA なら "csa"、それ以外は "kifu" とする
+        // dev.irof.kifuzo.logic.parser.KifuFormat は HeaderParser.kt で定義されている
+        val isCsa = info.format?.toString() == "CSA"
+        val extension = if (isCsa) "csa" else "kifu"
         val replacements = mapOf(
             "{開始日の年月日}" to dt.format(DATE_FORMATTER),
             "{開始日の時分秒}" to dt.format(TIME_FORMATTER),

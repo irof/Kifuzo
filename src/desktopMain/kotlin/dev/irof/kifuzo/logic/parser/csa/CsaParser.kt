@@ -1,7 +1,7 @@
 package dev.irof.kifuzo.logic.parser.csa
 
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
-import dev.irof.kifuzo.logic.parser.KifuFormatParser
+import dev.irof.kifuzo.logic.parser.KifuFormatHandler
 import dev.irof.kifuzo.logic.parser.KifuHeader
 import dev.irof.kifuzo.logic.parser.KifuParseException
 import dev.irof.kifuzo.logic.parser.parseHeader
@@ -23,7 +23,7 @@ private const val TO_Y_POS = 4
 private const val PIECE_START_POS = 5
 private const val PIECE_END_POS = 7
 
-class CsaParser : KifuFormatParser {
+class CsaParser : KifuFormatHandler {
     override fun scanInfo(lines: List<String>): KifuInfo {
         val header = parseHeader(lines)
         return KifuInfo(
@@ -60,6 +60,47 @@ class CsaParser : KifuFormatParser {
         }
 
         state.updateSession(ctx.builder.build())
+    }
+
+    override fun formatHeader(lines: MutableList<String>, event: String, startTime: String) {
+        updateOrAddCsaLine(lines, "\$EVENT:", event)
+        updateOrAddCsaLine(lines, "\$START_TIME:", startTime)
+    }
+
+    override fun formatResult(lines: MutableList<String>, result: String) {
+        if (result.isEmpty()) return
+        val resultLine = when (result) {
+            "投了" -> "%TORYO"
+            "詰み" -> "%TSUMI"
+            "中断" -> "%CHUDAN"
+            "千日手" -> "%SENNICHITE"
+            "切れ負け" -> "%TIME_UP"
+            "持将棋" -> "%JISHOGI"
+            "入玉勝ち" -> "%KACHI"
+            "引き分け" -> "%HIKIWAKE"
+            else -> "%$result"
+        }
+
+        val existingResultIndex = lines.indexOfLast { it.startsWith("%") }
+        if (existingResultIndex != -1) {
+            lines[existingResultIndex] = resultLine
+        } else {
+            lines.add(resultLine)
+        }
+    }
+
+    private fun updateOrAddCsaLine(lines: MutableList<String>, prefix: String, value: String) {
+        val index = lines.indexOfFirst { it.startsWith(prefix) }
+        if (index != -1) {
+            lines[index] = prefix + value
+        } else {
+            val insertIndex = lines.indexOfFirst { it.startsWith("+") || it.startsWith("-") || it.startsWith("P") }
+            if (insertIndex != -1) {
+                lines.add(insertIndex, prefix + value)
+            } else {
+                lines.add(0, prefix + value)
+            }
+        }
     }
 
     private fun handleCsaResultLine(line: String, ctx: CsaParseContext) {

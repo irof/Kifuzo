@@ -67,7 +67,7 @@ class KifuRepositoryImpl(
 
     override fun parseManually(lines: List<String>, state: ShogiBoardState) = parseService.parseManually(lines, state)
 
-    override fun scanKifuInfo(lines: List<String>): KifuInfo = parseService.scanKifuInfo(lines)
+    override fun scanKifuInfo(lines: List<String>): KifuInfo = parseService.scanInfo(lines)
 
     override fun convertCsa(path: Path): Path = parseService.convertCsaToKifu(path)
 
