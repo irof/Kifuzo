@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -48,7 +46,6 @@ interface KifuNavigationActions {
     fun onNextStep()
     fun onPrevStep()
     fun onToggleFlip()
-    fun onToggleMoveList()
     fun onSelectVariation(moves: List<Move>)
     fun onResetToMainHistory()
 }
@@ -106,13 +103,6 @@ fun KifuPreviewPanel(
             onSave = { actions.onShowSaveDialog() },
         )
 
-        KifuHeader(
-            hasHistory = boardState.session.moves.isNotEmpty(),
-            isMoveListVisible = state.isMoveListVisible,
-            onToggleMoveList = actions::onToggleMoveList,
-            onToggleFlip = actions::onToggleFlip,
-        )
-
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             BoardArea(boardState, isFlipped, actions::onToggleFlip, Modifier.weight(1f))
 
@@ -131,38 +121,6 @@ fun KifuPreviewPanel(
         }
 
         KifuFooter(boardState, isFlipped, actions::onStepChange)
-    }
-}
-
-@Composable
-private fun KifuHeader(
-    hasHistory: Boolean,
-    isMoveListVisible: Boolean,
-    onToggleMoveList: () -> Unit,
-    onToggleFlip: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.Spacing.Large),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onToggleMoveList) {
-            Icon(
-                imageVector = ShogiIcons.SidebarToggle,
-                contentDescription = "手順リスト表示切り替え",
-                tint = if (isMoveListVisible) MaterialTheme.colors.primary else Color.Gray.copy(alpha = ICON_ALPHA_INACTIVE),
-            )
-        }
-        if (hasHistory) {
-            IconButton(onClick = onToggleFlip) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "盤面反転",
-                    tint = Color.Gray.copy(alpha = ICON_ALPHA_INACTIVE),
-                    modifier = Modifier.size(ShogiDimensions.Icon.Small),
-                )
-            }
-        }
     }
 }
 

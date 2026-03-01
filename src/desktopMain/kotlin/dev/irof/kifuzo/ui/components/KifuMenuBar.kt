@@ -29,6 +29,8 @@ import dev.irof.kifuzo.utils.AppStrings
 fun KifuMenuBar(
     isSidebarVisible: Boolean,
     onToggleSidebar: () -> Unit,
+    isMoveListVisible: Boolean,
+    onToggleMoveList: () -> Unit,
     onImport: () -> Unit,
     onPaste: () -> Unit,
     onShowSettings: () -> Unit,
@@ -47,6 +49,17 @@ fun KifuMenuBar(
                 imageVector = ShogiIcons.SidebarToggle,
                 contentDescription = "サイドバー表示切り替え",
                 tint = if (isSidebarVisible) MaterialTheme.colors.primary else Color.Gray,
+            )
+        }
+
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
+
+        // 手順リスト表示切り替え
+        IconButton(onClick = onToggleMoveList) {
+            Icon(
+                imageVector = ShogiIcons.SidebarToggle, // 同じアイコンを使用
+                contentDescription = "手順リスト表示切り替え",
+                tint = if (isMoveListVisible) MaterialTheme.colors.primary else Color.Gray,
             )
         }
 

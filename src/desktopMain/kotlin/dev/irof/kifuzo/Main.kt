@@ -128,6 +128,8 @@ private fun RowScope.KifuzoMainLayout(viewModel: KifuzoViewModel) {
     KifuMenuBar(
         isSidebarVisible = state.isSidebarVisible,
         onToggleSidebar = { viewModel.dispatch(KifuzoAction.ToggleSidebar) },
+        isMoveListVisible = state.isMoveListVisible,
+        onToggleMoveList = { viewModel.dispatch(KifuzoAction.ToggleMoveList) },
         onImport = { viewModel.dispatch(KifuzoAction.ShowImportDialog(true)) },
         onPaste = { viewModel.dispatch(KifuzoAction.PasteKifu) },
         onShowSettings = { viewModel.dispatch(KifuzoAction.ShowSettings(true)) },
@@ -141,7 +143,6 @@ private fun RowScope.KifuzoMainLayout(viewModel: KifuzoViewModel) {
     val previewActions = remember(viewModel) {
         object : KifuPreviewActions {
             override fun onToggleFlip() = viewModel.dispatch(KifuzoAction.ToggleFlipped)
-            override fun onToggleMoveList() = viewModel.dispatch(KifuzoAction.ToggleMoveList)
             override fun onWriteResult(path: Path, result: String) = viewModel.dispatch(KifuzoAction.WriteGameResult(path, result))
             override fun onShowEditMetadata(path: Path) = viewModel.dispatch(KifuzoAction.ShowEditMetadataDialog(path))
             override fun onStepChange(step: Int) = viewModel.dispatch(KifuzoAction.ChangeStep(step))
