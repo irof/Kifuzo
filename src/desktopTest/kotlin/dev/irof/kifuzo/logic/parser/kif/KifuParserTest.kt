@@ -207,7 +207,8 @@ class KifuParserTest {
 
     @Test
     fun 提示された形式の局面図を正しくパースできること() {
-        val info = parseHeader(KifuTestData.COMPLEX_BOARD.lines())
+        val lines = KifuTestData.COMPLEX_BOARD.lines()
+        val info = parseHeader(lines)
 
         // 1一に龍（先手）
         assertEquals(Piece.RY, info.initialCells[0][8]?.piece)
@@ -217,6 +218,11 @@ class KifuParserTest {
         val piece33 = info.initialCells[2][6]
         assertEquals(Piece.GI, piece33?.piece)
         assertEquals(PieceColor.White, piece33?.color)
+
+        // 8七に成銀（後手）
+        val piece87 = info.initialCells[6][1]
+        assertEquals(Piece.NG, piece87?.piece)
+        assertEquals(PieceColor.White, piece87?.color)
 
         // 2八に玉（先手）
         assertEquals(Piece.OU, info.initialCells[7][7]?.piece)

@@ -65,21 +65,15 @@ internal fun parseKifBoardLine(hp: HeaderParser, line: String) {
 }
 
 private fun extractKifBoardCells(content: String): List<String> {
-    val s = content.replace(" ", "").replace("　", "")
+    // KIF形式の盤面図は、1マス2文字分の固定幅で構成される（計18文字）。
+    // 例: "| ・ ・ ・ ・ ・ ・ ・ ・ 龍|"
+    // 例: "| ・v歩 ・v龍v歩 ・v銀v歩 ・|"
     val cells = mutableListOf<String>()
     var i = 0
-    while (i < s.length && cells.size < ShogiConstants.BOARD_SIZE) {
-        if (s[i] == 'v') {
-            if (i + 1 < s.length) {
-                cells.add(s.substring(i, i + 2))
-                i += 2
-            } else {
-                i++
-            }
-        } else {
-            cells.add(s.substring(i, i + 1))
-            i++
-        }
+    // 1マス2文字ずつ取り出す。
+    while (i + 1 < content.length && cells.size < ShogiConstants.BOARD_SIZE) {
+        cells.add(content.substring(i, i + 2).trim())
+        i += 2
     }
     return cells
 }
