@@ -9,11 +9,6 @@ import dev.irof.kifuzo.models.Piece
 import dev.irof.kifuzo.models.ShogiConstants
 import java.nio.file.Path
 
-enum class KifuFormat(val extension: String) {
-    KIF("kifu"),
-    CSA("csa"),
-}
-
 data class KifuHeader(
     val senteName: String,
     val goteName: String,

@@ -94,7 +94,7 @@ class KifuFileServiceImpl : KifuFileService {
     }
 
     private fun generateProposedNameFromInfo(info: KifuInfo, template: String, dt: LocalDateTime): String? {
-        val extension = info.format?.extension
+        val extension = info.format?.primaryExtension
         val replacements = mapOf(
             "{開始日の年月日}" to dt.format(DATE_FORMATTER),
             "{開始日の時分秒}" to dt.format(TIME_FORMATTER),

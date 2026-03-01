@@ -2,6 +2,26 @@ package dev.irof.kifuzo.logic.parser
 
 import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.ShogiBoardState
+import java.nio.file.Path
+import kotlin.io.path.extension
+
+/**
+ * 棋譜のファイル形式。
+ */
+enum class KifuFormat(val extensions: List<String>) {
+    KIF(listOf("kifu", "kif")),
+    CSA(listOf("csa")),
+    ;
+
+    val primaryExtension: String get() = extensions[0]
+
+    companion object {
+        fun fromPath(path: Path): KifuFormat? {
+            val ext = path.extension.lowercase()
+            return entries.find { ext in it.extensions }
+        }
+    }
+}
 
 /**
  * 特定の棋譜形式（KIF, CSAなど）を処理するためのインターフェース。

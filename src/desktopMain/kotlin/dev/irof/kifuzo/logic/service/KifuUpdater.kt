@@ -1,11 +1,11 @@
 package dev.irof.kifuzo.logic.service
 
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
+import dev.irof.kifuzo.logic.parser.KifuFormat
 import dev.irof.kifuzo.logic.parser.KifuFormatHandler
 import dev.irof.kifuzo.logic.parser.csa.CsaParser
 import dev.irof.kifuzo.logic.parser.kif.KifParser
 import java.nio.file.Path
-import kotlin.io.path.name
 import kotlin.text.Charsets
 
 /**
@@ -34,10 +34,10 @@ fun updateKifuResult(path: Path, result: String) {
 }
 
 private fun getHandlerForPath(path: Path): KifuFormatHandler? {
-    val extension = path.name.substringAfterLast(".").lowercase()
-    return when (extension) {
-        "kifu", "kif" -> KifParser()
-        "csa" -> CsaParser()
+    val format = KifuFormat.fromPath(path)
+    return when (format) {
+        KifuFormat.KIF -> KifParser()
+        KifuFormat.CSA -> CsaParser()
         else -> null
     }
 }

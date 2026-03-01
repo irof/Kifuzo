@@ -1,6 +1,7 @@
 package dev.irof.kifuzo.logic.service
 
 import dev.irof.kifuzo.logic.io.readLinesWithEncoding
+import dev.irof.kifuzo.logic.parser.KifuFormat
 import dev.irof.kifuzo.logic.parser.KifuFormatHandler
 import dev.irof.kifuzo.logic.parser.KifuParseException
 import dev.irof.kifuzo.logic.parser.csa.CsaParser
@@ -34,8 +35,8 @@ class KifuParseServiceImpl : KifuParseService {
     override fun parse(path: Path, state: ShogiBoardState) {
         try {
             val lines = readLinesWithEncoding(path)
-            val extension = path.name.substringAfterLast(".").lowercase()
-            val handler = if (extension == "csa") csaParser else kifParser
+            val format = KifuFormat.fromPath(path)
+            val handler = if (format == KifuFormat.CSA) csaParser else kifParser
             handler.parse(lines, state)
         } catch (e: IOException) {
             logger.error(e) { "Failed to read file: $path" }
