@@ -48,12 +48,9 @@ import dev.irof.kifuzo.viewmodel.KifuzoViewModel
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.awt.Cursor
 import java.awt.datatransfer.DataFlavor
-import java.awt.dnd.DnDConstants
-import java.awt.dnd.DropTarget
-import java.awt.dnd.DropTargetAdapter
-import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 import java.nio.file.Path
+import javax.swing.TransferHandler
 
 private val logger = KotlinLogging.logger {}
 
@@ -103,53 +100,40 @@ fun KifuzoApp(window: ComposeWindow) {
 @Composable
 private fun FileDropTarget(window: ComposeWindow, viewModel: KifuzoViewModel) {
     DisposableEffect(window) {
-        val target = DropTarget(window.contentPane, KifuzoDropTarget(viewModel))
+        val component = window.contentPane as? javax.swing.JComponent
+        val originalHandler = component?.transferHandler
+        if (component != null) {
+            component.transferHandler = KifuzoFileTransferHandler(viewModel)
+        }
         onDispose {
-            window.contentPane.dropTarget = null
+            if (component != null) {
+                component.transferHandler = originalHandler
+            }
         }
     }
 }
 
-private class KifuzoDropTarget(private val viewModel: KifuzoViewModel) : DropTargetAdapter() {
-    override fun dragEnter(event: java.awt.dnd.DropTargetDragEvent) {
-        if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-            event.acceptDrag(DnDConstants.ACTION_COPY)
-        } else {
-            event.rejectDrag()
-        }
-    }
+private class KifuzoFileTransferHandler(private val viewModel: KifuzoViewModel) : TransferHandler() {
+    override fun canImport(support: TransferSupport): Boolean = support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
 
-    override fun dragOver(event: java.awt.dnd.DropTargetDragEvent) {
-        if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-            event.acceptDrag(DnDConstants.ACTION_COPY)
-        } else {
-            event.rejectDrag()
-        }
-    }
+    override fun importData(support: TransferSupport): Boolean {
+        if (!canImport(support)) return false
 
-    override fun drop(event: DropTargetDropEvent) {
+        var result = false
         try {
-            if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                event.acceptDrop(DnDConstants.ACTION_COPY)
-                val transferable = event.transferable
-                val files = transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
-                val file = files.firstOrNull() as? File
-                if (file != null) {
-                    viewModel.dispatch(KifuzoAction.FileDrop(file.toPath()))
-                    event.dropComplete(true)
-                } else {
-                    event.dropComplete(false)
-                }
-            } else {
-                event.rejectDrop()
+            val transferable = support.transferable
+            val files = transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
+            val file = files.firstOrNull() as? File
+            if (file != null) {
+                viewModel.dispatch(KifuzoAction.FileDrop(file.toPath()))
+                result = true
             }
         } catch (e: java.awt.datatransfer.UnsupportedFlavorException) {
             logger.error(e) { "Unsupported flavor for drop" }
-            event.rejectDrop()
         } catch (e: java.io.IOException) {
             logger.error(e) { "IO error during drop" }
-            event.rejectDrop()
         }
+        return result
     }
 }
 
