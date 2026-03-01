@@ -72,6 +72,12 @@ private object TimeGraphConstants {
     const val PRECISION_THRESHOLD = 10.0
 }
 
+/**
+ * 消費時間グラフ（各手の消費時間グラフ）。
+ *
+ * 対局の各手にかかった消費時間を棒グラフで表示します。
+ * 先手・後手それぞれの平均消費時間の表示や、特定の局面への移動機能を提供します。
+ */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ConsumptionTimeGraph(

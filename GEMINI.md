@@ -10,18 +10,18 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
 
 ## Key Features
 
-- **File Browser:** A dual-pane interface with a file navigator on the left and a preview/board view on the right. Supports directory navigation (double-click to enter, `..` to go back).
+- **File Browser (サイドバー):** A dual-pane interface with a file navigator on the left and a preview/board view on the right. Supports directory navigation (double-click to enter, `..` to go back).
     - Remembers the last opened root directory across application restarts. Defaults to "no directory selected" on first run.
-    - **Vertical Menu Bar:** A dedicated sidebar on the far left for quick access to "Sidebar Toggle", "Move List Toggle", "Import", "Paste", and "Settings".
-- **Board Display:** Renders a 9x9 Shogi board showing the board state of a match.
+    - **Vertical Menu Bar (メニューバー):** A dedicated sidebar on the far left for quick access to "Sidebar Toggle", "Move List Toggle", "Import", "Paste", and "Settings".
+- **Board Display (将棋盤ビュー):** Renders a 9x9 Shogi board showing the board state of a match.
     - Supports piece rotation (opponent pieces face down).
     - Features a board flip button (refresh icon) at the top-right corner for swapping views.
     - Highlights regular pieces in black and promoted pieces in red.
     - **Koma-dai (Piece Stands):** Displays captured pieces on dedicated stands located at the top-left (Gote) and bottom-right (Sente) of the board, styled to match the board's aesthetic. Player names are positioned opposite to their respective piece stands.
-    - **Move List Variations:** Supports viewing alternate move sequences ("Henka") from .kifu files. Branching points are marked with an icon in the move list, allowing users to switch between the main line and variations. Features a "Reset to Main" button to easily return to the primary game record.
+    - **Move List Variations (指し手リスト):** Supports viewing alternate move sequences ("Henka") from .kifu files. Branching points are marked with an icon in the move list, allowing users to switch between the main line and variations. Features a "Reset to Main" button to easily return to the primary game record.
 - **Analysis Tools:** 
-    - **Evaluation Graph:** Visualizes the game's evaluation values. Features non-linear scaling (compressing values > 2000) for better readability and automatic inversion when the board is flipped. Uses distinct background colors for Sente (red) and Gote (blue) advantage regions.
-    - **Consumption Time Graph:** Visualizes time spent on each move.
+    - **Evaluation Graph (形勢判断グラフ):** Visualizes the game's evaluation values. Features non-linear scaling (compressing values > 2000) for better readability and automatic inversion when the board is flipped. Uses distinct background colors for Sente (red) and Gote (blue) advantage regions.
+    - **Consumption Time Graph (消費時間グラフ):** Visualizes time spent on each move.
     - **Kifu Meta Info:** Displays game metadata such as tournament/event name and start time below the evaluation graph. Supports both `.kifu` (e.g., `棋戦：`, `開始日時：`) and `.csa` (e.g., `$EVENT:`, `$START_TIME:`) formats.
     - **Significant Moves:** Automatically detects moves with large evaluation changes (500+ points) and marks them in the move list with "!" or "!!".
 - **Kifu Parser & Robustness:**

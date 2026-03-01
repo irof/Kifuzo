@@ -25,6 +25,12 @@ import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.ui.theme.ShogiIcons
 import dev.irof.kifuzo.utils.AppStrings
 
+/**
+ * メニューバー（画面左端の固定機能ボタン群）。
+ *
+ * サイドバーの開閉、指し手リストの表示切り替え、棋譜のインポート、
+ * 貼り付け、設定ダイアログの表示など、アプリ全体の主要な操作ボタンを提供します。
+ */
 @Composable
 fun KifuMenuBar(
     isSidebarVisible: Boolean,

@@ -68,6 +68,12 @@ interface KifuPreviewActions :
     KifuNavigationActions,
     KifuFileActions
 
+/**
+ * プレビューパネル（棋譜のメイン表示領域全体）。
+ *
+ * 将棋盤、指し手リスト、形勢判断グラフ、消費時間グラフ、および
+ * ナビゲーションコントロールを統合して表示するメインコンポーネントです。
+ */
 @Composable
 fun KifuPreviewPanel(
     state: KifuzoUiState,

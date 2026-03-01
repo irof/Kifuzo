@@ -42,6 +42,12 @@ private object GraphConstants {
     const val ZERO_FLOAT = 0f
 }
 
+/**
+ * 形勢判断グラフ（評価値の推移グラフ）。
+ *
+ * 対局の各手における評価値を時系列で描画し、有利・不利の推移を視覚化します。
+ * 非線形スケーリングにより、大きな評価値の変化も詳細に表示します。
+ */
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalTextApi::class)
 @Composable
 fun EvaluationGraph(

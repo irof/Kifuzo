@@ -27,6 +27,12 @@ import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.viewmodel.KifuzoUiState
 import java.nio.file.Path
 
+/**
+ * サイドバー（ファイルブラウザ）。
+ *
+ * 表示モードの切り替え、ファイルのフィルタリングやソート、
+ * ルートディレクトリの選択、および棋譜ファイルのツリー表示機能を提供します。
+ */
 @Composable
 fun KifuSidebar(
     state: KifuzoUiState,

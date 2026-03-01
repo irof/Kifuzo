@@ -39,6 +39,12 @@ import dev.irof.kifuzo.models.toMoveLabel
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.utils.AppStrings
 
+/**
+ * 指し手リスト（本譜および変化のリスト表示）。
+ *
+ * 棋譜の各指し手を一覧表示し、クリックによる局面移動や、
+ * 変化（分岐）の切り替え、終局結果の追加などの機能を提供します。
+ */
 @Composable
 fun KifuMoveList(
     moves: List<Move>,

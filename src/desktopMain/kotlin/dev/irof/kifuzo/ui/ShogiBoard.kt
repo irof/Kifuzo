@@ -29,6 +29,12 @@ private object BoardViewConstants {
     const val BOARD_WIDTH_CELLS = 10
 }
 
+/**
+ * 将棋盤ビュー（盤面、駒台、対局者情報の表示）。
+ *
+ * 9x9の盤面、先手・後手の駒台、対局者名、および盤面反転ボタンを
+ * 描画し、指定された局面の状態を視覚化します。
+ */
 @Composable
 fun ShogiBoardView(
     state: ShogiBoardState,
