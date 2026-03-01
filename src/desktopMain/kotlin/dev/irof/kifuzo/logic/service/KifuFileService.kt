@@ -94,10 +94,7 @@ class KifuFileServiceImpl : KifuFileService {
     }
 
     private fun generateProposedNameFromInfo(info: KifuInfo, template: String, dt: LocalDateTime): String? {
-        // info.format が KifuFormat.CSA なら "csa"、それ以外は "kifu" とする
-        // dev.irof.kifuzo.logic.parser.KifuFormat は HeaderParser.kt で定義されている
-        val isCsa = info.format?.toString() == "CSA"
-        val extension = if (isCsa) "csa" else "kifu"
+        val extension = info.format?.extension
         val replacements = mapOf(
             "{開始日の年月日}" to dt.format(DATE_FORMATTER),
             "{開始日の時分秒}" to dt.format(TIME_FORMATTER),
@@ -111,7 +108,7 @@ class KifuFileServiceImpl : KifuFileService {
             resultName = resultName.replace(key, value)
         }
 
-        return "$resultName.$extension"
+        return if (extension != null) "$resultName.$extension" else resultName
     }
 
     // 棋譜内の自由な形式の開始日時をパースするため、
