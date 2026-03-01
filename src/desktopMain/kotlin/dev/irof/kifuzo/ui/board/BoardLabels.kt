@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import dev.irof.kifuzo.models.BoardLayout
+import dev.irof.kifuzo.ui.theme.ShogiIcons
 import dev.irof.kifuzo.utils.AppStrings
 
 private object LabelConstants {
@@ -42,7 +41,7 @@ fun SujiLabels(
             onToggleFlip?.let {
                 IconButton(onClick = it, modifier = Modifier.size(cellSize * LabelConstants.FLIP_BUTTON_SIZE_RATIO)) {
                     Icon(
-                        imageVector = Icons.Default.Refresh,
+                        imageVector = ShogiIcons.Refresh,
                         contentDescription = AppStrings.FLIP_BOARD,
                         tint = Color.Gray.copy(alpha = LabelConstants.FLIP_BUTTON_ALPHA),
                     )

@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.irof.kifuzo.models.AppSettings
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
+import dev.irof.kifuzo.ui.theme.ShogiIcons
 import dev.irof.kifuzo.utils.AppStrings
 
 @Composable
@@ -127,7 +128,7 @@ private fun RawSettingsSection() {
                     AppSettings.Default.removeSetting(key)
                     rawSettings = AppSettings.Default.getAllSettings()
                 }) {
-                    Icon(Icons.Default.Delete, contentDescription = AppStrings.DELETE, tint = Color.Red, modifier = Modifier.size(ShogiDimensions.Icon.Small))
+                    Icon(ShogiIcons.Delete, contentDescription = AppStrings.DELETE, tint = Color.Red, modifier = Modifier.size(ShogiDimensions.Icon.Small))
                 }
             }
         }

@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
+import dev.irof.kifuzo.ui.theme.ShogiIcons
 import java.nio.file.Path
 import kotlin.io.path.extension
 
@@ -77,7 +75,7 @@ private fun FileTreeRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = if (node.isDirectory) Icons.Default.Folder else Icons.AutoMirrored.Filled.List,
+            imageVector = if (node.isDirectory) ShogiIcons.Directory else ShogiIcons.File,
             contentDescription = null,
             modifier = Modifier.size(ShogiDimensions.Icon.Small),
             tint = if (node.isDirectory) Color(FileTreeConstants.DIRECTORY_ICON_TINT) else Color.Gray,

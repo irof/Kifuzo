@@ -15,8 +15,6 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.TextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
+import dev.irof.kifuzo.ui.theme.ShogiIcons
 import dev.irof.kifuzo.utils.AppStrings
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.InvalidPathException
@@ -74,7 +73,7 @@ private fun ImportSourceField(path: String, onPathChange: (String) -> Unit) {
                 onPathChange(chooser.selectedFile.absolutePath)
             }
         }) {
-            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "フォルダを選択")
+            Icon(ShogiIcons.MoveList, contentDescription = "フォルダを選択")
         }
     }
 }

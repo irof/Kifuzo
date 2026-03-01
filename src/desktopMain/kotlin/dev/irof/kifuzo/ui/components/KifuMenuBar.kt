@@ -11,10 +11,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Input
-import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,7 +70,7 @@ fun KifuMenuBar(
         // インポート
         IconButton(onClick = onImport) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.Input,
+                imageVector = ShogiIcons.Import,
                 contentDescription = AppStrings.IMPORT_KIFU,
                 tint = Color.Gray,
             )
@@ -85,7 +81,7 @@ fun KifuMenuBar(
         // 貼り付け
         IconButton(onClick = onPaste) {
             Icon(
-                imageVector = Icons.Default.ContentPaste,
+                imageVector = ShogiIcons.Paste,
                 contentDescription = AppStrings.PASTE_KIFU,
                 tint = Color.Gray,
             )
@@ -96,7 +92,7 @@ fun KifuMenuBar(
         // 設定
         IconButton(onClick = onShowSettings) {
             Icon(
-                imageVector = Icons.Default.Settings,
+                imageVector = ShogiIcons.Settings,
                 contentDescription = AppStrings.SETTINGS,
                 tint = Color.Gray,
                 modifier = Modifier.size(ShogiDimensions.Icon.Medium),

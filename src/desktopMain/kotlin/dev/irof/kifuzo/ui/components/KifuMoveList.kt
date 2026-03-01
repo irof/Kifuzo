@@ -20,8 +20,6 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +35,7 @@ import dev.irof.kifuzo.models.GameResult
 import dev.irof.kifuzo.models.Move
 import dev.irof.kifuzo.models.toMoveLabel
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
+import dev.irof.kifuzo.ui.theme.ShogiIcons
 import dev.irof.kifuzo.utils.AppStrings
 
 /**
@@ -105,7 +104,7 @@ private fun AddResultRow(onWriteResult: (String) -> Unit) {
         Spacer(Modifier.width(32.dp))
         Box {
             OutlinedButton(onClick = { showMenu = true }, modifier = Modifier.height(ShogiDimensions.Component.ButtonHeight), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(ShogiDimensions.Icon.Small))
+                Icon(ShogiIcons.Add, contentDescription = null, modifier = Modifier.size(ShogiDimensions.Icon.Small))
                 Spacer(Modifier.width(ShogiDimensions.Spacing.ExtraSmall))
                 Text("終局手を追加", fontSize = ShogiDimensions.Text.Small)
             }
