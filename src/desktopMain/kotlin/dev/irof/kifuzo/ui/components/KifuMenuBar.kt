@@ -43,11 +43,11 @@ fun KifuMenuBar(
             .padding(vertical = ShogiDimensions.Spacing.Medium),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // サイドバー表示切り替え
+        // ファイルブラウザ表示切り替え
         IconButton(onClick = onToggleSidebar) {
             Icon(
-                imageVector = ShogiIcons.SidebarToggle,
-                contentDescription = "サイドバー表示切り替え",
+                imageVector = ShogiIcons.FileBrowser,
+                contentDescription = "ファイルブラウザ表示切り替え",
                 tint = if (isSidebarVisible) MaterialTheme.colors.primary else Color.Gray,
             )
         }
@@ -57,7 +57,7 @@ fun KifuMenuBar(
         // 手順リスト表示切り替え
         IconButton(onClick = onToggleMoveList) {
             Icon(
-                imageVector = ShogiIcons.SidebarToggle, // 同じアイコンを使用
+                imageVector = ShogiIcons.MoveList,
                 contentDescription = "手順リスト表示切り替え",
                 tint = if (isMoveListVisible) MaterialTheme.colors.primary else Color.Gray,
             )
