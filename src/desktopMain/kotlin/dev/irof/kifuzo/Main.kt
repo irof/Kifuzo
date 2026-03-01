@@ -103,9 +103,11 @@ fun KifuzoApp(window: ComposeWindow) {
 @Composable
 private fun FileDropTarget(window: ComposeWindow, viewModel: KifuzoViewModel) {
     DisposableEffect(window) {
-        val target = DropTarget(window.contentPane, KifuzoDropTarget(viewModel))
+        // window(JFrame) に直接 DropTarget を設定する。
+        // contentPane よりも外側でキャッチする。
+        val target = DropTarget(window, KifuzoDropTarget(viewModel))
         onDispose {
-            window.contentPane.dropTarget = null
+            window.dropTarget = null
         }
     }
 }
@@ -113,7 +115,9 @@ private fun FileDropTarget(window: ComposeWindow, viewModel: KifuzoViewModel) {
 private class KifuzoDropTarget(private val viewModel: KifuzoViewModel) : DropTargetAdapter() {
     override fun dragEnter(event: java.awt.dnd.DropTargetDragEvent) {
         if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-            event.acceptDrag(DnDConstants.ACTION_COPY)
+            // COPY_OR_MOVE を受け入れる。macOS ではこれが重要な場合がある。
+            event.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE)
+            logger.info { "Drag entered with supported flavor" }
         } else {
             event.rejectDrag()
         }
@@ -121,7 +125,7 @@ private class KifuzoDropTarget(private val viewModel: KifuzoViewModel) : DropTar
 
     override fun dragOver(event: java.awt.dnd.DropTargetDragEvent) {
         if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-            event.acceptDrag(DnDConstants.ACTION_COPY)
+            event.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE)
         } else {
             event.rejectDrag()
         }
@@ -130,11 +134,12 @@ private class KifuzoDropTarget(private val viewModel: KifuzoViewModel) : DropTar
     override fun drop(event: DropTargetDropEvent) {
         try {
             if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                event.acceptDrop(DnDConstants.ACTION_COPY)
+                event.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE)
                 val transferable = event.transferable
                 val files = transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
                 val file = files.firstOrNull() as? File
                 if (file != null) {
+                    logger.info { "File dropped: ${file.absolutePath}" }
                     viewModel.dispatch(KifuzoAction.FileDrop(file.toPath()))
                     event.dropComplete(true)
                 } else {
