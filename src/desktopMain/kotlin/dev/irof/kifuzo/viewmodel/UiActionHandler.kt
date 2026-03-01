@@ -100,7 +100,7 @@ class UiActionHandler(
         viewModel.updateUiState { it.copy(pastedKifuText = null, pastedKifuProposedName = null) }
     }
 
-    internal fun handleShowSavePastedDialog() {
+    private fun handleShowSavePastedDialog() {
         viewModel.uiState.pastedKifuText?.let { text ->
             val info = repository.scanKifuInfo(text.lines())
             val proposedName = repository.generateProposedNameForPasted(info, viewModel.uiState.filenameTemplate)

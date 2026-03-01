@@ -35,7 +35,6 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
     - **Clipboard Integration:**
         - **Copy:** Buttons to copy kifu text or error logs for easy sharing.
         - **Paste Support:** Allows pasting game records directly from the clipboard. Automatically detects format, parses content, and provides a "Save As" dialog with a proposed filename based on metadata.
-        - **File Drop Support:** Allows dropping a game record file directly onto the window to open it. Behaves identically to the paste functionality.
 - **Error Handling:** 
     - Detailed error dialogs showing stacktraces for technical troubleshooting.
     - Informative messages for common issues like format mismatches or invalid coordinates.

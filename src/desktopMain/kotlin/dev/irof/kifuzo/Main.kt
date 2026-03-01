@@ -12,12 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -45,17 +43,8 @@ import dev.irof.kifuzo.ui.dialogs.KifuzoDialogs
 import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.viewmodel.KifuzoAction
 import dev.irof.kifuzo.viewmodel.KifuzoViewModel
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.awt.Cursor
-import java.awt.datatransfer.DataFlavor
-import java.awt.dnd.DnDConstants
-import java.awt.dnd.DropTarget
-import java.awt.dnd.DropTargetAdapter
-import java.awt.dnd.DropTargetDropEvent
-import java.io.File
 import java.nio.file.Path
-
-private val logger = KotlinLogging.logger {}
 
 fun main() = application {
     val windowState = rememberKifuzoWindowState()
@@ -69,7 +58,7 @@ fun main() = application {
         state = windowState,
     ) {
         MaterialTheme {
-            KifuzoApp(window)
+            KifuzoApp()
         }
     }
 }
@@ -85,76 +74,16 @@ private fun rememberKifuzoWindowState(): androidx.compose.ui.window.WindowState 
 )
 
 @Composable
-fun KifuzoApp(window: ComposeWindow) {
+fun KifuzoApp() {
     val viewModel = remember { KifuzoViewModel() }
 
     LaunchedEffect(Unit) {
         viewModel.refreshFiles()
     }
 
-    FileDropTarget(window, viewModel)
-
     Box(modifier = Modifier.fillMaxSize()) {
         KifuzoAppContent(viewModel)
         KifuzoDialogs(viewModel)
-    }
-}
-
-@Composable
-private fun FileDropTarget(window: ComposeWindow, viewModel: KifuzoViewModel) {
-    DisposableEffect(window) {
-        // window(JFrame) に直接 DropTarget を設定する。
-        // contentPane よりも外側でキャッチする。
-        val target = DropTarget(window, KifuzoDropTarget(viewModel))
-        onDispose {
-            window.dropTarget = null
-        }
-    }
-}
-
-private class KifuzoDropTarget(private val viewModel: KifuzoViewModel) : DropTargetAdapter() {
-    override fun dragEnter(event: java.awt.dnd.DropTargetDragEvent) {
-        if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-            // COPY_OR_MOVE を受け入れる。macOS ではこれが重要な場合がある。
-            event.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE)
-            logger.info { "Drag entered with supported flavor" }
-        } else {
-            event.rejectDrag()
-        }
-    }
-
-    override fun dragOver(event: java.awt.dnd.DropTargetDragEvent) {
-        if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-            event.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE)
-        } else {
-            event.rejectDrag()
-        }
-    }
-
-    override fun drop(event: DropTargetDropEvent) {
-        try {
-            if (event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                event.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE)
-                val transferable = event.transferable
-                val files = transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
-                val file = files.firstOrNull() as? File
-                if (file != null) {
-                    logger.info { "File dropped: ${file.absolutePath}" }
-                    viewModel.dispatch(KifuzoAction.FileDrop(file.toPath()))
-                    event.dropComplete(true)
-                } else {
-                    event.dropComplete(false)
-                }
-            } else {
-                event.rejectDrop()
-            }
-        } catch (e: java.awt.datatransfer.UnsupportedFlavorException) {
-            logger.error(e) { "Unsupported flavor for drop" }
-            event.rejectDrop()
-        } catch (e: java.io.IOException) {
-            logger.error(e) { "IO error during drop" }
-            event.rejectDrop()
-        }
     }
 }
 
