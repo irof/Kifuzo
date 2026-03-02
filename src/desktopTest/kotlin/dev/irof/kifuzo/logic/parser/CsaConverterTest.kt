@@ -72,6 +72,27 @@ class CsaConverterTest {
     }
 
     @Test
+    fun convertCsaToKifuLinesが不規則な持駒行を処理できること() {
+        // P+00HIAL (全駒指定の AL はスキップされる)
+        val csaLines = listOf("P+00HIAL")
+        val kifLines = convertCsaToKifuLines(csaLines)
+        assertTrue(kifLines.any { it.contains("先手持駒：飛") })
+
+        // 空の持駒
+        val csaEmpty = listOf("P+")
+        val kifEmpty = convertCsaToKifuLines(csaEmpty)
+        assertTrue(kifEmpty.any { it.contains("先手持駒：なし") })
+    }
+
+    @Test
+    fun convertCsaToKifuLinesが未知の結果コードを無視すること() {
+        val csaLines = listOf("%UNKNOWN")
+        val kifLines = convertCsaToKifuLines(csaLines)
+        // KIFヘッダーのみが残るはず
+        assertEquals(1, kifLines.size)
+    }
+
+    @Test
     fun convertCsaToKifuがファイルを生成すること() {
         val dir = createTempDirectory("kifuzo-csa-conv")
         try {

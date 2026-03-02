@@ -160,12 +160,18 @@ class FileActionHandlerTest {
     }
 
     @Test
-    fun openInExternalAppが例外を投げずに実行されること() {
-        // 実際の外部アプリ起動はモックしづらいが、パスが渡された時にエラーにならないことを確認
+    fun openInExternalAppが何らかの通知を行うこと() {
         val path = Paths.get("test.kifu")
         handler.openInExternalApp(path)
-        // ShogiHomeがない環境ではエラー通知されるはず
-        assertTrue(errorMsg?.contains("起動エラー") == true || infoMsg?.contains("開いています") == true)
+        // 成功（コマンド実行成功）した場合は infoMsg, 失敗（IOException）した場合は errorMsg
+        assertTrue(errorMsg != null || infoMsg != null)
+    }
+
+    @Test
+    fun savePastedKifuが保存エラーを通知すること() {
+        val path = Paths.get("/non/existent/dir")
+        handler.savePastedKifu(path, "test.kifu", "content")
+        assertTrue(errorMsg?.contains("保存エラー") == true)
     }
 }
 

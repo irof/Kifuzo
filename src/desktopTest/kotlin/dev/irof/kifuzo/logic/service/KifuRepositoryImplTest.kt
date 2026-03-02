@@ -79,5 +79,11 @@ class KifuRepositoryImplTest {
 
         repository.renameFileTo(Paths.get("test.kifu"), "new.kifu")
         assertEquals("renameFile", fileService.lastMethod)
+
+        repository.convertCsa(Paths.get("test.csa"))
+        assertEquals("convertCsaToKifu", parseService.lastMethod)
+
+        repository.generateProposedNameForPasted(dev.irof.kifuzo.models.KifuInfo(Paths.get("test")), "template")
+        assertEquals("generateProposedNameForPasted", fileService.lastMethod)
     }
 }

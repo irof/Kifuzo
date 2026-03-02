@@ -2,51 +2,86 @@ package dev.irof.kifuzo.logic.handler
 
 import dev.irof.kifuzo.InMemoryAppSettings
 import dev.irof.kifuzo.StubKifuRepository
+import dev.irof.kifuzo.models.BoardSnapshot
+import dev.irof.kifuzo.models.KifuInfo
 import dev.irof.kifuzo.models.KifuSession
 import dev.irof.kifuzo.models.ShogiBoardState
+import java.nio.file.Path
+import java.nio.file.Paths
+import kotlin.io.path.writeText
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SettingsHandlerTest {
-    private lateinit var boardState: ShogiBoardState
+    private lateinit var repository: StubKifuRepository
     private lateinit var handler: SettingsHandler
-    private var isFlipped: Boolean? = null
+    private var filesChangedCalled = false
+    private var flipped: Boolean? = null
 
     @BeforeTest
     fun setup() {
-        boardState = ShogiBoardState()
+        repository = object : StubKifuRepository() {
+            override fun generateProposedName(path: Path, info: KifuInfo, template: String): String? = "proposed.kifu"
+            override fun renameFileTo(path: Path, newName: String): Path? = path.parent.resolve(newName)
+            override fun scanKifuInfo(lines: List<String>): KifuInfo = KifuInfo(Paths.get("stub"))
+        }
         handler = SettingsHandler(
-            repository = StubKifuRepository(),
+            repository = repository,
             settings = InMemoryAppSettings(),
-            boardState = boardState,
-            onFilesChanged = {},
-            onAutoFlip = { isFlipped = it },
+            boardState = ShogiBoardState(),
+            onFilesChanged = { filesChangedCalled = true },
+            onAutoFlip = { flipped = it },
         )
-        isFlipped = null
     }
 
     @Test
-    fun 後手名が正規表現にマッチした時に反転すること() {
-        boardState.updateSession(KifuSession(senteName = "Sente", goteName = "MyName"))
+    fun renameWithTemplateがリネームを実行し通知すること() {
+        val root = kotlin.io.path.createTempDirectory("kifuzo-rename-test")
+        try {
+            val path = root.resolve("old.kifu")
+            path.writeText("test")
 
-        handler.updateAutoFlip("MyName")
+            handler.renameWithTemplate(path, "{template}")
 
-        assertEquals(true, isFlipped)
+            assertTrue(filesChangedCalled)
+        } finally {
+            root.toFile().deleteRecursively()
+        }
     }
 
     @Test
-    fun 先手名が正規表現にマッチした時に反転しないこと() {
-        boardState.updateSession(KifuSession(senteName = "MyName", goteName = "Gote"))
+    fun updateAutoFlipが名前設定に基づいて自動反転すること() {
+        val state = ShogiBoardState()
+        // 先手: A, 後手: B
+        state.updateSession(
+            KifuSession(
+                initialSnapshot = BoardSnapshot(BoardSnapshot.getInitialCells()),
+                senteName = "A",
+                goteName = "B",
+            ),
+        )
 
-        handler.updateAutoFlip("MyName")
+        val handlerAutoFlip = SettingsHandler(
+            repository = repository,
+            settings = InMemoryAppSettings(),
+            boardState = state,
+            onFilesChanged = {},
+            onAutoFlip = { flipped = it },
+        )
 
-        assertEquals(false, isFlipped)
-    }
+        // 自分が後手(B)の場合、反転する
+        handlerAutoFlip.updateAutoFlip("B")
+        assertEquals(true, flipped)
 
-    @Test
-    fun 不正な正規表現が渡された時にログ出力され処理が中断されること() {
-        handler.updateAutoFlip("[") // 不正な正規表現
-        assertEquals(null, isFlipped)
+        // 自分が先手(A)の場合、反転しない
+        handlerAutoFlip.updateAutoFlip("A")
+        assertEquals(false, flipped)
+
+        // どちらにもマッチしない場合、何もしない
+        flipped = null
+        handlerAutoFlip.updateAutoFlip("X")
+        assertEquals(null, flipped)
     }
 }

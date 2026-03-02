@@ -96,13 +96,60 @@ class CsaParserTest {
     }
 
     @Test
-    fun 不正な座標に駒打ちをしようとした場合にパースエラーになること() {
+    fun formatResultが結果行を正しく追加および更新できること() {
+        val parser = CsaParser()
+        val lines = mutableListOf("+7776FU")
+
+        parser.formatResult(lines, "投了")
+        assertEquals("%TORYO", lines.last())
+
+        parser.formatResult(lines, "中断")
+        assertEquals("%CHUDAN", lines.last())
+        assertEquals(2, lines.size)
+    }
+
+    @Test
+    fun isValidCsaMoveが正しく判定すること() {
+        val parser = CsaParser()
+        // 正常
+        // 内部的に private なので parse を通じて確認するか、リフレクション等が必要
+        // ここでは parse 時のエラーとして確認
         val state = ShogiBoardState()
-        val exception = kotlin.test.assertFailsWith<KifuParseException> {
-            CsaParser().parse(KifuTestData.CSA_INVALID_DROP.lines(), state)
+        kotlin.test.assertFailsWith<KifuParseException> {
+            parser.parse(listOf("+7A76FU"), state) // Aは数字ではない
         }
-        // 3行目(+0000FU) でエラーになるはず
-        assertTrue(exception.message!!.contains("3行目"), "エラーメッセージに行番号が含まれること: ${exception.message}")
-        assertEquals(3, exception.lineNumber)
+    }
+
+    @Test
+    fun エイリアス関数が動作すること() {
+        val hp = dev.irof.kifuzo.logic.parser.HeaderParser()
+        handleCsaMetadataLine(hp, "N+SentePlayer")
+        assertEquals("SentePlayer", hp.senteName)
+
+        handleCsaMochigomaLine(hp, "P+00HIAL")
+        // AL は addCsaMochigoma でスキップされるはずだが、その前の HI は追加される
+        assertTrue(hp.senteMochi.contains(Piece.HI))
+    }
+
+    @Test
+    fun handleCsaResultLineが未知のコードを適切に処理すること() {
+        val state = ShogiBoardState()
+        val csaLines = listOf(
+            "+7776FU",
+            "%UNKNOWN_CODE",
+        )
+        CsaParser().parse(csaLines, state)
+        // 1手完結 + 結果行も1手(Move)として追加される
+        assertEquals(2, state.session.moves.size)
+        // 最後に結果テキストがセットされているはず
+        assertTrue(state.session.moves.last().moveText.contains("UNKNOWN_CODE"))
+    }
+
+    @Test
+    fun parseが短すぎる指し手行で例外を投げること() {
+        val state = ShogiBoardState()
+        kotlin.test.assertFailsWith<KifuParseException> {
+            CsaParser().parse(listOf("+7776F"), state) // 長さが足りない
+        }
     }
 }

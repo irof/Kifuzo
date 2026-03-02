@@ -139,4 +139,50 @@ class FileTreeManagerAdvancedTest {
             root.toFile().deleteRecursively()
         }
     }
+
+    @Test
+    fun buildFlatListが隠しディレクトリをスキップすること() {
+        val root = createTempDirectory("kifuzo-test-hidden-dir")
+        try {
+            val hiddenDir = root.resolve(".hidden").createDirectory()
+            hiddenDir.resolve("file.kifu").createFile()
+            val normalDir = root.resolve("normal").createDirectory()
+            val normalFile = normalDir.resolve("file.kifu").createFile()
+
+            val manager = FileTreeManager(object : dev.irof.kifuzo.StubKifuRepository() {})
+            val nodes = manager.buildFlatList(root)
+
+            assertEquals(1, nodes.size)
+            assertEquals(normalFile, nodes[0].path)
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun toggleNodeが隠しファイルを無視すること() {
+        val root = createTempDirectory("kifuzo-test-toggle-hidden")
+        try {
+            val dir = root.resolve("dir").createDirectory()
+            dir.resolve(".hidden.kifu").createFile()
+            dir.resolve("visible.kifu").createFile()
+
+            val manager = FileTreeManager(object : dev.irof.kifuzo.StubKifuRepository() {
+                override fun scanDirectory(directory: java.nio.file.Path, sortOption: dev.irof.kifuzo.models.FileSortOption): List<java.nio.file.Path> = when (directory) {
+                    dir -> listOf(dir.resolve(".hidden.kifu"), dir.resolve("visible.kifu"))
+                    else -> emptyList()
+                }
+            })
+
+            val node = FileTreeNode(dir, 0, true, isExpanded = false)
+            val result = manager.toggleNode(node, listOf(node))
+
+            // 展開後のリストには visible.kifu だけが含まれるはず
+            assertEquals(2, result.size)
+            assertTrue(result.any { it.name == "visible.kifu" })
+            assertTrue(result.none { it.name.startsWith(".") })
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
 }

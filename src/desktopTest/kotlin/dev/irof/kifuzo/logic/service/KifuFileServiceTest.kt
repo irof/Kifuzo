@@ -10,8 +10,6 @@ import kotlin.io.path.createFile
 import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class KifuFileServiceTest {
@@ -74,5 +72,45 @@ class KifuFileServiceTest {
 
         val proposed = service.generateProposedNameForPasted(info, template)
         assertEquals("棋戦_名_先手_A_後手_B.kifu", proposed)
+    }
+
+    @Test
+    fun renameFileが失敗した場合にnullを返すこと() {
+        val path = java.nio.file.Paths.get("/non/existent/path.kifu")
+        val result = service.renameFile(path, "new.kifu")
+        assertEquals(null, result)
+    }
+
+    @Test
+    fun generateProposedNameが不正な形式の日時でも動作すること() {
+        val info = KifuInfo(
+            path = java.nio.file.Paths.get("test.kifu"),
+            startTime = "invalid-date",
+            format = KifuFormat.KIF,
+        )
+        val proposed = service.generateProposedName(java.nio.file.Paths.get("test.kifu"), info, "{開始日の年月日}")
+        assertTrue(proposed?.substringBefore(".")?.length == 8)
+    }
+
+    @Test
+    fun generateProposedNameがエラー情報の場合にnullを返すこと() {
+        val info = KifuInfo(java.nio.file.Paths.get("test.kifu"), isError = true)
+        val proposed = service.generateProposedName(java.nio.file.Paths.get("test.kifu"), info, "{棋戦名}")
+        assertEquals(null, proposed)
+    }
+
+    @Test
+    fun scanDirectoryがアクセス不能なファイルでも動作すること() {
+        val root = createTempDirectory("kifuzo-scan-io-error")
+        try {
+            val file = root.resolve("locked.kifu").createFile()
+            // 権限を剥奪して Files.getLastModifiedTime を失敗させる（OSに依存するため確実ではないが）
+            file.toFile().setReadable(false)
+
+            val result = service.scanDirectory(root, FileSortOption.LAST_MODIFIED)
+            assertEquals(1, result.size)
+        } finally {
+            root.toFile().deleteRecursively()
+        }
     }
 }

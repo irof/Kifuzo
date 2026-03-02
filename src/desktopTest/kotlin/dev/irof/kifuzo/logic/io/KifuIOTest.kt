@@ -44,6 +44,23 @@ class KifuIOTest {
             assertEquals(2, lines.size)
             assertEquals("A", lines[0])
             assertEquals("B", lines[1])
+
+            // 空ファイル
+            val emptyFile = dir.resolve("empty.kifu")
+            emptyFile.writeText("", Charsets.UTF_8)
+            assertEquals(0, readLinesWithEncoding(emptyFile).size)
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun writeTextToFileがUTF8で書き込むこと() {
+        val dir = createTempDirectory("kifuzo-io-write")
+        try {
+            val file = dir.resolve("out.kifu")
+            writeTextToFile(file, "出力テスト")
+            assertEquals("出力テスト", java.nio.file.Files.readString(file, Charsets.UTF_8))
         } finally {
             dir.toFile().deleteRecursively()
         }

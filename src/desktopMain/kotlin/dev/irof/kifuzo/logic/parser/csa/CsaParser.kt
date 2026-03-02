@@ -48,8 +48,11 @@ class CsaParser : KifuFormatHandler {
                     if (line.length >= CSA_MOVE_LINE_MIN_LENGTH) {
                         handleCsaMoveLine(line, i, lines, ctx)
                         ctx.moveCount++
+                    } else if (line.length > 1) {
+                        throw KifuParseException("${i + 1}行目: CSA形式の指し手として短すぎます: $line", lineNumber = i + 1, lineContent = line)
                     }
                 }
+
                 line.startsWith("%") -> {
                     handleCsaResultLine(line, ctx)
                 }

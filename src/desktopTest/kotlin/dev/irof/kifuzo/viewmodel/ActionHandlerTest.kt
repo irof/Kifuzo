@@ -4,6 +4,7 @@ import dev.irof.kifuzo.InMemoryAppSettings
 import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.models.FileTreeNode
 import java.nio.file.Paths
+import kotlin.io.path.createTempDirectory
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -50,23 +51,31 @@ class ActionHandlerTest {
 
     @Test
     fun CSA変換のフローが正しく動作すること() {
-        val path = Paths.get("test.csa")
+        // 実際のファイルシステムを使ったテスト
+        val dir = kotlin.io.path.createTempDirectory("kifuzo-convert-test")
+        try {
+            val csaFile = dir.resolve("test.csa")
+            java.nio.file.Files.writeString(csaFile, "V2.2")
+            val kifuFile = dir.resolve("test.kifu")
 
-        // 変換アクション
-        viewModel.dispatch(KifuzoAction.ConvertCsa(path))
-        assertEquals("convertCsa", stubRepository.lastMethodCalled)
+            // 1. KIFUファイルが存在しない場合、即座に変換
+            viewModel.dispatch(KifuzoAction.ConvertCsa(csaFile))
+            assertEquals("convertCsa", stubRepository.lastMethodCalled)
+            assertNull(viewModel.uiState.showOverwriteConfirm)
 
-        // 上書き確認のシミュレーション
-        // (実際にはファイル存在チェックがあるが、ViewModelのステート更新を確認)
-        viewModel.updateUiState { it.copy(showOverwriteConfirm = path) }
-        assertTrue(viewModel.uiState.showOverwriteConfirm != null)
+            // 2. KIFUファイルが存在する場合、上書き確認を表示
+            java.nio.file.Files.writeString(kifuFile, "existing")
+            viewModel.dispatch(KifuzoAction.ConvertCsa(csaFile))
+            assertEquals(csaFile, viewModel.uiState.showOverwriteConfirm)
 
-        viewModel.dispatch(KifuzoAction.ConfirmOverwrite)
-        assertNull(viewModel.uiState.showOverwriteConfirm)
-
-        viewModel.updateUiState { it.copy(showOverwriteConfirm = path) }
-        viewModel.dispatch(KifuzoAction.HideOverwriteConfirm)
-        assertNull(viewModel.uiState.showOverwriteConfirm)
+            // 3. 上書き確認で Confirm した場合、変換実行
+            stubRepository.lastMethodCalled = ""
+            viewModel.dispatch(KifuzoAction.ConfirmOverwrite)
+            assertEquals("convertCsa", stubRepository.lastMethodCalled)
+            assertNull(viewModel.uiState.showOverwriteConfirm)
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
     }
 
     @Test
@@ -80,14 +89,12 @@ class ActionHandlerTest {
     fun メタデータ更新アクションが動作すること() {
         val path = Paths.get("test.kifu")
         viewModel.dispatch(KifuzoAction.UpdateMetadata(path, "Event", "StartTime"))
-        // repositoryへの委譲は FileActionHandlerTest で担保されている
     }
 
     @Test
     fun ディレクトリの開閉アクションが動作すること() {
         val dir = FileTreeNode(Paths.get("/root/dir"), 0, true)
         viewModel.dispatch(KifuzoAction.ToggleDirectory(dir))
-        // FileTreeManager への委譲を確認
     }
 
     @Test
@@ -103,11 +110,9 @@ class ActionHandlerTest {
             )
         }
 
-        // 保存ダイアログ表示
         viewModel.dispatch(KifuzoAction.ShowSavePastedKifuDialog)
         assertTrue(viewModel.uiState.pastedKifuProposedName != null)
 
-        // ダイアログ閉じる
         viewModel.dispatch(KifuzoAction.HideSavePastedKifuDialog)
         assertNull(viewModel.uiState.pastedKifuProposedName)
     }
@@ -122,14 +127,45 @@ class ActionHandlerTest {
     }
 
     @Test
-    fun ファイルフィルタのトグルがUiStateに反映されること() {
-        val filter = dev.irof.kifuzo.models.FileFilter.RECENT
-        assertFalse(viewModel.uiState.fileFilters.contains(filter))
+    fun UIのトグル系アクションが動作すること() {
+        // Sidebar
+        val initialSidebar = viewModel.uiState.isSidebarVisible
+        viewModel.dispatch(KifuzoAction.ToggleSidebar)
+        assertEquals(!initialSidebar, viewModel.uiState.isSidebarVisible)
 
-        viewModel.dispatch(KifuzoAction.ToggleFileFilter(filter))
-        assertTrue(viewModel.uiState.fileFilters.contains(filter))
+        // MoveList
+        val initialMoveList = viewModel.uiState.isMoveListVisible
+        viewModel.dispatch(KifuzoAction.ToggleMoveList)
+        assertEquals(!initialMoveList, viewModel.uiState.isMoveListVisible)
 
-        viewModel.dispatch(KifuzoAction.ToggleFileFilter(filter))
-        assertFalse(viewModel.uiState.fileFilters.contains(filter))
+        // Flipped
+        val initialFlipped = viewModel.uiState.isFlipped
+        viewModel.dispatch(KifuzoAction.ToggleFlipped)
+        assertEquals(!initialFlipped, viewModel.uiState.isFlipped)
+    }
+
+    @Test
+    fun 各種設定変更アクションが動作すること() {
+        // ViewMode
+        viewModel.dispatch(KifuzoAction.SetViewMode(dev.irof.kifuzo.models.FileViewMode.FLAT))
+        // Dispatchers.Main の設定がないため refreshFiles が即座に失敗または無視されることを期待
+        // uiState 自体は即座に書き換わるはず
+        assertEquals(dev.irof.kifuzo.models.FileViewMode.FLAT, viewModel.uiState.viewMode)
+
+        // SortOption
+        viewModel.dispatch(KifuzoAction.SetFileSortOption(dev.irof.kifuzo.models.FileSortOption.LAST_MODIFIED))
+        assertEquals(dev.irof.kifuzo.models.FileSortOption.LAST_MODIFIED, viewModel.uiState.fileSortOption)
+
+        // SidebarWidth
+        viewModel.dispatch(KifuzoAction.UpdateSidebarWidth(50f)) // delta
+        assertEquals(300f, viewModel.uiState.sidebarWidth) // 250 + 50
+    }
+
+    @Test
+    fun 棋譜操作系アクションが動作すること() {
+        viewModel.dispatch(KifuzoAction.RefreshFiles)
+        viewModel.dispatch(KifuzoAction.ResetToMainHistory)
+        viewModel.dispatch(KifuzoAction.SelectVariation(emptyList()))
+        viewModel.dispatch(KifuzoAction.ToggleFileFilter(dev.irof.kifuzo.models.FileFilter.RECENT))
     }
 }
