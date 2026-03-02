@@ -4,6 +4,8 @@ import dev.irof.kifuzo.StubKifuRepository
 import dev.irof.kifuzo.logic.parser.KifuParseException
 import dev.irof.kifuzo.models.ShogiBoardState
 import java.nio.file.Paths
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -136,4 +138,37 @@ class FileActionHandlerTest {
         assertEquals(true, filesChangedCalled)
         assertEquals(true, infoMsg?.contains("棋譜情報"))
     }
+
+    @Test
+    fun savePastedKifuがファイルを保存し通知すること() {
+        val root = kotlin.io.path.createTempDirectory("kifuzo-save-test")
+        try {
+            val filename = "pasted.kifu"
+            val text = "test kifu content"
+
+            handler.savePastedKifu(root, filename, text)
+
+            val savedFile = root.resolve(filename)
+            assertTrue(savedFile.exists())
+            assertEquals(text, savedFile.readText())
+            assertEquals(savedFile, renamedPath)
+            assertTrue(filesChangedCalled)
+            assertTrue(infoMsg?.contains("保存しました") == true)
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun openInExternalAppが例外を投げずに実行されること() {
+        // 実際の外部アプリ起動はモックしづらいが、パスが渡された時にエラーにならないことを確認
+        val path = Paths.get("test.kifu")
+        handler.openInExternalApp(path)
+        // ShogiHomeがない環境ではエラー通知されるはず
+        assertTrue(errorMsg?.contains("起動エラー") == true || infoMsg?.contains("開いています") == true)
+    }
+}
+
+private fun assertTrue(actual: Boolean) {
+    kotlin.test.assertTrue(actual)
 }

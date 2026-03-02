@@ -12,7 +12,7 @@ object KifHeaderParser {
         l.startsWith("先手:") || l.startsWith("対局者:") || l.startsWith("後手:") || l.startsWith("開始日時:") || l.startsWith("棋戦:") || l.startsWith("場所:")
 
     fun isBoardLine(l: String) = l.startsWith("|") && l.count { it == '|' } >= 2
-    fun isMochigomaLine(l: String) = Regex("""^[上下先後]手(の)?持駒：""").containsMatchIn(l)
+    fun isMochigomaLine(l: String) = Regex("""^[上下先後]手((の)?(手)?)?持駒：""").containsMatchIn(l)
     fun isMoveLine(l: String) = Regex("""^\s*\d+\s+.*""").matches(l)
 
     fun handleMetadataLine(hp: HeaderParser, line: String) {

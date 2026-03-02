@@ -80,8 +80,7 @@ class ActionHandlerTest {
     fun メタデータ更新アクションが動作すること() {
         val path = Paths.get("test.kifu")
         viewModel.dispatch(KifuzoAction.UpdateMetadata(path, "Event", "StartTime"))
-        // repositoryへの委譲は FileActionHandlerTest で担保されているので、
-        // ここでは例外が発生せずに処理が終わることを確認
+        // repositoryへの委譲は FileActionHandlerTest で担保されている
     }
 
     @Test
@@ -111,5 +110,26 @@ class ActionHandlerTest {
         // ダイアログ閉じる
         viewModel.dispatch(KifuzoAction.HideSavePastedKifuDialog)
         assertNull(viewModel.uiState.pastedKifuProposedName)
+    }
+
+    @Test
+    fun エラーメッセージが表示されている時にクリアできること() {
+        viewModel.updateUiState { it.copy(errorMessage = "Some error") }
+        assertEquals("Some error", viewModel.uiState.errorMessage)
+
+        viewModel.dispatch(KifuzoAction.ClearErrorAndInfo)
+        assertNull(viewModel.uiState.errorMessage)
+    }
+
+    @Test
+    fun ファイルフィルタのトグルがUiStateに反映されること() {
+        val filter = dev.irof.kifuzo.models.FileFilter.RECENT
+        assertFalse(viewModel.uiState.fileFilters.contains(filter))
+
+        viewModel.dispatch(KifuzoAction.ToggleFileFilter(filter))
+        assertTrue(viewModel.uiState.fileFilters.contains(filter))
+
+        viewModel.dispatch(KifuzoAction.ToggleFileFilter(filter))
+        assertFalse(viewModel.uiState.fileFilters.contains(filter))
     }
 }

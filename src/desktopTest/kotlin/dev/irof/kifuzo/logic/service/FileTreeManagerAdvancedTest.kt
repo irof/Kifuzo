@@ -2,6 +2,7 @@ package dev.irof.kifuzo.logic.service
 
 import dev.irof.kifuzo.models.FileFilter
 import dev.irof.kifuzo.models.FileSortOption
+import dev.irof.kifuzo.models.FileTreeNode
 import java.nio.file.Files
 import java.time.Instant
 import kotlin.io.path.createDirectory
@@ -73,6 +74,67 @@ class FileTreeManagerAdvancedTest {
             val nodesByTime = manager.buildFlatList(root, sortOption = FileSortOption.LAST_MODIFIED)
             assertEquals("a.kifu", nodesByTime[0].name)
             assertEquals("b.kifu", nodesByTime[1].name)
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun buildTreeが指定したパスを展開してツリーを構築すること() {
+        val root = createTempDirectory("kifuzo-test-tree")
+        try {
+            val dir1 = (root.resolve("dir1")).createDirectory()
+            val file1 = (root.resolve("file1.kifu")).createFile()
+            val file2 = (dir1.resolve("file2.csa")).createFile()
+
+            val manager = FileTreeManager(object : dev.irof.kifuzo.StubKifuRepository() {
+                override fun scanDirectory(directory: java.nio.file.Path, sortOption: dev.irof.kifuzo.models.FileSortOption): List<java.nio.file.Path> = when (directory) {
+                    root -> listOf(dir1, file1)
+                    dir1 -> listOf(file2)
+                    else -> emptyList()
+                }
+            })
+
+            // dir1 を展開状態にする
+            val initialNodes = listOf(FileTreeNode(dir1, 0, true, isExpanded = true))
+            val nodes = manager.buildTree(root, initialNodes)
+
+            assertEquals(3, nodes.size)
+            assertEquals(dir1, nodes[0].path)
+            assertTrue(nodes[0].isExpanded)
+            assertEquals(file2, nodes[1].path) // 子
+            assertEquals(1, nodes[1].level)
+            assertEquals(file1, nodes[2].path) // 兄弟
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun buildTreeで権限エラーが多発した場合に例外を投げること() {
+        val root = createTempDirectory("kifuzo-error-root")
+        try {
+            val dir1 = root.resolve("dir1").createDirectory()
+            val dir2 = root.resolve("dir2").createDirectory()
+            val dir3 = root.resolve("dir3").createDirectory()
+
+            val manager = FileTreeManager(object : dev.irof.kifuzo.StubKifuRepository() {
+                override fun scanDirectory(directory: java.nio.file.Path, sortOption: dev.irof.kifuzo.models.FileSortOption): List<java.nio.file.Path> = when (directory) {
+                    root -> listOf(dir1, dir2, dir3)
+                    else -> throw java.io.IOException("Permission denied")
+                }
+            })
+
+            // 3つのディレクトリをすべて展開状態に設定
+            val initialNodes = listOf(
+                FileTreeNode(dir1, 0, true, isExpanded = true),
+                FileTreeNode(dir2, 0, true, isExpanded = true),
+                FileTreeNode(dir3, 0, true, isExpanded = true),
+            )
+
+            kotlin.test.assertFailsWith<dev.irof.kifuzo.logic.parser.TooManyErrorsException> {
+                manager.buildTree(root, initialNodes)
+            }
         } finally {
             root.toFile().deleteRecursively()
         }
