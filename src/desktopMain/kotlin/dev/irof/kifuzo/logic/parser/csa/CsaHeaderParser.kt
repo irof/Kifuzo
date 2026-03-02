@@ -80,7 +80,4 @@ object CsaHeaderParser {
     }
 }
 
-// 互換性のためのエイリアス関数
-fun handleCsaMetadataLine(hp: HeaderParser, line: String) = CsaHeaderParser.handleMetadataLine(hp, line)
-fun handleCsaMochigomaLine(hp: HeaderParser, line: String) = CsaHeaderParser.handleMochigomaLine(hp, line)
-fun parseCsaBoardLine(hp: HeaderParser, line: String) = CsaHeaderParser.handleBoardLine(hp, line)
+

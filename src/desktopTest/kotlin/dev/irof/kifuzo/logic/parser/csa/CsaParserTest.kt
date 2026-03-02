@@ -120,16 +120,7 @@ class CsaParserTest {
         }
     }
 
-    @Test
-    fun エイリアス関数が動作すること() {
-        val hp = dev.irof.kifuzo.logic.parser.HeaderParser()
-        handleCsaMetadataLine(hp, "N+SentePlayer")
-        assertEquals("SentePlayer", hp.senteName)
 
-        handleCsaMochigomaLine(hp, "P+00HIAL")
-        // AL は addCsaMochigoma でスキップされるはずだが、その前の HI は追加される
-        assertTrue(hp.senteMochi.contains(Piece.HI))
-    }
 
     @Test
     fun handleCsaResultLineが未知のコードを適切に処理すること() {

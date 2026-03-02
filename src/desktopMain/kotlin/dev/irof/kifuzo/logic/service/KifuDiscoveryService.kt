@@ -37,13 +37,5 @@ class KifuDiscoveryService(
         fileTreeManager.buildFlatList(root, filters, sortOption)
     }
 
-    private fun isKifuFile(path: Path): Boolean = try {
-        !path.name.startsWith(".") && path.isRegularFile() && (path.extension.lowercase() in listOf("kifu", "kif", "csa"))
-    } catch (e: IOException) {
-        logger.debug(e) { "Failed to check if kifu file (IO): $path" }
-        false
-    } catch (e: SecurityException) {
-        logger.debug(e) { "Failed to check if kifu file (Security): $path" }
-        false
-    }
+
 }
