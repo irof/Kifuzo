@@ -2,6 +2,10 @@ package dev.irof.kifuzo.logic.service
 
 import java.time.LocalDateTime
 import java.time.ZoneId
+import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.writeLines
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -58,4 +62,43 @@ class ImportLogicTest {
     fun 空のファイルリストの場合はnullを返すこと() {
         assertNull(calculateImportTarget(emptyList(), 0L))
     }
+
+    @Test
+    fun importShogiQuestFilesがファイルを正しくインポートすること() {
+        val sourceDir = kotlin.io.path.createTempDirectory("kifuzo-import-source")
+        val targetDir = kotlin.io.path.createTempDirectory("kifuzo-import-target")
+
+        try {
+            val sourceFile = sourceDir.resolve("quest_game.txt")
+            sourceFile.writeLines(
+                listOf(
+                    "V2.2",
+                    "N+SentePlayer",
+                    "N-GotePlayer",
+                    "+7776FU",
+                ),
+            )
+
+            val count = importShogiQuestFiles(sourceDir, targetDir)
+
+            assertEquals(1, count)
+            // 元ファイルが削除されていること
+            assertFalse(sourceFile.exists())
+            // インポートされたファイルが存在すること
+            val importedFiles = targetDir.listDirectoryEntries("*.csa")
+            assertEquals(1, importedFiles.size)
+            assertTrue(importedFiles[0].name.contains("SentePlayer-GotePlayer.csa"))
+        } finally {
+            sourceDir.toFile().deleteRecursively()
+            targetDir.toFile().deleteRecursively()
+        }
+    }
+}
+
+private fun assertFalse(actual: Boolean) {
+    kotlin.test.assertFalse(actual)
+}
+
+private fun assertTrue(actual: Boolean) {
+    kotlin.test.assertTrue(actual)
 }

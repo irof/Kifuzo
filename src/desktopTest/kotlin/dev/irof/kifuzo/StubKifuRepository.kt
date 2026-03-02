@@ -44,11 +44,18 @@ open class StubKifuRepository : KifuRepository {
         parseAction(state)
     }
 
-    override fun scanKifuInfo(path: Path): KifuInfo = KifuInfo(path)
+    override fun scanKifuInfo(path: Path): KifuInfo {
+        lastMethodCalled = "scanKifuInfoPath"
+        return KifuInfo(path)
+    }
 
-    override fun scanKifuInfo(lines: List<String>): KifuInfo = KifuInfo(java.nio.file.Paths.get("stub"))
+    override fun scanKifuInfo(lines: List<String>): KifuInfo {
+        lastMethodCalled = "scanKifuInfoLines"
+        return KifuInfo(java.nio.file.Paths.get("stub"))
+    }
 
     override fun convertCsa(path: Path): Path {
+        lastMethodCalled = "convertCsa"
         convertCsaAction()
         return path
     }
