@@ -122,35 +122,55 @@ private fun FilenameTemplateSection(value: String, onValueChange: (String) -> Un
     }
 }
 
+private const val SETTINGS_TABLE_KEY_WEIGHT = 0.4f
+private const val SETTINGS_TABLE_VALUE_WEIGHT = 0.6f
+
 @Composable
 private fun RawSettingsSection() {
     var rawSettings by remember { mutableStateOf(AppSettings.Default.getAllSettings()) }
     Column {
-        Text(AppStrings.RAW_PREFS_LABEL, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
-        rawSettings.forEach { (key, value) ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(vertical = ShogiDimensions.Spacing.Small),
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(key, fontSize = ShogiDimensions.Text.Caption, color = Color.Gray)
-                    var editingValue by remember(key) { mutableStateOf(value) }
-                    BasicTextField(
-                        value = editingValue,
-                        onValueChange = {
-                            editingValue = it
-                            AppSettings.Default.putSetting(key, it)
-                        },
-                        textStyle = TextStyle(fontSize = ShogiDimensions.Text.Body),
-                        modifier = Modifier.fillMaxWidth().background(Color.LightGray.copy(alpha = 0.2f)).padding(ShogiDimensions.Spacing.Small),
-                    )
-                }
-                IconButton(onClick = {
-                    AppSettings.Default.removeSetting(key)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(AppStrings.RAW_PREFS_LABEL, fontWeight = FontWeight.Bold)
+            TextButton(
+                onClick = {
+                    AppSettings.Default.clearAllSettings()
                     rawSettings = AppSettings.Default.getAllSettings()
-                }) {
-                    Icon(ShogiIcons.Delete, contentDescription = AppStrings.DELETE, tint = Color.Red, modifier = Modifier.size(ShogiDimensions.Icon.Small))
+                },
+            ) {
+                Text(AppStrings.CLEAR_ALL_SETTINGS, color = Color.Red, fontSize = ShogiDimensions.Text.Caption)
+            }
+        }
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Small))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.LightGray.copy(alpha = 0.1f))
+                .padding(ShogiDimensions.Spacing.Small),
+        ) {
+            rawSettings.forEach { (key, value) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(ShogiDimensions.Spacing.Medium),
+                ) {
+                    Text(
+                        text = key,
+                        modifier = Modifier.weight(SETTINGS_TABLE_KEY_WEIGHT),
+                        fontSize = ShogiDimensions.Text.Caption,
+                        color = Color.Gray,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = value,
+                        modifier = Modifier.weight(SETTINGS_TABLE_VALUE_WEIGHT),
+                        fontSize = ShogiDimensions.Text.Caption,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
                 }
             }
         }

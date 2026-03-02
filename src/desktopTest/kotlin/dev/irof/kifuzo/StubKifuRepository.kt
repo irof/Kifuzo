@@ -89,6 +89,7 @@ class InMemoryAppSettings : dev.irof.kifuzo.models.AppSettings {
     override fun getAllSettings(): Map<String, String> = emptyMap()
     override fun removeSetting(key: String) { /* Stub */ }
     override fun putSetting(key: String, value: String) { /* Stub */ }
+    override fun clearAllSettings() { /* Stub */ }
 }
 
 /**

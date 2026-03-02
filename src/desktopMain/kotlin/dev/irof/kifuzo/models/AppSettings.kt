@@ -26,6 +26,7 @@ interface AppSettings {
     fun getAllSettings(): Map<String, String>
     fun removeSetting(key: String)
     fun putSetting(key: String, value: String)
+    fun clearAllSettings()
 
     companion object {
         /**
@@ -181,6 +182,11 @@ private class StandardAppSettings : AppSettings {
 
     override fun putSetting(key: String, value: String) {
         prefs.put(key, value)
+        prefs.flush()
+    }
+
+    override fun clearAllSettings() {
+        prefs.clear()
         prefs.flush()
     }
 }
