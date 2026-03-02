@@ -23,7 +23,7 @@ class ActionHandlerTest {
     }
 
     @Test
-    fun 隣接するファイルを選択できること() {
+    fun 隣接するファイルやフォルダを選択できること() {
         val root = Paths.get("/root")
         val file1 = root.resolve("file1.kifu")
         val file2 = root.resolve("file2.kifu")
@@ -40,13 +40,17 @@ class ActionHandlerTest {
             )
         }
 
-        // 次のファイル (dir1はスキップされて file2 になるはず)
+        // 次のアイテム (dir1)
+        viewModel.dispatch(KifuzoAction.SelectNextFile)
+        assertEquals(dir1, viewModel.uiState.selectedFile)
+
+        // その次のアイテム (file2)
         viewModel.dispatch(KifuzoAction.SelectNextFile)
         assertEquals(file2, viewModel.uiState.selectedFile)
 
-        // 前のファイル
+        // 前のアイテム (dir1)
         viewModel.dispatch(KifuzoAction.SelectPrevFile)
-        assertEquals(file1, viewModel.uiState.selectedFile)
+        assertEquals(dir1, viewModel.uiState.selectedFile)
     }
 
     @Test

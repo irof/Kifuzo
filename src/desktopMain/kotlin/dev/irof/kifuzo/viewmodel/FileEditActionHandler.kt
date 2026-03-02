@@ -88,7 +88,7 @@ class FileEditActionHandler(
         val currentIndex = viewModel.uiState.selectedFile?.let { selected -> nodes.indexOfFirst { it.path == selected } } ?: -1
         if (currentIndex != -1) {
             val targetIndices = if (forward) (currentIndex + 1 until nodes.size) else (currentIndex - 1 downTo 0)
-            targetIndices.asSequence().map { nodes[it] }.firstOrNull { !it.isDirectory }?.let { node ->
+            targetIndices.asSequence().map { nodes[it] }.firstOrNull()?.let { node ->
                 fileActionHandler.selectFile(node.path)
                 viewModel.updateUiState { it.copy(selectedFile = node.path) }
             }
