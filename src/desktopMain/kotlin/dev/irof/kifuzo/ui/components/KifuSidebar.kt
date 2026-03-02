@@ -61,27 +61,14 @@ fun KifuSidebar(
             .focusRequester(focusRequester)
             .focusable()
             .onPreviewKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                when (event.key) {
-                    Key.DirectionDown -> {
-                        onSelectNext()
-                        true
-                    }
-                    Key.DirectionUp -> {
-                        onSelectPrev()
-                        true
-                    }
-                    Key.Enter, Key.NumPadEnter, Key.DirectionRight -> {
-                        val selectedNode = state.treeNodes.find { it.path == state.selectedFile }
-                        if (selectedNode != null && selectedNode.isDirectory) {
-                            onToggleDir(selectedNode)
-                            true
-                        } else {
-                            false
-                        }
-                    }
-                    else -> false
-                }
+                handleSidebarKeyEvent(
+                    event = event,
+                    state = state,
+                    onSelectNext = onSelectNext,
+                    onSelectPrev = onSelectPrev,
+                    onSelectFile = onSelectFile,
+                    onToggleDir = onToggleDir,
+                )
             }
             .pointerInput(Unit) {
                 detectTapGestures { focusRequester.requestFocus() }
@@ -123,4 +110,100 @@ fun KifuSidebar(
             onForceParse = onForceParse,
         )
     }
+}
+
+private fun handleSidebarKeyEvent(
+    event: androidx.compose.ui.input.key.KeyEvent,
+    state: KifuzoUiState,
+    onSelectNext: () -> Unit,
+    onSelectPrev: () -> Unit,
+    onSelectFile: (Path) -> Unit,
+    onToggleDir: (dev.irof.kifuzo.models.FileTreeNode) -> Unit,
+): Boolean {
+    if (event.type != KeyEventType.KeyDown) return false
+    val currentIndex = state.treeNodes.indexOfFirst { it.path == state.selectedFile }
+
+    return when (event.key) {
+        Key.DirectionDown -> {
+            onSelectNext()
+            true
+        }
+        Key.DirectionUp -> {
+            onSelectPrev()
+            true
+        }
+        Key.Enter, Key.NumPadEnter -> handleEnterKey(currentIndex, state, onToggleDir)
+        Key.DirectionRight -> handleRightKey(currentIndex, state, onSelectFile, onToggleDir)
+        Key.DirectionLeft -> handleLeftKey(currentIndex, state, onSelectFile, onToggleDir)
+        else -> false
+    }
+}
+
+private fun handleEnterKey(
+    currentIndex: Int,
+    state: KifuzoUiState,
+    onToggleDir: (dev.irof.kifuzo.models.FileTreeNode) -> Unit,
+): Boolean {
+    val node = state.treeNodes.getOrNull(currentIndex) ?: return false
+    return if (node.isDirectory) {
+        onToggleDir(node)
+        true
+    } else {
+        false
+    }
+}
+
+private fun handleRightKey(
+    currentIndex: Int,
+    state: KifuzoUiState,
+    onSelectFile: (Path) -> Unit,
+    onToggleDir: (dev.irof.kifuzo.models.FileTreeNode) -> Unit,
+): Boolean {
+    val node = state.treeNodes.getOrNull(currentIndex)
+    if (node == null || !node.isDirectory) return false
+
+    if (node.isExpanded) {
+        state.treeNodes.getOrNull(currentIndex + 1)?.let { onSelectFile(it.path) }
+    } else {
+        onToggleDir(node)
+    }
+    return true
+}
+
+private fun handleLeftKey(
+    currentIndex: Int,
+    state: KifuzoUiState,
+    onSelectFile: (Path) -> Unit,
+    onToggleDir: (dev.irof.kifuzo.models.FileTreeNode) -> Unit,
+): Boolean {
+    val node = state.treeNodes.getOrNull(currentIndex) ?: return false
+
+    return if (node.isDirectory && node.isExpanded) {
+        onToggleDir(node)
+        true
+    } else {
+        findAndCloseParent(currentIndex, node.level, state, onSelectFile, onToggleDir)
+    }
+}
+
+private fun findAndCloseParent(
+    currentIndex: Int,
+    currentLevel: Int,
+    state: KifuzoUiState,
+    onSelectFile: (Path) -> Unit,
+    onToggleDir: (dev.irof.kifuzo.models.FileTreeNode) -> Unit,
+): Boolean {
+    var i = currentIndex - 1
+    while (i >= 0) {
+        val parentCandidate = state.treeNodes[i]
+        if (parentCandidate.isDirectory && parentCandidate.level < currentLevel) {
+            onSelectFile(parentCandidate.path)
+            if (parentCandidate.isExpanded) {
+                onToggleDir(parentCandidate)
+            }
+            return true
+        }
+        i--
+    }
+    return false
 }
