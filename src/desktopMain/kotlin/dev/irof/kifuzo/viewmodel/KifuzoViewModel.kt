@@ -81,7 +81,10 @@ class KifuzoViewModel(
         KifuzoUiState(
             myNameRegex = settings.myNameRegex,
             filenameTemplate = settings.filenameTemplate,
+            persistFileTreeState = settings.persistFileTreeState,
             sidebarWidth = settings.sidebarWidth,
+            viewMode = if (settings.persistFileTreeState) settings.lastFileViewMode else dev.irof.kifuzo.models.FileViewMode.HIERARCHY,
+            fileFilters = if (settings.persistFileTreeState) settings.lastFileFilters else emptySet(),
             fileSortOption = settings.fileSortOption,
         ),
     )

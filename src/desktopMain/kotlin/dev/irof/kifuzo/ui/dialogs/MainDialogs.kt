@@ -71,8 +71,11 @@ private fun SettingsDialogWrapper(viewModel: KifuzoViewModel) {
         SettingsDialog(
             initialRegex = state.myNameRegex,
             initialTemplate = state.filenameTemplate,
+            initialPersistState = state.persistFileTreeState,
             onDismiss = { viewModel.dispatch(KifuzoAction.ShowSettings(false)) },
-            onSave = { regex, template -> viewModel.dispatch(KifuzoAction.SaveSettings(regex, template)) },
+            onSave = { regex, template, persist ->
+                viewModel.dispatch(KifuzoAction.SaveSettings(regex, template, persist))
+            },
         )
     }
 }

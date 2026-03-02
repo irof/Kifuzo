@@ -81,6 +81,9 @@ class InMemoryAppSettings : dev.irof.kifuzo.models.AppSettings {
     override var lastRootDir: String = ""
     override var filenameTemplate: String = "{開始日の年月日}_{開始日の時分秒}_{棋戦名}_{先手}_{後手}"
     override var fileSortOption: dev.irof.kifuzo.models.FileSortOption = dev.irof.kifuzo.models.FileSortOption.NAME
+    override var persistFileTreeState: Boolean = true
+    override var lastFileViewMode: dev.irof.kifuzo.models.FileViewMode = dev.irof.kifuzo.models.FileViewMode.HIERARCHY
+    override var lastFileFilters: Set<dev.irof.kifuzo.models.FileFilter> = emptySet()
 
     override fun saveWindowState(windowState: androidx.compose.ui.window.WindowState) { /* Stub */ }
     override fun getAllSettings(): Map<String, String> = emptyMap()

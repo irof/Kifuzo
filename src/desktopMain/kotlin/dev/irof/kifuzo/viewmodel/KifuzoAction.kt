@@ -10,7 +10,7 @@ sealed class KifuzoAction {
     data class SetRootDirectory(val path: Path) : KifuzoAction()
     data class ToggleDirectory(val node: FileTreeNode) : KifuzoAction()
     data class SelectFile(val path: Path) : KifuzoAction()
-    data class SaveSettings(val regex: String, val template: String) : KifuzoAction()
+    data class SaveSettings(val regex: String, val template: String, val persistFileTreeState: Boolean) : KifuzoAction()
     data class SetViewingText(val text: String?) : KifuzoAction()
     data object ToggleFlipped : KifuzoAction()
     data class ShowSettings(val show: Boolean) : KifuzoAction()

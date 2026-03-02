@@ -52,8 +52,16 @@ class UiActionHandler(
     private fun handleSaveSettings(action: KifuzoAction.SaveSettings): Boolean {
         settings.myNameRegex = action.regex
         settings.filenameTemplate = action.template
+        settings.persistFileTreeState = action.persistFileTreeState
         settingsHandler.updateAutoFlip(action.regex)
-        viewModel.updateUiState { it.copy(myNameRegex = action.regex, filenameTemplate = action.template, showSettings = false) }
+        viewModel.updateUiState {
+            it.copy(
+                myNameRegex = action.regex,
+                filenameTemplate = action.template,
+                persistFileTreeState = action.persistFileTreeState,
+                showSettings = false,
+            )
+        }
         return true
     }
 

@@ -29,6 +29,7 @@ object AppStrings {
     const val RAW_PREFS_LABEL = "保存されている詳細データ (Preferences):"
     const val FILENAME_TEMPLATE_LABEL = "ファイル名の命名規則テンプレート:"
     const val FILENAME_TEMPLATE_HINT = "利用可能: {開始日の年月日}, {開始日の時分秒}, {棋戦名}, {先手}, {後手}"
+    const val PERSIST_FILE_TREE_STATE_LABEL = "ファイルツリーの状態（階層/フラット、フィルタ）を次回起動時に復元する"
     const val SAVE_SETTINGS = "設定を保存"
     const val SAVE_KIFU = "棋譜を保存"
     const val FILENAME = "ファイル名"

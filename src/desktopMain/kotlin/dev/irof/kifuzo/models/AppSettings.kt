@@ -18,6 +18,9 @@ interface AppSettings {
     var lastRootDir: String
     var filenameTemplate: String
     var fileSortOption: FileSortOption
+    var persistFileTreeState: Boolean
+    var lastFileViewMode: FileViewMode
+    var lastFileFilters: Set<FileFilter>
 
     fun saveWindowState(windowState: WindowState)
     fun getAllSettings(): Map<String, String>
@@ -42,6 +45,9 @@ private const val KEY_IMPORT_SOURCE_DIR = "import_source_dir"
 private const val KEY_LAST_ROOT_DIR = "last_root_dir"
 private const val KEY_FILENAME_TEMPLATE = "kifu_filename_template"
 private const val KEY_FILE_SORT_OPTION = "file_sort_option"
+private const val KEY_PERSIST_FILE_TREE_STATE = "persist_file_tree_state"
+private const val KEY_LAST_FILE_VIEW_MODE = "last_file_view_mode"
+private const val KEY_LAST_FILE_FILTERS = "last_file_filters"
 
 private class StandardAppSettings : AppSettings {
     private val logger = KotlinLogging.logger {}
@@ -126,6 +132,39 @@ private class StandardAppSettings : AppSettings {
         }
         set(value) {
             prefs.put(KEY_FILE_SORT_OPTION, value.name)
+            prefs.flush()
+        }
+
+    override var persistFileTreeState: Boolean
+        get() = prefs.getBoolean(KEY_PERSIST_FILE_TREE_STATE, true)
+        set(value) {
+            prefs.putBoolean(KEY_PERSIST_FILE_TREE_STATE, value)
+            prefs.flush()
+        }
+
+    override var lastFileViewMode: FileViewMode
+        get() = try {
+            FileViewMode.valueOf(prefs.get(KEY_LAST_FILE_VIEW_MODE, FileViewMode.HIERARCHY.name))
+        } catch (e: IllegalArgumentException) {
+            logger.warn(e) { "Failed to parse file view mode, defaulting to HIERARCHY" }
+            FileViewMode.HIERARCHY
+        }
+        set(value) {
+            prefs.put(KEY_LAST_FILE_VIEW_MODE, value.name)
+            prefs.flush()
+        }
+
+    override var lastFileFilters: Set<FileFilter>
+        get() = prefs.get(KEY_LAST_FILE_FILTERS, "").split(",").filter { it.isNotEmpty() }.mapNotNull { name ->
+            try {
+                FileFilter.valueOf(name)
+            } catch (e: IllegalArgumentException) {
+                logger.warn(e) { "Failed to parse file filter: $name" }
+                null
+            }
+        }.toSet()
+        set(value) {
+            prefs.put(KEY_LAST_FILE_FILTERS, value.joinToString(",") { it.name })
             prefs.flush()
         }
 

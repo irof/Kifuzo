@@ -27,6 +27,9 @@ class FileTreeActionHandler(
         }
         is KifuzoAction.SetViewMode -> {
             viewModel.updateUiState { it.copy(viewMode = action.mode) }
+            if (settings.persistFileTreeState) {
+                settings.lastFileViewMode = action.mode
+            }
             viewModel.refreshFiles()
             true
         }
@@ -58,9 +61,14 @@ class FileTreeActionHandler(
     }
 
     private fun handleToggleFileFilter(filter: FileFilter) {
+        var nextFilters: Set<FileFilter> = emptySet()
         viewModel.updateUiState {
             val newFilters = if (it.fileFilters.contains(filter)) it.fileFilters - filter else it.fileFilters + filter
+            nextFilters = newFilters
             it.copy(fileFilters = newFilters)
+        }
+        if (settings.persistFileTreeState) {
+            settings.lastFileFilters = nextFilters
         }
         viewModel.refreshFiles()
     }

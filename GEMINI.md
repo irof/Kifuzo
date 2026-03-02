@@ -12,6 +12,7 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
 
 - **File Browser (サイドバー):** A dual-pane interface with a file navigator on the left and a preview/board view on the right. Supports directory navigation (double-click to enter, `..` to go back).
     - Remembers the last opened root directory across application restarts. Defaults to "no directory selected" on first run.
+    - Optionally remembers the file view mode (Hierarchy/Flat), file filters (Recent), and sort options across application restarts, configurable in settings.
     - **Vertical Menu Bar (メニューバー):** A dedicated sidebar on the far left for quick access to "Sidebar Toggle", "Move List Toggle", "Import", "Paste", and "Settings".
 - **Board Display (将棋盤ビュー):** Renders a 9x9 Shogi board showing the board state of a match.
     - Supports piece rotation (opponent pieces face down).

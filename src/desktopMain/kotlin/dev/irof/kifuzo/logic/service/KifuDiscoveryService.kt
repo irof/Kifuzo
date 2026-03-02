@@ -36,6 +36,4 @@ class KifuDiscoveryService(
     } else {
         fileTreeManager.buildFlatList(root, filters, sortOption)
     }
-
-
 }

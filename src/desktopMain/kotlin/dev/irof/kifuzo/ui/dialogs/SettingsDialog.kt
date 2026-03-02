@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
+import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -43,11 +44,13 @@ import dev.irof.kifuzo.utils.AppStrings
 fun SettingsDialog(
     initialRegex: String,
     initialTemplate: String,
+    initialPersistState: Boolean,
     onDismiss: () -> Unit,
-    onSave: (String, String) -> Unit,
+    onSave: (String, String, Boolean) -> Unit,
 ) {
     var tempRegex by remember { mutableStateOf(initialRegex) }
     var tempTemplate by remember { mutableStateOf(initialTemplate) }
+    var tempPersistState by remember { mutableStateOf(initialPersistState) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -58,6 +61,8 @@ fun SettingsDialog(
                 NameRegexSection(tempRegex, onValueChange = { tempRegex = it })
                 Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
                 FilenameTemplateSection(tempTemplate, onValueChange = { tempTemplate = it })
+                Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
+                PersistStateSection(tempPersistState, onValueChange = { tempPersistState = it })
                 Spacer(Modifier.height(24.dp))
                 Divider()
                 Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
@@ -65,9 +70,26 @@ fun SettingsDialog(
             }
         },
         buttons = {
-            SettingsFooter(tempRegex, tempTemplate, onDismiss, onSave)
+            SettingsFooter(tempRegex, tempTemplate, tempPersistState, onDismiss, onSave)
         },
     )
+}
+
+@Composable
+private fun PersistStateSection(value: Boolean, onValueChange: (Boolean) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Checkbox(
+            checked = value,
+            onCheckedChange = onValueChange,
+        )
+        Text(
+            text = AppStrings.PERSIST_FILE_TREE_STATE_LABEL,
+            modifier = Modifier.padding(start = ShogiDimensions.Spacing.Small),
+        )
+    }
 }
 
 @Composable
@@ -136,10 +158,10 @@ private fun RawSettingsSection() {
 }
 
 @Composable
-private fun SettingsFooter(regex: String, template: String, onDismiss: () -> Unit, onSave: (String, String) -> Unit) {
+private fun SettingsFooter(regex: String, template: String, persist: Boolean, onDismiss: () -> Unit, onSave: (String, String, Boolean) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth().padding(ShogiDimensions.Spacing.Medium), horizontalArrangement = Arrangement.End) {
         TextButton(onClick = onDismiss) { Text(AppStrings.CLOSE) }
         Spacer(Modifier.width(ShogiDimensions.Spacing.Medium))
-        Button(onClick = { onSave(regex, template) }) { Text(AppStrings.SAVE_SETTINGS) }
+        Button(onClick = { onSave(regex, template, persist) }) { Text(AppStrings.SAVE_SETTINGS) }
     }
 }

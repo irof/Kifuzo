@@ -88,7 +88,7 @@ class KifuzoViewModelTest {
 
     @Test
     fun 設定を保存すると正規表現が更新されダイアログが閉じること() {
-        viewModel.dispatch(KifuzoAction.SaveSettings("MyName", "{Sente}"))
+        viewModel.dispatch(KifuzoAction.SaveSettings("MyName", "{Sente}", true))
         assertEquals("MyName", viewModel.uiState.myNameRegex)
         assertFalse(viewModel.uiState.showSettings)
     }
@@ -96,7 +96,7 @@ class KifuzoViewModelTest {
     @Test
     fun 設定された自分の名前によって盤面が自動的に反転されること() {
         // 自分の名前を "irof" に設定
-        viewModel.dispatch(KifuzoAction.SaveSettings("irof", "{Sente}"))
+        viewModel.dispatch(KifuzoAction.SaveSettings("irof", "{Sente}", true))
 
         // 後手が "irof" の棋譜を読み込む
         val path = Paths.get("test.kifu")
@@ -129,6 +129,58 @@ class KifuzoViewModelTest {
 
         // 先手が自分なので、反転されていないはず
         assertFalse(viewModel.uiState.isFlipped)
+    }
+
+    @Test
+    fun 状態の保存が有効な場合ビューモードの変更が設定に保存されること() {
+        inMemorySettings.persistFileTreeState = true
+        viewModel.dispatch(KifuzoAction.SetViewMode(FileViewMode.FLAT))
+
+        assertEquals(FileViewMode.FLAT, inMemorySettings.lastFileViewMode)
+    }
+
+    @Test
+    fun 状態の保存が無効な場合ビューモードの変更は設定に保存されないこと() {
+        inMemorySettings.persistFileTreeState = false
+        inMemorySettings.lastFileViewMode = FileViewMode.HIERARCHY
+
+        viewModel.dispatch(KifuzoAction.SetViewMode(FileViewMode.FLAT))
+
+        assertEquals(FileViewMode.HIERARCHY, inMemorySettings.lastFileViewMode)
+    }
+
+    @Test
+    fun 状態の保存が有効な場合フィルタの変更が設定に保存されること() {
+        inMemorySettings.persistFileTreeState = true
+        val filter = dev.irof.kifuzo.models.FileFilter.RECENT
+
+        viewModel.dispatch(KifuzoAction.ToggleFileFilter(filter))
+
+        assertTrue(inMemorySettings.lastFileFilters.contains(filter))
+    }
+
+    @Test
+    fun 起動時に状態の保存が有効なら設定から読み込まれること() {
+        inMemorySettings.persistFileTreeState = true
+        inMemorySettings.lastFileViewMode = FileViewMode.FLAT
+        inMemorySettings.lastFileFilters = setOf(dev.irof.kifuzo.models.FileFilter.RECENT)
+
+        val newViewModel = KifuzoViewModel(stubRepository, inMemorySettings)
+
+        assertEquals(FileViewMode.FLAT, newViewModel.uiState.viewMode)
+        assertTrue(newViewModel.uiState.fileFilters.contains(dev.irof.kifuzo.models.FileFilter.RECENT))
+    }
+
+    @Test
+    fun 起動時に状態の保存が無効ならデフォルト値になること() {
+        inMemorySettings.persistFileTreeState = false
+        inMemorySettings.lastFileViewMode = FileViewMode.FLAT
+        inMemorySettings.lastFileFilters = setOf(dev.irof.kifuzo.models.FileFilter.RECENT)
+
+        val newViewModel = KifuzoViewModel(stubRepository, inMemorySettings)
+
+        assertEquals(FileViewMode.HIERARCHY, newViewModel.uiState.viewMode)
+        assertTrue(newViewModel.uiState.fileFilters.isEmpty())
     }
 
     @Test

@@ -120,8 +120,6 @@ class CsaParserTest {
         }
     }
 
-
-
     @Test
     fun handleCsaResultLineが未知のコードを適切に処理すること() {
         val state = ShogiBoardState()
