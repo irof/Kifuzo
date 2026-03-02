@@ -23,6 +23,7 @@ import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.ui.theme.ShogiIcons
+import dev.irof.kifuzo.utils.AppStrings
 import java.nio.file.Path
 import kotlin.io.path.extension
 
@@ -44,12 +45,13 @@ fun FileTreeItem(
     onShowText: (Path) -> Unit,
     onRename: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
+    onForceParse: (Path) -> Unit,
 ) {
     val backgroundColor = if (isSelected) ShogiColors.Panel.Primary.copy(alpha = ShogiColors.Panel.SELECTED_BACKGROUND_ALPHA) else Color.Transparent
     val startPadding = if (showParentName) ShogiDimensions.Spacing.Medium else (node.level * FileTreeConstants.INDENT_SIZE).dp
 
     ContextMenuArea(items = {
-        buildContextMenuItems(node, onShowText, onRename, onConvertCsa)
+        buildContextMenuItems(node, onShowText, onRename, onConvertCsa, onForceParse)
     }) {
         FileTreeRow(node, isError, showParentName, backgroundColor, startPadding, onToggle, onSelect)
     }
@@ -90,11 +92,13 @@ private fun buildContextMenuItems(
     onShowText: (Path) -> Unit,
     onRename: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
+    onForceParse: (Path) -> Unit,
 ): List<ContextMenuItem> {
     val items = mutableListOf<ContextMenuItem>()
     if (!node.isDirectory) {
         items.add(ContextMenuItem("テキストを表示") { onShowText(node.path) })
         items.add(ContextMenuItem("ファイル名を変更") { onRename(node.path) })
+        items.add(ContextMenuItem(AppStrings.FORCE_PARSE_KIFU) { onForceParse(node.path) })
         if (node.path.extension.lowercase() == "csa") {
             items.add(ContextMenuItem("KIFに変換") { onConvertCsa(node.path) })
         }

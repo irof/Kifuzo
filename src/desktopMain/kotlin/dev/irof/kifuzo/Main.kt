@@ -177,6 +177,7 @@ private fun KifuzoSidebarWrapper(viewModel: KifuzoViewModel) {
         onShowText = { viewModel.dispatch(KifuzoAction.SetViewingText(it)) },
         onRename = { viewModel.dispatch(KifuzoAction.ShowRenameDialog(it)) },
         onConvertCsa = { viewModel.dispatch(KifuzoAction.ConvertCsa(it)) },
+        onForceParse = { viewModel.dispatch(KifuzoAction.ForceParseAsKifu(it)) },
         onSetViewMode = { viewModel.dispatch(KifuzoAction.SetViewMode(it)) },
         onSetFileSortOption = { viewModel.dispatch(KifuzoAction.SetFileSortOption(it)) },
         onToggleFileFilter = { viewModel.dispatch(KifuzoAction.ToggleFileFilter(it)) },

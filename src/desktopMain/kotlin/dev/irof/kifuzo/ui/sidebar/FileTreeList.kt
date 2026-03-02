@@ -24,6 +24,7 @@ fun FileTreeList(
     onShowText: (String) -> Unit,
     onRename: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
+    onForceParse: (Path) -> Unit,
 ) {
     val treeHorizontalScroll = rememberScrollState()
     Box(
@@ -43,6 +44,7 @@ fun FileTreeList(
                     onShowText = { onShowText(dev.irof.kifuzo.logic.io.readTextWithEncoding(it)) },
                     onRename = onRename,
                     onConvertCsa = onConvertCsa,
+                    onForceParse = onForceParse,
                 )
             }
         }

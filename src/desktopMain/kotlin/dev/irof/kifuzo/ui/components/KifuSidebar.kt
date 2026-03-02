@@ -44,6 +44,7 @@ fun KifuSidebar(
     onShowText: (String) -> Unit,
     onRename: (Path) -> Unit,
     onConvertCsa: (Path) -> Unit,
+    onForceParse: (Path) -> Unit,
     onSetViewMode: (dev.irof.kifuzo.models.FileViewMode) -> Unit,
     onSetFileSortOption: (dev.irof.kifuzo.models.FileSortOption) -> Unit,
     onToggleFileFilter: (dev.irof.kifuzo.models.FileFilter) -> Unit,
@@ -110,6 +111,7 @@ fun KifuSidebar(
             onShowText = onShowText,
             onRename = onRename,
             onConvertCsa = onConvertCsa,
+            onForceParse = onForceParse,
         )
     }
 }

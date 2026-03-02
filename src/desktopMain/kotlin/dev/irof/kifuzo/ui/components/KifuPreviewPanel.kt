@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.Button
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -110,7 +112,15 @@ fun KifuPreviewPanel(
         )
 
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            BoardArea(boardState, isFlipped, actions::onToggleFlip, Modifier.weight(1f))
+            val isError = state.selectedFile?.let { state.kifuInfos[it]?.isError } ?: false
+            if (isError) {
+                ErrorArea(
+                    onForceParse = { state.selectedFile?.let { actions.onForceParse(it) } },
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                BoardArea(boardState, isFlipped, actions::onToggleFlip, Modifier.weight(1f))
+            }
 
             if (state.isMoveListVisible) {
                 KifuMoveList(
@@ -127,6 +137,24 @@ fun KifuPreviewPanel(
         }
 
         KifuFooter(boardState, isFlipped, actions::onStepChange)
+    }
+}
+
+@Composable
+private fun ErrorArea(
+    onForceParse: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxHeight(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text("棋譜として認識できませんでした。", color = Color.Gray)
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
+        Button(onClick = onForceParse) {
+            Text(AppStrings.FORCE_PARSE_KIFU)
+        }
     }
 }
 
