@@ -68,12 +68,6 @@ fun RenameDialog(
                     modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                     singleLine = true,
                 )
-                Text(
-                    "※ 拡張子は自動的に維持されます（変更も可能ですがご注意ください）。",
-                    style = androidx.compose.material.MaterialTheme.typography.caption,
-                    color = androidx.compose.ui.graphics.Color.Gray,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
             }
         },
         buttons = {
