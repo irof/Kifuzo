@@ -78,8 +78,30 @@ spotless {
     }
 }
 
+// Kover によるカバレッジ検証の設定
+// UI関連のコードが未テストで全体の数値を下げるため、検証対象から除外します。
+// これにより、コアロジック(Logic/Models)のカバレッジ低下を確実に検出できるようにします。
+kover {
+    reports {
+        filters {
+            excludes {
+                packages("dev.irof.kifuzo.ui.*", "dev.irof.kifuzo.viewmodel.*")
+            }
+        }
+        verify {
+            rule {
+                bound {
+                    // 行カバレッジ 80% 以上を目標とします。
+                    // 現時点の実測値（UI/ViewModel除外で約80.5%）に合わせています。
+                    minValue.set(80)
+                }
+            }
+        }
+    }
+}
+
 tasks.register("verify") {
     group = "verification"
-    description = "Runs Spotless check, detekt, tests and coverage."
-    dependsOn("spotlessCheck", "detekt", "koverHtmlReport")
+    description = "Runs Spotless check, detekt, tests and coverage verification."
+    dependsOn("spotlessCheck", "detekt", "koverVerify", "koverHtmlReport")
 }
