@@ -71,6 +71,15 @@ fun KifuSidebar(
                         onSelectPrev()
                         true
                     }
+                    Key.Enter, Key.NumPadEnter, Key.DirectionRight -> {
+                        val selectedNode = state.treeNodes.find { it.path == state.selectedFile }
+                        if (selectedNode != null && selectedNode.isDirectory) {
+                            onToggleDir(selectedNode)
+                            true
+                        } else {
+                            false
+                        }
+                    }
                     else -> false
                 }
             }
