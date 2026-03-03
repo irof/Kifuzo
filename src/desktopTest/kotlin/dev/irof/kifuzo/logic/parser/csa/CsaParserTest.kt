@@ -135,6 +135,14 @@ class CsaParserTest {
     }
 
     @Test
+    fun P1からP9形式で記述された初期局面を標準開始と判定できること() {
+        val state = ShogiBoardState()
+        CsaParser().parse(KifuTestData.CSA_STANDARD_BOARD.lines(), state)
+
+        assertTrue(state.session.isStandardStart, "P1-P9形式でも内容が初期局面ならisStandardStart=trueであるべき")
+    }
+
+    @Test
     fun parseが短すぎる指し手行で例外を投げること() {
         val state = ShogiBoardState()
         kotlin.test.assertFailsWith<KifuParseException> {

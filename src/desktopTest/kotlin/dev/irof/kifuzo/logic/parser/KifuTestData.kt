@@ -50,6 +50,20 @@ object KifuTestData {
     val CSA_PROM_MOVE get() = readResource("csa/promote_then_move.csa")
     val CSA_BOARD_SETUP_PROM get() = readResource("csa/board_setup_promote.csa")
 
+    val CSA_STANDARD_BOARD = """
+        P1-KY-KE-GI-KI-OU-KI-GI-KE-KY
+        P2 * -HI *  *  *  *  * -KA * 
+        P3-FU-FU-FU-FU-FU-FU-FU-FU-FU
+        P4 *  *  *  *  *  *  *  *  * 
+        P5 *  *  *  *  *  *  *  *  * 
+        P6 *  *  *  *  *  *  *  *  * 
+        P7+FU+FU+FU+FU+FU+FU+FU+FU+FU
+        P8 * +KA *  *  *  *  * +HI * 
+        P9+KY+KE+GI+KI+OU+KI+GI+KE+KY
+        +
+        +7776FU
+    """.trimIndent()
+
     val EVALUATION_REGRESSION_1 get() = readResource("kif/evaluation_regression_1.kifu")
     val EVALUATION_REGRESSION_2 get() = readResource("kif/evaluation_regression_2.kifu")
 }

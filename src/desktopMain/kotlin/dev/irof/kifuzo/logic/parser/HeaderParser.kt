@@ -135,10 +135,14 @@ class HeaderParser {
         if (boardY in 1 until ShogiConstants.BOARD_SIZE) {
             throw KifuParseException("盤面図が不完全です（${boardY}行しか見つかりませんでした）。")
         }
+
+        val snapshot = BoardSnapshot(currentCells.map { it.toList() }, senteMochi.toList(), goteMochi.toList())
+        val finalIsStandardStart = isStandardStart && snapshot.isStandardInitial()
+
         return KifuHeader(
             senteName = senteName, goteName = goteName, startTime = startTime, event = event,
-            initialCells = currentCells.map { it.toList() }, senteMochi = senteMochi.toList(), goteMochi = goteMochi.toList(),
-            isStandardStart = isStandardStart, moveStartIndex = moveStartIndex,
+            initialCells = snapshot.cells, senteMochi = snapshot.senteMochigoma, goteMochi = snapshot.goteMochigoma,
+            isStandardStart = finalIsStandardStart, moveStartIndex = moveStartIndex,
             format = detectedFormat,
         )
     }

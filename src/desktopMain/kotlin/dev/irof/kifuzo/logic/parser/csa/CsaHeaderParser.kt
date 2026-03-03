@@ -46,7 +46,6 @@ object CsaHeaderParser {
     }
 
     fun handleMochigomaLine(hp: HeaderParser, line: String) {
-        hp.prepareNonStandardBoard()
         val color = if (line[1] == '+') PieceColor.Black else PieceColor.White
         var i = HeaderCsaConstants.START_INDEX
         while (i + HeaderCsaConstants.ENTRY_LENGTH <= line.length) {
@@ -65,7 +64,6 @@ object CsaHeaderParser {
     fun handleBoardLine(hp: HeaderParser, line: String) {
         val rowIdx = line[1] - '1'
         if (rowIdx !in 0 until ShogiConstants.BOARD_SIZE) return
-        hp.prepareNonStandardBoard()
         for (i in 0 until ShogiConstants.BOARD_SIZE) {
             val start = HeaderCsaConstants.START_INDEX + i * HeaderCsaConstants.PIECE_WIDTH
             if (start + HeaderCsaConstants.PIECE_WIDTH > line.length) break
