@@ -57,8 +57,9 @@ fun main() = application {
         title = AppStrings.APP_TITLE,
         state = windowState,
     ) {
+        val viewModel = remember { KifuzoViewModel() }
         MaterialTheme {
-            KifuzoApp()
+            KifuzoApp(viewModel)
         }
     }
 }
@@ -74,10 +75,8 @@ private fun rememberKifuzoWindowState(): androidx.compose.ui.window.WindowState 
 )
 
 @Composable
-fun KifuzoApp() {
-    val viewModel = remember { KifuzoViewModel() }
-
-    LaunchedEffect(Unit) {
+fun KifuzoApp(viewModel: KifuzoViewModel) {
+    LaunchedEffect(viewModel) {
         viewModel.refreshFiles()
     }
 

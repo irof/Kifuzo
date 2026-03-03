@@ -866,3 +866,4 @@ style:
     active: true
     excludeImports:
       - 'java.util.*'
+      - 'androidx.compose.ui.test.*'

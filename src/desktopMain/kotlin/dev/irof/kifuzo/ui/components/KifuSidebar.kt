@@ -19,6 +19,8 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
+import dev.irof.kifuzo.ui.UiTestTags
 import dev.irof.kifuzo.ui.sidebar.FileFiltersAndSorting
 import dev.irof.kifuzo.ui.sidebar.FileTreeList
 import dev.irof.kifuzo.ui.sidebar.FileViewModeSelector
@@ -56,6 +58,7 @@ fun KifuSidebar(
 
     Column(
         modifier = modifier
+            .testTag(UiTestTags.SIDEBAR)
             .fillMaxHeight()
             .padding(ShogiDimensions.Spacing.Large)
             .focusRequester(focusRequester)

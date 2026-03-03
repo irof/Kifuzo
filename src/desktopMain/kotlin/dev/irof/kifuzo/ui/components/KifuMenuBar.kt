@@ -15,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import dev.irof.kifuzo.ui.UiTestTags
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.ui.theme.ShogiIcons
@@ -46,7 +48,7 @@ fun KifuMenuBar(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // ファイルブラウザ表示切り替え
-        IconButton(onClick = onToggleSidebar) {
+        IconButton(onClick = onToggleSidebar, modifier = Modifier.testTag(UiTestTags.MENU_BAR_TOGGLE_SIDEBAR)) {
             Icon(
                 imageVector = ShogiIcons.FileBrowser,
                 contentDescription = "ファイルブラウザ表示切り替え",
@@ -57,7 +59,7 @@ fun KifuMenuBar(
         Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
 
         // 手順リスト表示切り替え
-        IconButton(onClick = onToggleMoveList) {
+        IconButton(onClick = onToggleMoveList, modifier = Modifier.testTag(UiTestTags.MENU_BAR_TOGGLE_MOVE_LIST)) {
             Icon(
                 imageVector = ShogiIcons.MoveList,
                 contentDescription = "手順リスト表示切り替え",
@@ -68,7 +70,7 @@ fun KifuMenuBar(
         Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
 
         // インポート
-        IconButton(onClick = onImport) {
+        IconButton(onClick = onImport, modifier = Modifier.testTag(UiTestTags.MENU_BAR_IMPORT)) {
             Icon(
                 imageVector = ShogiIcons.Import,
                 contentDescription = AppStrings.IMPORT_KIFU,
@@ -79,7 +81,7 @@ fun KifuMenuBar(
         Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
 
         // 貼り付け
-        IconButton(onClick = onPaste) {
+        IconButton(onClick = onPaste, modifier = Modifier.testTag(UiTestTags.MENU_BAR_PASTE)) {
             Icon(
                 imageVector = ShogiIcons.Paste,
                 contentDescription = AppStrings.PASTE_KIFU,
@@ -90,7 +92,7 @@ fun KifuMenuBar(
         Spacer(Modifier.weight(1f))
 
         // 設定
-        IconButton(onClick = onShowSettings) {
+        IconButton(onClick = onShowSettings, modifier = Modifier.testTag(UiTestTags.MENU_BAR_SETTINGS)) {
             Icon(
                 imageVector = ShogiIcons.Settings,
                 contentDescription = AppStrings.SETTINGS,

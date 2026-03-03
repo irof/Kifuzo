@@ -98,3 +98,5 @@ The project uses **Gradle** as the build tool.
 - **Encoding:** Standardizes on **UTF-8** for all file operations.
 - **Naming:** Uses standard Kotlin/JVM naming conventions.
 - **Testing:** Test methods are named in Japanese without backticks. Always use `./gradlew desktopTest` to run unit tests.
+    - **UI Testing:** Uses `compose.desktop.uiTestJUnit4` for testing Compose UI components. UI tests are located in `src/desktopTest/kotlin/dev/irof/kifuzo/ui/`.
+    - **Test Tags:** Components use `Modifier.testTag` with constants from `UiTestTags` for identification in UI tests.

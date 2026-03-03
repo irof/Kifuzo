@@ -9,4 +9,4 @@
 
 ## 将来の改善 (Future Improvements)
 - [x] **カバレッジのさらなる向上**: Models/Logic のラインカバレッジを 90% 以上、Instruction カバレッジを 85% 以上に引き上げる。(Models は 95% 以上、Logic は 85% 以上を達成済み)
-- [ ] **UI テストの導入**: ViewModel のテストは強化されたが、Compose UI 自体の表示やインタラクションのテストが未着手。
+- [x] **UI テストの導入**: Compose Multiplatform (Desktop) の UI テスト環境を構築し、メニューバーやサイドバーの表示・インタラクションを検証するテストを追加済み。
