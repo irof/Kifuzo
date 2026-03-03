@@ -10,6 +10,10 @@ object AppStrings {
     const val COPY_AND_CLOSE = "コピーして閉じる"
     const val CLOSE = "閉じる"
     const val CANCEL = "キャンセル"
+
+    const val TOGGLE_SIDEBAR = "サイドバー表示切り替え"
+    const val TOGGLE_MOVE_LIST = "指し手リスト表示切り替え"
+
     const val OVERWRITE_CONFIRM = "上書き確認"
     const val OVERWRITE_ACTION = "上書きする"
     const val NOTIFICATION = "通知"

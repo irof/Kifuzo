@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import dev.irof.kifuzo.ui.UiTestTags
+import dev.irof.kifuzo.ui.UiId
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
 import dev.irof.kifuzo.ui.theme.ShogiIcons
@@ -48,10 +48,10 @@ fun KifuMenuBar(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // ファイルブラウザ表示切り替え
-        IconButton(onClick = onToggleSidebar, modifier = Modifier.testTag(UiTestTags.MENU_BAR_TOGGLE_SIDEBAR)) {
+        IconButton(onClick = onToggleSidebar, modifier = Modifier.testTag(UiId.Menu.TOGGLE_SIDEBAR)) {
             Icon(
                 imageVector = ShogiIcons.FileBrowser,
-                contentDescription = "ファイルブラウザ表示切り替え",
+                contentDescription = AppStrings.TOGGLE_SIDEBAR,
                 tint = if (isSidebarVisible) MaterialTheme.colors.primary else Color.Gray,
             )
         }
@@ -59,10 +59,10 @@ fun KifuMenuBar(
         Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
 
         // 手順リスト表示切り替え
-        IconButton(onClick = onToggleMoveList, modifier = Modifier.testTag(UiTestTags.MENU_BAR_TOGGLE_MOVE_LIST)) {
+        IconButton(onClick = onToggleMoveList, modifier = Modifier.testTag(UiId.Menu.TOGGLE_MOVE_LIST)) {
             Icon(
                 imageVector = ShogiIcons.MoveList,
-                contentDescription = "手順リスト表示切り替え",
+                contentDescription = AppStrings.TOGGLE_MOVE_LIST,
                 tint = if (isMoveListVisible) MaterialTheme.colors.primary else Color.Gray,
             )
         }
@@ -70,7 +70,7 @@ fun KifuMenuBar(
         Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
 
         // インポート
-        IconButton(onClick = onImport, modifier = Modifier.testTag(UiTestTags.MENU_BAR_IMPORT)) {
+        IconButton(onClick = onImport, modifier = Modifier.testTag(AppStrings.IMPORT_KIFU)) {
             Icon(
                 imageVector = ShogiIcons.Import,
                 contentDescription = AppStrings.IMPORT_KIFU,
@@ -81,7 +81,7 @@ fun KifuMenuBar(
         Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
 
         // 貼り付け
-        IconButton(onClick = onPaste, modifier = Modifier.testTag(UiTestTags.MENU_BAR_PASTE)) {
+        IconButton(onClick = onPaste, modifier = Modifier.testTag(AppStrings.PASTE_KIFU)) {
             Icon(
                 imageVector = ShogiIcons.Paste,
                 contentDescription = AppStrings.PASTE_KIFU,
@@ -92,7 +92,7 @@ fun KifuMenuBar(
         Spacer(Modifier.weight(1f))
 
         // 設定
-        IconButton(onClick = onShowSettings, modifier = Modifier.testTag(UiTestTags.MENU_BAR_SETTINGS)) {
+        IconButton(onClick = onShowSettings, modifier = Modifier.testTag(AppStrings.SETTINGS)) {
             Icon(
                 imageVector = ShogiIcons.Settings,
                 contentDescription = AppStrings.SETTINGS,

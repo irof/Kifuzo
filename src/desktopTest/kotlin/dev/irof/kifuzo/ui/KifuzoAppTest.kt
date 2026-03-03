@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import dev.irof.kifuzo.InMemoryAppSettings
 import dev.irof.kifuzo.KifuzoApp
 import dev.irof.kifuzo.StubKifuRepository
+import dev.irof.kifuzo.utils.AppStrings
 import dev.irof.kifuzo.viewmodel.KifuzoViewModel
 import org.junit.Rule
 import org.junit.Test
@@ -30,11 +31,11 @@ class KifuzoAppTest {
             KifuzoApp(viewModel)
         }
 
-        composeTestRule.onNodeWithTag(UiTestTags.MENU_BAR_TOGGLE_SIDEBAR).assertIsDisplayed()
-        composeTestRule.onNodeWithTag(UiTestTags.MENU_BAR_TOGGLE_MOVE_LIST).assertIsDisplayed()
-        composeTestRule.onNodeWithTag(UiTestTags.MENU_BAR_IMPORT).assertIsDisplayed()
-        composeTestRule.onNodeWithTag(UiTestTags.MENU_BAR_PASTE).assertIsDisplayed()
-        composeTestRule.onNodeWithTag(UiTestTags.MENU_BAR_SETTINGS).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(AppStrings.TOGGLE_SIDEBAR).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(AppStrings.TOGGLE_MOVE_LIST).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(AppStrings.IMPORT_KIFU).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(AppStrings.PASTE_KIFU).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(AppStrings.SETTINGS).assertIsDisplayed()
     }
 
     @Test
@@ -46,14 +47,14 @@ class KifuzoAppTest {
         }
 
         // 初期状態では表示されているはず
-        composeTestRule.onNodeWithTag(UiTestTags.SIDEBAR).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(UiId.SIDEBAR).assertIsDisplayed()
 
         // クリックして非表示にする
-        composeTestRule.onNodeWithTag(UiTestTags.MENU_BAR_TOGGLE_SIDEBAR).performClick()
-        composeTestRule.onNodeWithTag(UiTestTags.SIDEBAR).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(AppStrings.TOGGLE_SIDEBAR).performClick()
+        composeTestRule.onNodeWithTag(UiId.SIDEBAR).assertDoesNotExist()
 
         // もう一度クリックして表示する
-        composeTestRule.onNodeWithTag(UiTestTags.MENU_BAR_TOGGLE_SIDEBAR).performClick()
-        composeTestRule.onNodeWithTag(UiTestTags.SIDEBAR).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(AppStrings.TOGGLE_SIDEBAR).performClick()
+        composeTestRule.onNodeWithTag(UiId.SIDEBAR).assertIsDisplayed()
     }
 }
