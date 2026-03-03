@@ -15,6 +15,7 @@ Kifuzo is a macOS GUI application built with **Compose Multiplatform** and **Kot
     - Optionally remembers the file view mode (Hierarchy/Flat), file filters (Recent), and sort options across application restarts, configurable in settings.
     - **Vertical Menu Bar (メニューバー):** A dedicated sidebar on the far left for quick access to "Sidebar Toggle", "Move List Toggle", "Import", "Paste", and "Settings".
 - **Board Display (将棋盤ビュー):** Renders a 9x9 Shogi board showing the board state of a match.
+    - Scales both horizontally and vertically to fit the available space while maintaining aspect ratio.
     - Supports piece rotation (opponent pieces face down).
     - Features a board flip button (refresh icon) at the top-right corner for swapping views.
     - Highlights regular pieces in black and promoted pieces in red.

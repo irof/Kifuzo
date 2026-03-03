@@ -26,6 +26,7 @@ private object BoardViewConstants {
     const val LABEL_FONT_SIZE_RATIO = 0.3f
     const val PIECE_FONT_SIZE_RATIO = 0.6f
     const val CELL_COUNT_FOR_WIDTH = 11f
+    const val CELL_COUNT_FOR_HEIGHT = 13f
     const val BOARD_WIDTH_CELLS = 10
 }
 
@@ -49,8 +50,10 @@ fun ShogiBoardView(
         modifier = Modifier.fillMaxWidth().padding(horizontal = ShogiDimensions.Spacing.Medium),
         contentAlignment = Alignment.Center,
     ) {
-        // 盤面(9) + 段符号(1) = 10. 10で割る (+ 余裕を持たせて11)
-        val cellSize = min(maxWidth / BoardViewConstants.CELL_COUNT_FOR_WIDTH, ShogiDimensions.Board.CellMaxSize)
+        // 縦横どちらかが小さくても収まるようにcellSizeを決定する
+        val cellSizeWidth = maxWidth / BoardViewConstants.CELL_COUNT_FOR_WIDTH
+        val cellSizeHeight = maxHeight / BoardViewConstants.CELL_COUNT_FOR_HEIGHT
+        val cellSize = min(min(cellSizeWidth, cellSizeHeight), ShogiDimensions.Board.CellMaxSize)
         val fontSize = (cellSize.value * BoardViewConstants.PIECE_FONT_SIZE_RATIO).sp
         val labelSize = (cellSize.value * BoardViewConstants.LABEL_FONT_SIZE_RATIO).sp
         val boardWidth = cellSize * BoardViewConstants.BOARD_WIDTH_CELLS
