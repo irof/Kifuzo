@@ -66,16 +66,16 @@ fun EvaluationGraph(
             .pointerInput(evaluations) {
                 awaitPointerEventScope {
                     while (true) {
-                        val event = awaitPointerEvent()
-                        val pos = event.changes.first().position.x
-                        hoverX = if (event.type != PointerEventType.Release) pos else null
-                        if (event.type == PointerEventType.Release && pos in GraphConstants.ZERO_FLOAT..size.width.toFloat()) {
-                            onStepClick(getStepIndex(pos, size.width.toFloat(), evaluations.size))
-                        }
+                        handleEvaluationGraphPointerEvent(
+                            event = awaitPointerEvent(),
+                            totalSteps = evaluations.size,
+                            canvasWidth = size.width,
+                            onHover = { hoverX = it },
+                            onStepClick = onStepClick,
+                        )
                     }
                 }
-            }
-            .onPointerEvent(PointerEventType.Exit) { hoverX = null },
+            },
     ) {
         val scaler = NonLinearScaler(GraphConstants.MAX_EVAL, size.height, GraphConstants.THRESHOLD, GraphConstants.COMPRESSION, ScalerMode.CENTER_ZERO, isFlipped)
         val stepWidth = size.width / maxOf(1, evaluations.size)
@@ -84,6 +84,29 @@ fun EvaluationGraph(
         drawEvaluationLine(evaluations, scaler, stepWidth)
         drawRect(color = Color.Gray, style = Stroke(width = GraphConstants.BORDER_WIDTH.dp.toPx()))
         drawHoverIndicator(hoverX, evaluations, stepWidth, scaler, textMeasurer)
+    }
+}
+
+private fun handleEvaluationGraphPointerEvent(
+    event: androidx.compose.ui.input.pointer.PointerEvent,
+    totalSteps: Int,
+    canvasWidth: Int,
+    onHover: (Float?) -> Unit,
+    onStepClick: (Int) -> Unit,
+) {
+    val pos = event.changes.first().position.x
+    when (event.type) {
+        PointerEventType.Move, PointerEventType.Enter -> {
+            onHover(pos)
+        }
+        PointerEventType.Exit -> {
+            onHover(null)
+        }
+        PointerEventType.Release -> {
+            if (pos in GraphConstants.ZERO_FLOAT..canvasWidth.toFloat()) {
+                onStepClick(getStepIndex(pos, canvasWidth.toFloat(), totalSteps))
+            }
+        }
     }
 }
 

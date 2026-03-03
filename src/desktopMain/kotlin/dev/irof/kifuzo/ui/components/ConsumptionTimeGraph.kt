@@ -89,8 +89,8 @@ fun ConsumptionTimeGraph(
     var hoverStep by remember { mutableStateOf<Int?>(null) }
     val textMeasurer = rememberTextMeasurer()
 
-    val senteTimes = times.filterIndexed { i, t -> i % 2 != 0 && t != null }.mapNotNull { it }
-    val goteTimes = times.filterIndexed { i, t -> i > 0 && i % 2 == 0 && t != null }.mapNotNull { it }
+    val senteTimes = remember(times) { times.filterIndexed { i, t -> i % 2 != 0 && t != null }.mapNotNull { it } }
+    val goteTimes = remember(times) { times.filterIndexed { i, t -> i > 0 && i % 2 == 0 && t != null }.mapNotNull { it } }
 
     Column(modifier = modifier) {
         Box(
@@ -104,19 +104,17 @@ fun ConsumptionTimeGraph(
                 modifier = Modifier
                     .fillMaxSize()
                     .pointerInput(times) {
-                        detectTapGestures { offset ->
-                            val stepWidth = size.width / max(1, times.size)
-                            val step = (offset.x / stepWidth).toInt().coerceIn(0, times.size - 1)
-                            onStepClick(step)
+                        awaitPointerEventScope {
+                            while (true) {
+                                handleTimeGraphPointerEvent(
+                                    event = awaitPointerEvent(),
+                                    totalSteps = times.size,
+                                    canvasWidth = size.width,
+                                    onHover = { hoverStep = it },
+                                    onStepClick = onStepClick,
+                                )
+                            }
                         }
-                    }
-                    .onPointerEvent(PointerEventType.Move) { event ->
-                        val offset = event.changes.first().position
-                        val stepWidth = size.width / max(1, times.size)
-                        hoverStep = (offset.x / stepWidth).toInt().coerceIn(0, times.size - 1)
-                    }
-                    .onPointerEvent(PointerEventType.Exit) {
-                        hoverStep = null
                     },
             ) {
                 val totalSteps = times.size
@@ -144,6 +142,32 @@ fun ConsumptionTimeGraph(
             senteAvg = senteTimes.takeIf { it.isNotEmpty() }?.average(),
             goteAvg = goteTimes.takeIf { it.isNotEmpty() }?.average(),
         )
+    }
+}
+
+private fun handleTimeGraphPointerEvent(
+    event: androidx.compose.ui.input.pointer.PointerEvent,
+    totalSteps: Int,
+    canvasWidth: Int,
+    onHover: (Int?) -> Unit,
+    onStepClick: (Int) -> Unit,
+) {
+    val pos = event.changes.first().position.x
+    val stepWidth = canvasWidth / max(1, totalSteps)
+
+    when (event.type) {
+        PointerEventType.Move, PointerEventType.Enter -> {
+            onHover((pos / stepWidth).toInt().coerceIn(0, totalSteps - 1))
+        }
+        PointerEventType.Exit -> {
+            onHover(null)
+        }
+        PointerEventType.Release -> {
+            val step = (pos / stepWidth).toInt().coerceIn(0, totalSteps - 1)
+            if (pos in 0f..canvasWidth.toFloat()) {
+                onStepClick(step)
+            }
+        }
     }
 }
 
