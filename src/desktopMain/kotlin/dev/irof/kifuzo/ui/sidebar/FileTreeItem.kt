@@ -99,7 +99,7 @@ private fun buildContextMenuItems(
     if (!node.isDirectory) {
         items.add(ContextMenuItem("テキストを表示") { onShowText(node.path) })
         items.add(ContextMenuItem("ファイル名を変更") { onRename(node.path) })
-        if (KifuFormat.fromPath(node.path) == null) {
+        if (KifuFormat.notSupported(node.path)) {
             items.add(ContextMenuItem(AppStrings.FORCE_PARSE_KIFU) { onForceParse(node.path) })
         }
         if (node.path.extension.lowercase() == "csa") {
