@@ -29,6 +29,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -58,6 +59,7 @@ fun main() = application {
         },
         title = AppStrings.APP_TITLE,
         state = windowState,
+        icon = painterResource("icon.png"),
     ) {
         val viewModel = remember { KifuzoViewModel() }
         MaterialTheme {

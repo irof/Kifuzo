@@ -47,6 +47,7 @@ kotlin {
         val desktopTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                @Suppress("DEPRECATION")
                 implementation(compose.desktop.uiTestJUnit4)
             }
         }
@@ -61,6 +62,9 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg)
             packageName = "Kifuzo"
             packageVersion = "1.0.0"
+            macOS {
+                iconFile.set(project.file("src/desktopMain/resources/icon.icns"))
+            }
         }
     }
 }
