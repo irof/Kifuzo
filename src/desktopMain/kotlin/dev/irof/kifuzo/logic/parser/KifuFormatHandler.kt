@@ -21,7 +21,6 @@ enum class KifuFormat(val extensions: List<String>) {
             return entries.find { ext in it.extensions }
         }
 
-        fun isSupported(path: Path): Boolean = fromPath(path) != null
         fun notSupported(path: Path): Boolean = fromPath(path) == null
     }
 }
