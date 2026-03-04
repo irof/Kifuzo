@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.irof.kifuzo.logic.parser.KifuFormat
 import dev.irof.kifuzo.models.FileTreeNode
 import dev.irof.kifuzo.ui.theme.ShogiColors
 import dev.irof.kifuzo.ui.theme.ShogiDimensions
@@ -98,7 +99,9 @@ private fun buildContextMenuItems(
     if (!node.isDirectory) {
         items.add(ContextMenuItem("テキストを表示") { onShowText(node.path) })
         items.add(ContextMenuItem("ファイル名を変更") { onRename(node.path) })
-        items.add(ContextMenuItem(AppStrings.FORCE_PARSE_KIFU) { onForceParse(node.path) })
+        if (KifuFormat.fromPath(node.path) == null) {
+            items.add(ContextMenuItem(AppStrings.FORCE_PARSE_KIFU) { onForceParse(node.path) })
+        }
         if (node.path.extension.lowercase() == "csa") {
             items.add(ContextMenuItem("KIFに変換") { onConvertCsa(node.path) })
         }
