@@ -115,7 +115,7 @@ fun KifuMetaInfo(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
         ) {
-            KifuMetaText(fileName, senteName, goteName, startTime, event, warningMessage, modifier = Modifier.weight(1f))
+            KifuMetaText(fileName, senteName, goteName, startTime, event, warningMessage, isPasted, modifier = Modifier.weight(1f))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (isPasted) {
@@ -164,13 +164,14 @@ private fun KifuMetaText(
     startTime: String,
     event: String,
     warningMessage: String? = null,
+    isPasted: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(ShogiDimensions.Spacing.Small),
     ) {
-        KifuFileNameWithWarning(fileName, warningMessage)
+        KifuFileNameWithWarning(fileName, warningMessage, isPasted)
 
         if (!isAllMetadataEmpty(sente, gote, startTime, event)) {
             if (sente.isNotEmpty()) MetaRow(AppStrings.LABEL_SENTE, sente)
@@ -183,11 +184,12 @@ private fun KifuMetaText(
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun KifuFileNameWithWarning(fileName: String, warningMessage: String?) {
+private fun KifuFileNameWithWarning(fileName: String, warningMessage: String?, isPasted: Boolean = false) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = fileName,
             style = MaterialTheme.typography.subtitle1,
+            color = if (isPasted) Color.Red else Color.Unspecified,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
