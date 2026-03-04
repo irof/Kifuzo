@@ -41,6 +41,7 @@ object AppStrings {
     const val SAVE = "保存"
     const val RENAME = "リネーム"
     const val SELECT_KIFU_HINT = "kifuファイルを選択してください"
+    const val PASTED_KIFU_HINT = "（貼り付けた棋譜：未保存）"
     const val SELECT_KIFU_ROOT = "棋譜フォルダを選択してください"
     const val DELETE = "削除"
     const val HIERARCHY = "階層"

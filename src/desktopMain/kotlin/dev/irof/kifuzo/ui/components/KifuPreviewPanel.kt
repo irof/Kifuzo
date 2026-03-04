@@ -85,7 +85,11 @@ fun KifuPreviewPanel(
 ) {
     val focusRequester = remember { FocusRequester() }
     val isFlipped = state.isFlipped
-    val fileName = state.selectedFile?.name ?: AppStrings.SELECT_KIFU_HINT
+    val fileName = when {
+        state.selectedFile != null -> state.selectedFile.name
+        state.pastedKifuText != null -> AppStrings.PASTED_KIFU_HINT
+        else -> AppStrings.SELECT_KIFU_HINT
+    }
 
     Column(
         modifier = modifier
