@@ -85,6 +85,12 @@ fun KifuPreviewPanel(
 ) {
     val focusRequester = remember { FocusRequester() }
     val isFlipped = state.isFlipped
+
+    if (state.selectedFile == null && state.pastedKifuText == null) {
+        WelcomeArea(modifier)
+        return
+    }
+
     val fileName = when {
         state.selectedFile != null -> state.selectedFile.name
         state.pastedKifuText != null -> AppStrings.PASTED_KIFU_HINT
@@ -141,6 +147,36 @@ fun KifuPreviewPanel(
         }
 
         KifuFooter(boardState, isFlipped, actions::onStepChange)
+    }
+}
+
+@Composable
+private fun WelcomeArea(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .background(ShogiColors.Panel.MenuBarBackground),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = ShogiIcons.FileBrowser,
+            contentDescription = null,
+            tint = Color.Gray.copy(alpha = 0.3f),
+            modifier = Modifier.size(128.dp),
+        )
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Large))
+        Text(
+            text = AppStrings.APP_TITLE,
+            style = MaterialTheme.typography.h4,
+            color = Color.Gray.copy(alpha = 0.5f),
+        )
+        Spacer(Modifier.height(ShogiDimensions.Spacing.Medium))
+        Text(
+            text = AppStrings.WELCOME_HINT,
+            style = MaterialTheme.typography.body1,
+            color = Color.Gray.copy(alpha = 0.5f),
+        )
     }
 }
 
