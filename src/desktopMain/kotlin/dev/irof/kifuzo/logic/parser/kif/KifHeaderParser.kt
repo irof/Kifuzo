@@ -8,27 +8,34 @@ import dev.irof.kifuzo.models.PieceColor
 import dev.irof.kifuzo.models.ShogiConstants
 
 object KifHeaderParser {
-    fun isMetadata(l: String) = l.startsWith("先手：") || l.startsWith("対局者：") || l.startsWith("後手：") || l.startsWith("開始日時：") || l.startsWith("棋戦：") || l.startsWith("場所：") ||
-        l.startsWith("先手:") || l.startsWith("対局者:") || l.startsWith("後手:") || l.startsWith("開始日時:") || l.startsWith("棋戦:") || l.startsWith("場所:")
+    fun isMetadata(l: String): Boolean {
+        val isSpecialLine = l.isBlank() || listOf("|", "#", "*", "$").any { l.startsWith(it) }
+        val isCsaName = l.startsWith("N+") || l.startsWith("N-")
+        val isOtherKifLine = isMochigomaLine(l) || isMoveLine(l)
+        if (isSpecialLine || isCsaName || isOtherKifLine) return false
+        return l.contains("：") || l.contains(":")
+    }
 
     fun isBoardLine(l: String) = l.startsWith("|") && l.count { it == '|' } >= 2
     fun isMochigomaLine(l: String) = Regex("""^[上下先後]手((の)?(手)?)?持駒：""").containsMatchIn(l)
     fun isMoveLine(l: String) = Regex("""^\s*\d+\s+.*""").matches(l)
 
     fun handleMetadataLine(hp: HeaderParser, line: String) {
-        val content = if (line.contains("：")) line.substringAfter("：").trim() else line.substringAfter(":").trim()
-        when {
-            line.startsWith("後手") -> hp.goteName = content
-            line.startsWith("先手") || line.startsWith("対局者") -> hp.senteName = content
-            line.startsWith("開始日時") -> hp.startTime = content
-            line.startsWith("棋戦") -> {
+        val separator = if (line.contains("：")) "：" else ":"
+        val key = line.substringBefore(separator).trim()
+        val content = line.substringAfter(separator).trim()
+        when (key) {
+            "後手", "上手" -> hp.goteName = content
+            "先手", "下手", "対局者" -> hp.senteName = content
+            "開始日時" -> hp.startTime = content
+            "棋戦" -> {
                 if (hp.event.isEmpty()) {
                     hp.event = content
                 } else if (!hp.event.contains(content)) {
                     hp.event = "$content (${hp.event})"
                 }
             }
-            line.startsWith("場所") -> {
+            "場所" -> {
                 if (hp.event.isEmpty()) {
                     hp.event = content
                 } else if (!hp.event.contains(content)) {

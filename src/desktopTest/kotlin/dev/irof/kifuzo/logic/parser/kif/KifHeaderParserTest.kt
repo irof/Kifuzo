@@ -64,6 +64,34 @@ class KifHeaderParserTest {
     }
 
     @Test
+    fun isMetadataが任意のキーワードを判定できること() {
+        assertTrue(KifHeaderParser.isMetadata("棋戦：竜王戦"))
+        assertTrue(KifHeaderParser.isMetadata("場所：東京"))
+        assertTrue(KifHeaderParser.isMetadata("未知の項目：値"))
+        assertTrue(KifHeaderParser.isMetadata("Key: Value"))
+    }
+
+    @Test
+    fun isMetadataが他の行と競合しないこと() {
+        // 盤面図
+        assertTrue(!KifHeaderParser.isMetadata("| ・ ・ ・ ・ ・ ・ ・ ・ 龍|"))
+        // 持駒
+        assertTrue(!KifHeaderParser.isMetadata("先手持駒：飛二"))
+        // 指し手
+        assertTrue(!KifHeaderParser.isMetadata("   1 ７六歩(77)"))
+        // コメント
+        assertTrue(!KifHeaderParser.isMetadata("# コメント"))
+        assertTrue(!KifHeaderParser.isMetadata("* 変化"))
+    }
+
+    @Test
+    fun handleMetadataLineが任意のキーワードを受け入れてもエラーにならないこと() {
+        val hp = HeaderParser()
+        KifHeaderParser.handleMetadataLine(hp, "未知の項目：値")
+        // エラーにならなければOK。現状は値は保存されない
+    }
+
+    @Test
     fun isMochigomaLineが各種手番表記に対応していること() {
         assertTrue(KifHeaderParser.isMochigomaLine("先手の手持駒："))
         assertTrue(KifHeaderParser.isMochigomaLine("後手の手持駒："))
