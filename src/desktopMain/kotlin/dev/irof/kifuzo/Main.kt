@@ -21,6 +21,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
@@ -107,12 +109,18 @@ private fun KifuzoAppContent(viewModel: KifuzoViewModel) {
 
 private fun handleKeyEvent(event: androidx.compose.ui.input.key.KeyEvent, viewModel: KifuzoViewModel): Boolean {
     if (event.type != KeyEventType.KeyDown) return false
-    return when (event.key) {
-        Key.DirectionRight, Key.DirectionDown -> {
+
+    return when {
+        // ⌘V (macOS) or Ctrl+V (Windows/Linux) for pasting
+        (event.isMetaPressed || event.isCtrlPressed) && event.key == Key.V -> {
+            viewModel.dispatch(KifuzoAction.PasteKifu)
+            true
+        }
+        event.key == Key.DirectionRight || event.key == Key.DirectionDown -> {
             viewModel.dispatch(KifuzoAction.NextStep)
             true
         }
-        Key.DirectionLeft, Key.DirectionUp -> {
+        event.key == Key.DirectionLeft || event.key == Key.DirectionUp -> {
             viewModel.dispatch(KifuzoAction.PrevStep)
             true
         }
