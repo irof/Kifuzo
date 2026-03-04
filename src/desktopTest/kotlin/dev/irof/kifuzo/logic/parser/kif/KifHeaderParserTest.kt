@@ -82,6 +82,9 @@ class KifHeaderParserTest {
         // コメント
         assertTrue(!KifHeaderParser.isMetadata("# コメント"))
         assertTrue(!KifHeaderParser.isMetadata("* 変化"))
+        // CSA関連
+        assertTrue(!KifHeaderParser.isMetadata("N+Sente"))
+        assertTrue(!KifHeaderParser.isMetadata("\$EVENT:Tournament"))
     }
 
     @Test

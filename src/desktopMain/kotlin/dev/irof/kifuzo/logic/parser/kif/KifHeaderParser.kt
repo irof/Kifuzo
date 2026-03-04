@@ -9,10 +9,9 @@ import dev.irof.kifuzo.models.ShogiConstants
 
 object KifHeaderParser {
     fun isMetadata(l: String): Boolean {
-        val isSpecialLine = l.isBlank() || listOf("|", "#", "*", "$").any { l.startsWith(it) }
-        val isCsaName = l.startsWith("N+") || l.startsWith("N-")
+        val isSpecialLine = l.isBlank() || l.startsWith("|") || l.startsWith("#") || l.startsWith("*") || l.startsWith("$")
         val isOtherKifLine = isMochigomaLine(l) || isMoveLine(l)
-        if (isSpecialLine || isCsaName || isOtherKifLine) return false
+        if (isSpecialLine || isOtherKifLine) return false
         return l.contains("：") || l.contains(":")
     }
 
