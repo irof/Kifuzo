@@ -2,7 +2,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     kotlin("multiplatform") version "2.3.10"
-    id("org.jetbrains.compose") version "1.10.1"
+    id("org.jetbrains.compose") version "1.10.2"
     kotlin("plugin.compose") version "2.3.10"
     id("com.diffplug.spotless") version "8.2.1"
     id("dev.detekt") version "2.0.0-alpha.2"
